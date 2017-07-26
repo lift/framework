@@ -2317,11 +2317,7 @@ case class LiftRulesSettingWrittenTwiceException(settingName: String, stackTrace
   extends LiftRulesSettingException(settingName, stackTrace, message)
 
 
-object LiftRulesSetting {
-  implicit def extractor[T](s: LiftRulesSetting[T]): T = s.get
-}
-
-class LiftRulesSetting[T](val name: String, val default: T) extends Serializable {
+class LiftRulesSetting[T](val name: String, val default: T) extends LiftValue[T] with HasCalcDefaultValue[T] {
   import LiftRules.StackTrace
 
   private [this] var v: T = default
@@ -2351,7 +2347,7 @@ class LiftRulesSetting[T](val name: String, val default: T) extends Serializable
     t.getStackTrace.dropWhile(_.getClassName contains "LiftRulesSetting")
 
 
-  def := (value: T): Unit = {
+  override def set(value: T): T = {
     lastSet.collect { case e if v != value =>
       val e1 = LiftRulesSettingWrittenTwiceException(name, trimmedStackTrace(e), writtenTwiceMessage1(value))
       LiftRules.settingsExceptionFunc.get.apply(e1)
@@ -2373,10 +2369,13 @@ class LiftRulesSetting[T](val name: String, val default: T) extends Serializable
 
     lastSet = Some(new Exception)
     v = value
+    v
   }
 
-  def get: T = {
+  override def get: T = {
     if(!LiftRules.doneBoot) lastRead = Some(new Exception)
     v
   }
+
+  override protected def calcDefaultValue: T = default
 }
