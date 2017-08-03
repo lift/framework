@@ -61,7 +61,8 @@ object BuildDef extends Build {
           Seq("-no-java-comments")
         case _ =>
           Seq()
-      }) //workaround for scala/scala-dev#249
+      }, libraryDependencies += scala_xml)
+      //workaround for scala/scala-dev#249
       .settings(aggregatedSetting(sources in(Compile, doc)),
                 aggregatedSetting(dependencyClasspath in(Compile, doc)),
                 publishArtifact := false)
@@ -100,7 +101,7 @@ object BuildDef extends Build {
     coreProject("json")
         .settings(description := "JSON Library",
                   parallelExecution in Test := false,
-                  libraryDependencies <++= scalaVersion { sv => Seq(scalap(sv), paranamer) })
+                  libraryDependencies <++= scalaVersion { sv => Seq(scalap(sv), paranamer, scala_xml) })
 
   lazy val documentationHelpers =
     coreProject("documentation-helpers")
