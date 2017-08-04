@@ -99,7 +99,7 @@ This repository, `framework`, contains the following components:
 
 * **core:** Core elements used by Lift projects. If you wish to reuse some of Lift's helpers and
 constructs, such as `Box`, this component may be all you need. However, a web application will most
-likely require one or more of Lift's components.
+likely require one or more of Lift's other components.
 * **web:** This component includes all of Lift's core HTTP and web handling. Including `lift-webkit`
 in your build process should be sufficient for basic applications and will include `lift-core` as a
 transitive dependency.
@@ -114,8 +114,9 @@ There are a variety of other repositories available on the Lift GitHub page. Whi
 
 #### modules
 
-The [modules](https://github.com/liftmodules) organization contains the many add-on modules that are
-part of the Lift project. If you don't find a module you need here, consider
+The [modules](https://github.com/liftmodules) organization contains some of the many add-on modules
+that are part of the Lift project. If you don't find a module you need here, consider
+looking for it on the [Lift modules directory](https://liftweb.net/lift_modules) or
 [creating a module](http://www.assembla.com/spaces/liftweb/wiki/Modules) and sharing it with the
 community.
 
