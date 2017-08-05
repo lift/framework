@@ -843,7 +843,7 @@ sealed trait PresenceBox[+A] extends Box[A] {
   def flatMap[B](f: A => PresenceBox[B]): PresenceBox[B]
   override def collect[B](pf: PartialFunction[A, B]): PresenceBox[B] = ???
 
-  def flatten[B](implicit ev: A <:< PresenceBox[B]): PresenceBox[B] = this match {
+  def flattenPresence[B](implicit ev: A <:< PresenceBox[B]): PresenceBox[B] = this match {
     case Full(internal) => ev(internal)
     case Empty => Empty
   }
@@ -874,9 +874,9 @@ sealed trait TryBox[+A] extends Box[A] {
   override def map[B](f: A => B): TryBox[B] = ???
   def flatMap[B](f: A => TryBox[B]): TryBox[B]
 
-  def flatten[B](implicit ev: A <:< TryBox[B]): TryBox[B] = this match {
+  def flattenTry[B](implicit ev: A <:< TryBox[B]): TryBox[B] = this match {
     case Full(internal) => ev(internal)
-    case failure: Failure => failure
+    case f: Failure => f
   }
 }
 /**

@@ -144,12 +144,16 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "define a 'flatten' method if it contains another Box." in {
       "If the inner box is a Full box, the final result is identical to that box" in {
         Full(Full(1)).flatten must_== Full(1)
+        (Full(Full(1)).flattenTry: TryBox[Int]) must_== Full(1)
+        (Full(Full(1)).flattenPresence: PresenceBox[Int]) must_== Full(1)
       }
       "If the inner box is a Failure, the final result is identical to that box" in {
         Full(Failure("error", Empty, Empty)).flatten must_== Failure("error", Empty, Empty)
+        (Full(Failure("error", Empty, Empty)).flattenTry: TryBox[Int]) must_== Failure("error", Empty, Empty)
       }
       "If the inner box is an Empty box, the final result is identical to that box" in {
         Full(Empty).flatten must_== Empty
+        (Full(Empty).flattenPresence: PresenceBox[Int]) must_== Empty
       }
     }
     "define an 'elements' method returning an iterator containing its value" in {
