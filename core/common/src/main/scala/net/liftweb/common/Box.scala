@@ -814,37 +814,30 @@ sealed abstract class Box[+A] extends Product with Serializable{
   }
 
   /**
-    * If this box is a `Failure` and if `pf` is defined for this `Failure` instance, returns
-    * a `Full` box containing the result of applying `pf` to this `Failure`, otherwise, returns
-    * `Empty`.
+    * Returns a `Full` box containing the results of applying `flipFn` to this box if it is a `Failure`,
+    * `ParamFailure` or `Empty`, and `flipFn` is defined for it. Returns `Empty` if this box is `Full`.
+    * In other words, it "flips" the full/empty status of this Box.
     *
     * @example {{{
     *  // Returns Full("alternative") because the partial function covers the case.
-    *  Failure("error") collectFailure { case Failure("error", Empty, Empty) => "alternative" }
+    *  Failure("error") flip { case Failure("error", Empty, Empty) => "alternative" }
     *
     *  // Returns Empty because the partial function doesn't cover the case.
-    *  Failure("another-error") collectFailure { case Failure("error", Empty, Empty) => "alternative" }
+    *  Failure("another-error") flip { case Failure("error", Empty, Empty) => "alternative" }
     *
-    *  // Returns Empty for an Empty box
-    *  Empty collectFailure { case _ => Failure("error") }
+    *  // Returns Full("alternative") for an Empty box since `partialFn` is defined for Empty
+    *  Empty flip { case Empty => "alternative" }
+    *
+    *  // Returns Empty because the partial function is not defined for Empty
+    *  Empty flip { case Failure("error", Empty, Empty) => "alternative" }
     *
     *  // Returns Empty for a Full box
-    *  Full(1) collectFailure { case _ => Failure("error") }
+    *  Full(1) flip { case _ => Failure("error") }
     *
     *  }}}
     */
-  final def collectFailure[B](pf: PartialFunction[Failure, B]): Box[B] = this match {
-    case f: Failure if pf.isDefinedAt(f) => Full(pf(f))
-    case _ => Empty
-  }
-
-  /**
-    * Returns a `Full` box containing the results of applying `flipFn` to this box if it is a `Failure`,
-    * `ParamFailure` or `Empty`. Returns `Empty` if this box is `Full`. In other words, it "flips" the
-    * full/empty status of this Box.
-    */
-  def flip[B](flipFn: EmptyBox => B): Box[B] = this match {
-    case e: EmptyBox => Full(flipFn(e))
+  def flip[B](flipFn: PartialFunction[EmptyBox, B]): Box[B] = this match {
+    case e: EmptyBox if flipFn.isDefinedAt(e) => Full(flipFn(e))
     case _ => Empty
   }
 }
