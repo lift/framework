@@ -9,13 +9,12 @@
 
 Dependency injection is an important topic in the JVM world. With Java, we usually go with Guice
 or Spring whenever we need it. However, Scala provides some unique advantages that allow many of the
-features needed for dependency injection without requiring an entire framework.
-
-Scala allows the use of http://jonasboner.com/real-world-scala-dependency-injection-di/[cake pattern], which
-facilitates composing complex classes out of Scala traits; however, it doesn't provide complete dependency
-injection functionality. In particular, it is less helpful in terms of allowing you to make dynamic
-choices about which combination of dependencies to vend in a given situation. Lift provides some additional
-features that complete the dependency injection puzzle.
+features needed for dependency injection without requiring an entire framework. For example, Scala allows
+the use of http://jonasboner.com/real-world-scala-dependency-injection-di/[cake pattern], which
+facilitates composing complex classes out of Scala traits; however, this by itself is not enough to
+provide complete dependency injection functionality. In particular, it is less helpful in terms of
+allowing you to make dynamic choices about which combination of dependencies to vend in a given situation.
+Lift provides some additional features that complete the dependency injection puzzle.
 
 == Why Lift's Dependency Injection
 
@@ -25,20 +24,20 @@ there is a better, more direct way that is less magical.
 
 Lift's philosophy is to keep things as simple as possible (and no simpler), and allow full control
 to the developers over how things work. To paraphrase David Pollak,
-"The abstraction turtles have to end somewhere" and  Lift's Dependency Injection features end those turtles quite
+"The abstraction turtles have to end somewhere", and  Lift's dependency injection features end those turtles quite
 early.
 
 == Getting started
 
-Lift's dependency injection is based on two main traits: https://liftweb.net/api/26/api/index.html#net.liftweb.util.Injector[`Injector`]
-and https://liftweb.net/api/26/api/index.html#net.liftweb.util.Maker[`Maker`]; however, most of the time,
+Lift's dependency injection is based on two main traits: https://liftweb.net/api/31/api/net/liftweb/util/Injector.html[`Injector`]
+and https://liftweb.net/api/31/api/net/liftweb/util/Maker.html[`Maker`]; however, most of the time,
 three higher level elements can be used:
 
-. The https://liftweb.net/api/26/api/index.html#net.liftweb.http.Factory[`Factory`] trait
-. The https://github.com/lift/framework/blob/5033c8798d4444f81996199c10ea330770e47fbc/web/webkit/src/main/scala/net/liftweb/http/Factory.scala#L37[`FactoryMaker`], an abstract class inside
+. The https://liftweb.net/api/31/api/net/liftweb/http/Factory.html[`Factory`] trait
+. The https://liftweb.net/api/31/api/net/liftweb/http/Factory$FactoryMaker.html[`FactoryMaker`], an abstract class inside
  inside the `Factory` trait.
-. https://liftweb.net/api/26/api/index.html#net.liftweb.util.SimpleInjector$Inject[`Inject`], an abstract class within the
- `SimpleInjector` trait.
+. https://liftweb.net/api/31/api/net/liftweb/util/SimpleInjector$Inject.html[`Inject`], an abstract class within the
+ https://liftweb.net/api/31/api/net/liftweb/util/SimpleInjector.html[`SimpleInjector`] trait.
 
 `FactoryMaker` and `Inject` serve the same purpose, with the former
 having more features. An important difference between them is related to performance,
@@ -328,7 +327,7 @@ class SomeSpec extends ... with DependencyOverrides {
 == Differences between FactoryMaker and Inject
 
 You can also declare your dependencies using
-the https://liftweb.net/api/26/api/index.html#net.liftweb.util.SimpleInjector$Inject[`Inject`] class, exactly like the
+the https://liftweb.net/api/31/api/net/liftweb/util/SimpleInjector$Inject.html[`Inject`] class, exactly like the
 `FactoryMaker`. For ex.
 
 [source,scala]
