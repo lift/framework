@@ -757,7 +757,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
 
 
   /**
-   * If the `Box` is `Fuvall`, apply the transform function `f` on the value `v`;
+   * If the `Box` is `Full`, apply the transform function `f` on the value `v`;
    * otherwise, just return the value untransformed.
    *
    * The transform function is expected to be a function that will take the
