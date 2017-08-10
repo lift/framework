@@ -301,6 +301,15 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var authentication: HttpAuthentication = NoAuthentication
 
   /**
+   * A session identifier for [[net.liftweb.http.provider.servlet.HTTPServletSession]].
+   *
+   * Under most circumstances, you won't need to change this value. However, in some cases
+   * containers will be configured with backing datastores that don't play nice with the default
+   * value. In those cases you can change this string to get those working.
+   */
+  @volatile var servletSessionIdentifier: String = "$lift_magic_session_thingy$"
+
+  /**
    * A function that takes the HTTPSession and the contextPath as parameters
    * and returns a LiftSession reference. This can be used in cases subclassing
    * LiftSession is necessary.
@@ -2294,4 +2303,3 @@ trait FormVendor {
   private object sessionForms extends SessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
   private object requestForms extends SessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
 }
-

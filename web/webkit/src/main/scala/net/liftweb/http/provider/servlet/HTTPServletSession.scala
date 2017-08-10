@@ -24,7 +24,7 @@ import net.liftweb.common._
 import net.liftweb.util._
 
 class HTTPServletSession(session: HttpSession) extends HTTPSession {
-  private val LiftMagicID = "$lift_magic_session_thingy$"
+  private[this] lazy val LiftMagicID = LiftRules.servletSessionIdentifier
 
   def sessionId: String = session.getId
 
@@ -72,4 +72,3 @@ case class SessionToServletBridge(uniqueId: String) extends HttpSessionBindingLi
   }
 
 }
-
