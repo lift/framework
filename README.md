@@ -19,24 +19,50 @@ Because Lift applications are written in [Scala](http://www.scala-lang.org), an 
 As of Lift 3.0, you'll need to be running Java 8 to use Lift. For those using Java 6 or Java 7,
 you'll need to use Lift 2.6 until you can upgrade your Java installation.
 
-You can create a new Lift project using your favorite build system by adding Lift as a dependency:
+You can create a new Lift project using your favorite build system by adding Lift as a dependency.
+Below we walk through setting up Lift in sbt and Maven.
 
-### With sbt
+### With sbt (new project)
 
-We recommend using the latest sbt version, which is currently 0.13.15, but anything 0.13.6+ will work
-with the instructions below.
+If you're using a recent version of sbt (e.g. 0.13.16), you can create a new Lift application using
+our Giter8. To create a new, basic Lift application that has some example code, simply execute:
 
-Create or update your `project/plugins.sbt` file with the `xsbt-web-plugin`:
-
-```scala
-addSbtPlugin("com.github.siasia" %% "xsbt-web-plugin" % "3.0.2")
+```
+sbt new lift/basic-app.g8
 ```
 
-Then, add the plugin and Lift to your `build.sbt` file:
+Or, if you're more on the advanced side of the room, you can also create a new, entirely blank
+application:
+
+```
+sbt new lift/blank-app.g8
+```
+
+Follow the prompts to create your Lift application.
+
+### With sbt (Existing project)
+
+If you're using Lift in an existing sbt project you'll need to:
+
+1. Add the xsbt-web-plugin if you don't already have it or some other way to start a servlet app.
+2. Add the lift dependencies.
+
+To add the xsbt-web-plugin download the most recent version of our [web-plugin.sbt][wpsbt] file
+to your `project/` folder.
+
+Then, enable the plugin for the container you want to use and in your `build.sbt` file. Below, we
+activate the JettyPlugin:
 
 ```scala
 enablePlugins(JettyPlugin)
+```
 
+More information on using the plugin can be found on the [xsbt-web-plugin project][wpproj].
+
+After you've done this, you'll want to add Lift to your `libraryDependencies` in addition to
+Logback if you don't already have another SLF4J logging library in place. For example:
+
+```scala
 libraryDependencies ++= {
   val liftVersion = "3.1.0"
   Seq(
@@ -46,9 +72,16 @@ libraryDependencies ++= {
 }
 ```
 
+[wpsbt]: https://github.com/lift/basic-app.g8/blob/master/src/main/g8/project/web-plugin.sbt
+[wpproj]: https://github.com/earldouglas/xsbt-web-plugin/
+
 ### With Maven
 
-You can use one of the several archetypes -- `lift-archetype-blank`, `lift-archetype-basic`, `lift-archetype-jpa-basic` -- to generate a new Lift project. You must set `archetypeRepository` and `remoteRepositories` to `http://scala-tools.org/repo-releases` or `http://scala-tools.org/repo-snapshots`, depending on whether you are using a release or the latest SNAPSHOT.
+You can use one of the several archetypes -- `lift-archetype-blank`, `lift-archetype-basic`,
+`lift-archetype-jpa-basic` -- to generate a new Lift project. You must set `archetypeRepository`
+and `remoteRepositories` to `http://scala-tools.org/repo-releases` or
+`http://scala-tools.org/repo-snapshots`, depending on whether you are using a release or the latest
+SNAPSHOT.
 
 Or, you can add Lift to your `pom.xml` like so:
 
@@ -58,8 +91,9 @@ Or, you can add Lift to your `pom.xml` like so:
       <version>3.1.0</version>
     </dependency>
 
-Where `${scala.version}` is `2.11` or `2.12`. Individual patch releases of the Scala compiler (e.g. 2.12.2)
-are binary compatible with everything in their release series, so you only need the first two version parts.
+Where `${scala.version}` is `2.11` or `2.12`. Individual patch releases of the Scala compiler
+(e.g. 2.12.2) are binary compatible with everything in their release series, so you only need the
+first two version parts.
 
 You can learn more about Maven integration [on the wiki](http://www.assembla.com/wiki/show/liftweb/Using_Maven).
 
