@@ -77,13 +77,7 @@ libraryDependencies ++= {
 
 ### With Maven
 
-You can use one of the several archetypes -- `lift-archetype-blank`, `lift-archetype-basic`,
-`lift-archetype-jpa-basic` -- to generate a new Lift project. You must set `archetypeRepository`
-and `remoteRepositories` to `http://scala-tools.org/repo-releases` or
-`http://scala-tools.org/repo-snapshots`, depending on whether you are using a release or the latest
-SNAPSHOT.
-
-Or, you can add Lift to your `pom.xml` like so:
+Add Lift to your `pom.xml` like so:
 
     <dependency>
       <groupId>net.liftweb</groupId>
