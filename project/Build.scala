@@ -100,7 +100,7 @@ object BuildDef extends Build {
     coreProject("json")
         .settings(description := "JSON Library",
                   parallelExecution in Test := false,
-                  libraryDependencies <++= scalaVersion { sv => Seq(scalap(sv), paranamer) })
+                  libraryDependencies <++= scalaVersion { sv => Seq(scalap(sv), paranamer, scalajson) })
 
   lazy val documentationHelpers =
     coreProject("documentation-helpers")
