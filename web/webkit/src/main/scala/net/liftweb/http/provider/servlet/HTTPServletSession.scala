@@ -24,7 +24,7 @@ import net.liftweb.common._
 import net.liftweb.util._
 
 class HTTPServletSession(session: HttpSession) extends HTTPSession {
-  private[this] lazy val servletSessionIdentifier = LiftRules.servletSessionIdentifier
+  private[this] val servletSessionIdentifier = LiftRules.servletSessionIdentifier
 
   def sessionId: String = session.getId
 
