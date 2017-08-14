@@ -42,7 +42,7 @@ object LiftToScalaJsonConversions {
       None
   }
 
-  private def convertFields(input: List[JField]): Array[unsafe.JField] = {
+  private[this] def convertFields(input: List[JField]): Array[unsafe.JField] = {
     val resultingFields = for {
       liftfield <- input
       liftvalue <- toScalaAST(liftfield.value)
