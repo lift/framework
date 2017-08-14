@@ -43,7 +43,7 @@ object ScalaJsonToLiftConversions {
       JObject(convertFields(fields))
   }
 
-  private def convertFields(input: Array[unsafe.JField]): List[JField] = {
+  private[this] def convertFields(input: Array[unsafe.JField]): List[JField] = {
     val resultingFields = for {
       scalafield <- input
       scalavalue = toLiftAST(scalafield.value)
