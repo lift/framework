@@ -1583,8 +1583,8 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   private def logSnippetFailure(sf: SnippetFailure) = logger.info("Snippet Failure: " + sf)
 
-  val settingsExceptionFunc = new LiftRulesGuardedSetting[LiftRulesSettingException => Unit]("settingsExceptionFunc",
-    e => logger.warn("LiftRules setting safety violation!!!", e)
+  val guardedSettingViolationFunc = new LiftRulesGuardedSetting[LiftRulesGuardedSetting.SettingViolation => Unit]("guardedSettingViolationFunc",
+    violation => logger.warn("LiftRules guarded setting violation!!!", violation.toException)
   )
 
   /**
