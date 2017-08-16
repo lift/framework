@@ -142,7 +142,6 @@ object LiftRules extends LiftRulesMocker {
    */
   type StatelessTestPF = PartialFunction[List[String], Boolean]
 
-  type StackTrace = Array[StackTraceElement]
 
 
   /**
@@ -1584,9 +1583,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   private def logSnippetFailure(sf: SnippetFailure) = logger.info("Snippet Failure: " + sf)
 
-  val throwSettingsException: LiftRulesSettingException => Unit = e => throw e
-  val warnOnSettingsException: LiftRulesSettingException => Unit = e => logger.warn("LiftRules setting safety violation!!!", e)
-  val settingsExceptionFunc = new LiftRulesSetting[LiftRulesSettingException => Unit]("settingsExceptionFunc", throwSettingsException)
+  val settingsExceptionFunc = new LiftRulesGuardedSetting[LiftRulesSettingException => Unit]("settingsExceptionFunc",
+    e => logger.warn("LiftRules setting safety violation!!!", e)
+  )
 
   /**
    * Set to false if you do not want ajax/comet requests that are not
@@ -2301,80 +2300,4 @@ trait FormVendor {
   private object requestForms extends SessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
 }
 
-abstract class LiftRulesSettingException(settingName: String, stackTrace: LiftRules.StackTrace, message: String) extends Exception(message) {
-  setStackTrace(stackTrace)
-}
 
-case class LiftRulesSettingWrittenAfterReadException(settingName: String, stackTrace: LiftRules.StackTrace, message: String)
-  extends LiftRulesSettingException(settingName, stackTrace, message)
-
-case class LiftRulesSettingWrittenAfterBootException(settingName: String, stackTrace: LiftRules.StackTrace, message: String)
-  extends LiftRulesSettingException(settingName, stackTrace, message)
-
-case class LiftRulesSettingWrittenTwiceException(settingName: String, stackTrace: LiftRules.StackTrace, message: String)
-  extends LiftRulesSettingException(settingName, stackTrace, message)
-
-
-class LiftRulesSetting[T](val name: String, val default: T) extends LiftValue[T] with HasCalcDefaultValue[T] {
-  import LiftRules.StackTrace
-
-  private [this] var v: T = default
-  private [this] var lastSet: Option[Exception] = None
-  private [this] var lastRead: Option[Exception] = None
-
-  private [this] def writeAfterReadMessage =
-    s"LiftRules.$name was set AFTER already being read! " +
-    s"Your Lift application may be booting into an inconsistent state. " +
-    s"Review the stacktrace below to see where the value was last read. " +
-    s"Consider re-ordering your settings in boot. "
-
-  private [this] def writeAfterBootMessage =
-    s"LiftRules.$name set after Lift finished booting. " +
-    s"This could potentially cause your Lift application to run in an inconsistent state. " +
-    s"Review the stacktrace below to see where settings are being changed after boot time. "
-
-  private [this] def writtenTwiceMessage1(newVal: T) =
-    s"LiftRules.$name was set to $v then later set to $newVal. " +
-    s"This could potentially cause your Lift application to run in an inconsistent state. " +
-    s"Review the stacktrace below to see where LiftRules.$name was first set to $v. "
-
-  private [this] def writtenTwiceMessage2(newVal: T) =
-    s"Review the stacktrace below to see where LiftRules.$name was later set to $newVal. "
-
-  private [this] val toIgnore = Set("LiftRulesSetting", "LiftValue")
-  private [this] def trimmedStackTrace(t: Throwable): StackTrace =
-    t.getStackTrace.dropWhile(e => toIgnore.find(e.getClassName contains _).isDefined)
-
-
-  override def set(value: T): T = {
-    lastSet.collect { case e if v != value =>
-      val e1 = LiftRulesSettingWrittenTwiceException(name, trimmedStackTrace(e), writtenTwiceMessage1(value))
-      LiftRules.settingsExceptionFunc.get.apply(e1)
-
-      val e2 = LiftRulesSettingWrittenTwiceException(name, trimmedStackTrace(e), writtenTwiceMessage2(value))
-      LiftRules.settingsExceptionFunc.get.apply(e2)
-    }
-
-    if(LiftRules.doneBoot) {
-      val e = LiftRulesSettingWrittenAfterBootException(name, trimmedStackTrace(new Exception), writeAfterBootMessage)
-      LiftRules.settingsExceptionFunc.get.apply(e)
-    }
-
-    // TODO: Skip if the value is the same?
-    lastRead.foreach { e =>
-      val e2 = LiftRulesSettingWrittenAfterReadException(name, trimmedStackTrace(e), writeAfterReadMessage)
-      LiftRules.settingsExceptionFunc.get.apply(e2)
-    }
-
-    lastSet = Some(new Exception)
-    v = value
-    v
-  }
-
-  override def get: T = {
-    if(!LiftRules.doneBoot) lastRead = Some(new Exception)
-    v
-  }
-
-  override protected def calcDefaultValue: T = default
-}
