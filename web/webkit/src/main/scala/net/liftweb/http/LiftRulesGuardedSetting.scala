@@ -6,15 +6,14 @@ object LiftRulesGuardedSetting {
   type StackTrace = Array[StackTraceElement]
 
   /**
-    * Base class for all possible violations which LiftRulesGuardedSetting warns you about
-    * @param settingName
-    * @param stackTrace
-    * @param message
+    * Base class for all possible violations which LiftRulesGuardedSetting warns you about.
+    * @param settingName the name of the LiftRules setting which was violated.
+    * @param stackTrace the stacktrace from where the violation occurred
+    * @param message an English message for the developer detailing the violation
     */
   abstract class SettingViolation(settingName: String, stackTrace: StackTrace, message: String) extends Serializable {
     /**
       * Converts this violation into an Exception which can be handed to a logger for clean message printing
-      * @return
       */
     def toException: Exception = {
       val e = new Exception(message)
@@ -25,27 +24,18 @@ object LiftRulesGuardedSetting {
 
   /**
     * Indicates that a LiftRulesGuardedSetting was written after it had already been read.
-    * @param settingName
-    * @param stackTrace
-    * @param message
     */
   case class SettingWrittenAfterRead(settingName: String, stackTrace: StackTrace, message: String)
     extends SettingViolation(settingName, stackTrace, message)
 
   /**
     * Indicates that a LiftRulesGuardedSetting was written after Lift finished booting.
-    * @param settingName
-    * @param stackTrace
-    * @param message
     */
   case class SettingWrittenAfterBoot(settingName: String, stackTrace: StackTrace, message: String)
     extends SettingViolation(settingName, stackTrace, message)
 
   /**
     * Indicates that a LiftRulesGuardedSetting was set to two different values.
-    * @param settingName
-    * @param stackTrace
-    * @param message
     */
   case class SettingWrittenTwice(settingName: String, stackTrace: StackTrace, message: String)
     extends SettingViolation(settingName, stackTrace, message)
@@ -57,9 +47,9 @@ import LiftRulesGuardedSetting._
   * This class encapsulates a mutable LiftRules setting which guards its value against changes which can produce
   * unexpected results in a Lift application.
   *
-  * @param name
-  * @param default
-  * @tparam T
+  * @param name the name of the LiftRules setting (an unfortunate duplication of the name given on LiftRules itself).
+  * @param default the default value of this setting
+  * @tparam T the type of the setting
   */
 class LiftRulesGuardedSetting[T](val name: String, val default: T) extends LiftValue[T] with HasCalcDefaultValue[T] {
   private[this] var v: T = default
