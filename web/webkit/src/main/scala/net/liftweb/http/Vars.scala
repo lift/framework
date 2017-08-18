@@ -319,6 +319,7 @@ object ContainerSerializer {
 
   implicit def listSerializer[T](implicit tc: ContainerSerializer[T]): ContainerSerializer[List[T]] = buildSerializer
 
+  implicit def anyRefSerializer[T <: Serializable]: ContainerSerializer[T] = buildSerializer
 }
 
 /**
