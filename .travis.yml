@@ -1,8 +1,12 @@
 language: scala
 
+dist: trusty
+
+sudo: false
+
 scala:
   - 2.11.11
-  - 2.12.2
+  - 2.12.3
 
 cache:
   directories:
@@ -28,7 +32,6 @@ before_script:
   - "cd web/webkit"
   - "npm install"
   - "cd -"
-  - sudo chmod +x /usr/local/bin/sbt
 
 notifications:
   webhooks:
