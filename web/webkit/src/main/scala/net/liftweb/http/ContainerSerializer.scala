@@ -5,10 +5,30 @@ package net.liftweb.http
  * the type can be stored into a container's session and be migrated across
  * servers
  */
-trait ContainerSerializer[T] {
+trait ContainerSerializer[T] extends Serializable {
   def serialize(in: T): Array[Byte]
 
   def deserialize(in: Array[Byte]): T
+}
+
+/**
+  * A trait that serializes regardless of type. Sadly in Java land, most implementations
+  * will look like this.
+  */
+trait UntypedContainerSerializer extends Serializable { self =>
+  def serialize(in: Any): Array[Byte]
+
+  def deserialize(in: Array[Byte]): Any
+
+  /**
+    * Convert into a typed ContainerSerializer[T], leaning on asInstanceOf[T] in hopes for the best
+    * @tparam T the type of object to serialize
+    */
+  def typed[T]: ContainerSerializer[T] = new ContainerSerializer[T] {
+    override def serialize(in: T): Array[Byte] = self.serialize(in)
+
+    override def deserialize(in: Array[Byte]): T = self.deserialize(in).asInstanceOf[T]
+  }
 }
 
 object ContainerSerializer {
@@ -16,12 +36,15 @@ object ContainerSerializer {
   import java.util.Date
   import org.joda.time.DateTime
 
-  private def buildSerializer[T]: ContainerSerializer[T] =
-    new ContainerSerializer[T] {
+  /**
+    * The default java serialization machinery
+    */
+  def javaSerializer: UntypedContainerSerializer =
+    new UntypedContainerSerializer {
 
       import java.io._
 
-      def serialize(in: T): Array[Byte] = {
+      override def serialize(in: Any): Array[Byte] = {
         val bos = new ByteArrayOutputStream()
         val oos = new ObjectOutputStream(bos)
         oos.writeObject(in)
@@ -29,12 +52,14 @@ object ContainerSerializer {
         bos.toByteArray()
       }
 
-      def deserialize(in: Array[Byte]): T = {
+      override def deserialize(in: Array[Byte]): Any = {
         val bis = new ByteArrayInputStream(in)
         val ois = new ObjectInputStream(bis)
-        ois.readObject.asInstanceOf[T]
+        ois.readObject
       }
     }
+
+  private def buildSerializer[T]: ContainerSerializer[T] = LiftRules.containerSerializer.typed
 
   implicit val objectSerializer: ContainerSerializer[Object] = buildSerializer
   implicit val intSerializer: ContainerSerializer[Int] = buildSerializer
