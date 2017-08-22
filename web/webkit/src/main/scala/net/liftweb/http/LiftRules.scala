@@ -143,6 +143,7 @@ object LiftRules extends LiftRulesMocker {
   type StatelessTestPF = PartialFunction[List[String], Boolean]
 
 
+
   /**
    * The test between the path of a request, the HTTP request, and whether that path
    * should result in stateless servicing of that path
@@ -1590,6 +1591,10 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   val snippetFailedFunc = RulesSeq[SnippetFailure => Unit].prepend(logSnippetFailure _)
 
   private def logSnippetFailure(sf: SnippetFailure) = logger.info("Snippet Failure: " + sf)
+
+  val guardedSettingViolationFunc = new LiftRulesGuardedSetting[LiftRulesGuardedSetting.SettingViolation => Unit]("guardedSettingViolationFunc",
+    violation => logger.warn("LiftRules guarded setting violation!!!", violation.toException)
+  )
 
   /**
    * Set to false if you do not want ajax/comet requests that are not
