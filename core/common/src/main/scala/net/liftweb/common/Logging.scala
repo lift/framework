@@ -291,7 +291,16 @@ class WrappedLogger(l: SLF4JLogger) extends Logger {
  * `val` that will be a `[[Logger]]` instance.
  */
 trait Loggable {
-  @transient protected val logger = Logger(this.getClass)
+  // After deserializstion, a transient field is left null because the constructor is not invoked.
+  // Hence this needs to be a private variable so we can reinit upon deserialization
+  @transient private[this] var _logger = Logger(this.getClass)
+
+  protected def logger = _logger
+
+  // Think of this as the constructor for deserialization. You are now instantiated, set your state as you wish.
+  private def readObject(in: java.io.ObjectInputStream): Unit = {
+    _logger = Logger(this.getClass)
+  }
 }
 
 /**
