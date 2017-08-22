@@ -61,18 +61,18 @@ object ContainerSerializer {
 
   private def buildSerializer[T]: ContainerSerializer[T] = LiftRules.containerSerializer.typed
 
-  implicit val objectSerializer: ContainerSerializer[Object] = buildSerializer
-  implicit val intSerializer: ContainerSerializer[Int] = buildSerializer
-  implicit val longSerializer: ContainerSerializer[Long] = buildSerializer
-  implicit val charSerializer: ContainerSerializer[Char] = buildSerializer
-  implicit val shortSerializer: ContainerSerializer[Short] = buildSerializer
-  implicit val byteSerializer: ContainerSerializer[Byte] = buildSerializer
-  implicit val floatSerializer: ContainerSerializer[Float] = buildSerializer
-  implicit val doubleSerializer: ContainerSerializer[Double] = buildSerializer
-  implicit val booleanSerializer: ContainerSerializer[Boolean] = buildSerializer
-  implicit val dateSerializer: ContainerSerializer[Date] = buildSerializer
-  implicit val stringSerializer: ContainerSerializer[String] = buildSerializer
-  implicit val jodaDateSerializer: ContainerSerializer[DateTime] = buildSerializer
+  implicit lazy val objectSerializer: ContainerSerializer[Object] = buildSerializer
+  implicit lazy val intSerializer: ContainerSerializer[Int] = buildSerializer
+  implicit lazy val longSerializer: ContainerSerializer[Long] = buildSerializer
+  implicit lazy val charSerializer: ContainerSerializer[Char] = buildSerializer
+  implicit lazy val shortSerializer: ContainerSerializer[Short] = buildSerializer
+  implicit lazy val byteSerializer: ContainerSerializer[Byte] = buildSerializer
+  implicit lazy val floatSerializer: ContainerSerializer[Float] = buildSerializer
+  implicit lazy val doubleSerializer: ContainerSerializer[Double] = buildSerializer
+  implicit lazy val booleanSerializer: ContainerSerializer[Boolean] = buildSerializer
+  implicit lazy val dateSerializer: ContainerSerializer[Date] = buildSerializer
+  implicit lazy val stringSerializer: ContainerSerializer[String] = buildSerializer
+  implicit lazy val jodaDateSerializer: ContainerSerializer[DateTime] = buildSerializer
 
   implicit def arraySerializer[T](implicit tc: ContainerSerializer[T]): ContainerSerializer[Array[T]] = buildSerializer
 
