@@ -3089,15 +3089,20 @@ final case class HandledRoundTrip[T](name: String, func: (T, RoundTripHandlerFun
 class ContainerMap[K : Manifest, V : Manifest](val sessionKey: String, val httpSession: Box[HTTPSession]) {
   import java.util
 
+  private[this] val serializer: ContainerSerializer[util.Map[K, V]] = LiftRules.lockedContainerSerializer.typed
+
+  private[this] def setInSession(map: util.Map[K, V]): Unit =
+    httpSession.foreach(_.setAttribute(sessionKey, serializer.serialize(map)))
+
   private[this] val map: util.Map[K, V] = (for {
     session <- httpSession if LiftRules.lockedPutAjaxFnsInContainerSession
-    m <- Box.asA[ConcurrentHashMap[K, V]](session.attribute(sessionKey))
+    bytes <- Box.asA[Array[Byte]](session.attribute(sessionKey))
+    m = serializer.deserialize(bytes)
   } yield {
     m
   }).openOr {
     val m = new ConcurrentHashMap[K, V]()
-    if(LiftRules.lockedPutAjaxFnsInContainerSession)
-      httpSession.foreach(_.setAttribute(sessionKey, m))
+    if(LiftRules.lockedPutAjaxFnsInContainerSession) setInSession(m)
     m
   }
 
@@ -3106,8 +3111,7 @@ class ContainerMap[K : Manifest, V : Manifest](val sessionKey: String, val httpS
   def !![R](f: util.Map[K, V] => R): R = mutate(f)
   def mutate[R](f: util.Map[K, V] => R): R = {
     val rtrn = f(map)
-    if(LiftRules.lockedPutAjaxFnsInContainerSession)
-      httpSession.foreach(_.setAttribute(sessionKey, map))
+    if(LiftRules.lockedPutAjaxFnsInContainerSession) setInSession(map)
     rtrn
   }
 
