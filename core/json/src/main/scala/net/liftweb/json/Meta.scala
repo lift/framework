@@ -231,11 +231,12 @@ private[json] object Meta {
 
     def memoize(x: A, f: A => R): R = {
       val c = cache.get
-      if (c contains x) c(x) else {
+      def addToCache() = {
         val ret = f(x)
         cache.set(c + (x -> ret))
         ret
       }
+      c.getOrElse(x, addToCache)
     }
   }
 

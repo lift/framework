@@ -143,6 +143,7 @@ object LiftRules extends LiftRulesMocker {
   type StatelessTestPF = PartialFunction[List[String], Boolean]
 
 
+
   /**
    * The test between the path of a request, the HTTP request, and whether that path
    * should result in stateless servicing of that path
@@ -299,6 +300,15 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * The HTTP authentication mechanism that Lift will perform. See <i>LiftRules.protectedResource</i>
    */
   @volatile var authentication: HttpAuthentication = NoAuthentication
+
+  /**
+   * A session identifier for [[net.liftweb.http.provider.servlet.HTTPServletSession]].
+   *
+   * Under most circumstances, you won't need to change this value. However, in some cases
+   * containers will be configured with backing datastores that don't play nice with the default
+   * value. In those cases you can change this string to get those working.
+   */
+  @volatile var servletSessionIdentifier: String = "$lift_magic_session_thingy$"
 
   /**
    * A function that takes the HTTPSession and the contextPath as parameters
@@ -1582,6 +1592,10 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   private def logSnippetFailure(sf: SnippetFailure) = logger.info("Snippet Failure: " + sf)
 
+  val guardedSettingViolationFunc = new LiftRulesGuardedSetting[LiftRulesGuardedSetting.SettingViolation => Unit]("guardedSettingViolationFunc",
+    violation => logger.warn("LiftRules guarded setting violation!!!", violation.toException)
+  )
+
   /**
    * Set to false if you do not want ajax/comet requests that are not
    * associated with a session to call their respective session
@@ -2300,4 +2314,3 @@ trait FormVendor {
   private object sessionForms extends SessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
   private object requestForms extends SessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
 }
-

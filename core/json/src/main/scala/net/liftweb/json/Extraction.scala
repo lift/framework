@@ -83,7 +83,7 @@ object Extraction {
         case x: Iterable[_] => JArray(x.toList map decompose)
         case x if (x.getClass.isArray) => JArray(x.asInstanceOf[Array[_]].toList map decompose)
         case x: Option[_] => x.flatMap[JValue] { y => Some(decompose(y)) }.getOrElse(JNothing)
-        case x: Product if tuple_?(x.getClass) && formats.tuplesAsArrays =>
+        case x: Product if formats.tuplesAsArrays && tuple_?(x.getClass) =>
           JArray(x.productIterator.toList.map(decompose))
         case x =>
           val fields = getDeclaredFields(x.getClass)
@@ -192,7 +192,7 @@ object Extraction {
       Col(TypeInfo(clazz, None), mkMapping(typeArgs.head, typeArgs.tail))
     } else if (clazz == classOf[Map[_, _]]) {
       Dict(mkMapping(typeArgs.tail.head, typeArgs.tail.tail))
-    } else if (tuple_?(clazz) && formats.tuplesAsArrays) {
+    } else if (formats.tuplesAsArrays && tuple_?(clazz)) {
       val childMappings = typeArgs.map(c => mkMapping(c, Nil)).toList
       HCol(TypeInfo(clazz, None), childMappings)
     } else {

@@ -21,10 +21,15 @@ class RestHelperSpec extends WebSpec(RestHelperSpecBoot.boot _) {
 
   "RestHelper" should {
     val testOptionsUrl = "http://foo.com/api/info"
+    val testPatchUrl = "http://foo.com/api/patched"
     val testFutureUrl = "http://foo.com/api/futured"
 
     val testOptionsReq = new MockHttpServletRequest(testOptionsUrl){
       method = "OPTIONS"
+    }
+
+    val testPatchReq = new MockHttpServletRequest(testPatchUrl){
+      method = "PATCH"
     }
 
     val testFutureReq = new MockHttpServletRequest(testFutureUrl){
@@ -39,6 +44,10 @@ class RestHelperSpec extends WebSpec(RestHelperSpecBoot.boot _) {
       RestHelperSpecRest(req)() must beLike {
         case Full(OkResponse()) => ok
       }
+    }
+
+    "set PATCH method" withReqFor testPatchReq in { req =>
+      req.patch_? must_== true
     }
 
     "respond async with something that CanResolveAsync" withReqFor testFutureReq in { req =>
@@ -68,6 +77,7 @@ class RestHelperSpec extends WebSpec(RestHelperSpecBoot.boot _) {
 object RestHelperSpecRest extends RestHelper  {
   serve {
     case "api" :: "info" :: Nil Options req => OkResponse()
+    case "api" :: "patched" :: Nil Patch req => OkResponse()
   }
 }
 
