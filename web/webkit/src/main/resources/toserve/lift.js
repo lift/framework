@@ -76,8 +76,12 @@
       },
       cometGetTimeout: 140000,
       cometFailureRetryTimeout: 10000,
-      cometOnSessionLost: function() {
-        window.location.href = "/";
+      cometOnSessionLost: function(contextPath) {
+        if (contextPath === null || contextPath === undefined) {
+          window.location.href = "/";
+        } else {
+          window.location.href = contextPath;
+        }
       },
       cometServer: null,
       cometOnError: function(e) {
@@ -711,7 +715,7 @@
       if (typeof elementOrId === 'string') {
         element = document.getElementById(elementOrId);
       }
-      
+
       // This is a Lift addition to allow return false to properly do
       // cross-browser preventDefault/stopPropagation/etc work.
       function normalizeEventReturn(event) {
@@ -722,7 +726,7 @@
             event.stopPropagation();
           }
         }
-        
+
         return result;
       }
 
