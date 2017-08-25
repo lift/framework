@@ -59,7 +59,7 @@ object ContainerSerializer {
       }
     }
 
-  private def buildSerializer[T]: ContainerSerializer[T] = LiftRules.lockedContainerSerializer.typed
+  private def buildSerializer[T]: ContainerSerializer[T] = LiftRules.containerSerializer.get.typed
 
   implicit lazy val objectSerializer: ContainerSerializer[Object] = buildSerializer
   implicit lazy val intSerializer: ContainerSerializer[Int] = buildSerializer
