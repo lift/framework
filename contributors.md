@@ -262,4 +262,4 @@ mroocoo at gmail dot com
 Riccardo Sirigu
 
 ### Email: ###
-me@riccardosirigu.com
+me at riccardosirigu dot com
