@@ -232,6 +232,43 @@ trait RestHelper extends LiftRules.DispatchPF {
     def body(r: Req): Box[T]
   }
 
+
+  /**
+    * A trait that defines the TestPatch extractor.  Is
+    * the request a PATCH, has JSON or XML data in the post body
+    * and something that expects JSON or XML in the response.
+    * Subclass this trait to change the behavior
+    */
+  protected trait TestPatch[T] {
+    /**
+      * Test to see if the request is a PATCH, has JSON data in the
+      * body and expecting JSON in the response.
+      * The path, JSON Data and the Req instance are extracted.
+      */
+    def unapply(r: Req): Option[(List[String], (T, Req))] =
+      if (r.patch_? && testResponse_?(r))
+        body(r).toOption.map(t => (r.path.partPath -> (t -> r)))
+      else None
+
+
+    def testResponse_?(r: Req): Boolean
+
+    def body(r: Req): Box[T]
+  }
+
+  /**
+    * The stable identifier for JsonPatch.  You can use it
+    * as an extractor.
+    */
+  protected lazy val JsonPatch = new TestPatch[JValue] with JsonTest with JsonBody
+
+  /**
+    * The stable identifier for XmlPatch.  You can use it
+    * as an extractor.
+    */
+  protected lazy val XmlPatch = new TestPatch[Elem] with XmlTest with XmlBody
+
+
   /**
    * a trait that extracts the JSON body from a request  It is
    * composed with a TestXXX to get the correct thing for the extractor
@@ -288,6 +325,20 @@ trait RestHelper extends LiftRules.DispatchPF {
     def unapply(r: Req): Option[(List[String], Req)] =
       if (r.put_?) Some(r.path.partPath -> r) else None
                                 
+  }
+
+  /**
+   * An extractor that tests the request to see if it's a PATCH and
+   * if it is, the path and the request are extracted.  It can
+   * be used as:<br/>
+   * <pre>case "api" :: id :: _ Patch req => ...</pre><br/>
+   * or<br/>
+   * <pre>case Patch("api" :: id :: _, req) => ...</pre><br/>
+   */
+  protected object Patch {
+    def unapply(r: Req): Option[(List[String], Req)] =
+      if (r.patch_?) Some(r.path.partPath -> r) else None
+
   }
 
   /**
