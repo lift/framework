@@ -364,8 +364,10 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   private val fullPageLoad = new BooleanThreadGlobal
 
-  private [this] val ajaxFns: ContainerMap[String, S.AFuncHolder] =
+  private[this] val ajaxFns: ContainerMap[String, S.AFuncHolder] =
     new ContainerMap[String, S.AFuncHolder]("net.liftweb.http.LiftSession.ajaxFns", httpSession)
+
+  private [this] def useAjaxFns: Boolean = LiftRules.putAjaxFnsInContainerSession.get || LiftRules.testContainerSerialization.get.apply()
 
   private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] = new ConcurrentHashMap(ajaxFns.snapshot)
 
@@ -584,10 +586,16 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * Updates the internal functions mapping
    */
   def updateFunctionMap(funcs: Map[String, S.AFuncHolder], uniqueId: String, when: Long): Unit = {
+    import scala.collection.JavaConverters._
+
     copyFunctions(funcs, nmessageCallback)
 
-    if(LiftRules.putAjaxFnsInContainerSession.get)
+    if(useAjaxFns) {
       ajaxFns !! (copyFunctions(funcs, _))
+
+      if(LiftRules.testContainerSerialization.get.apply())
+        copyFunctions(ajaxFns.snapshot.asScala.toMap, nmessageCallback)
+    }
   }
 
   private def copyFunctions(from: Map[String, S.AFuncHolder], to:java.util.Map[String, S.AFuncHolder]):Unit =
@@ -889,7 +897,16 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     }))
 
     // Since some of the functions have been mutated, force a write of the fn map to the container.
-    if(numUpdated > 0) ajaxFns !! (_ => ())
+    if(numUpdated > 0) {
+      import scala.collection.JavaConverters._
+
+      if(useAjaxFns) {
+        ajaxFns !! (_ => ())
+
+        if(LiftRules.testContainerSerialization.get.apply())
+          copyFunctions(ajaxFns.snapshot.asScala.toMap, nmessageCallback)
+      }
+    }
 
     numUpdated
   }
@@ -3087,12 +3104,19 @@ final case class SimpleRoundTrip[T](name: String, func: T => Any)(implicit val m
 final case class HandledRoundTrip[T](name: String, func: (T, RoundTripHandlerFunc) => Unit)(implicit val manifest: Manifest[T]) extends RoundTripInfo
 
 class ContainerMap[K : Manifest, V : Manifest](val sessionKey: String, val httpSession: Box[HTTPSession]) {
+  import scala.collection.JavaConverters._
   import java.util
 
   private[this] val serializer: ContainerSerializer[util.Map[K, V]] = LiftRules.containerSerializer.get.typed
 
-  private[this] def setInSession(map: util.Map[K, V]): Unit =
-    httpSession.foreach(_.setAttribute(sessionKey, serializer.serialize(map)))
+  private[this] def maybeSetInSession(map: util.Map[K, V]): Unit =
+    if(LiftRules.putAjaxFnsInContainerSession.get)
+      httpSession.foreach(_.setAttribute(sessionKey, serializer.serialize(map)))
+
+  private[this] def maybeTestSerialization(map: util.Map[K, V]): Unit =
+    if(LiftRules.testContainerSerialization.get.apply())
+      serializer.deserialize(serializer.serialize(map))
+        .asScala.foreach { case (k, v) => this.map.put(k, v) }
 
   private[this] val map: util.Map[K, V] = (for {
     session <- httpSession if LiftRules.putAjaxFnsInContainerSession.get
@@ -3102,7 +3126,8 @@ class ContainerMap[K : Manifest, V : Manifest](val sessionKey: String, val httpS
     m
   }).openOr {
     val m = new ConcurrentHashMap[K, V]()
-    if(LiftRules.putAjaxFnsInContainerSession.get) setInSession(m)
+    maybeSetInSession(m)
+    maybeTestSerialization(m)
     m
   }
 
@@ -3111,7 +3136,8 @@ class ContainerMap[K : Manifest, V : Manifest](val sessionKey: String, val httpS
   def !![R](f: util.Map[K, V] => R): R = mutate(f)
   def mutate[R](f: util.Map[K, V] => R): R = {
     val rtrn = f(map)
-    if(LiftRules.putAjaxFnsInContainerSession.get) setInSession(map)
+    maybeSetInSession(map)
+    maybeTestSerialization(map)
     rtrn
   }
 
