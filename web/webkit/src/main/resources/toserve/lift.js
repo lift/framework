@@ -604,8 +604,8 @@
       },
       calcAjaxUrl: calcAjaxUrl,
       registerComets: registerComets,
-      cometOnSessionLost: function() {
-        settings.cometOnSessionLost();
+      cometOnSessionLost: function(contextPath) {
+        settings.cometOnSessionLost(contextPath);
       },
       cometOnError: function(e) {
         settings.cometOnError(e);
