@@ -853,6 +853,15 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
       new FactoryMaker(() => (name: String) => name :: Nil) {}
 
 
+  /**
+   * Snippet timers are used to time and record the execution time of snippets. We provide
+   * two default implementations for you:
+   *   - NoOpSnippetTimer that does nothing
+   *   - LoggingSnippetTimer that logs snippet times.
+   *
+   * Since this is a FactoryMaker you can programmatically override it for an individual request
+   * or session as you see fit. You can also implement your own timer!
+   */
   val snippetTimer = new FactoryMaker[SnippetTimer](() => NoOpSnippetTimer){}
 
   /**
