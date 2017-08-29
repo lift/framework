@@ -59,8 +59,12 @@ trait UserIdAsString {
   def userIdAsString: String
 }
 
+trait ProtoSessionCookiePath {
+  def sessionCookiePath: String = "/"
+}
+
 trait MetaProtoExtendedSession[T <: ProtoExtendedSession[T]] extends
-KeyedMetaMapper[Long, T] {
+KeyedMetaMapper[Long, T] with ProtoSessionCookiePath {
   self: T =>
 
   def CookieName = "ext_id"
@@ -92,7 +96,7 @@ KeyedMetaMapper[Long, T] {
     val inst = create.userId(uid.userIdAsString).saveMe
     val cookie = HTTPCookie(CookieName, inst.cookieId.get).
     setMaxAge(((inst.expiration.get - millis) / 1000L).toInt).
-    setPath("/")
+    setPath(sessionCookiePath)
     S.addCookie(cookie)
   }
 
@@ -120,10 +124,13 @@ KeyedMetaMapper[Long, T] {
             case Full(es) => logUserIdIn(es.userId.get)
             case _ =>
           }
-        
+
         case _ =>
       }
     }
   }
 }
 
+trait ContextPathExtendedCookie extends ProtoSessionCookiePath {
+  override def sessionCookiePath = S.contextPath
+}
