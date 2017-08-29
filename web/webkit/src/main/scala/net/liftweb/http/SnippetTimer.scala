@@ -5,35 +5,25 @@ import net.liftweb.util.TimeHelpers._
 import net.liftweb.util.Props
 
 /**
- * Times the performance of evaluating of individual snippets
+ * A snippet timer is a general interface for timing snippets. A few default implementations are
+ * provided and can be selected by setting LiftRules.snippetTimer as you need.
  */
-object SnippetTimer {
+trait SnippetTimer {
+  def timeSnippet(snippetName: String)(snippetFunc: => NodeSeq): NodeSeq
+}
 
-  /**
-   * The configured snippet timing function.  Defaults to not timing snippets.
-   */
-  lazy val evaluate: String => (=> NodeSeq) => NodeSeq = {
-    if(Props.getBool("run.timesnippets",defVal = false))
-      timeSnippet _
-    else
-      noTiming _
+/**
+ * A SnippetTimer that does not do anything.
+ */
+object NoOpSnippetTimer extends SnippetTimer {
+  override def timeSnippet(snippetName: String)(snippetFunc: => NodeSeq): NodeSeq = snippetFunc
+}
+
+/**
+ * A SnippetTimer that logs its timings to the console.
+ */
+object LoggingSnippetTimer extends SnippetTimer {
+  override def timeSnippet(snippetName: String)(snippetFunc: => NodeSeq): NodeSeq = {
+    logTime(s"Snippet $snippetName evaluation", snippetFunc)
   }
-
-  /**
-   * Times the evaluation of a snippet
-   * @param snippetName String The name of the snippet
-   * @param f The snippet function
-   * @return NodeSeq The result of evaluating f
-   */
-  def timeSnippet(snippetName:String)(f: => NodeSeq) = {
-    logTime("Snippet %s evaluation" format snippetName, f)
-  }
-
-  /**
-   * A function which doesn't time a snippet but just evaluates it
-   * @param snippetName String Name of the snippet which is ignored
-   * @param f The snippet function
-   * @return NodeSeq The result of evaluating f
-   */
-  def noTiming(snippetName:String)(f: => NodeSeq) = f
 }
