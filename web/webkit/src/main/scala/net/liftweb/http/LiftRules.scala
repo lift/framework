@@ -852,6 +852,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var snippetNamesToSearch: FactoryMaker[String => List[String]] =
       new FactoryMaker(() => (name: String) => name :: Nil) {}
 
+
+  val snippetTimer = new FactoryMaker[SnippetTimer](() => NoOpSnippetTimer){}
+
   /**
    * Implementation for snippetNamesToSearch that looks first in a package named by taking the current template path.
    * For example, suppose the following is configured in Boot:
