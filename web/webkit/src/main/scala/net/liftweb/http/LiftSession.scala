@@ -1644,7 +1644,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
       try {
         snippetName.map{snippet =>
           val (cls, method) = splitColonPair(snippet)
-          val snippetTimer = LiftRules.snippetTimer.vend
+          val snippetTimer = LiftRules.snippetTimer.get.map(_.vend).getOrElse(NoOpSnippetTimer)
 
           snippetTimer.timeSnippet(snippet) {
             S.doSnippet(snippet)(

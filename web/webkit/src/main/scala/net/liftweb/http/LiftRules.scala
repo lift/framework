@@ -862,7 +862,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * Since this is a FactoryMaker you can programmatically override it for an individual request
    * or session as you see fit. You can also implement your own timer!
    */
-  val snippetTimer = new FactoryMaker[SnippetTimer](() => NoOpSnippetTimer){}
+  val snippetTimer = new LiftRulesGuardedSetting[Option[FactoryMaker[SnippetTimer]]]("snippetTimer", None)
 
   /**
    * Implementation for snippetNamesToSearch that looks first in a package named by taking the current template path.
