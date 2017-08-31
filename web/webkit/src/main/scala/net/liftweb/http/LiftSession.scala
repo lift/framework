@@ -2487,8 +2487,9 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * As with `findOrBuildComet[T]`, but specify the type as a `String`. If the
    * comet doesn't already exist, the comet type is first looked up via
-   * `LiftRules.cometCreationFactory`, and then as a class name in the comet
-   * packages designated by `LiftRules.buildPackage("comet")`.
+   * `LiftRules.cometCreationFactory`, then `LiftRules.cometCreation`, and
+   * finally  as a class name in the comet packages designated by
+   * `LiftRules.buildPackage("comet")`.
    */
   private[http] def findOrCreateComet(
     cometType: String,
@@ -2568,12 +2569,14 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   // Given a comet creation info, build a comet based on the comet type, first
-  // attempting to use LiftRules.cometCreationFactory and then building it by
+  // attempting to use `LiftRules.cometCreationFactory` and then attempting to
+  // find a match in `LiftRules.cometCreation`. Failing those, this will build it by
   // class name. Return a descriptive Failure if it's all gone sideways.
   //
   // Runs some base setup tasks before returning the comet.
   private def buildCometByCreationInfo(creationInfo: CometCreationInfo): Box[LiftCometActor] = {
-    LiftRules.cometCreationFactory.vend.apply(creationInfo) or {
+    LiftRules.cometCreationFactory.vend.apply(creationInfo) or
+    LiftRules.cometCreation.toList.find(_.isDefinedAt(creationInfo)).map(_.apply(creationInfo)) or {
       val cometType =
         findType[LiftCometActor](
           creationInfo.cometType,
