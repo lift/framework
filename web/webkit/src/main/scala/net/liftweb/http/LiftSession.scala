@@ -2668,10 +2668,10 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * marshalled to the server and the code is executed on the server.
    * The result can be an item (JValue) or a Stream of Items.
    *
-   * If the
-   * The // HERE
+   * @param info The RoundTripInfo to build on.
+   * @param onShutdown A callback that is invoked when the underlying comet is shut down.
    */
-  def buildRoundtrip(info: Seq[RoundTripInfo]): JsExp = {
+  def buildRoundtrip(info: Seq[RoundTripInfo], onShutdown: ()=>Unit = ()=>()): JsExp = {
     testStatefulFeature{
 
 
@@ -2720,6 +2720,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           case _ =>
 
         }
+
+        override def localShutdown(): Unit = onShutdown()
       }
 
         nasyncComponents.put(CometId(ca.theType openOr "Roundtrip Comet Actor", ca.name), ca)
