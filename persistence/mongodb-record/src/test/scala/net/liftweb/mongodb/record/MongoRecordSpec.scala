@@ -54,10 +54,10 @@ class MongoRecordSpec extends Specification with MongoTestKit {
 
   "MongoRecord field introspection" should {
     val rec = MongoFieldTypeTestRecord.createRecord
-    val allExpectedFieldNames: List[String] = "_id" :: "mandatoryCaseClassField" ::
+    val allExpectedFieldNames: List[String] = "_id" :: "mandatoryCaseClassField" :: "optionalCaseClassField" ::
       (for {
         typeName <- "Date JsonObject ObjectId UUID".split(" ")
-        flavor <- "mandatory legacyOptional".split(" ")
+        flavor <- "mandatory legacyOptional optional".split(" ")
       } yield flavor + typeName + "Field").toList
 
     "introspect only the expected fields" in {
@@ -215,13 +215,18 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       ("_id" -> ("$oid" -> mfttr.id.toString)) ~
       ("mandatoryDateField" -> ("$dt" -> mfttr.meta.formats.dateFormat.format(mfttr.mandatoryDateField.value))) ~
       ("legacyOptionalDateField" -> (None: Option[JObject])) ~
+      ("optionalDateField" -> JNothing) ~
       ("mandatoryJsonObjectField" -> (("intField" -> 1) ~ ("stringField" -> "jsonobj1") ~ ("mapField" -> ("x" -> "1")))) ~
+      ("optionalJsonObjectField" -> JNothing) ~
       ("legacyOptionalJsonObjectField" -> (None: Option[JObject])) ~
       ("mandatoryObjectIdField", ("$oid" -> mfttr.mandatoryObjectIdField.value.toString)) ~
+      ("optionalObjectIdField" -> JNothing) ~
       ("legacyOptionalObjectIdField" -> (None: Option[JObject])) ~
       ("mandatoryUUIDField" -> ("$uuid" -> mfttr.mandatoryUUIDField.value.toString)) ~
+      ("optionalUUIDField" -> JNothing) ~
       ("legacyOptionalUUIDField" -> (None: Option[JObject])) ~
-      ("mandatoryCaseClassField" -> ("intField" -> 1) ~ ("stringField" -> "str") ~ ("enum" -> 1))
+      ("mandatoryCaseClassField" -> ("intField" -> 1) ~ ("stringField" -> "str") ~ ("enum" -> 1)) ~
+      ("optionalCaseClassField" -> JNothing)
 
     val pftr = PatternFieldTestRecord.createRecord
       .mandatoryPatternField(Pattern.compile("^Mo", Pattern.CASE_INSENSITIVE))

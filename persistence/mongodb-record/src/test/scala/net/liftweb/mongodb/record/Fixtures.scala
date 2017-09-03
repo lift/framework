@@ -212,23 +212,31 @@ class MongoFieldTypeTestRecord private () extends MongoRecord[MongoFieldTypeTest
   def meta = MongoFieldTypeTestRecord
 
   object mandatoryDateField extends DateField(this)
+  object optionalDateField extends OptionalDateField(this)
   object legacyOptionalDateField extends DateField(this) { override def optional_? = true }
+
 
   object mandatoryJsonObjectField extends JsonObjectField(this, TypeTestJsonObject) {
     def defaultValue = TypeTestJsonObject(0, "", Map[String, String]())
   }
+  object optionalJsonObjectField extends OptionalJsonObjectField(this, TypeTestJsonObject)
   object legacyOptionalJsonObjectField extends JsonObjectField(this, TypeTestJsonObject) {
     override def optional_? = true
     def defaultValue = TypeTestJsonObject(0, "", Map[String, String]())
   }
 
   object mandatoryObjectIdField extends ObjectIdField(this)
+  object optionalObjectIdField extends OptionalObjectIdField(this)
   object legacyOptionalObjectIdField extends ObjectIdField(this) { override def optional_? = true }
 
   object mandatoryUUIDField extends UUIDField(this)
+  object optionalUUIDField extends OptionalUUIDField(this)
   object legacyOptionalUUIDField extends UUIDField(this) { override def optional_? = true }
 
   object mandatoryCaseClassField extends CaseClassField[MongoFieldTypeTestRecord, CaseClassTestObject](this) {
+    override def formats = owner.meta.formats
+  }
+  object optionalCaseClassField extends OptionalCaseClassField[MongoFieldTypeTestRecord, CaseClassTestObject](this) {
     override def formats = owner.meta.formats
   }
 }
