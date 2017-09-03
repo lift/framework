@@ -108,7 +108,10 @@ class LAFutureSpec extends Specification {
         val three: LAFuture[Box[Int]] = LAFuture(() => Full(3): Box[Int])
 
         val collectResult = LAFuture.collectAll(one, two, three)
-        collectResult.get(timeout) shouldEqual Full(List(1, 2, 3))
+        collectResult.get(timeout) should beLike {
+          case Full(Full(results)) =>
+            results should contain(allOf(1, 2, 3))
+        }
       }
 
       "collectAll reports a failed LAFuture as a failure for the overall future" in {

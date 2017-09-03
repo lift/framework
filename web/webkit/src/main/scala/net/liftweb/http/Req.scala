@@ -1187,6 +1187,8 @@ class Req(val path: ParsePath,
   
   val post_? = requestType.post_?
 
+  val patch_? = requestType.patch_?
+
   val get_? = requestType.get_?
 
   val put_? = requestType.put_?

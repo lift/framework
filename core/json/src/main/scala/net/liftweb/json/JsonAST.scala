@@ -817,8 +817,7 @@ object JsonAST {
   }
 
   private def appendEscapedString(buf: Appendable, s: String, settings: RenderSettings) {
-    for (i <- 0 until s.length) {
-      val c = s.charAt(i)
+    s.foreach { c =>
       val strReplacement = c match {
         case '"'  => "\\\""
         case '\\' => "\\\\"
@@ -827,7 +826,8 @@ object JsonAST {
         case '\n' => "\\n"
         case '\r' => "\\r"
         case '\t' => "\\t"
-        case c if ((c >= '\u0000' && c < '\u0020')) || settings.escapeChars.contains(c) =>
+        // Set.contains will cause boxing of c to Character, try and avoid this
+        case c if ((c >= '\u0000' && c < '\u0020')) || (settings.escapeChars.nonEmpty && settings.escapeChars.contains(c)) =>
           "\\u%04x".format(c: Int)
 
         case _ => ""
@@ -947,7 +947,7 @@ object JsonAST {
    */
   case class RenderSettings(
     indent: Int,
-    escapeChars: Set[Char] = Set(),
+    escapeChars: Set[Char] = Set.empty,
     spaceAfterFieldName: Boolean = false,
     doubleRenderer: DoubleRenderer = RenderSpecialDoubleValuesAsNull
   ) {

@@ -257,3 +257,9 @@ Paweł Mruk
 
 ### Email: ###
 mroocoo at gmail dot com
+
+### Name: ###
+Riccardo Sirigu
+
+### Email: ###
+me at riccardosirigu dot com
