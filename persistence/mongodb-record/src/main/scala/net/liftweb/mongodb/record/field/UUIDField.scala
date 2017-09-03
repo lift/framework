@@ -74,11 +74,11 @@ trait UUIDTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[UUID
   override def asJValue: JValue = valueBox.map(v => JsonUUID(v)) openOr (JNothing: JValue)
 }
 
-class UUIDField[OwnerType <: BsonRecord[OwnerType]](override val owner: OwnerType)
+class UUIDField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
   extends UUIDTypedField[OwnerType] with MandatoryTypedField[UUID] {
 
-  def this(rec: OwnerType, value: UUID) = {
-    this(rec)
+  def this(owner: OwnerType, value: UUID) = {
+    this(owner)
     setBox(Full(value))
   }
 
@@ -89,8 +89,8 @@ class UUIDField[OwnerType <: BsonRecord[OwnerType]](override val owner: OwnerTyp
 class OptionalUUIDField[OwnerType <: BsonRecord[OwnerType]](override val owner: OwnerType)
   extends UUIDTypedField[OwnerType] with OptionalTypedField[UUID] {
 
-  def this(rec: OwnerType, value: Box[UUID]) = {
-    this(rec)
+  def this(owner: OwnerType, value: Box[UUID]) = {
+    this(owner)
     setBox(value)
   }
 

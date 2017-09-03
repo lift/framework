@@ -65,8 +65,8 @@ abstract class PatternTypedField[OwnerType <: BsonRecord[OwnerType]](override va
 }
 
 class PatternField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) owner: OwnerType) extends PatternTypedField[OwnerType](owner) with MandatoryTypedField[Pattern] {
-  def this(rec: OwnerType, value: Pattern) = {
-    this(rec)
+  def this(owner: OwnerType, value: Pattern) = {
+    this(owner)
     setBox(Full(value))
   }
 
@@ -74,8 +74,8 @@ class PatternField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) own
 }
 
 class OptionalPatternField[OwnerType <: BsonRecord[OwnerType]](owner: OwnerType) extends PatternTypedField[OwnerType](owner) with OptionalTypedField[Pattern] {
-  def this(rec: OwnerType, value: Box[Pattern]) = {
-    this(rec)
+  def this(owner: OwnerType, value: Box[Pattern]) = {
+    this(owner)
     setBox(value)
   }
 }

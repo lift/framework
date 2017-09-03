@@ -86,59 +86,60 @@ trait MongoRefField[RefType <: MongoRecord[RefType], MyType] extends TypedField[
   private[this] def elem = SHtml.selectObj[Box[MyType]](
     buildDisplayList,
     Full(valueBox),
-    setBox(_)
+    setBox
   ) % ("tabindex" -> tabIndex.toString)
 
   override def toForm =
-    if (options.length > 0)
+    if (options.nonEmpty) {
       uniqueFieldId match {
         case Full(id) => Full(elem % ("id" -> id))
         case _ => Full(elem)
       }
-    else
+    } else {
       Empty
+    }
 }
 
 class ObjectIdRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
-) extends ObjectIdField[OwnerType](rec) with MongoRefField[RefType, ObjectId]
+  @deprecatedName('rec) owner: OwnerType, val refMeta: MongoMetaRecord[RefType]
+) extends ObjectIdField[OwnerType](owner) with MongoRefField[RefType, ObjectId]
 
 class OptionalObjectIdRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
-) extends OptionalObjectIdField[OwnerType](rec) with MongoRefField[RefType, ObjectId]
+  owner: OwnerType, val refMeta: MongoMetaRecord[RefType]
+) extends OptionalObjectIdField[OwnerType](owner) with MongoRefField[RefType, ObjectId]
 
 
 class UUIDRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
-) extends UUIDField[OwnerType](rec) with MongoRefField[RefType, UUID]
+  @deprecatedName('rec) owner: OwnerType, val refMeta: MongoMetaRecord[RefType]
+) extends UUIDField[OwnerType](owner) with MongoRefField[RefType, UUID]
 
 class OptionalUUIDRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
-) extends OptionalUUIDField[OwnerType](rec) with MongoRefField[RefType, UUID]
+  owner: OwnerType, val refMeta: MongoMetaRecord[RefType]
+) extends OptionalUUIDField[OwnerType](owner) with MongoRefField[RefType, UUID]
 
 
 class StringRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  rec: OwnerType, val refMeta: MongoMetaRecord[RefType], maxLen: Int
-) extends StringField[OwnerType](rec, maxLen) with MongoRefField[RefType, String]
+  @deprecatedName('rec) owner: OwnerType, val refMeta: MongoMetaRecord[RefType], maxLen: Int
+) extends StringField[OwnerType](owner, maxLen) with MongoRefField[RefType, String]
 
 class OptionalStringRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  rec: OwnerType, val refMeta: MongoMetaRecord[RefType], maxLen: Int
-) extends OptionalStringField[OwnerType](rec, maxLen) with MongoRefField[RefType, String]
+  owner: OwnerType, val refMeta: MongoMetaRecord[RefType], maxLen: Int
+) extends OptionalStringField[OwnerType](owner, maxLen) with MongoRefField[RefType, String]
 
 
 class IntRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
-) extends IntField[OwnerType](rec) with MongoRefField[RefType, Int]
+  @deprecatedName('rec) owner: OwnerType, val refMeta: MongoMetaRecord[RefType]
+) extends IntField[OwnerType](owner) with MongoRefField[RefType, Int]
 
 class OptionalIntRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
-) extends OptionalIntField[OwnerType](rec) with MongoRefField[RefType, Int]
+  owner: OwnerType, val refMeta: MongoMetaRecord[RefType]
+) extends OptionalIntField[OwnerType](owner) with MongoRefField[RefType, Int]
 
 
 class LongRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
-) extends LongField[OwnerType](rec) with MongoRefField[RefType, Long]
+  @deprecatedName('rec) owner: OwnerType, val refMeta: MongoMetaRecord[RefType]
+) extends LongField[OwnerType](owner) with MongoRefField[RefType, Long]
 
 class OptionalLongRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  rec: OwnerType, val refMeta: MongoMetaRecord[RefType]
-) extends OptionalLongField[OwnerType](rec) with MongoRefField[RefType, Long]
+  owner: OwnerType, val refMeta: MongoMetaRecord[RefType]
+) extends OptionalLongField[OwnerType](owner) with MongoRefField[RefType, Long]

@@ -35,9 +35,9 @@ abstract class BsonRecordTypedField[OwnerType <: BsonRecord[OwnerType], SubRecor
 (override val owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit subRecordType: Manifest[SubRecordType])
   extends Field[SubRecordType, OwnerType] {
 
-  def this(rec: OwnerType, valueMeta: BsonMetaRecord[SubRecordType], value: Box[SubRecordType])
+  def this(owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType], value: Box[SubRecordType])
     (implicit subRecordType: Manifest[SubRecordType]) = {
-    this(rec, valueMeta)
+    this(owner, valueMeta)
     setBox(value)
   }
 
@@ -70,8 +70,8 @@ class BsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonR
 (@deprecatedName('rec) owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit subRecordType: Manifest[SubRecordType])
   extends BsonRecordTypedField(owner, valueMeta) with MandatoryTypedField[SubRecordType] {
 
-  def this(rec: OwnerType, valueMeta: BsonMetaRecord[SubRecordType], value: SubRecordType)(implicit subRecordType: Manifest[SubRecordType]) = {
-    this(rec, value.meta)
+  def this(@deprecatedName('rec) owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType], value: SubRecordType)(implicit subRecordType: Manifest[SubRecordType]) = {
+    this(owner, value.meta)
     set(value)
   }
 

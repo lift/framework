@@ -82,11 +82,11 @@ trait ObjectIdTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[
 
 }
 
-class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](override val owner: OwnerType)
+class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
   extends MandatoryTypedField[ObjectId] with ObjectIdTypedField[OwnerType] {
 
-  def this(rec: OwnerType, value: ObjectId) = {
-    this(rec)
+  def this(owner: OwnerType, value: ObjectId) = {
+    this(owner)
     setBox(Full(value))
   }
 
@@ -99,8 +99,8 @@ class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](override val owner: Owne
 class OptionalObjectIdField[OwnerType <: BsonRecord[OwnerType]](override val owner: OwnerType)
   extends OptionalTypedField[ObjectId] with ObjectIdTypedField[OwnerType] {
 
-  def this(rec: OwnerType, value: Box[ObjectId]) = {
-    this(rec)
+  def this(owner: OwnerType, value: Box[ObjectId]) = {
+    this(owner)
     setBox(value)
   }
 

@@ -81,8 +81,8 @@ abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](ove
   }
 }
 
-class CaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: OwnerType)(implicit mf: Manifest[CaseType])
-  extends CaseClassTypedField[OwnerType, CaseType](rec) with MandatoryTypedField[CaseType] {
+class CaseClassField[OwnerType <: Record[OwnerType], CaseType](owner: OwnerType)(implicit mf: Manifest[CaseType])
+  extends CaseClassTypedField[OwnerType, CaseType](owner) with MandatoryTypedField[CaseType] {
 
 
   def this(owner: OwnerType, value: CaseType)(implicit mf: Manifest[CaseType]) = {
@@ -94,11 +94,11 @@ class CaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: OwnerType)(i
 }
 
 @deprecated("Use the more consistently named 'CaseClassField' instead. This class will be removed in Lift 4.", "3.2")
-class MongoCaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: OwnerType)(implicit mf: Manifest[CaseType])
-  extends CaseClassField[OwnerType, CaseType](rec)
+class MongoCaseClassField[OwnerType <: Record[OwnerType], CaseType](@deprecatedName('rec) owner: OwnerType)(implicit mf: Manifest[CaseType])
+  extends CaseClassField[OwnerType, CaseType](owner)
 
-class OptionalCaseClassField[OwnerType <: Record[OwnerType], CaseType](rec: OwnerType)(implicit mf: Manifest[CaseType])
-  extends CaseClassTypedField[OwnerType, CaseType](rec) with OptionalTypedField[CaseType] {
+class OptionalCaseClassField[OwnerType <: Record[OwnerType], CaseType](owner: OwnerType)(implicit mf: Manifest[CaseType])
+  extends CaseClassTypedField[OwnerType, CaseType](owner) with OptionalTypedField[CaseType] {
 
   def this(owner: OwnerType, value: Box[CaseType])(implicit mf: Manifest[CaseType]) = {
     this(owner)
@@ -174,5 +174,5 @@ class CaseClassListField[OwnerType <: Record[OwnerType], CaseType](override val 
 }
 
 @deprecated("Please use the more consistently named 'CaseClassListField' instead. This class will be removed in Lift 4.", "3.2")
-class MongoCaseClassListField[OwnerType <: Record[OwnerType], CaseType](owner: OwnerType)(implicit mf: Manifest[CaseType])
+class MongoCaseClassListField[OwnerType <: Record[OwnerType], CaseType](@deprecatedName('rec) owner: OwnerType)(implicit mf: Manifest[CaseType])
   extends CaseClassListField[OwnerType, CaseType](owner)

@@ -26,10 +26,8 @@ import com.mongodb.{BasicDBList, DBObject}
 import scala.collection.JavaConverters._
 
 abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
-  (rec: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
+  (@deprecatedName('rec) override val owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
   extends Field[JObjectType, OwnerType] with MandatoryTypedField[JObjectType] with MongoFieldFlavor[JObjectType] {
-
-  def owner = rec
 
   implicit val formats = owner.meta.formats
 
@@ -69,7 +67,7 @@ abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <
   def setFromString(in: String): Box[JObjectType] = tryo(JsonParser.parse(in)) match {
     case Full(jv: JValue) => setFromJValue(jv)
     case f: Failure => setBox(f)
-    case other => setBox(Failure("Error parsing String into a JValue: "+in))
+    case _ => setBox(Failure(s"Error parsing String into a JValue: $in"))
   }
 
   /*
@@ -87,8 +85,8 @@ abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <
 * List of JsonObject case classes
 */
 class JsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
-(rec: OwnerType, valueMeta: JsonObjectMeta[JObjectType])(implicit mf: Manifest[JObjectType])
-  extends MongoListField[OwnerType, JObjectType](rec: OwnerType) {
+(owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])(implicit mf: Manifest[JObjectType])
+  extends MongoListField[OwnerType, JObjectType](owner: OwnerType) {
 
   override def asDBObject: DBObject = {
     val dbl = new BasicDBList
@@ -114,4 +112,4 @@ class JsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <: Jso
 
 @deprecated("Use the more consistently named 'JsonObjectListField' instead. This class will be removed in Lift 4.", "3.2")
 class MongoJsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
-(rec: OwnerType, valueMeta: JsonObjectMeta[JObjectType])(implicit mf: Manifest[JObjectType]) extends JsonObjectListField(rec, valueMeta)
+(@deprecatedName('rec) owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])(implicit mf: Manifest[JObjectType]) extends JsonObjectListField(owner, valueMeta)
