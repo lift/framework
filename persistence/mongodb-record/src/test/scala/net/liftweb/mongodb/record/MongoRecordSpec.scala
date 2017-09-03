@@ -229,6 +229,7 @@ class MongoRecordSpec extends Specification with MongoTestKit {
     val pftrJson =
       ("_id" -> ("$oid" -> pftr.id.toString)) ~
       ("mandatoryPatternField" -> (("$regex" -> pftr.mandatoryPatternField.value.pattern) ~ ("$flags" -> pftr.mandatoryPatternField.value.flags))) ~
+      ("optionalPatternField" -> JNothing) ~
       ("legacyOptionalPatternField" -> (None: Option[JObject]))
 
     val ltr = ListTestRecord.createRecord

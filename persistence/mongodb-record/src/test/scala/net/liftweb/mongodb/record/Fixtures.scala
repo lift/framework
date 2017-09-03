@@ -240,9 +240,8 @@ object MongoFieldTypeTestRecord extends MongoFieldTypeTestRecord with MongoMetaR
 class PatternFieldTestRecord private () extends MongoRecord[PatternFieldTestRecord] with ObjectIdPk[PatternFieldTestRecord] {
   def meta = PatternFieldTestRecord
 
-  import java.util.regex.Pattern
-
   object mandatoryPatternField extends PatternField(this)
+  object optionalPatternField extends OptionalPatternField(this)
   object legacyOptionalPatternField extends PatternField(this) { override def optional_? = true }
 
   override def equals(other: Any): Boolean = equalsWithPatternCheck(other)
