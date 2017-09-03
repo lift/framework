@@ -810,8 +810,14 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       mfttr2.legacyOptionalDateField(new Date)
       mfttr2.legacyOptionalDateField.dirty_? must_== true
 
-      mfttr2.legacyOptionalObjectIdField(ObjectId.get)
-      mfttr2.legacyOptionalObjectIdField.dirty_? must_== true
+      mfttr2.optionalDateField(new Date)
+      mfttr2.optionalDateField.dirty_? must_== true
+
+      mfttr2.optionalObjectIdField(ObjectId.get)
+      mfttr2.optionalObjectIdField.dirty_? must_== true
+
+      mfttr2.optionalUUIDField(UUID.randomUUID())
+      mfttr2.optionalUUIDField.dirty_? must_== true
 
       mfttr2.dirty_? must_== true
       mfttr2.update

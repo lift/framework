@@ -365,6 +365,7 @@ class SubRecordTestRecord private () extends MongoRecord[SubRecordTestRecord] wi
   def meta = SubRecordTestRecord
 
   object mandatoryBsonRecordField extends BsonRecordField(this, SubRecord)
+  object optioalBsonRecordField extends OptionalBsonRecordField(this, SubRecord)
   object legacyOptionalBsonRecordField extends BsonRecordField(this, SubRecord) {
     override def optional_? = true
   }
