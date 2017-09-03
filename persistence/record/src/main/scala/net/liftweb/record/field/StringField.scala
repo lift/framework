@@ -36,7 +36,7 @@ trait StringTypedField extends TypedField[String] with StringValidators {
   def maxLen = maxLength
   
   def setFromAny(in: Any): Box[String] = in match {
-    case seq: Seq[_] if !seq.isEmpty => setFromAny(seq.head)
+    case seq: Seq[_] if seq.nonEmpty => setFromAny(seq.head)
     case _ => genericSetFromAny(in)
   }
 
@@ -73,20 +73,18 @@ trait StringTypedField extends TypedField[String] with StringValidators {
   }
 }
 
-class StringField[OwnerType <: Record[OwnerType]](rec: OwnerType, val maxLength: Int)
+class StringField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType, val maxLength: Int)
   extends Field[String, OwnerType] with MandatoryTypedField[String] with StringTypedField {
 
-  def this(rec: OwnerType, maxLength: Int, value: String) = {
-    this(rec, maxLength)
+  def this(@deprecatedName('rec) owner: OwnerType, maxLength: Int, value: String) = {
+    this(owner, maxLength)
     set(value)
   }
 
-  def this(rec: OwnerType, value: String) = {
-    this(rec, 100)
+  def this(@deprecatedName('rec) owner: OwnerType, value: String) = {
+    this(owner, 100)
     set(value)
   }
-
-  def owner = rec
 
   protected def valueTypeToBoxString(in: ValueType): Box[String] = toBoxMyType(in)
   protected def boxStrToValType(in: Box[String]): ValueType = toValueType(in)
@@ -99,20 +97,18 @@ abstract class UniqueIdField[OwnerType <: Record[OwnerType]](rec: OwnerType, ove
 }
 
 
-class OptionalStringField[OwnerType <: Record[OwnerType]](rec: OwnerType, val maxLength: Int)
+class OptionalStringField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType, val maxLength: Int)
   extends Field[String, OwnerType] with OptionalTypedField[String] with StringTypedField {
 
-  def this(rec: OwnerType, maxLength: Int, value: Box[String]) = {
-    this(rec, maxLength)
+  def this(@deprecatedName('rec) owner: OwnerType, maxLength: Int, value: Box[String]) = {
+    this(owner, maxLength)
     setBox(value)
   }
 
-  def this(rec: OwnerType, value: Box[String]) = {
-    this(rec, 100)
+  def this(@deprecatedName('rec) owner: OwnerType, value: Box[String]) = {
+    this(owner, 100)
     setBox(value)
   }
-
-  def owner = rec
 
   protected def valueTypeToBoxString(in: ValueType): Box[String] = toBoxMyType(in)
   protected def boxStrToValType(in: Box[String]): ValueType = toValueType(in)

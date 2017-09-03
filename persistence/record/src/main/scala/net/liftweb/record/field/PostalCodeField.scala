@@ -38,7 +38,7 @@ trait PostalCodeTypedField extends StringTypedField {
 
   def validatePostalCode(in: ValueType): List[FieldError] = {
     toBoxMyType(in) match {
-      case Full(zip) if (optional_? && zip.isEmpty) => Nil
+      case Full(zip) if optional_? && zip.isEmpty => Nil
       case _ =>
         country.value match {
           case Countries.USA       => valRegex(RegexPattern.compile("[0-9]{5}(\\-[0-9]{4})?"), S.?("invalid.zip.code"))(in)
@@ -58,7 +58,7 @@ trait PostalCodeTypedField extends StringTypedField {
   }
 }
 
-class PostalCodeField[OwnerType <: Record[OwnerType]](rec: OwnerType, val country: CountryField[OwnerType]) extends StringField(rec, 32) with PostalCodeTypedField
+class PostalCodeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType, val country: CountryField[OwnerType]) extends StringField(owner, 32) with PostalCodeTypedField
 
-class OptionalPostalCodeField[OwnerType <: Record[OwnerType]](rec: OwnerType, val country: CountryField[OwnerType]) extends OptionalStringField(rec, 32) with PostalCodeTypedField
+class OptionalPostalCodeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType, val country: CountryField[OwnerType]) extends OptionalStringField(owner, 32) with PostalCodeTypedField
 

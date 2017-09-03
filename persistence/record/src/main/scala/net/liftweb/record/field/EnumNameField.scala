@@ -79,27 +79,27 @@ trait EnumNameTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Va
   def setFromJValue(jvalue: JValue): Box[EnumType#Value] = setFromJStringName(jvalue)
 }
 
-class EnumNameField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](rec: OwnerType, protected val enum: EnumType)(implicit m: Manifest[EnumType#Value])
-  extends Field[EnumType#Value, OwnerType] with MandatoryTypedField[EnumType#Value] with EnumNameTypedField[EnumType]
-{
-  def this(rec: OwnerType, enum: EnumType, value: EnumType#Value)(implicit m: Manifest[EnumType#Value]) = {
-    this(rec, enum)
+class EnumNameField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](@deprecatedName('rec) override val owner: OwnerType,
+  protected val enum: EnumType)(implicit m: Manifest[EnumType#Value]
+) extends Field[EnumType#Value, OwnerType] with MandatoryTypedField[EnumType#Value] with EnumNameTypedField[EnumType] {
+
+  def this(@deprecatedName('rec) owner: OwnerType, enum: EnumType, value: EnumType#Value)(implicit m: Manifest[EnumType#Value]) = {
+    this(owner, enum)
     set(value)
   }
 
-  def owner = rec
   protected val valueManifest = m
 }
 
-class OptionalEnumNameField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](rec: OwnerType, protected val enum: EnumType)(implicit m: Manifest[EnumType#Value])
-  extends Field[EnumType#Value, OwnerType] with OptionalTypedField[EnumType#Value] with EnumNameTypedField[EnumType]
-{
-  def this(rec: OwnerType, enum: EnumType, value: Box[EnumType#Value])(implicit m: Manifest[EnumType#Value]) = {
-    this(rec, enum)
+class OptionalEnumNameField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](@deprecatedName('rec) override val owner: OwnerType,
+  protected val enum: EnumType)(implicit m: Manifest[EnumType#Value]
+) extends Field[EnumType#Value, OwnerType] with OptionalTypedField[EnumType#Value] with EnumNameTypedField[EnumType] {
+
+  def this(@deprecatedName('rec) owner: OwnerType, enum: EnumType, value: Box[EnumType#Value])(implicit m: Manifest[EnumType#Value]) = {
+    this(owner, enum)
     setBox(value)
   }
 
-  def owner = rec
   protected val valueManifest = m
 }
 

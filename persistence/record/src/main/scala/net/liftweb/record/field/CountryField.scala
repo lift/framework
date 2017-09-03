@@ -67,11 +67,9 @@ object Countries extends Enumeration(1) {
 }
 
 
-class CountryField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends EnumField(rec, Countries) {
+class CountryField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType)
+  extends EnumField(owner, Countries)
 
-}
-
-class OptionalCountryField[OwnerType <: Record[OwnerType]](rec: OwnerType) extends OptionalEnumField(rec, Countries) {
-
-}
+class OptionalCountryField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType)
+  extends OptionalEnumField(owner, Countries)
 

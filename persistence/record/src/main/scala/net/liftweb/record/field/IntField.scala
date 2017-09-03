@@ -48,24 +48,20 @@ trait IntTypedField extends NumericTypedField[Int] {
   }
 }
 
-class IntField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+class IntField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
   extends Field[Int, OwnerType] with MandatoryTypedField[Int] with IntTypedField {
 
-  def owner = rec
-
-  def this(rec: OwnerType, value: Int) = {
-    this(rec)
+  def this(@deprecatedName('rec) owner: OwnerType, value: Int) = {
+    this(owner)
     set(value)
   }
 }
 
-class OptionalIntField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+class OptionalIntField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
   extends Field[Int, OwnerType] with OptionalTypedField[Int] with IntTypedField {
 
-  def owner = rec
-
-  def this(rec: OwnerType, value: Box[Int]) = {
-    this(rec)
+  def this(@deprecatedName('rec) owner: OwnerType, value: Box[Int]) = {
+    this(owner)
     setBox(value)
   }
 }

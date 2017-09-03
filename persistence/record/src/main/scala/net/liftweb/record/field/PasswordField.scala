@@ -67,11 +67,14 @@ trait PasswordTypedField extends TypedField[String] {
    */
   def setFromAny(in: Any): Box[String] = {
     in match {
-      case (a: Array[String]) if (a.length == 2 && a(0)   == a(1)) => setBoxPlain(Full(a(0)))
+      case (a: Array[String]) if a.length == 2 && a(0) == a(1) => setBoxPlain(Full(a(0)))
       case (h1: String) :: (h2: String) :: Nil if h1 == h2 => setBoxPlain(Full(h1))
-      case (hash: String) if(hash.startsWith("$2a$")) => setBox(Full(hash))
-      case Full(hash: String) if(hash.startsWith("$2a$")) => setBox(Full(hash))
-      case _ => {invalidPw = true; invalidMsg = S.?("passwords.do.not.match"); Failure(invalidMsg)}
+      case (hash: String) if hash.startsWith("$2a$") => setBox(Full(hash))
+      case Full(hash: String) if hash.startsWith("$2a$") => setBox(Full(hash))
+      case _ =>
+        invalidPw = true
+        invalidMsg = S.?("passwords.do.not.match")
+        Failure(invalidMsg)
     }
   }
 
@@ -128,16 +131,14 @@ trait PasswordTypedField extends TypedField[String] {
   
 }
 
-class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+class PasswordField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
   extends Field[String, OwnerType] with MandatoryTypedField[String] with PasswordTypedField {
 
-  def this(rec: OwnerType, value: String) = {
-    this(rec)
+  def this(@deprecatedName('rec) owner: OwnerType, value: String) = {
+    this(owner)
     setPlain(value)
   }
 
-  def owner = rec
-  
   override def apply(in: Box[String]): OwnerType = 
     if(owner.meta.mutable_?) {
       this.setBoxPlain(in)
@@ -148,15 +149,13 @@ class PasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType)
 
 }
 
-class OptionalPasswordField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+class OptionalPasswordField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
   extends Field[String, OwnerType] with OptionalTypedField[String] with PasswordTypedField {
 
-  def this(rec: OwnerType, value: Box[String]) = {
-    this(rec)
+  def this(@deprecatedName('rec) owner: OwnerType, value: Box[String]) = {
+    this(owner)
     setBoxPlain(value)
   }
-
-  def owner = rec
   
   override def apply(in: Box[String]): OwnerType = 
     if(owner.meta.mutable_?) {

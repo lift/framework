@@ -49,8 +49,8 @@ trait LocaleTypedField extends TypedField[String] {
     }
 }
 
-class LocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType)
-  extends StringField(rec, 16) with LocaleTypedField {
+class LocaleField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType)
+  extends StringField(owner, 16) with LocaleTypedField {
 
   override def defaultValue = Locale.getDefault.toString
 
@@ -63,8 +63,8 @@ class LocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType)
 
 }
 
-class OptionalLocaleField[OwnerType <: Record[OwnerType]](rec: OwnerType)
-  extends OptionalStringField(rec, 16) with LocaleTypedField {
+class OptionalLocaleField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType)
+  extends OptionalStringField(owner, 16) with LocaleTypedField {
 
   /** Label for the selection item representing Empty, show when this field is optional. Defaults to the empty string. */
   def emptyOptionLabel: String = ""
