@@ -228,7 +228,7 @@ class MongoFieldTypeTestRecord private () extends MongoRecord[MongoFieldTypeTest
   object mandatoryUUIDField extends UUIDField(this)
   object legacyOptionalUUIDField extends UUIDField(this) { override def optional_? = true }
 
-  object mandatoryMongoCaseClassField extends CaseClassField[MongoFieldTypeTestRecord, MongoCaseClassTestObject](this) {
+  object mandatoryCaseClassField extends CaseClassField[MongoFieldTypeTestRecord, CaseClassTestObject](this) {
     override def formats = owner.meta.formats
   }
 }
@@ -259,7 +259,7 @@ class PasswordTestRecord private () extends MongoRecord[PasswordTestRecord] with
 }
 object PasswordTestRecord extends PasswordTestRecord with MongoMetaRecord[PasswordTestRecord]
 
-case class MongoCaseClassTestObject(intField: Int, stringField: String, enum: MyTestEnum.Value)
+case class CaseClassTestObject(intField: Int, stringField: String, enum: MyTestEnum.Value)
 
 class ListTestRecord private () extends MongoRecord[ListTestRecord] with UUIDPk[ListTestRecord] {
   def meta = ListTestRecord
@@ -268,7 +268,7 @@ class ListTestRecord private () extends MongoRecord[ListTestRecord] with UUIDPk[
   object mandatoryMongoRefListField extends ObjectIdRefListField(this, FieldTypeTestRecord)
   object mandatoryIntListField extends MongoListField[ListTestRecord, Int](this)
   object mandatoryJsonObjectListField extends JsonObjectListField(this, TypeTestJsonObject)
-  object caseClassListField extends CaseClassListField[ListTestRecord, MongoCaseClassTestObject](this) {
+  object caseClassListField extends CaseClassListField[ListTestRecord, CaseClassTestObject](this) {
     override def formats = owner.meta.formats
   }
 }

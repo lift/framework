@@ -481,7 +481,7 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundEach {
     }
   }
 
-  "MongoJsonObjectListField" should {
+  "JsonObjectListField" should {
     "function correctly" in {
       val rec = ListTestRecord.createRecord
       val lst = List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2")))
@@ -503,10 +503,10 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundEach {
     }
   }
 
-  "MongoCaseClassListField" should {
+  "CaseClassListField" should {
     "setFromAny a List" in {
       val rec = ListTestRecord.createRecord
-      val lst = List(MongoCaseClassTestObject(1,"str1", MyTestEnum.THREE))
+      val lst = List(CaseClassTestObject(1,"str1", MyTestEnum.THREE))
       rec.caseClassListField.setFromAny(lst)
       rec.caseClassListField.value must_== lst
     }

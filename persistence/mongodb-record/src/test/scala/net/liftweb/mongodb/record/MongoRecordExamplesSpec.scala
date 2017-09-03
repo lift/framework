@@ -227,8 +227,6 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
 
       fromDb.isDefined must_== true
 
-
-
       for (t <- fromDb) {
         t.id.value must_== tr.id.value
         t.booleanfield.value must_== tr.booleanfield.value
