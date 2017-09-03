@@ -19,15 +19,15 @@ package field
 import scala.xml.NodeSeq
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.json._
-import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField}
+import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, OptionalTypedField}
 import net.liftweb.util.Helpers.tryo
 import com.mongodb.{BasicDBList, DBObject}
 
 import scala.collection.JavaConverters._
 
-abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
-  (@deprecatedName('rec) override val owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
-  extends Field[JObjectType, OwnerType] with MandatoryTypedField[JObjectType] with MongoFieldFlavor[JObjectType] {
+abstract class JsonObjectTypedField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
+(override val owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
+  extends Field[JObjectType, OwnerType] with MongoFieldFlavor[JObjectType] {
 
   implicit val formats = owner.meta.formats
 
@@ -44,7 +44,7 @@ abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <
   * Returns Empty or Failure if the value could not be set
   */
   def setFromJValue(jvalue: JValue): Box[JObjectType] = jvalue match {
-    case JNothing|JNull if optional_? => setBox(Empty)
+    case JNothing | JNull if optional_? => setBox(Empty)
     case o: JObject => setBox(tryo(valueMeta.create(o)))
     case other => setBox(FieldHelpers.expectedA("JObject", other))
   }
@@ -79,6 +79,26 @@ abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <
   def setFromDBObject(dbo: DBObject): Box[JObjectType] =
     setFromJValue(JObjectParser.serialize(dbo).asInstanceOf[JObject])
 
+}
+
+abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
+(@deprecatedName('rec) owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
+  extends JsonObjectTypedField(owner, valueMeta) with MandatoryTypedField[JObjectType] {
+
+  def this(owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType], value: JObjectType) = {
+    this(owner, valueMeta)
+    setBox(Full(value))
+  }
+}
+
+class OptionalJsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
+(owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
+  extends JsonObjectTypedField(owner, valueMeta) with OptionalTypedField[JObjectType] {
+
+  def this(owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType], valueBox: Box[JObjectType]) = {
+    this(owner, valueMeta)
+    setBox(valueBox)
+  }
 }
 
 /*
