@@ -54,10 +54,10 @@ class MongoRecordSpec extends Specification with MongoTestKit {
 
   "MongoRecord field introspection" should {
     val rec = MongoFieldTypeTestRecord.createRecord
-    val allExpectedFieldNames: List[String] = "_id" :: "mandatoryMongoCaseClassField" ::
+    val allExpectedFieldNames: List[String] = "_id" :: "mandatoryCaseClassField" :: "optionalCaseClassField" ::
       (for {
         typeName <- "Date JsonObject ObjectId UUID".split(" ")
-        flavor <- "mandatory legacyOptional".split(" ")
+        flavor <- "mandatory legacyOptional optional".split(" ")
       } yield flavor + typeName + "Field").toList
 
     "introspect only the expected fields" in {
@@ -209,19 +209,24 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       .mandatoryJsonObjectField(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")))
       .mandatoryObjectIdField(ObjectId.get)
       .mandatoryUUIDField(UUID.randomUUID)
-      .mandatoryMongoCaseClassField(MongoCaseClassTestObject(1,"str",MyTestEnum.TWO))
+      .mandatoryCaseClassField(CaseClassTestObject(1,"str",MyTestEnum.TWO))
 
     val mfttrJson =
       ("_id" -> ("$oid" -> mfttr.id.toString)) ~
       ("mandatoryDateField" -> ("$dt" -> mfttr.meta.formats.dateFormat.format(mfttr.mandatoryDateField.value))) ~
       ("legacyOptionalDateField" -> (None: Option[JObject])) ~
+      ("optionalDateField" -> JNothing) ~
       ("mandatoryJsonObjectField" -> (("intField" -> 1) ~ ("stringField" -> "jsonobj1") ~ ("mapField" -> ("x" -> "1")))) ~
+      ("optionalJsonObjectField" -> JNothing) ~
       ("legacyOptionalJsonObjectField" -> (None: Option[JObject])) ~
       ("mandatoryObjectIdField", ("$oid" -> mfttr.mandatoryObjectIdField.value.toString)) ~
+      ("optionalObjectIdField" -> JNothing) ~
       ("legacyOptionalObjectIdField" -> (None: Option[JObject])) ~
       ("mandatoryUUIDField" -> ("$uuid" -> mfttr.mandatoryUUIDField.value.toString)) ~
+      ("optionalUUIDField" -> JNothing) ~
       ("legacyOptionalUUIDField" -> (None: Option[JObject])) ~
-      ("mandatoryMongoCaseClassField" -> ("intField" -> 1) ~ ("stringField" -> "str") ~ ("enum" -> 1))
+      ("mandatoryCaseClassField" -> ("intField" -> 1) ~ ("stringField" -> "str") ~ ("enum" -> 1)) ~
+      ("optionalCaseClassField" -> JNothing)
 
     val pftr = PatternFieldTestRecord.createRecord
       .mandatoryPatternField(Pattern.compile("^Mo", Pattern.CASE_INSENSITIVE))
@@ -229,24 +234,25 @@ class MongoRecordSpec extends Specification with MongoTestKit {
     val pftrJson =
       ("_id" -> ("$oid" -> pftr.id.toString)) ~
       ("mandatoryPatternField" -> (("$regex" -> pftr.mandatoryPatternField.value.pattern) ~ ("$flags" -> pftr.mandatoryPatternField.value.flags))) ~
+      ("optionalPatternField" -> JNothing) ~
       ("legacyOptionalPatternField" -> (None: Option[JObject]))
 
     val ltr = ListTestRecord.createRecord
       .mandatoryStringListField(List("abc", "def", "ghi"))
       .mandatoryIntListField(List(4, 5, 6))
-      .mandatoryMongoJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2"))))
-      .mongoCaseClassListField(List(MongoCaseClassTestObject(1,"str",MyTestEnum.TWO)))
+      .mandatoryJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2"))))
+      .caseClassListField(List(CaseClassTestObject(1,"str",MyTestEnum.TWO)))
       .mandatoryMongoRefListField(Nil)
 
     val ltrJson =
       ("_id" -> ("$uuid" -> ltr.id.toString)) ~
       ("mandatoryStringListField" -> List("abc", "def", "ghi")) ~
       ("mandatoryIntListField" -> List(4, 5, 6)) ~
-      ("mandatoryMongoJsonObjectListField" -> List(
+      ("mandatoryJsonObjectListField" -> List(
         (("intField" -> 1) ~ ("stringField" -> "jsonobj1") ~ ("mapField" -> ("x" -> "1"))),
         (("intField" -> 2) ~ ("stringField" -> "jsonobj2") ~ ("mapField" -> ("x" -> "2")))
       )) ~
-      ("mongoCaseClassListField" -> List(
+      ("caseClassListField" -> List(
         ("intField" -> 1) ~ ("stringField" -> "str") ~ ("enum" -> 1)
       )) ~
       ("mandatoryMongoRefListField" -> JArray(Nil))
@@ -804,8 +810,14 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       mfttr2.legacyOptionalDateField(new Date)
       mfttr2.legacyOptionalDateField.dirty_? must_== true
 
-      mfttr2.legacyOptionalObjectIdField(ObjectId.get)
-      mfttr2.legacyOptionalObjectIdField.dirty_? must_== true
+      mfttr2.optionalDateField(new Date)
+      mfttr2.optionalDateField.dirty_? must_== true
+
+      mfttr2.optionalObjectIdField(ObjectId.get)
+      mfttr2.optionalObjectIdField.dirty_? must_== true
+
+      mfttr2.optionalUUIDField(UUID.randomUUID())
+      mfttr2.optionalUUIDField.dirty_? must_== true
 
       mfttr2.dirty_? must_== true
       mfttr2.update
@@ -846,11 +858,11 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       ltr.mandatoryIntListField(List(4, 5, 6))
       ltr.mandatoryIntListField.dirty_? must_== true
 
-      ltr.mandatoryMongoJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2"))))
-      ltr.mandatoryMongoJsonObjectListField.dirty_? must_== true
+      ltr.mandatoryJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2"))))
+      ltr.mandatoryJsonObjectListField.dirty_? must_== true
 
-      ltr.mongoCaseClassListField(List(MongoCaseClassTestObject(1,"str",MyTestEnum.TWO)))
-      ltr.mongoCaseClassListField.dirty_? must_== true
+      ltr.caseClassListField(List(CaseClassTestObject(1,"str",MyTestEnum.TWO)))
+      ltr.caseClassListField.dirty_? must_== true
 
       ltr.dirty_? must_== true
       ltr.update
