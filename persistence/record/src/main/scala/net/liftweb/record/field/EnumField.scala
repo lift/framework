@@ -105,7 +105,7 @@ trait EnumTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Value]
   def setFromJValue(jvalue: JValue): Box[EnumType#Value] = setFromJIntOrdinal(jvalue)
 }
 
-class EnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](@deprecatedName('rec) override val owner: OwnerType,
+class EnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](@deprecatedName('rec) val owner: OwnerType,
   protected val enum: EnumType)(implicit m: Manifest[EnumType#Value]
 ) extends Field[EnumType#Value, OwnerType] with MandatoryTypedField[EnumType#Value] with EnumTypedField[EnumType] {
 
@@ -117,7 +117,7 @@ class EnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](@deprec
   protected val valueManifest = m
 }
 
-class OptionalEnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](@deprecatedName('rec) override val owner: OwnerType,
+class OptionalEnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](@deprecatedName('rec) val owner: OwnerType,
   protected val enum: EnumType)(implicit m: Manifest[EnumType#Value]
 ) extends Field[EnumType#Value, OwnerType] with OptionalTypedField[EnumType#Value] with EnumTypedField[EnumType] {
 

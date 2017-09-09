@@ -73,7 +73,7 @@ trait StringTypedField extends TypedField[String] with StringValidators {
   }
 }
 
-class StringField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType, val maxLength: Int)
+class StringField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType, val maxLength: Int)
   extends Field[String, OwnerType] with MandatoryTypedField[String] with StringTypedField {
 
   def this(@deprecatedName('rec) owner: OwnerType, maxLength: Int, value: String) = {
@@ -97,7 +97,7 @@ abstract class UniqueIdField[OwnerType <: Record[OwnerType]](rec: OwnerType, ove
 }
 
 
-class OptionalStringField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType, val maxLength: Int)
+class OptionalStringField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType, val maxLength: Int)
   extends Field[String, OwnerType] with OptionalTypedField[String] with StringTypedField {
 
   def this(@deprecatedName('rec) owner: OwnerType, maxLength: Int, value: Box[String]) = {

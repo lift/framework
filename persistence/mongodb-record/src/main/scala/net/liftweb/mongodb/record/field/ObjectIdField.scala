@@ -68,12 +68,12 @@ trait ObjectIdTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[
         tabindex={tabIndex.toString}/>
     }
 
-  override def toForm = uniqueFieldId match {
+  def toForm = uniqueFieldId match {
     case Full(id) => Full(elem % ("id" -> id))
     case _ => Full(elem)
   }
 
-  override def asJs: JsExp = asJValue match {
+  def asJs: JsExp = asJValue match {
     case JNothing => JsNull
     case jv => JsRaw(compactRender(jv))
   }
@@ -82,7 +82,7 @@ trait ObjectIdTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[
 
 }
 
-class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
+class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends MandatoryTypedField[ObjectId] with ObjectIdTypedField[OwnerType] {
 
   def this(owner: OwnerType, value: ObjectId) = {
@@ -90,13 +90,13 @@ class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) ov
     setBox(Full(value))
   }
 
-  override def defaultValue = new ObjectId
+  def defaultValue = new ObjectId
 
   def createdAt: Date = this.get.getDate
 
 }
 
-class OptionalObjectIdField[OwnerType <: BsonRecord[OwnerType]](override val owner: OwnerType)
+class OptionalObjectIdField[OwnerType <: BsonRecord[OwnerType]](val owner: OwnerType)
   extends OptionalTypedField[ObjectId] with ObjectIdTypedField[OwnerType] {
 
   def this(owner: OwnerType, value: Box[ObjectId]) = {

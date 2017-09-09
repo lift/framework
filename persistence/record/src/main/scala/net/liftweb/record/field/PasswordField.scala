@@ -131,7 +131,7 @@ trait PasswordTypedField extends TypedField[String] {
   
 }
 
-class PasswordField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
+class PasswordField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[String, OwnerType] with MandatoryTypedField[String] with PasswordTypedField {
 
   def this(@deprecatedName('rec) owner: OwnerType, value: String) = {
@@ -149,7 +149,7 @@ class PasswordField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) overri
 
 }
 
-class OptionalPasswordField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
+class OptionalPasswordField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[String, OwnerType] with OptionalTypedField[String] with PasswordTypedField {
 
   def this(@deprecatedName('rec) owner: OwnerType, value: Box[String]) = {
@@ -157,7 +157,7 @@ class OptionalPasswordField[OwnerType <: Record[OwnerType]](@deprecatedName('rec
     setBoxPlain(value)
   }
   
-  override def apply(in: Box[String]): OwnerType = 
+  override def apply(in: Box[String]): OwnerType =
     if(owner.meta.mutable_?) {
       this.setBoxPlain(in)
       owner

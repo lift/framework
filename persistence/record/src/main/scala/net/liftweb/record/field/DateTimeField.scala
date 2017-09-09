@@ -74,7 +74,7 @@ trait DateTimeTypedField extends TypedField[Calendar] {
   }
 }
 
-class DateTimeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
+class DateTimeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[Calendar, OwnerType] with MandatoryTypedField[Calendar] with DateTimeTypedField {
 
   def this(@deprecatedName('rec) owner: OwnerType, value: Calendar) = {
@@ -85,7 +85,7 @@ class DateTimeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) overri
   def defaultValue = Calendar.getInstance
 }
 
-class OptionalDateTimeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
+class OptionalDateTimeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[Calendar, OwnerType] with OptionalTypedField[Calendar] with DateTimeTypedField {
 
   def this(@deprecatedName('rec) owner: OwnerType, value: Box[Calendar]) = {

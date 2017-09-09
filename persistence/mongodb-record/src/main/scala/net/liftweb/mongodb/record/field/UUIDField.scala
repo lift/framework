@@ -42,13 +42,13 @@ trait UUIDTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[UUID
     case o => setFromString(o.toString)
   }
 
-  override def setFromJValue(jvalue: JValue): Box[UUID] = jvalue match {
+  def setFromJValue(jvalue: JValue): Box[UUID] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
     case JObject(JField("$uuid", JString(s)) :: Nil) => setFromString(s)
     case other => setBox(FieldHelpers.expectedA("JObject", other))
   }
 
-  override def setFromString(in: String): Box[UUID] = tryo(UUID.fromString(in)) match {
+  def setFromString(in: String): Box[UUID] = tryo(UUID.fromString(in)) match {
     case Full(uid: UUID) => setBox(Full(uid))
     case f: Failure => setBox(f)
     case _ => setBox(Failure(s"Invalid UUID string: $in"))
@@ -61,20 +61,20 @@ trait UUIDTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[UUID
       tabindex={tabIndex.toString}/>
   }
 
-  override def toForm: Box[NodeSeq] = uniqueFieldId match {
+  def toForm: Box[NodeSeq] = uniqueFieldId match {
     case Full(id) => Full(elem % ("id" -> id))
     case _ => Full(elem)
   }
 
-  override def asJs: JsExp = asJValue match {
+  def asJs: JsExp = asJValue match {
     case JNothing => JsNull
     case jv => JsRaw(compactRender(jv))
   }
 
-  override def asJValue: JValue = valueBox.map(v => JsonUUID(v)) openOr (JNothing: JValue)
+  def asJValue: JValue = valueBox.map(v => JsonUUID(v)) openOr (JNothing: JValue)
 }
 
-class UUIDField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
+class UUIDField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends UUIDTypedField[OwnerType] with MandatoryTypedField[UUID] {
 
   def this(owner: OwnerType, value: UUID) = {
@@ -82,11 +82,11 @@ class UUIDField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) overri
     setBox(Full(value))
   }
 
-  override def defaultValue = UUID.randomUUID
+  def defaultValue = UUID.randomUUID
 
 }
 
-class OptionalUUIDField[OwnerType <: BsonRecord[OwnerType]](override val owner: OwnerType)
+class OptionalUUIDField[OwnerType <: BsonRecord[OwnerType]](val owner: OwnerType)
   extends UUIDTypedField[OwnerType] with OptionalTypedField[UUID] {
 
   def this(owner: OwnerType, value: Box[UUID]) = {

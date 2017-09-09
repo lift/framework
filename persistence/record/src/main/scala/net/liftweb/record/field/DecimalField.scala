@@ -74,7 +74,7 @@ trait DecimalTypedField extends NumericTypedField[BigDecimal] {
  * @param context The MathContext that controls precision and rounding
  * @param scale Controls the scale of the underlying BigDecimal
  */
-class DecimalField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType, val context : MathContext, val scale : Int)
+class DecimalField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType, val context : MathContext, val scale : Int)
   extends Field[BigDecimal, OwnerType] with MandatoryTypedField[BigDecimal] with DecimalTypedField {
 
   /**
@@ -125,7 +125,7 @@ class DecimalField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) overrid
  * @param context The MathContext that controls precision and rounding
  * @param scale Controls the scale of the underlying BigDecimal
  */
-class OptionalDecimalField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType, val context : MathContext, val scale : Int)
+class OptionalDecimalField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType, val context : MathContext, val scale : Int)
   extends Field[BigDecimal, OwnerType] with OptionalTypedField[BigDecimal] with DecimalTypedField {
 
   /**

@@ -26,8 +26,8 @@ import net.liftweb.util.Helpers.tryo
 
 import scala.xml.NodeSeq
 
-abstract class PatternTypedField[OwnerType <: BsonRecord[OwnerType]](override val owner: OwnerType) extends Field[Pattern, OwnerType] {
-  override def setFromAny(in: Any): Box[Pattern] = in match {
+abstract class PatternTypedField[OwnerType <: BsonRecord[OwnerType]](val owner: OwnerType) extends Field[Pattern, OwnerType] {
+  def setFromAny(in: Any): Box[Pattern] = in match {
     case p: Pattern => setBox(Full(p))
     case Some(p: Pattern) => setBox(Full(p))
     case Full(p: Pattern) => setBox(Full(p))
@@ -40,7 +40,7 @@ abstract class PatternTypedField[OwnerType <: BsonRecord[OwnerType]](override va
     case o => setFromString(o.toString)
   }
 
-  override def setFromJValue(jvalue: JValue): Box[Pattern] = jvalue match {
+  def setFromJValue(jvalue: JValue): Box[Pattern] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
     case JObject(JField("$regex", JString(s)) :: JField("$flags", JInt(f)) :: Nil) =>
       setBox(Full(Pattern.compile(s, f.intValue)))
@@ -48,15 +48,15 @@ abstract class PatternTypedField[OwnerType <: BsonRecord[OwnerType]](override va
   }
 
   // parse String into a JObject
-  override def setFromString(in: String): Box[Pattern] = tryo(JsonParser.parse(in)) match {
+  def setFromString(in: String): Box[Pattern] = tryo(JsonParser.parse(in)) match {
     case Full(jv: JValue) => setFromJValue(jv)
     case f: Failure => setBox(f)
     case other => setBox(Failure("Error parsing String into a JValue: "+in))
   }
 
-  override def toForm: Box[NodeSeq] = Empty
+  def toForm: Box[NodeSeq] = Empty
 
-  override def asJs = asJValue match {
+  def asJs = asJValue match {
     case JNothing => JsNull
     case jv => Str(compactRender(jv))
   }
@@ -70,7 +70,7 @@ class PatternField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) own
     setBox(Full(value))
   }
 
-  override def defaultValue = Pattern.compile("")
+  def defaultValue = Pattern.compile("")
 }
 
 class OptionalPatternField[OwnerType <: BsonRecord[OwnerType]](owner: OwnerType) extends PatternTypedField[OwnerType](owner) with OptionalTypedField[Pattern] {

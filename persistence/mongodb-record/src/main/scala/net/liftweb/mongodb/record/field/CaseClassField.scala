@@ -31,7 +31,7 @@ import net.liftweb.http.js.JsExp
 import org.bson.Document
 import scala.collection.JavaConverters._
 
-abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](override val owner: OwnerType)(implicit mf: Manifest[CaseType])
+abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](val owner: OwnerType)(implicit mf: Manifest[CaseType])
   extends Field[CaseType, OwnerType] with MongoFieldFlavor[CaseType] {
 
   // override this for custom formats
@@ -66,7 +66,7 @@ abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](ove
     setFromJValue(jvalue)
   }
 
-  override def setFromString(in: String): Box[CaseType] = Helpers.tryo {
+  def setFromString(in: String): Box[CaseType] = Helpers.tryo {
     JsonParser.parse(in).extract[CaseType]
   }
 
@@ -90,7 +90,7 @@ class CaseClassField[OwnerType <: Record[OwnerType], CaseType](owner: OwnerType)
     setBox(Full(value))
   }
 
-  override def defaultValue = null.asInstanceOf[MyType]
+  def defaultValue = null.asInstanceOf[MyType]
 }
 
 @deprecated("Use the more consistently named 'CaseClassField' instead. This class will be removed in Lift 4.", "3.2")
@@ -106,7 +106,7 @@ class OptionalCaseClassField[OwnerType <: Record[OwnerType], CaseType](owner: Ow
   }
 }
 
-class CaseClassListField[OwnerType <: Record[OwnerType], CaseType](override val owner: OwnerType)(implicit mf: Manifest[CaseType])
+class CaseClassListField[OwnerType <: Record[OwnerType], CaseType](val owner: OwnerType)(implicit mf: Manifest[CaseType])
   extends Field[List[CaseType], OwnerType] with MandatoryTypedField[List[CaseType]] with MongoFieldFlavor[List[CaseType]] {
 
   // override this for custom formats
@@ -119,7 +119,7 @@ class CaseClassListField[OwnerType <: Record[OwnerType], CaseType](override val 
 
   def toForm: Box[NodeSeq] = Empty
 
-  override def defaultValue: MyType = Nil
+  def defaultValue: MyType = Nil
 
   def asJValue: JValue = JArray(value.map(v => Extraction.decompose(v)))
 
@@ -168,7 +168,7 @@ class CaseClassListField[OwnerType <: Record[OwnerType], CaseType](override val 
     case _ => setBox(Empty)
   }
 
-  override def setFromString(in: String): Box[MyType] = {
+  def setFromString(in: String): Box[MyType] = {
     setFromJValue(JsonParser.parse(in))
   }
 }

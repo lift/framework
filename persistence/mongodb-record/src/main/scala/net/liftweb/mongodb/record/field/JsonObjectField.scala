@@ -26,7 +26,7 @@ import com.mongodb.{BasicDBList, DBObject}
 import scala.collection.JavaConverters._
 
 abstract class JsonObjectTypedField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
-(override val owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
+(val owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
   extends Field[JObjectType, OwnerType] with MongoFieldFlavor[JObjectType] {
 
   implicit val formats = owner.meta.formats
@@ -34,7 +34,7 @@ abstract class JsonObjectTypedField[OwnerType <: BsonRecord[OwnerType], JObjectT
   /**
    * Convert the field value to an XHTML representation
    */
-  override def toForm: Box[NodeSeq] = Empty // FIXME
+  def toForm: Box[NodeSeq] = Empty // FIXME
 
   /** Encode the field value into a JValue */
   def asJValue: JValue = valueBox.map(_.asJObject) openOr (JNothing: JValue)

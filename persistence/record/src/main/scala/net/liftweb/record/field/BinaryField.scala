@@ -47,7 +47,7 @@ trait BinaryTypedField extends TypedField[Array[Byte]] {
   def setFromJValue(jvalue: JValue) = setFromJString(jvalue)(s => tryo(base64Decode(s)))
 }
   
-class BinaryField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
+class BinaryField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[Array[Byte], OwnerType] with MandatoryTypedField[Array[Byte]] with BinaryTypedField {
 
   def this(@deprecatedName('rec) owner: OwnerType, value: Array[Byte]) = {
@@ -58,7 +58,7 @@ class BinaryField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override
   def defaultValue = Array(0)
 }
 
-class OptionalBinaryField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
+class OptionalBinaryField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[Array[Byte], OwnerType] with OptionalTypedField[Array[Byte]] with BinaryTypedField {
 
   def this(@deprecatedName('rec) owner: OwnerType, value: Box[Array[Byte]]) = {

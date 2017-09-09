@@ -32,7 +32,7 @@ import scala.xml._
 
 /** Field that contains an entire record represented as an inline object value. Inspired by JSONSubRecordField */
 abstract class BsonRecordTypedField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonRecord[SubRecordType]]
-(override val owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit subRecordType: Manifest[SubRecordType])
+(val owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit subRecordType: Manifest[SubRecordType])
   extends Field[SubRecordType, OwnerType] {
 
   def this(owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType], value: Box[SubRecordType])
@@ -41,26 +41,26 @@ abstract class BsonRecordTypedField[OwnerType <: BsonRecord[OwnerType], SubRecor
     setBox(value)
   }
 
-  override def asJs = asJValue match {
+  def asJs = asJValue match {
     case JNothing => JsNull
     case jv => new JsExp {
       lazy val toJsCmd = compactRender(jv)
     }
   }
 
-  override def toForm: Box[NodeSeq] = Empty
+  def toForm: Box[NodeSeq] = Empty
 
-  override def setFromString(s: String): Box[SubRecordType] = valueMeta.fromJsonString(s)
+  def setFromString(s: String): Box[SubRecordType] = valueMeta.fromJsonString(s)
 
-  override def setFromAny(in: Any): Box[SubRecordType] = in match {
+  def setFromAny(in: Any): Box[SubRecordType] = in match {
     case dbo: DBObject => setBox(Full(valueMeta.fromDBObject(dbo)))
     case dbo: Document => setBox(Full(valueMeta.fromDocument(dbo)))
     case _ => genericSetFromAny(in)
   }
 
-  override def asJValue: JValue = valueBox.map(_.asJValue) openOr (JNothing: JValue)
+  def asJValue: JValue = valueBox.map(_.asJValue) openOr (JNothing: JValue)
 
-  override def setFromJValue(jvalue: JValue): Box[SubRecordType] = jvalue match {
+  def setFromJValue(jvalue: JValue): Box[SubRecordType] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
     case _ => setBox(valueMeta.fromJValue(jvalue))
   }
@@ -75,7 +75,7 @@ class BsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonR
     set(value)
   }
 
-  override def defaultValue = valueMeta.createRecord
+  def defaultValue = valueMeta.createRecord
 }
 
 class OptionalBsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonRecord[SubRecordType]]

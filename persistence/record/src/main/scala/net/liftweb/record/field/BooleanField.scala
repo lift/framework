@@ -68,7 +68,7 @@ trait BooleanTypedField extends TypedField[Boolean] {
   }
 }
 
-class BooleanField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
+class BooleanField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[Boolean, OwnerType] with MandatoryTypedField[Boolean] with BooleanTypedField {
 
   def this(@deprecatedName('rec) owner: OwnerType, value: Boolean) = {
@@ -79,7 +79,7 @@ class BooleanField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) overrid
   def defaultValue = false
 }
 
-class OptionalBooleanField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
+class OptionalBooleanField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[Boolean, OwnerType] with OptionalTypedField[Boolean] with BooleanTypedField {
 
   def this(@deprecatedName('rec) owner: OwnerType, value: Box[Boolean]) = {

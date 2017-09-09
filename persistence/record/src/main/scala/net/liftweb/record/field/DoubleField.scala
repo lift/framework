@@ -50,7 +50,7 @@ trait DoubleTypedField extends NumericTypedField[Double] {
   }
 }
 
-class DoubleField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
+class DoubleField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[Double, OwnerType] with MandatoryTypedField[Double] with DoubleTypedField {
 
   def this(@deprecatedName('rec) owner: OwnerType, value: Double) = {
@@ -59,7 +59,7 @@ class DoubleField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override
   }
 }
 
-class OptionalDoubleField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
+class OptionalDoubleField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[Double, OwnerType] with OptionalTypedField[Double] with DoubleTypedField {
 
   def this(@deprecatedName('rec) owner: OwnerType, value: Box[Double]) = {

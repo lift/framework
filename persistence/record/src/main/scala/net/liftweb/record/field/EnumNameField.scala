@@ -79,7 +79,7 @@ trait EnumNameTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Va
   def setFromJValue(jvalue: JValue): Box[EnumType#Value] = setFromJStringName(jvalue)
 }
 
-class EnumNameField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](@deprecatedName('rec) override val owner: OwnerType,
+class EnumNameField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](@deprecatedName('rec) val owner: OwnerType,
   protected val enum: EnumType)(implicit m: Manifest[EnumType#Value]
 ) extends Field[EnumType#Value, OwnerType] with MandatoryTypedField[EnumType#Value] with EnumNameTypedField[EnumType] {
 
@@ -91,7 +91,7 @@ class EnumNameField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](@de
   protected val valueManifest = m
 }
 
-class OptionalEnumNameField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](@deprecatedName('rec) override val owner: OwnerType,
+class OptionalEnumNameField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](@deprecatedName('rec) val owner: OwnerType,
   protected val enum: EnumType)(implicit m: Manifest[EnumType#Value]
 ) extends Field[EnumType#Value, OwnerType] with OptionalTypedField[EnumType#Value] with EnumNameTypedField[EnumType] {
 

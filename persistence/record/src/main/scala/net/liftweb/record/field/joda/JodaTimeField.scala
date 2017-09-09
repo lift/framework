@@ -74,7 +74,7 @@ trait JodaTimeTypedField extends TypedField[DateTime] with JodaHelpers {
   }
 }
 
-class JodaTimeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
+class JodaTimeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[DateTime, OwnerType] with MandatoryTypedField[DateTime] with JodaTimeTypedField {
 
   def this(@deprecatedName('rec) owner: OwnerType, value: DateTime) = {
@@ -85,7 +85,7 @@ class JodaTimeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) overri
   def defaultValue = DateTime.now
 }
 
-class OptionalJodaTimeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) override val owner: OwnerType)
+class OptionalJodaTimeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[DateTime, OwnerType] with OptionalTypedField[DateTime] with JodaTimeTypedField {
 
   def this(@deprecatedName('rec) owner: OwnerType, value: Box[DateTime]) = {
