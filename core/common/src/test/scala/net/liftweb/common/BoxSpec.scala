@@ -152,10 +152,6 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
         Full(Empty).flatten must_== Empty
       }
     }
-    "define a 'mapFailure' method returning itself." in {
-      val failure = Failure("new-error", Empty, Empty)
-      Full(1).mapFailure(_ => failure) must_==  Full(1)
-    }
     "define a 'collect' method that takes a PartialFunction to transform its contents" in {
       "If the partial-function is defined for the contents of this box, returns a full box containing the result of applying that partial function to this Box's contents" in {
         Full("Albus") collect { case "Albus" => "Dumbledore"} must_== Full("Dumbledore")
@@ -164,8 +160,21 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
         Full("Hermione") collect { case "Albus" => "Dumbledore"} must beEmpty
       }
     }
+    "define a 'transform' method that takes a PartialFunction to transform this box into another box" in {
+      "If the partial-function is defined for this box, returns the result of applying the partial function to it" in {
+        Full(404) transform {
+          case Full(x: Int) if x != 200 => Failure("Server error")
+        } must_== Failure("Server error")
+      }
+      "If the partial-function is not defined for this box, returns itself unchanged" in {
+        Full("Intended Result") transform {
+          case _: EmptyBox => Full("Alternative")
+          case Full("Unexpected Result") => Full("Alternative")
+        } must_== Full("Intended Result")
+      }
+    }
     "define a 'flip' method returning Empty" in {
-      Full(1) flip { case _ => "alternative" } must_== Empty
+      Full(1) flip { _ => "No data found" } mustEqual Empty
     }
     "define an 'elements' method returning an iterator containing its value" in {
       Full(1).elements.next must_== 1
@@ -313,24 +322,25 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "define a 'flatten' method returning Empty" in {
       Empty.flatten must beEmpty
     }
-    "define a 'mapFailure' method returning itself." in {
-      val failure = Failure("new-error", Empty, Empty)
-      Empty.mapFailure(_ => failure) must beEmpty
-    }
     "define a 'collect' method returning Empty" in {
       Empty collect { case _ => "Some Value" } must beEmpty
     }
-    "define a 'flip' method that takes a PartialFunction to transform this Empty box into something else" in {
-      "If the partial-function is defined for Empty, returns a full box containing the result of applying the partial function to it" in {
-        Empty flip { case Empty => "Return Of The Jedi" } must_== Full("Return Of The Jedi")
-        Empty flip {
-          case Failure("The Phantom Menace", Empty, Empty) => "Attack"
-          case Empty => "Return Of The Jedi"
-        } must_== Full("Return Of The Jedi")
+    "define a 'transform' method that takes a PartialFunction to transform this Empty box into another box" in {
+      "If the partial-function is defined for Empty, returns the result of applying the partial function to it" in {
+        Empty transform {
+          case Failure("error", Empty, Empty) => Full("failure-alternative")
+          case Empty => Full("alternative")
+        } must_== Full("alternative")
       }
       "If the partial-function is not defined for Empty, returns Empty" in {
-        Empty flip { case Failure("The Phantom Menace", Empty, Empty) => "Return Of The Jedi" } must_== Empty
+        Empty transform { case Failure("The Phantom Menace", Empty, Empty) => Full("Return Of The Jedi") } must_== Empty
       }
+    }
+    "define a 'flip' method returning a Full box" in {
+      Empty flip {
+        case Empty => "flipped-empty"
+        case _ => "flipped-failure"
+      } mustEqual Full("flipped-empty")
     }
     "define an 'elements' method returning an empty iterator" in {
       Empty.elements.hasNext must beFalse
@@ -392,21 +402,29 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Failure("error", Empty, Empty) flatMap {x: String => Full(x.toString)} must_== Failure("error", Empty, Empty)
       Failure("error", Empty, Empty).flatten must_== Failure("error", Empty, Empty)
     }
-    "define a 'mapFailure' method that transforms it into another Failure instance." in {
-      val exception = new Exception("transformed")
-      Failure("error", Empty, Empty) mapFailure { _ => Failure("new-error", Full(exception), Empty) } must_== Failure("new-error", Full(exception), Empty)
-    }
     "define a 'collect' method returning itself" in {
       Failure("error", Empty, Empty) collect { case _ => "Some Value" } must_== Failure("error", Empty, Empty)
     }
-    "define a 'flip' method that takes a PartialFunction to transform this Failure into something else" in {
-      "If the partial-function is defined for this Failure, returns a full box containing the result of applying the partial function to it" in {
-        Failure("The Phantom Menace") flip { case Failure("The Phantom Menace", Empty, Empty) => "Return Of The Jedi" } must_== Full("Return Of The Jedi")
-        Failure("The Phantom Menace") flip { case Failure("The Phantom Menace", Empty, Empty) => Failure("Attack") } must_== Full(Failure("Attack"))
+    "define a 'transform' method that takes a PartialFunction to transform this Failure into another box" in {
+      "If the partial-function is defined for this Failure, returns the result of applying the partial function to it" in {
+        Failure("The Phantom Menace") transform {
+          case Failure("The Phantom Menace", Empty, Empty) => Full("Return Of The Jedi")
+        } must_== Full("Return Of The Jedi")
+
+        Failure("The Phantom Menace") transform {
+          case Failure("The Phantom Menace", Empty, Empty) => Failure("Clones")
+          case _ => Full("Jedi")
+        } must_== Failure("Clones")
       }
-      "If the partial-function is not defined for this Failure, returns Empty" in {
-        Failure("Attack Of The Clones") flip { case Failure("The Phantom Menace", Empty, Empty) => "Return Of The Jedi" } must_== Empty
+      "If the partial-function is not defined for this Failure, returns itself unchanged" in {
+        Failure("Clones") transform { case Failure("The Phantom Menace", Empty, Empty) => Full("Jedi") } must_== Failure("Clones")
       }
+    }
+    "define a 'flip' method returning a Full box" in {
+      Failure("error", Empty, Empty) flip {
+        case Empty => "flipped-empty"
+        case _: Failure => "flipped-failure"
+      } must_== Full("flipped-failure")
     }
     "return itself when asked for its status with the operator ?~" in {
       Failure("error", Empty, Empty) ?~ "nothing" must_== Failure("error", Empty, Empty)

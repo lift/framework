@@ -519,30 +519,6 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def foreach[U](f: A => U): Unit = {}
 
   /**
-    * If this box is a `Failure`, returns a `Failure` box that results from passing this box
-    * to `fn`. Otherwise, returns this box. Used for transforming Failures without having to
-    * cover all three cases of Box, which is required by `map`.
-    *
-    * `map` is only applied if the box is full, `mapFailure` is only applied if this box is a `Failure`.
-    *
-    * @example {{{
-    *  // Returns `Failure("Changed failure")` because this box is a failure.
-    *  Failure("Original Failure") mapFailure { failed => Failure("Changed failure") }
-    *
-    *  // Returns Full("some-value") on which it was called
-    *  Full("some-value") mapFailure { failure => Failure("Changed failure") }
-    *
-    *  // Returns this Empty instance
-    *  Empty mapFailure { case value => value }
-    *  }}}
-    *
-    * @param fn the function that will be used to transform the Failure if this box is a failure.
-    * @return A `Failure` instance that results from applying `fn` if this box is a `Failure`, otherwise
-    *         the same instance on which it was called.
-    */
-  def mapFailure(fn: Failure => Failure): Box[A] = this
-
-  /**
    * If this box is `Full` and contains an object of type `B`, returns a `Full`
    * of type `Box[B]`. Otherwise, returns `Empty`.
    *
@@ -576,16 +552,16 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def asA[B](implicit m: Manifest[B]): Box[B] = Empty
 
   /**
-   * Return this Box if `Full`, or the specified alternative if it is
-   * empty. Equivalent to `Option`'s `[[scala.Option.orElse orElse]]`.
-   */
-  def or[B >: A](alternative: => Box[B]): Box[B] = alternative
-
-  /**
    * Returns an `[[scala.collection.Iterator Iterator]]` over the value
    * contained in this `Box`, if any.
    */
   def elements: Iterator[A] = Iterator.empty
+
+  /**
+    * Return this Box if `Full`, or the specified alternative if it is
+    * empty. Equivalent to `Option`'s `[[scala.Option.orElse orElse]]`.
+    */
+  def or[B >: A](alternative: => Box[B]): Box[B] = transform { case _: EmptyBox => alternative }
 
   /**
    * Get a `java.util.Iterator` from the Box.
@@ -814,30 +790,39 @@ sealed abstract class Box[+A] extends Product with Serializable{
   }
 
   /**
-    * Returns a `Full` box containing the results of applying `flipFn` to this box if it is a `Failure`,
-    * `ParamFailure` or `Empty`, and `flipFn` is defined for it. Returns `Empty` if this box is `Full`.
-    * In other words, it "flips" the full/empty status of this Box.
+    * Transforms this box using the `transformFn`. If `transformFn` is defined for this box,
+    * returns the result of applying `transformFn` to it. Otherwise, returns this box unchanged.
     *
     * @example {{{
-    *  // Returns Full("alternative") because the partial function covers the case.
-    *  Failure("error") flip { case Failure("error", Empty, Empty) => "alternative" }
     *
-    *  // Returns Empty because the partial function doesn't cover the case.
-    *  Failure("another-error") flip { case Failure("error", Empty, Empty) => "alternative" }
+    *  // Returns Full("alternative") because the partial function covers the case.
+    *  Full("error") transform { case Full("error") => Full("alternative") }
+    *
+    *  // Returns Full(1), this Full box unchanged, because the partial function doesn't cover the case.
+    *  Full(1) transform { case Full(2) => Failure("error") }
+    *
+    *  // Returns this Failure("another-error") unchanged because the partial function doesn't cover the case.
+    *  Failure("another-error") transform { case Failure("error", Empty, Empty) => Full("alternative") }
     *
     *  // Returns Full("alternative") for an Empty box since `partialFn` is defined for Empty
-    *  Empty flip { case Empty => "alternative" }
+    *  Empty transform { case Empty => Full("alternative") }
     *
     *  // Returns Empty because the partial function is not defined for Empty
-    *  Empty flip { case Failure("error", Empty, Empty) => "alternative" }
-    *
-    *  // Returns Empty for a Full box
-    *  Full(1) flip { case _ => Failure("error") }
+    *  Empty transform { case Failure("error", Empty, Empty) => Full("alternative") }
     *
     *  }}}
     */
-  def flip[B](flipFn: PartialFunction[EmptyBox, B]): Box[B] = this match {
-    case e: EmptyBox if flipFn.isDefinedAt(e) => Full(flipFn(e))
+  def transform[B >: A](transformFn: PartialFunction[Box[A], Box[B]]): Box[B] = {
+    transformFn.applyOrElse(this, (thisBox: Box[A]) => thisBox)
+  }
+
+  /**
+    * Returns a `Full` box containing the results of applying `flipFn` to this box if it is a `Failure`,
+    * `ParamFailure` or `Empty`. Returns `Empty` if this box is `Full`. In other words, it "flips" the
+    * full/empty status of this Box.
+    */
+  def flip[B](flipFn: EmptyBox => B): Box[B] = this match {
+    case e: EmptyBox => Full(flipFn(e))
     case _ => Empty
   }
 }
@@ -851,8 +836,6 @@ final case class Full[+A](value: A) extends Box[A] {
   def openOrThrowException(justification: => String): A = value
 
   override def openOr[B >: A](default: => B): B = value
-
-  override def or[B >: A](alternative: => Box[B]): Box[B] = this
 
   override def exists(func: A => Boolean): Boolean = func(value)
 
@@ -920,8 +903,6 @@ sealed abstract class EmptyBox extends Box[Nothing] with Serializable {
 
   override def openOr[B >: Nothing](default: => B): B = default
 
-  override def or[B >: Nothing](alternative: => Box[B]): Box[B] = alternative
-
   override def filter(p: Nothing => Boolean): Box[Nothing] = this
 
   override def ?~(msg: => String): Failure = Failure(msg, Empty, Empty)
@@ -955,8 +936,6 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
     }
 
   override def map[B](f: A => B): Box[B] = this
-
-  override def mapFailure(f: (Failure) => Failure): Box[A] = f(this)
 
   override def flatMap[B](f: A => Box[B]): Box[B] = this
 
