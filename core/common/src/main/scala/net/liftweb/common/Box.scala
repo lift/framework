@@ -793,9 +793,9 @@ sealed abstract class Box[+A] extends Product with Serializable{
     * Transforms this box using the `transformFn`. If `transformFn` is defined for this box,
     * returns the result of applying `transformFn` to it. Otherwise, returns this box unchanged.
     *
-    * If you want to change the content of a `Full` box, using [[map]] or [[collect]] might be better
+    * If you want to change the content of a `Full` box, using `[[map]]` or `[[collect]]` might be better
     * suited to that purpose. If you want to convert an `Empty`, `Failure` or a `ParamFailure` into a
-    * `Full` box, you should use [[flip]].
+    * `Full` box, you should use `[[flip]]`.
     *
     * @example {{{
     *
