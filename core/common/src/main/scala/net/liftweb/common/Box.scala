@@ -561,7 +561,7 @@ sealed abstract class Box[+A] extends Product with Serializable{
     * Return this Box if `Full`, or the specified alternative if it is
     * empty. Equivalent to `Option`'s `[[scala.Option.orElse orElse]]`.
     */
-  def or[B >: A](alternative: => Box[B]): Box[B] = transform { case _: EmptyBox => alternative }
+  def or[B >: A](alternative: => Box[B]): Box[B]
 
   /**
    * Get a `java.util.Iterator` from the Box.
@@ -793,6 +793,10 @@ sealed abstract class Box[+A] extends Product with Serializable{
     * Transforms this box using the `transformFn`. If `transformFn` is defined for this box,
     * returns the result of applying `transformFn` to it. Otherwise, returns this box unchanged.
     *
+    * If you want to change the content of a `Full` box, using [[map]] or [[collect]] might be better
+    * suited to that purpose. If you want to convert an `Empty`, `Failure` or a `ParamFailure` into a
+    * `Full` box, you should use [[flip]].
+    *
     * @example {{{
     *
     *  // Returns Full("alternative") because the partial function covers the case.
@@ -836,6 +840,8 @@ final case class Full[+A](value: A) extends Box[A] {
   def openOrThrowException(justification: => String): A = value
 
   override def openOr[B >: A](default: => B): B = value
+
+  override def or[B >: A](alternative: => Box[B]): Box[B] = this
 
   override def exists(func: A => Boolean): Boolean = func(value)
 
@@ -902,6 +908,8 @@ sealed abstract class EmptyBox extends Box[Nothing] with Serializable {
   throw new NullPointerException("An Empty Box was opened.  The justification for allowing the openOrThrowException was "+justification)
 
   override def openOr[B >: Nothing](default: => B): B = default
+
+  override def or[B >: Nothing](alternative: => Box[B]): Box[B] = alternative
 
   override def filter(p: Nothing => Boolean): Box[Nothing] = this
 
