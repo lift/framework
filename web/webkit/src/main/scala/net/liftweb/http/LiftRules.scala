@@ -859,10 +859,28 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    *   - NoOpSnippetTimer that does nothing
    *   - LoggingSnippetTimer that logs snippet times.
    *
-   * Since this is a FactoryMaker you can programmatically override it for an individual request
+   * To enable snippet timing, invoke `LiftRules.installSnippetTimer`. Once enabled you can use
+   * the snippet timer like a regular `FactoryMaker`. If you only want snippet timing for certain
+   * sessions or requests, invoke `installSnippetTimer` with the `NoOpSnippetTimer` and change
+   * the value for the sessions or requests where you want snippet timing.
+   *
+   * Since this is a `FactoryMaker` you can programmatically override it for an individual request
    * or session as you see fit. You can also implement your own timer!
    */
   val snippetTimer = new LiftRulesGuardedSetting[Option[FactoryMaker[SnippetTimer]]]("snippetTimer", None)
+
+  /**
+   * Enable snippet timing and install a default snippet timer.
+   * This method can only be invoked during boot.
+   *
+   * This method only enables snippet timing and sets the default snippet timer. If you want to
+   * change snipping timing behavior for specific sessions or requests, you'll want to interact
+   * with the underlying `FactoryMaker` after its set up.
+   */
+  def installSnippetTimer(default: SnippetTimer): Unit = {
+    val factoryMaker = new FactoryMaker[SnippetTimer](default) {}
+    snippetTimer.set(Some(factoryMaker))
+  }
 
   /**
    * Implementation for snippetNamesToSearch that looks first in a package named by taking the current template path.
