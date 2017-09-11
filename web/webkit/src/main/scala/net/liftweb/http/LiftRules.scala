@@ -766,7 +766,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * lift.cometOnSessionLost reloads the current page by default.
    */
   val noCometSessionCmd = new FactoryMaker[JsCmd](
-    () => JsCmds.Run(s"lift.cometOnSessionLost('${S.contextPath}')")
+    () => JsCmds.Run(s"lift.cometOnSessionLost('${urlEncode(S.contextPath).replace("'", "\\'")}')")
   ) {}
 
   /**
