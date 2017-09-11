@@ -2576,7 +2576,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   // Runs some base setup tasks before returning the comet.
   private def buildCometByCreationInfo(creationInfo: CometCreationInfo): Box[LiftCometActor] = {
     LiftRules.cometCreationFactory.vend.apply(creationInfo) or
-    LiftRules.cometCreation.toList.find(_.isDefinedAt(creationInfo)).map(_.apply(creationInfo)) or {
+    NamedPF.applyBox(creationInfo, LiftRules.cometCreation.toList) or {
       val cometType =
         findType[LiftCometActor](
           creationInfo.cometType,
