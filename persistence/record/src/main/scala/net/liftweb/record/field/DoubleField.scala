@@ -18,13 +18,11 @@ package net.liftweb
 package record
 package field
 
-import scala.xml._
 import net.liftweb.common._
 import net.liftweb.http.{S}
 import json._
 import net.liftweb.util._
 import Helpers._
-import S._
 
 trait DoubleTypedField extends NumericTypedField[Double] {
   
@@ -52,25 +50,21 @@ trait DoubleTypedField extends NumericTypedField[Double] {
   }
 }
 
-class DoubleField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+class DoubleField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[Double, OwnerType] with MandatoryTypedField[Double] with DoubleTypedField {
 
-  def this(rec: OwnerType, value: Double) = {
-    this(rec)
+  def this(@deprecatedName('rec) owner: OwnerType, value: Double) = {
+    this(owner)
     set(value)
   }
-
-  def owner = rec
 }
 
-class OptionalDoubleField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+class OptionalDoubleField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[Double, OwnerType] with OptionalTypedField[Double] with DoubleTypedField {
 
-  def this(rec: OwnerType, value: Box[Double]) = {
-    this(rec)
+  def this(@deprecatedName('rec) owner: OwnerType, value: Box[Double]) = {
+    this(owner)
     setBox(value)
   }
-
-  def owner = rec
 }
 

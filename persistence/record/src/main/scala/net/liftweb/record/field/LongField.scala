@@ -51,25 +51,21 @@ trait LongTypedField extends NumericTypedField[Long] {
   }
 }
 
-class LongField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+class LongField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[Long, OwnerType] with MandatoryTypedField[Long] with LongTypedField {
 
-  def this(rec: OwnerType, value: Long) = {
-    this(rec)
+  def this(@deprecatedName('rec) owner: OwnerType, value: Long) = {
+    this(owner)
     set(value)
   }
-
-  def owner = rec
 }
 
-class OptionalLongField[OwnerType <: Record[OwnerType]](rec: OwnerType)
+class OptionalLongField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[Long, OwnerType] with OptionalTypedField[Long] with LongTypedField {
 
-  def this(rec: OwnerType, value: Box[Long]) = {
-    this(rec)
+  def this(@deprecatedName('rec) owner: OwnerType, value: Box[Long]) = {
+    this(owner)
     setBox(value)
   }
-
-  def owner = rec
 }
 

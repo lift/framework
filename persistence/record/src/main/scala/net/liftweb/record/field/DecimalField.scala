@@ -70,11 +70,11 @@ trait DecimalTypedField extends NumericTypedField[BigDecimal] {
  *
  * @author Derek Chen-Becker
  *
- * @param rec The Record that owns this field
+ * @param owner The Record that owns this field
  * @param context The MathContext that controls precision and rounding
  * @param scale Controls the scale of the underlying BigDecimal
  */
-class DecimalField[OwnerType <: Record[OwnerType]](rec: OwnerType, val context : MathContext, val scale : Int)
+class DecimalField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType, val context : MathContext, val scale : Int)
   extends Field[BigDecimal, OwnerType] with MandatoryTypedField[BigDecimal] with DecimalTypedField {
 
   /**
@@ -82,11 +82,11 @@ class DecimalField[OwnerType <: Record[OwnerType]](rec: OwnerType, val context :
    * is set to MathContext.UNLIMITED (see note above about default precision).
    * The scale is taken from the initial value.
    *
-   * @param rec The Record that owns this field
+   * @param owner The Record that owns this field
    * @param value The initial value
    */
-  def this(rec : OwnerType, value : BigDecimal) = {
-    this(rec, MathContext.UNLIMITED, value.scale)
+  def this(@deprecatedName('rec) owner : OwnerType, value : BigDecimal) = {
+    this(owner, MathContext.UNLIMITED, value.scale)
     set(value)
   }
 
@@ -94,16 +94,14 @@ class DecimalField[OwnerType <: Record[OwnerType]](rec: OwnerType, val context :
    * Constructs a DecimalField with the specified initial value and context.
    * The scale is taken from the initial value.
    *
-   * @param rec The Record that owns this field
+   * @param owner The Record that owns this field
    * @param value The initial value
    * @param context The MathContext that controls precision and rounding
    */
-  def this(rec : OwnerType, value : BigDecimal, context : MathContext) = {
-    this(rec, context, value.scale)
+  def this(@deprecatedName('rec) owner : OwnerType, value : BigDecimal, context : MathContext) = {
+    this(owner, context, value.scale)
     set(value)
   }
-
-  def owner = rec
 }
 
 
@@ -123,11 +121,11 @@ class DecimalField[OwnerType <: Record[OwnerType]](rec: OwnerType, val context :
  *
  * @author Derek Chen-Becker
  *
- * @param rec The Record that owns this field
+ * @param owner The Record that owns this field
  * @param context The MathContext that controls precision and rounding
  * @param scale Controls the scale of the underlying BigDecimal
  */
-class OptionalDecimalField[OwnerType <: Record[OwnerType]](rec: OwnerType, val context : MathContext, val scale : Int)
+class OptionalDecimalField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType, val context : MathContext, val scale : Int)
   extends Field[BigDecimal, OwnerType] with OptionalTypedField[BigDecimal] with DecimalTypedField {
 
   /**
@@ -135,12 +133,12 @@ class OptionalDecimalField[OwnerType <: Record[OwnerType]](rec: OwnerType, val c
    * is set to MathContext.UNLIMITED (see note above about default precision).
    * The scale is taken from the initial value.
    *
-   * @param rec The Record that owns this field
+   * @param owner The Record that owns this field
    * @param value The initial value
    * @param scale the scale of the decimal field, since there might be no value
    */
-  def this(rec : OwnerType, value : Box[BigDecimal], scale : Int) = {
-    this(rec, MathContext.UNLIMITED, scale)
+  def this(@deprecatedName('rec) owner : OwnerType, value : Box[BigDecimal], scale : Int) = {
+    this(owner, MathContext.UNLIMITED, scale)
     setBox(value)
   }
 
@@ -148,16 +146,14 @@ class OptionalDecimalField[OwnerType <: Record[OwnerType]](rec: OwnerType, val c
    * Constructs a DecimalField with the specified initial value and context.
    * The scale is taken from the initial value.
    *
-   * @param rec The Record that owns this field
+   * @param owner The Record that owns this field
    * @param value The initial value
    * @param scale the scale of the decimal field, since there might be no value
    * @param context The MathContext that controls precision and rounding
    */
-  def this(rec : OwnerType, value : Box[BigDecimal], scale : Int, context : MathContext) = {
-    this(rec, context, scale)
+  def this(@deprecatedName('rec) owner : OwnerType, value : Box[BigDecimal], scale : Int, context : MathContext) = {
+    this(owner, context, scale)
     setBox(value)
   }
-
-  def owner = rec
 }
 

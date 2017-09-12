@@ -1917,7 +1917,13 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   private[http] def withMimeHeaders[T](map: Map[String, List[String]])(f: => T): T = _mimeHeaders.doWith(Full(map))(f)
 
-  @volatile var templateCache: Box[TemplateCache[(Locale, List[String]), NodeSeq]] = Empty
+  @volatile var templateCache: Box[TemplateCache[(Locale, List[String]), NodeSeq]] = {
+    if (Props.productionMode) {
+      Full(InMemoryCache(500))
+    } else {
+      Empty
+    }
+  }
 
   val dateTimeConverter: FactoryMaker[DateTimeConverter] = new FactoryMaker[DateTimeConverter]( () => DefaultDateTimeConverter ) {}
 
