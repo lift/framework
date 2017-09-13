@@ -34,8 +34,8 @@ object ThreadPoolRules {
 }
 
 /**
- * The LAPinger object schedules a LiftActor to be pinged "delay" miliseconds in the future.
- * The schedule method return a ScheduledFuture object which can be cancelled if necessary.
+ * LAPinger is for scheduling LiftActors to be pinged with an arbitrary message at some point
+ * in the future.
  */
 object LAPinger {
 
@@ -99,4 +99,3 @@ private object TF extends ThreadFactory {
     d
   }
 }
-
