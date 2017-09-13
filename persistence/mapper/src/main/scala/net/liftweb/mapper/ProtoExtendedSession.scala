@@ -59,6 +59,13 @@ trait UserIdAsString {
   def userIdAsString: String
 }
 
+/**
+ * The root trait for defining the session cookie path for extended sessions
+ * that defines the default session cookie path: "/".
+ *
+ * Extend this trait then mix it into an extended session singleton to change
+ * the cookie path. See also: [[ContextPathExtendedCookie]]
+ */
 trait ProtoSessionCookiePath {
   def sessionCookiePath: String = "/"
 }
@@ -131,6 +138,12 @@ KeyedMetaMapper[Long, T] with ProtoSessionCookiePath {
   }
 }
 
+/**
+ * Mix this in to your extended session singleton to set the cookie path
+ * to the context path for your application. This is useful if you have
+ * multiple applications on a single application server and want to ensure
+ * their cookies don't cross-pollinate.
+ */
 trait ContextPathExtendedCookie extends ProtoSessionCookiePath {
   override def sessionCookiePath = S.contextPath
 }
