@@ -24,7 +24,6 @@ import java.util.regex.Pattern
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.json.DefaultFormats
 import net.liftweb.json.JsonDSL._
-import net.liftweb.json.JsonAST.JObject
 import net.liftweb.record.field._
 import net.liftweb.util.TimeHelpers._
 import net.liftweb.mongodb.record.field._
@@ -99,7 +98,7 @@ package mongotestrecords {
   class ListDoc private () extends MongoRecord[ListDoc] with ObjectIdPk[ListDoc] {
     def meta = ListDoc
 
-    import scala.collection.JavaConversions._
+    import scala.collection.JavaConverters._
 
     // standard list types
     object name extends StringField(this, 10)
@@ -113,7 +112,7 @@ package mongotestrecords {
     object binarylist extends MongoListField[ListDoc, Array[Byte]](this)
 
     // specialized list types
-    object jsonobjlist extends MongoJsonObjectListField(this, JsonDoc)
+    object jsonobjlist extends JsonObjectListField(this, JsonDoc)
 
     // these require custom setFromDBObject methods
     object maplist extends MongoListField[ListDoc, Map[String, String]](this) {
@@ -137,13 +136,10 @@ package mongotestrecords {
 
       override def setFromDBObject(dbo: DBObject): Box[List[Map[String, String]]] = {
         val lst: List[Map[String, String]] =
-          dbo.keySet.toList.map(k => {
-            dbo.get(k.toString) match {
-              case bdbo: BasicDBObject if (bdbo.containsField("name") && bdbo.containsField("type")) =>
-                Map("name"-> bdbo.getString("name"), "type" -> bdbo.getString("type"))
-              case _ => null
-            }
-          }).filter(_ != null)
+          dbo.keySet.asScala.toList.map(dbo.get).collect {
+            case bdbo: BasicDBObject if bdbo.containsField("name") && bdbo.containsField("type") =>
+              Map("name"-> bdbo.getString("name"), "type" -> bdbo.getString("type"))
+          }
         Full(set(lst))
       }
     }
@@ -202,7 +198,7 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
 
     checkMongoIsRunning
 
-    S.initIfUninitted(session){
+    S.initIfUninitted(session) {
 
       val pwd = "test"
       val cal = Calendar.getInstance

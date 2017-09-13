@@ -19,25 +19,17 @@ package mongodb
 package record
 package field
 
-import common._
-import http.js.JE._
-import json._
-import util.Helpers.tryo
-import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField}
+import com.mongodb._
+import net.liftweb.common._
+import net.liftweb.json._
+import net.liftweb.record._
+import net.liftweb.util.Helpers.tryo
+import org.bson.Document
 
 import scala.xml.NodeSeq
 
-import com.mongodb._
-import org.bson.Document
-
-class JObjectField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
-extends Field[JObject, OwnerType]
-with MandatoryTypedField[JObject]
-with MongoFieldFlavor[JObject] {
-
-  def owner = rec
-
-  def asJValue: JValue = valueBox openOr (JNothing: JValue)
+trait JObjectTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[JObject]
+  with Field[JObject, OwnerType] with MongoFieldFlavor[JObject] {
 
   def setFromJValue(jvalue: JValue): Box[JObject] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
@@ -45,15 +37,13 @@ with MongoFieldFlavor[JObject] {
     case other => setBox(FieldHelpers.expectedA("JObject", other))
   }
 
-  def defaultValue = JObject(List())
-
   def setFromAny(in: Any): Box[JObject] = in match {
     case dbo: DBObject => setBox(setFromDBObject(dbo))
     case doc: Document => setBox(setFromDocument(doc))
     case jv: JObject => setBox(Full(jv))
     case Some(jv: JObject) => setBox(Full(jv))
     case Full(jv: JObject) => setBox(Full(jv))
-    case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny).apply(0)
+    case seq: Seq[_] if seq.nonEmpty => seq.map(setFromAny).head
     case (s: String) :: _ => setFromString(s)
     case null => setBox(Full(null))
     case s: String => setFromString(s)
@@ -78,5 +68,28 @@ with MongoFieldFlavor[JObject] {
 
   def setFromDocument(obj: Document): Box[JObject] =
     Full(JObjectParser.serialize(obj)(owner.meta.formats).asInstanceOf[JObject])
+
+  def asJValue: JValue = valueBox openOr (JNothing: JValue)
+}
+
+class JObjectField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+  extends JObjectTypedField[OwnerType] with MandatoryTypedField[JObject] {
+
+  def this(owner: OwnerType, value: JObject) = {
+    this(owner)
+    setBox(Full(value))
+  }
+
+  def defaultValue = JObject(List())
+
+}
+
+class OptionalJObjectField[OwnerType <: BsonRecord[OwnerType]](val owner: OwnerType)
+  extends JObjectTypedField[OwnerType] with OptionalTypedField[JObject] {
+
+  def this(owner: OwnerType, value: Box[JObject]) = {
+    this(owner)
+    setBox(value)
+  }
 
 }
