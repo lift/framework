@@ -378,7 +378,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     */
   private[this] def this() = this("", "")
 
-  @transient lazy val httpSession: Box[HTTPSession] = _httpSession // TODO joescii
+  @transient lazy val httpSession: Box[HTTPSession] = _httpSession
+    .or(SessionMaster.getHttpSession(underlyingId)) // Handles the case where this LiftSession has been deserialized.
 
   def sessionHtmlProperties = LiftRules.htmlProperties.session.is.make openOr LiftRules.htmlProperties.default.is.vend
 
@@ -689,6 +690,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     postPageFunctions = Map()
     highLevelSessionDispatcher = HashMap.empty
     sessionRewriter = HashMap.empty
+    SessionMaster.removeHttpSession(underlyingId)
   }
 
   def fixSessionTime(): Unit = synchronized {

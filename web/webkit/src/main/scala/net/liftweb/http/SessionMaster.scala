@@ -42,6 +42,7 @@ case class SessionInfo(session: LiftSession, userAgent: Box[String], ipAddress: 
 object SessionMaster extends LiftActor with Loggable {
   private val nsessions: ConcurrentHashMap[String, SessionInfo] = new ConcurrentHashMap()
   private val killedSessions: ConcurrentHashMap[String, Long] = new ConcurrentHashMap()
+  private val httpSessions: ConcurrentHashMap[String, HTTPSession] = new ConcurrentHashMap()
 
   private object CheckAndPurge
 
@@ -171,6 +172,10 @@ object SessionMaster extends LiftActor with Loggable {
 
     liftSession.httpSession.foreach(_.link(liftSession))
   }
+
+  def addHttpSession(httpSession: HTTPSession): Unit = httpSessions.put(httpSession.sessionId, httpSession)
+  def getHttpSession(id: String): Box[HTTPSession] = Box.legacyNullTest(httpSessions.get(id))
+  def removeHttpSession(id: String): Unit = httpSessions.remove(id)
 
   protected def messageHandler = reaction
 

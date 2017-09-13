@@ -53,6 +53,8 @@ trait HTTPProvider {
    * @param chain - function to be executed in case this request is supposed to not be processed by Lift
    */
   protected def service(req: HTTPRequest, resp: HTTPResponse)(chain: => Unit) = {
+    SessionMaster.addHttpSession(req.session)
+
     tryo {
       LiftRules.early.toList.foreach(_(req))
     }
