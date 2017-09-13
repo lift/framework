@@ -143,6 +143,14 @@ KeyedMetaMapper[Long, T] with ProtoSessionCookiePath {
  * to the context path for your application. This is useful if you have
  * multiple applications on a single application server and want to ensure
  * their cookies don't cross-pollinate.
+ *
+ * Example usage:
+ *
+ * {{{
+ * case class AppExtendedSession extends ProtoExtendedSession[AppExtendedSession]
+ * object MetaAppExtendedSession extends MetaProtoExtendedSession[AppExtendedSession]
+ *   with ContextPathExtendedCookie
+ * }}}
  */
 trait ContextPathExtendedCookie extends ProtoSessionCookiePath {
   override def sessionCookiePath = S.contextPath
