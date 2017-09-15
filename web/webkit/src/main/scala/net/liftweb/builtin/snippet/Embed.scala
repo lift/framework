@@ -79,8 +79,13 @@ object Embed extends DispatchSnippet {
 
       bindFn(template)
     }
-    case Failure(msg, _, _) =>
-      logger.error("'embed' snippet failed with message: "+msg)
+    case Failure(msg, ex, _) =>
+      ex match {
+        case Full(e) =>
+          logger.error("'embed' snippet failed with message: "+msg, e)
+        case _ =>
+          logger.error("'embed' snippet failed with message: "+msg)
+      }
       throw new SnippetExecutionException("Embed Snippet failed: "+msg)
 
     case _ =>
