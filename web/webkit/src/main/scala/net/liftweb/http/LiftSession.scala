@@ -2106,6 +2106,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           in.!(xlate(p) match {
             case Full(v) => v
             case Empty => logger.error("Failed to deserialize JSON message "+p); p
+            case Failure(msg, Full(ex), _) => logger.error("Failed to deserialize JSON message "+p+". Error "+msg, ex); p
             case Failure(msg, _, _) => logger.error("Failed to deserialize JSON message "+p+". Error "+msg); p
           })
           JsCmds.Noop
