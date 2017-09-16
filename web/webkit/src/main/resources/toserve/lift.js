@@ -76,8 +76,8 @@
       },
       cometGetTimeout: 140000,
       cometFailureRetryTimeout: 10000,
-      cometOnSessionLost: function() {
-        window.location.href = "/";
+      cometOnSessionLost: function(contextPath) {
+        window.location.href = contextPath || "/";
       },
       cometServer: null,
       cometOnError: function(e) {
@@ -600,8 +600,8 @@
       },
       calcAjaxUrl: calcAjaxUrl,
       registerComets: registerComets,
-      cometOnSessionLost: function() {
-        settings.cometOnSessionLost();
+      cometOnSessionLost: function(contextPath) {
+        settings.cometOnSessionLost(contextPath);
       },
       cometOnError: function(e) {
         settings.cometOnError(e);
