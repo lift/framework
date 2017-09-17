@@ -891,6 +891,7 @@ sealed trait ParamTryBox[+A, +E] extends Box[A] with TryBox[A] {
 
   override def map[B](f: A => B): ParamTryBox[B, E] = ???
   def flatMap[B, E2 >: E](f: A => ParamTryBox[B, E2]): ParamTryBox[B, E2]
+  def flatMap[B](f: A => Full[B])(implicit a: DummyImplicit): ParamTryBox[B, E]
 }
 
 /**
@@ -926,11 +927,12 @@ final case class Full[+A](value: A) extends Box[A]
   override def flatMap[B](f: A => PresenceBox[B]): PresenceBox[B] = f(value)
   override def flatMap[B](f: A => TryBox[B]): TryBox[B] = f(value)
   override def flatMap[B, E2 >: Nothing](f: A => ParamTryBox[B, E2]): ParamTryBox[B, E2] = f(value)
+  override def flatMap[B](f: A => Full[B])(implicit a: DummyImplicit): Full[B] = f(value)
 
   // Redefine these two with the more specific type information we have at this
   // point.
   override def collect[B](pf: PartialFunction[A, B]): PresenceBox[B] = {
-    flatMap { value =>
+    flatMap { value: A =>
       if (pf.isDefinedAt(value)) {
         Full(pf(value))
       } else {
@@ -1204,6 +1206,7 @@ final class ParamFailure[T](override val msg: String,
 
   override def map[B](f: A => B): ParamFailure[T] = this
   override def flatMap[B, E2 >: T](f: A => ParamTryBox[B, E2]): ParamFailure[T] = this
+  override def flatMap[B](f: Nothing => Full[B])(implicit a: DummyImplicit): ParamFailure[T] = this
 
   override def filter(p: Nothing => Boolean): ParamFailure[T] = this
 }
