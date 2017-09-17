@@ -834,10 +834,10 @@ sealed trait PresenceBox[+A] extends Box[A] {
   override def isA[B](clsOrg: Class[B]): PresenceBox[B] = Empty
   override def asA[B](implicit m: Manifest[B]): PresenceBox[B] = Empty
 
-  def or[B >: A](alternative: => Full[B]): Full[B]
-  def or[B >: A](alternative: => PresenceBox[B])(implicit a: DummyImplicit): PresenceBox[B]
-  def or[B >: A](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit): TryBox[B]
-  def or[B >: A, E](alternative: => ParamTryBox[B, E])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): ParamTryBox[B, E]
+  def or[B >: A](alternative: => Full[B])(implicit a: DummyImplicit): Full[B]
+  def or[B >: A](alternative: => PresenceBox[B])(implicit a: DummyImplicit, b: DummyImplicit): PresenceBox[B]
+  def or[B >: A](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): TryBox[B]
+  def or[B >: A, E](alternative: => ParamTryBox[B, E])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit, d: DummyImplicit): ParamTryBox[B, E]
 
   override def map[B](f: A => B): PresenceBox[B] = Empty
   def flatMap[B](f: A => PresenceBox[B]): PresenceBox[B]
@@ -866,10 +866,10 @@ sealed trait PresenceBox[+A] extends Box[A] {
  * message without needing an exception, and a parameter as in `ParamFailure`).
  */
 sealed trait TryBox[+A] extends Box[A] {
-  def or[B >: A](alternative: => Full[B]): Full[B]
-  def or[B >: A](alternative: => PresenceBox[B])(implicit a: DummyImplicit): PresenceBox[B] // *
-  def or[B >: A](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit): TryBox[B]
-  def or[B >: A, E](alternative: => ParamTryBox[B, E])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): ParamTryBox[B, E]
+  def or[B >: A](alternative: => Full[B])(implicit a: DummyImplicit): Full[B]
+  def or[B >: A](alternative: => PresenceBox[B])(implicit a: DummyImplicit, b: DummyImplicit): PresenceBox[B] // *
+  def or[B >: A](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): TryBox[B]
+  def or[B >: A, E](alternative: => ParamTryBox[B, E])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit, d: DummyImplicit): ParamTryBox[B, E]
 
   override def map[B](f: A => B): TryBox[B] = ???
   def flatMap[B](f: A => TryBox[B]): TryBox[B]
@@ -884,10 +884,10 @@ sealed trait TryBox[+A] extends Box[A] {
  * of the `ParamFailure`'s param.
  */
 sealed trait ParamTryBox[+A, +E] extends Box[A] with TryBox[A] {
-  def or[B >: A](alternative: => Full[B]): Full[B]
-  def or[B >: A](alternative: => PresenceBox[B])(implicit a: DummyImplicit): PresenceBox[B] // *
-  def or[B >: A](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit): TryBox[B]
-  def or[B >: A, E2](alternative: => ParamTryBox[B, E2])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): ParamTryBox[B, E2]
+  def or[B >: A](alternative: => Full[B])(implicit a: DummyImplicit): Full[B]
+  def or[B >: A](alternative: => PresenceBox[B])(implicit a: DummyImplicit, b: DummyImplicit): PresenceBox[B] // *
+  def or[B >: A](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): TryBox[B]
+  def or[B >: A, E2](alternative: => ParamTryBox[B, E2])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit, d: DummyImplicit): ParamTryBox[B, E2]
 
   override def map[B](f: A => B): ParamTryBox[B, E] = ???
   def flatMap[B, E2 >: E](f: A => ParamTryBox[B, E2]): ParamTryBox[B, E2]
@@ -906,10 +906,11 @@ final case class Full[+A](value: A) extends Box[A]
 
   override def openOr[B >: A](default: => B): B = value
 
-  override def or[B >: A](alternative: => Full[B]): Full[A] = this
-  override def or[B >: A](alternative: => PresenceBox[B])(implicit a: DummyImplicit): Full[A] = this
-  override def or[B >: A](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit): Full[A] = this
-  override def or[B >: A, T](alternative: => ParamTryBox[B, T])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): Full[A] = this
+  override def or[B >: A](alternative: => Box[B]): Full[A] = this
+  override def or[B >: A](alternative: => Full[B])(implicit a: DummyImplicit): Full[A] = this
+  override def or[B >: A](alternative: => PresenceBox[B])(implicit a: DummyImplicit, b: DummyImplicit): Full[A] = this
+  override def or[B >: A](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): Full[A] = this
+  override def or[B >: A, T](alternative: => ParamTryBox[B, T])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit, d: DummyImplicit): Full[A] = this
 
   override def exists(func: A => Boolean): Boolean = func(value)
 
@@ -990,10 +991,10 @@ final case class Full[+A](value: A) extends Box[A]
 case object Empty extends EmptyBox with PresenceBox[Nothing] {
   override def filter(p: Nothing => Boolean) = this
 
-  override def or[B >: Nothing](alternative: => Full[B]): Full[B] = alternative
-  override def or[B >: Nothing](alternative: => PresenceBox[B])(implicit a: DummyImplicit): PresenceBox[B] = alternative
-  override def or[B >: Nothing](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit): TryBox[B] = alternative
-  override def or[B >: Nothing, E](alternative: => ParamTryBox[B, E])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): ParamTryBox[B, E] = alternative
+  override def or[B >: Nothing](alternative: => Full[B])(implicit a: DummyImplicit): Full[B] = alternative
+  override def or[B >: Nothing](alternative: => PresenceBox[B])(implicit a: DummyImplicit, b: DummyImplicit): PresenceBox[B] = alternative
+  override def or[B >: Nothing](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): TryBox[B] = alternative
+  override def or[B >: Nothing, E](alternative: => ParamTryBox[B, E])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit, d: DummyImplicit): ParamTryBox[B, E] = alternative
 
   override def flatMap[B](f: Nothing => PresenceBox[B]): PresenceBox[B] = this
 
@@ -1045,10 +1046,10 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
       override def getCause() = exception openOr null
     }
 
-  override def or[B >: Nothing](alternative: => Full[B]): Full[B] = alternative
-  override def or[B >: Nothing](alternative: => PresenceBox[B])(implicit a: DummyImplicit): PresenceBox[B] = alternative
-  override def or[B >: Nothing](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit): TryBox[B] = alternative
-  override def or[B >: Nothing, E](alternative: => ParamTryBox[B, E])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): ParamTryBox[B, E] = alternative
+  override def or[B >: Nothing](alternative: => Full[B])(implicit a: DummyImplicit): Full[B] = alternative
+  override def or[B >: Nothing](alternative: => PresenceBox[B])(implicit a: DummyImplicit, b: DummyImplicit): PresenceBox[B] = alternative
+  override def or[B >: Nothing](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): TryBox[B] = alternative
+  override def or[B >: Nothing, E](alternative: => ParamTryBox[B, E])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit, d: DummyImplicit): ParamTryBox[B, E] = alternative
 
   override def filter(p: Nothing => Boolean): Failure = this
 
