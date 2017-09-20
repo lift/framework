@@ -170,28 +170,42 @@ trait StringHelpers {
   def clean(in : String) =  if (in == null) "" else in.replaceAll("[^a-zA-Z0-9_]", "")
 
   /**
-   * Create a random string of a given size.  5 bits of randomness per character
-   * @param size size of the string to create. Must be a positive integer.
-   * @return the generated string
-   */
+    * Create a random string of a given size.  6 bits of randomness per character
+    * @param size size of the string to create. Must be a positive integer.
+    * @return the generated string
+    */
   def randomString(size: Int): String = {
-    def addChar(pos: Int, lastRand: Int, sb: GoodSB): GoodSB = {
-      if (pos >= size) sb
-      else {
-        val randNum = if ((pos % 6) == 0) {
-          _random.synchronized(_random.nextInt)
-        } else {
-          lastRand
-        }
-
-        sb.append((randNum & 0x1f) match {
-          case n if n < 26 => ('A' + n).toChar
-          case n => ('0' + (n - 26)).toChar
-        })
-        addChar(pos + 1, randNum >> 5, sb)
+    val charArray = new Array[Char](size)
+    val numRandomBits = 6
+    val bytesNeeded = math.ceil((numRandomBits * size) / 8.0).toInt
+    val bytesArray = new Array[Byte](bytesNeeded)
+    _random.nextBytes(bytesArray)
+    var carry: Int = 0
+    var carryCount: Int = 0
+    var idx = 0
+    var byteIdx = 0
+    do {
+      val byteToUse = if (carryCount != 3) {
+        carryCount += 1
+        val byteFromArray = bytesArray(byteIdx)
+        byteIdx += 1
+        carry = carry << 2 // Shift value 2 bits left to make room for the extra 2 bits
+        val twoBitsFromByteArray = (byteFromArray >> 6) & 0x3 // zero out everything except the two first bits
+        carry |= twoBitsFromByteArray // copy over the 2 left-most bits (byteFromArray >> 6) to the 2 first bits (0x3) of "carry"
+        byteFromArray
+      } else {
+        val charFromCarry = carry.toByte
+        carry = 0
+        carryCount = 0
+        charFromCarry
       }
-    }
-    addChar(0, 0, new GoodSB(size)).toString
+      charArray(idx) = byteToUse & 0x3f match { // Zero all but 6 first bits
+        case n if n < 26 => ('A' + n).toChar
+        case n => ('0' + (n % 10)).toChar // Ensure 0 < n < 10
+      }
+      idx += 1
+    } while(idx < size)
+    new String(charArray)
   }
 
   /**
