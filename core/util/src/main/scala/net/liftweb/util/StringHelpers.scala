@@ -175,6 +175,7 @@ trait StringHelpers {
     * @return the generated string
     */
   def randomString(size: Int): String = {
+    if (size < 1) return ""
     val charArray = new Array[Char](size)
     val numRandomBits = 6
     val bytesNeeded = math.ceil((numRandomBits * size) / 8.0).toInt
