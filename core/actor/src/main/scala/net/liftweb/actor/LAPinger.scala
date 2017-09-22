@@ -34,8 +34,8 @@ object ThreadPoolRules {
 }
 
 /**
- * The ActorPing object schedules an actor to be ping-ed with a given message at specific intervals.
- * The schedule methods return a ScheduledFuture object which can be cancelled if necessary
+ * LAPinger is for scheduling LiftActors to be pinged with an arbitrary message at some point
+ * in the future.
  */
 object LAPinger {
 
@@ -60,6 +60,9 @@ object LAPinger {
   /**
    * Schedules the sending of a message to occur after the specified delay.
    *
+   * @param to The LiftActor to send the message to.
+   * @param msg The message to send.
+   * @param delay The number of milliseconds to delay before sending msg
    * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
    * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
    */
@@ -96,4 +99,3 @@ private object TF extends ThreadFactory {
     d
   }
 }
-
