@@ -926,7 +926,7 @@ final case class Full[+A](value: A) extends Box[A]
   override def flatMap[B](f: A => Box[B]): Box[B] = f(value)
   override def flatMap[B](f: A => PresenceBox[B]): PresenceBox[B] = f(value)
   override def flatMap[B](f: A => TryBox[B]): TryBox[B] = f(value)
-  override def flatMap[B, E2 >: Nothing](f: A => ParamTryBox[B, E2]): ParamTryBox[B, E2] = f(value)
+  override def flatMap[B, E2](f: A => ParamTryBox[B, E2]): ParamTryBox[B, E2] = f(value)
   override def flatMap[B](f: A => Full[B])(implicit a: DummyImplicit): Full[B] = f(value)
 
   // Redefine these two with the more specific type information we have at this
