@@ -474,7 +474,7 @@ sealed abstract class Box[+A] extends Product with Serializable {
    * @note This means that using `map` with a `Failure` will preserve the
    *       `Failure.`
    */
-  def map[B](f: A => B): Box[B] = Empty
+  def map[B](f: A => B): Box[B]
 
   /**
    * Apply a function returning a `Box` to the value contained in this `Box` if
@@ -806,15 +806,7 @@ sealed abstract class Box[+A] extends Product with Serializable {
    * If the partial function is defined at the current Box's value, apply the
    * partial function.
    */
-  def collect[B](pf: PartialFunction[A, B]): Box[B] = {
-    flatMap { value =>
-      if (pf.isDefinedAt(value)) {
-        Full(pf(value))
-      } else {
-        Empty
-      }
-    }
-  }
+  def collect[B](pf: PartialFunction[A, B]): Box[B]
 
   /**
    * An alias for `collect`.
@@ -841,7 +833,7 @@ sealed trait PresenceBox[+A] extends Box[A] {
 
   override def map[B](f: A => B): PresenceBox[B] = Empty
   def flatMap[B](f: A => PresenceBox[B]): PresenceBox[B]
-  override def collect[B](pf: PartialFunction[A, B]): PresenceBox[B] = ???
+  override def collect[B](pf: PartialFunction[A, B]): PresenceBox[B]
 
   /**
    * Variant of `flatten` that will only work on a `PresenceBox`, and returns a
@@ -877,7 +869,7 @@ sealed trait TryBox[+A] extends Box[A] {
   def or[B >: A](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): TryBox[B]
   def or[B >: A, E](alternative: => ParamTryBox[B, E])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit, d: DummyImplicit): ParamTryBox[B, E]
 
-  override def map[B](f: A => B): TryBox[B] = ???
+  override def map[B](f: A => B): TryBox[B]
   def flatMap[B](f: A => TryBox[B]): TryBox[B]
 
   /**
@@ -901,7 +893,7 @@ sealed trait ParamTryBox[+A, +E] extends Box[A] with TryBox[A] {
   def or[B >: A](alternative: => TryBox[B])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit): TryBox[B]
   def or[B >: A, E2](alternative: => ParamTryBox[B, E2])(implicit a: DummyImplicit, b: DummyImplicit, c: DummyImplicit, d: DummyImplicit): ParamTryBox[B, E2]
 
-  override def map[B](f: A => B): ParamTryBox[B, E] = ???
+  override def map[B](f: A => B): ParamTryBox[B, E]
   def flatMap[B, E2 >: E](f: A => ParamTryBox[B, E2]): ParamTryBox[B, E2]
   def flatMap[B](f: A => Full[B])(implicit a: DummyImplicit): ParamTryBox[B, E]
 }
@@ -1068,6 +1060,8 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
   override def filter(p: Nothing => Boolean): Failure = this
 
   override def map[B](f: A => B): Failure = this
+
+  def collect[B](pf: PartialFunction[A, B]): Box[B] = this
 
   override def flatMap[B](f: A => Box[B]): Box[B] = this
   override def flatMap[B](f: A => TryBox[B]): TryBox[B] = this
