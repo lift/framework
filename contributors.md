@@ -257,3 +257,22 @@ Paweł Mruk
 
 ### Email: ###
 mroocoo at gmail dot com
+
+### Name: ###
+Riccardo Sirigu
+
+### Email: ###
+me at riccardosirigu dot com
+
+### Name: ###
+Josef Vlach
+
+### Email: ###
+vlach.josef at gmail dot com
+
+### Name: ###
+Noel Kennedy
+
+### Email: ###
+nkennedy at rvc dot ac dot uk
+

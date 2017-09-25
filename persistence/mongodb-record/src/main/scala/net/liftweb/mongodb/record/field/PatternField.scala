@@ -17,24 +17,16 @@ package record
 package field
 
 import java.util.regex.Pattern
-import scala.xml.NodeSeq
 
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.js.JE.{JsNull, Str}
 import net.liftweb.json._
-import net.liftweb.mongodb.record._
-import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField}
+import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, OptionalTypedField}
 import net.liftweb.util.Helpers.tryo
 
-class PatternField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
-  extends Field[Pattern, OwnerType]
-  with MandatoryTypedField[Pattern]
-{
+import scala.xml.NodeSeq
 
-  def owner = rec
-
-  def defaultValue = Pattern.compile("")
-
+abstract class PatternTypedField[OwnerType <: BsonRecord[OwnerType]](val owner: OwnerType) extends Field[Pattern, OwnerType] {
   def setFromAny(in: Any): Box[Pattern] = in match {
     case p: Pattern => setBox(Full(p))
     case Some(p: Pattern) => setBox(Full(p))
@@ -72,3 +64,18 @@ class PatternField[OwnerType <: BsonRecord[OwnerType]](rec: OwnerType)
   def asJValue: JValue = valueBox.map(v => JsonRegex(v)) openOr (JNothing: JValue)
 }
 
+class PatternField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) owner: OwnerType) extends PatternTypedField[OwnerType](owner) with MandatoryTypedField[Pattern] {
+  def this(owner: OwnerType, value: Pattern) = {
+    this(owner)
+    setBox(Full(value))
+  }
+
+  def defaultValue = Pattern.compile("")
+}
+
+class OptionalPatternField[OwnerType <: BsonRecord[OwnerType]](owner: OwnerType) extends PatternTypedField[OwnerType](owner) with OptionalTypedField[Pattern] {
+  def this(owner: OwnerType, value: Box[Pattern]) = {
+    this(owner)
+    setBox(value)
+  }
+}

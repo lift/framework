@@ -30,32 +30,30 @@ import reflect.Manifest
 import net.liftweb.http.js.JsExp
 import org.bson.Document
 import scala.collection.JavaConverters._
-class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerType)( implicit mf: Manifest[CaseType]) extends Field[CaseType, OwnerType] with MandatoryTypedField[CaseType] with MongoFieldFlavor[CaseType] {
+
+abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](val owner: OwnerType)(implicit mf: Manifest[CaseType])
+  extends Field[CaseType, OwnerType] with MongoFieldFlavor[CaseType] {
 
   // override this for custom formats
   def formats: Formats = DefaultFormats
+
   implicit lazy val _formats = formats
 
   override type MyType = CaseType
 
-  def owner = rec
-
-  def asXHtml = Text(value.toString)
 
   def toForm: Box[NodeSeq] = Empty
 
-  override def defaultValue = null.asInstanceOf[MyType]
-  override def optional_? = true
-
-  def asJValue: JValue = valueBox.map(v => Extraction.decompose(v)) openOr (JNothing: JValue)
+  def asJValue: JValue = valueBox.map(Extraction.decompose) openOr (JNothing: JValue)
 
   def setFromJValue(jvalue: JValue): Box[CaseType] = jvalue match {
-    case JNothing|JNull => setBox(Empty)
-    case s => setBox(Helpers.tryo[CaseType]{ s.extract[CaseType] })
+    case JNothing | JNull => setBox(Empty)
+    case s => setBox(Helpers.tryo[CaseType] { s.extract[CaseType] })
   }
 
-  def asDBObject: DBObject = {
-    JObjectParser.parse(asJValue.asInstanceOf[JObject])
+  def asDBObject: DBObject = asJValue match {
+    case JNothing | JNull => null
+    case other => JObjectParser.parse(other.asInstanceOf[JObject])
   }
 
   def setFromDocument(doc: Document): Box[CaseType] = {
@@ -68,8 +66,8 @@ class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerTyp
     setFromJValue(jvalue)
   }
 
-  override def setFromString(in: String): Box[CaseType] = {
-    Helpers.tryo{ JsonParser.parse(in).extract[CaseType] }
+  def setFromString(in: String): Box[CaseType] = Helpers.tryo {
+    JsonParser.parse(in).extract[CaseType]
   }
 
   def setFromAny(in: Any): Box[CaseType] = in match {
@@ -83,7 +81,33 @@ class MongoCaseClassField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerTyp
   }
 }
 
-class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: OwnerType)( implicit mf: Manifest[CaseType]) extends Field[List[CaseType], OwnerType] with MandatoryTypedField[List[CaseType]] with MongoFieldFlavor[List[CaseType]] {
+class CaseClassField[OwnerType <: Record[OwnerType], CaseType](owner: OwnerType)(implicit mf: Manifest[CaseType])
+  extends CaseClassTypedField[OwnerType, CaseType](owner) with MandatoryTypedField[CaseType] {
+
+
+  def this(owner: OwnerType, value: CaseType)(implicit mf: Manifest[CaseType]) = {
+    this(owner)
+    setBox(Full(value))
+  }
+
+  def defaultValue = null.asInstanceOf[MyType]
+}
+
+@deprecated("Use the more consistently named 'CaseClassField' instead. This class will be removed in Lift 4.", "3.2")
+class MongoCaseClassField[OwnerType <: Record[OwnerType], CaseType](@deprecatedName('rec) owner: OwnerType)(implicit mf: Manifest[CaseType])
+  extends CaseClassField[OwnerType, CaseType](owner)
+
+class OptionalCaseClassField[OwnerType <: Record[OwnerType], CaseType](owner: OwnerType)(implicit mf: Manifest[CaseType])
+  extends CaseClassTypedField[OwnerType, CaseType](owner) with OptionalTypedField[CaseType] {
+
+  def this(owner: OwnerType, value: Box[CaseType])(implicit mf: Manifest[CaseType]) = {
+    this(owner)
+    setBox(value)
+  }
+}
+
+class CaseClassListField[OwnerType <: Record[OwnerType], CaseType](val owner: OwnerType)(implicit mf: Manifest[CaseType])
+  extends Field[List[CaseType], OwnerType] with MandatoryTypedField[List[CaseType]] with MongoFieldFlavor[List[CaseType]] {
 
   // override this for custom formats
   def formats: Formats = DefaultFormats
@@ -91,14 +115,11 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
 
   override type MyType = List[CaseType]
 
-  def owner = rec
-
   def asXHtml = Text(value.toString)
 
   def toForm: Box[NodeSeq] = Empty
 
-  override def defaultValue: MyType = Nil
-  override def optional_? = true
+  def defaultValue: MyType = Nil
 
   def asJValue: JValue = JArray(value.map(v => Extraction.decompose(v)))
 
@@ -108,7 +129,7 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
   }
 
   def setFromDocumentList(list: java.util.List[Document]): Box[MyType] = {
-    val objs = list.asScala.map{ d => JObjectParser.serialize(d) }
+    val objs = list.asScala.map { JObjectParser.serialize }
     setFromJValue(JArray(objs.toList))
   }
 
@@ -147,8 +168,11 @@ class MongoCaseClassListField[OwnerType <: Record[OwnerType],CaseType](rec: Owne
     case _ => setBox(Empty)
   }
 
-  override def setFromString(in: String): Box[MyType] = {
+  def setFromString(in: String): Box[MyType] = {
     setFromJValue(JsonParser.parse(in))
   }
 }
 
+@deprecated("Please use the more consistently named 'CaseClassListField' instead. This class will be removed in Lift 4.", "3.2")
+class MongoCaseClassListField[OwnerType <: Record[OwnerType], CaseType](@deprecatedName('rec) owner: OwnerType)(implicit mf: Manifest[CaseType])
+  extends CaseClassListField[OwnerType, CaseType](owner)
