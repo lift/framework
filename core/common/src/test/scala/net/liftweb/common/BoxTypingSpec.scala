@@ -349,15 +349,111 @@ class BoxTypingSpec extends Specification {
     }
 
     "when isA/asAing" should {
-      // Full [ai]sA -> PresenceBox
-      // Empty [ai]sA -> PresenceBox
-      // Failure/ParamFailure [ai]sA -> Failure
-      // Box [ai]sA -> Box
-      0 must_== 0
+      "preserve PresenceBoxiness for Full, Empty, and PresenceBox" in {
+        fullBox.asA[String].presence_? must beTrue
+        fullBox.isA(classOf[String]).presence_? must beTrue
+        fullBox.asA[Int].presence_? must beTrue
+        fullBox.isA(classOf[Int]).presence_? must beTrue
+
+        Empty.asA[String].presence_? must beTrue
+        Empty.isA(classOf[String]).presence_? must beTrue
+        Empty.asA[Int].presence_? must beTrue
+        Empty.isA(classOf[Int]).presence_? must beTrue
+
+        fullPresence.asA[String].presence_? must beTrue
+        fullPresence.isA(classOf[String]).presence_? must beTrue
+        fullPresence.asA[Int].presence_? must beTrue
+        fullPresence.isA(classOf[Int]).presence_? must beTrue
+
+        emptyPresence.asA[String].presence_? must beTrue
+        emptyPresence.isA(classOf[String]).presence_? must beTrue
+        emptyPresence.asA[Int].presence_? must beTrue
+        emptyPresence.isA(classOf[Int]).presence_? must beTrue
+      }
+
+      "preserve Failureness for Failure and ParamFailure" in {
+        failureBox.asA[String].failure_? must beTrue
+        failureBox.isA(classOf[String]).failure_? must beTrue
+        paramFailureBox.asA[String].failure_? must beTrue
+        paramFailureBox.isA(classOf[String]).failure_? must beTrue
+
+        failureBox.asA[String].presence_? must beFalse
+        failureBox.isA(classOf[String]).presence_? must beFalse
+        paramFailureBox.asA[String].presence_? must beFalse
+        paramFailureBox.isA(classOf[String]).presence_? must beFalse
+      }
+
+      "preserve Boxiness for Box" in {
+        fullPlain.asA[String].plainBox_? must beTrue
+        fullPlain.isA(classOf[String]).plainBox_? must beTrue
+        emptyPlain.asA[String].plainBox_? must beTrue
+        emptyPlain.isA(classOf[String]).plainBox_? must beTrue
+        failurePlain.asA[String].plainBox_? must beTrue
+        failurePlain.isA(classOf[String]).plainBox_? must beTrue
+        paramFailurePlain.asA[String].plainBox_? must beTrue
+        paramFailurePlain.isA(classOf[String]).plainBox_? must beTrue
+      }
     }
 
-    // collect/collectFirst go PresenceBox for Full/Empty, Box for everything else
-    // flattenPresence/flattenTry
-    // for comprehensions
+    "when collecting and collectFirsting" should {
+      "preserve PresenceBoxiness for Full, Empty, and PresenceBox" in {
+        fullBox.collect { case _ => "a" }.presence_? must beTrue
+        Empty.collect { case _ => "a" }.presence_? must beTrue
+
+        fullPresence.collect { case _ => "a" }.presence_? must beTrue
+        emptyPresence.collect { case _ => "a" }.presence_? must beTrue
+      }
+
+      "lose Failureness for Failure and ParamFailure" in {
+        failureBox.collect { case _ => "a" }.failure_? must beFalse
+        paramFailureBox.collect { case _ => "a" }.failure_? must beFalse
+
+        failureBox.collect { case _ => "a" }.presence_? must beFalse
+        paramFailureBox.collect { case _ => "a" }.presence_? must beFalse
+
+        failureBox.collect { case _ => "a" }.plainBox_? must beTrue
+        paramFailureBox.collect { case _ => "a" }.plainBox_? must beTrue
+      }
+
+      "preserve Boxiness for Box" in {
+        fullPlain.collect { case _ => "a" }.plainBox_? must beTrue
+        emptyPlain.collect { case _ => "a" }.plainBox_? must beTrue
+        failurePlain.collect { case _ => "a" }.plainBox_? must beTrue
+        paramFailurePlain.collect { case _ => "a" }.plainBox_? must beTrue
+      }
+    }
+
+    "when used in for comprehensions" should {
+      "preserve closest common type for mapping for comprehensions" in {
+        (for (a <- fullBox ; b <- failureBox ; c <- fullBox) yield "a").try_? must beTrue
+        (for (a <- fullBox ; b <- failureTry ; c <- fullBox) yield "a").try_? must beTrue
+        (for (a <- fullBox ; b <- failurePlain ; c <- fullBox) yield "a").plainBox_? must beTrue
+
+        (for (a <- fullBox ; b <- Empty ; c <- fullBox) yield "a").presence_? must beTrue
+        (for (a <- fullBox ; b <- emptyPresence ; c <- fullBox) yield "a").presence_? must beTrue
+        (for (a <- fullBox ; b <- emptyPlain ; c <- fullBox) yield "a").plainBox_? must beTrue
+
+        (for (a <- fullBox ; b <- paramFailureBox ; c <- fullBox) yield "a").paramTry_? must beTrue
+        (for (a <- fullBox ; b <- paramFailureParamTry ; c <- fullBox) yield "a").paramTry_? must beTrue
+        (for (a <- fullBox ; b <- paramFailureTry ; c <- fullBox) yield "a").paramTry_? must beFalse
+        (for (a <- fullBox ; b <- paramFailureTry ; c <- fullBox) yield "a").try_? must beTrue
+        (for (a <- fullBox ; b <- paramFailurePlain ; c <- fullBox) yield "a").plainBox_? must beTrue
+      }
+
+      "preserve closest common type to PresenceBox for filtering for comprehensions" in {
+        (for (a <- fullBox ; b <- failureBox ; c <- fullBox if c == 5) yield "a").plainBox_? must beTrue
+        (for (a <- fullBox ; b <- failureTry ; c <- fullBox if c == 5) yield "a").plainBox_? must beTrue
+        (for (a <- fullBox ; b <- failurePlain ; c <- fullBox if c == 5) yield "a").plainBox_? must beTrue
+
+        (for (a <- fullBox ; b <- Empty ; c <- fullBox if c == 5) yield "a").presence_? must beTrue
+        (for (a <- fullBox ; b <- emptyPresence ; c <- fullBox if c == 5) yield "a").presence_? must beTrue
+        (for (a <- fullBox ; b <- emptyPlain ; c <- fullBox if c == 5) yield "a").plainBox_? must beTrue
+
+        (for (a <- fullBox ; b <- paramFailureBox ; c <- fullBox if c == 5) yield "a").plainBox_? must beTrue
+        (for (a <- fullBox ; b <- paramFailureParamTry ; c <- fullBox if c == 5) yield "a").plainBox_? must beTrue
+        (for (a <- fullBox ; b <- paramFailureTry ; c <- fullBox if c == 5) yield "a").plainBox_? must beTrue
+        (for (a <- fullBox ; b <- paramFailurePlain ; c <- fullBox if c == 5) yield "a").plainBox_? must beTrue
+      }
+    }
   }
 }
