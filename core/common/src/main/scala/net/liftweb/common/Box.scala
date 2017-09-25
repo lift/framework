@@ -1062,7 +1062,7 @@ sealed case class Failure(msg: String, exception: Box[Throwable], chain: Box[Fai
 
   override def isA[B](cls: Class[B]): Failure = this
 
-  override def asA[B](implicit m: Manifest[B]): Box[B] = this
+  override def asA[B](implicit m: Manifest[B]): Failure = this
 
   private def chainList: List[Failure] = chain match {
     case Full(f) => f :: f.chainList
