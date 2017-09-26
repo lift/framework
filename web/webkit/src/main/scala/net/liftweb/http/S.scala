@@ -222,7 +222,7 @@ object S extends S {
     private[this] def this() = this(Empty, null)
     
     private val loc = S.location
-    @transient private val snapshot:  Function1[Function0[Any], Any] = RequestVarHandler.generateSnapshotRestorer()
+    private val snapshot:  Function1[Function0[Any], Any] = RequestVarHandler.generateSnapshotRestorer()
     override def sessionLife: Boolean = false
 
     def apply(in: List[String]): Any = {
