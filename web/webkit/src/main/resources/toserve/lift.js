@@ -428,7 +428,7 @@
         settings.logError(err);
       }
 
-      settings.ajaxPost(location.toString(), {}, "html", onSuccess, onFailure);
+      settings.ajaxGet(location.toString(), {}, onSuccess, onFailure, "html");
     }
 
 
@@ -715,12 +715,16 @@
         contentType: contentType
       });
     },
-    ajaxGet: function(url, data, onSuccess, onFailure) {
+    ajaxGet: function(url, data, onSuccess, onFailure, dataType) {
+      if (!dataType) {
+        dataType = "script";
+      }
+
       return jQuery.ajax({
         url: url,
         data: data,
         type: "GET",
-        dataType: "script",
+        dataType: dataType,
         timeout: this.cometGetTimeout,
         cache: false,
         success: onSuccess,
