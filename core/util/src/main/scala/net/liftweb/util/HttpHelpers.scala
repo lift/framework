@@ -42,7 +42,7 @@ trait HttpHelpers {
                                          "aim","aip","ani","aos","aps","arc","arj","art","asf","asm","asp","asx","au","avi","avs",
                                          "bcpio","bin","bm","bmp","boo","book","boz","bsh","bz","bz2","c","c++","cat","cc","ccad",
                                          "cco","cdf","cer","cha","chat","class","com","conf","cpio","cpp","cpt","crl","crt","csh",
-                                         "css","cxx","dcr","deepv","def","der","dif","dir","dl","doc","dot","dp","drw","dump","dv",
+                                         "css","csv","cxx","dcr","deepv","def","der","dif","dir","dl","doc","dot","dp","drw","dump","dv",
                                          "dvi","dwf","dwg","dxf","dxr","el","elc","env","eps","es","etx","evy","exe","f","f77",
                                          "f90","fdf","fif","fli","flo","flx","fmf","for","fpx","frl","funk","g","g3","gif","gl","gsd",
                                          "gsm","gsp","gss","gtar","gz","gzip","h","hdf","help","hgl","hh","hlb","hlp","hpg","hpgl",
