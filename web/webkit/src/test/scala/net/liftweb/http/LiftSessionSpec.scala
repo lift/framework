@@ -44,6 +44,15 @@ object LiftSessionSpec extends Specification with BeforeEach {
     }
   }
 
+  private class ExplodesInConstructorCometActor extends CometActor {
+    def render = NodeSeq.Empty
+
+    throw new RuntimeException("boom, this explodes in the constructor!")
+    override def lowPriority = {
+      case _ =>
+    }
+  }
+
   "A LiftSession" should {
 
     "Send accumulated messages to a newly-created comet actor in the order in which they arrived" in {
@@ -89,6 +98,22 @@ object LiftSessionSpec extends Specification with BeforeEach {
 
         // Assert that the message was seen twice
         receivedMessages mustEqual Vector(1, 1)
+      }
+    }
+
+    "Surface exceptions from the no-arg comet constructor" in {
+      val session = new LiftSession("Test Session", "", Empty)
+
+      S.init(Empty, session) {
+        val result = session.findOrCreateComet[ExplodesInConstructorCometActor](Empty, NodeSeq.Empty, Map.empty)
+
+        result match {
+          case Failure(_, Full(ex: java.lang.reflect.InvocationTargetException), _) =>
+            success
+
+          case other =>
+            failure("Comet did not fail with an InvocationTargetException. Please check to ensure error handling in no-arg comet constructors wasn't broken.")
+        }
       }
     }
   }
