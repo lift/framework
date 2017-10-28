@@ -62,9 +62,6 @@ trait UserIdAsString {
 /**
  * The root trait for defining the session cookie path for extended sessions
  * that defines the default session cookie path: "/".
- *
- * Extend this trait then mix it into an extended session singleton to change
- * the cookie path. See also: [[ContextPathExtendedCookie]]
  */
 trait ProtoSessionCookiePath {
   def sessionCookiePath: String = "/"
