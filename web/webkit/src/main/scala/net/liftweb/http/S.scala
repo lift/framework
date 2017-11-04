@@ -215,6 +215,12 @@ object S extends S {
    * We create one of these dudes and put it
    */
   private[http] final case class PageStateHolder(owner: Box[String], session: LiftSession) extends AFuncHolder {
+
+    /**
+      * Private no-arg constructor needed for deserialization.
+      */
+    private[this] def this() = this(Empty, null)
+    
     private val loc = S.location
     private val snapshot:  Function1[Function0[Any], Any] = RequestVarHandler.generateSnapshotRestorer()
     override def sessionLife: Boolean = false

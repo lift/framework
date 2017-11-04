@@ -199,6 +199,41 @@ object LiftSession {
     }
   }
 
+  private[http] class DataAttrNode(liftSession: LiftSession) {
+    val dataAttributeProcessors = LiftRules.dataAttributeProcessor.toList
+
+    def unapply(in: Node): Option[DataAttributeProcessorAnswer] = {
+      in match {
+        case element: Elem if dataAttributeProcessors.nonEmpty =>
+          element.attributes.toStream.flatMap {
+            case UnprefixedAttribute(key, value, _) if key.toLowerCase().startsWith("data-") =>
+              val dataProcessorName = key.substring(5).toLowerCase()
+              val dataProcessorInputValue = value.text
+              val filteredElement = removeAttribute(key, element)
+
+              NamedPF.applyBox(
+                (dataProcessorName, dataProcessorInputValue, filteredElement, liftSession),
+                dataAttributeProcessors
+              )
+            case _ => Empty
+          }.headOption
+
+        case _ => None
+      }
+    }
+  }
+
+  private[http] class TagProcessingNode(liftSession: LiftSession) {
+    val rules = LiftRules.tagProcessor.toList
+
+    def unapply(in: Node): Option[DataAttributeProcessorAnswer] = {
+      in match {
+        case e: Elem if !rules.isEmpty =>
+          NamedPF.applyBox((e.label, e, liftSession), rules)
+        case _ => None
+      }
+    }
+  }
 }
 
 object PageName extends RequestVar[String]("")
@@ -336,6 +371,12 @@ private[http] class BooleanThreadGlobal extends ThreadGlobal[Boolean] {
  */
 class LiftSession(private[http] val _contextPath: String, val underlyingId: String,
                   val httpSession: Box[HTTPSession]) extends LiftMerge with Loggable with HowStateful {
+
+  /**
+    * Private no-arg constructor needed for deserialization.
+    */
+  private[this] def this() = this("", "", Empty)
+
   def sessionHtmlProperties = LiftRules.htmlProperties.session.is.make openOr LiftRules.htmlProperties.default.is.vend
 
   val requestHtmlProperties: TransientRequestVar[HtmlProperties] =
@@ -371,9 +412,9 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   private case class CometId(cometType: String, cometName: Box[String])
 
-  private val nasyncComponents = new ConcurrentHashMap[CometId, LiftCometActor]
+  @transient private val nasyncComponents = new ConcurrentHashMap[CometId, LiftCometActor]
 
-  private val nasyncById = new ConcurrentHashMap[String, LiftCometActor]
+  @transient private val nasyncById = new ConcurrentHashMap[String, LiftCometActor]
 
   private val asyncSync = new Object
 
@@ -455,7 +496,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   def running_? = _running_?
 
-  private var cometList: Vector[(LiftActor, Req)] = Vector.empty
+  @transient private var cometList: Vector[(LiftActor, Req)] = Vector.empty
 
   private[http] def breakOutComet(): Unit = {
     val cl = asyncSync.synchronized {
@@ -2011,41 +2052,9 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   private object _lastFoundSnippet extends ThreadGlobal[String]
 
-  private object DataAttrNode {
-    val dataAttributeProcessors = LiftRules.dataAttributeProcessor.toList
+  @transient private val DataAttrNode = new LiftSession.DataAttrNode(this)
 
-    def unapply(in: Node): Option[DataAttributeProcessorAnswer] = {
-      in match {
-        case element: Elem if dataAttributeProcessors.nonEmpty =>
-          element.attributes.toStream.flatMap {
-            case UnprefixedAttribute(key, value, _) if key.toLowerCase().startsWith("data-") =>
-              val dataProcessorName = key.substring(5).toLowerCase()
-              val dataProcessorInputValue = value.text
-              val filteredElement = removeAttribute(key, element)
-
-              NamedPF.applyBox(
-                (dataProcessorName, dataProcessorInputValue, filteredElement, LiftSession.this),
-                dataAttributeProcessors
-              )
-            case _ => Empty
-          }.headOption
-
-        case _ => None
-      }
-    }
-  }
-
-  private object TagProcessingNode {
-    val rules = LiftRules.tagProcessor.toList
-
-    def unapply(in: Node): Option[DataAttributeProcessorAnswer] = {
-      in match {
-        case e: Elem if !rules.isEmpty =>
-          NamedPF.applyBox((e.label, e, LiftSession.this), rules)
-        case _ => None
-      }
-    }
-  }
+  @transient private val TagProcessingNode = new LiftSession.TagProcessingNode(this)
 
   /**
    * Pass in a LiftActor and get a JavaScript expression (function(x) {...}) that
