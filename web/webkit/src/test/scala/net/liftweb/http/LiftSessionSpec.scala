@@ -32,7 +32,7 @@ object LiftSessionSpec extends Specification with BeforeEach {
 
   override def before = receivedMessages = Vector[Int]()
 
-  private class TestCometActor extends CometActor {
+  private[this] class TestCometActor extends CometActor {
     def render = NodeSeq.Empty
 
     override def lowPriority = {
@@ -44,7 +44,7 @@ object LiftSessionSpec extends Specification with BeforeEach {
     }
   }
 
-  private class ExplodesInConstructorCometActor extends CometActor {
+  private[this] class ExplodesInConstructorCometActor extends CometActor {
     def render = NodeSeq.Empty
 
     throw new RuntimeException("boom, this explodes in the constructor!")
