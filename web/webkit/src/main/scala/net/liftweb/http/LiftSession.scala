@@ -2624,7 +2624,17 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
       constructor.newInstance(this, name, defaultXml, attributes).asInstanceOf[T]
     }
 
-    val attemptedComet = tryo(buildWithNoArgConstructor) or tryo(buildWithCreateInfoConstructor)
+    // We first attempt to use the no argument constructor. If we get a NoSuchMethodException,
+    // we _then_ try to use the create info constructor. If anything else happens, including
+    // others kinds of exceptions, we abort construction attempts intentionally so we surface
+    // the correct error.
+    val attemptedComet = tryo(buildWithNoArgConstructor) match {
+      case fail @ Failure(_, Full(e: java.lang.NoSuchMethodException), _) =>
+        fail or tryo(buildWithCreateInfoConstructor)
+
+      case other =>
+        other
+    }
 
     attemptedComet match {
       case fail @ Failure(_, Full(e: java.lang.NoSuchMethodException), _) =>
