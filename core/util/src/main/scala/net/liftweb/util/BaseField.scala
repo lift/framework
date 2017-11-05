@@ -18,7 +18,8 @@ package net.liftweb
 package util
 
 import common._
-import xml.NodeSeq
+
+import xml._
 
 /**
  * Defines the association of this reference with a markup tag ID
@@ -112,6 +113,14 @@ trait SettableField extends ReadableField with SettableValueHolder {
    * Create an input field for the item
    */
   def toForm: Box[NodeSeq]
+
+  protected def html5RequiredAttribute: MetaData = {
+    if (required_?) {
+      new UnprefixedAttribute("required", Text("required"), Null)
+    } else {
+      Null
+    }
+  }
 
  /**
   * Given the current state of things, should this field be shown

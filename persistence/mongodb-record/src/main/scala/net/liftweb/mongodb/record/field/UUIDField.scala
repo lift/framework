@@ -62,7 +62,7 @@ trait UUIDTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[UUID
   }
 
   def toForm: Box[NodeSeq] = uniqueFieldId match {
-    case Full(id) => Full(elem % ("id" -> id))
+    case Full(id) => Full(elem % ("id" -> id) % html5RequiredAttribute)
     case _ => Full(elem)
   }
 
