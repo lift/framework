@@ -52,7 +52,7 @@ class BlockParsersTest extends FlatSpec with Matchers with BlockParsers{
         an [IllegalArgumentException] should be thrownBy(apply(p, List(new OtherLine("foo"))))
     }
 
-    it should "correctly ovverride list items markup" in {
+    it should "correctly override list items markup" in {
         object MyDecorator extends Decorator {
             override def decorateItemOpen(): String = "<foo>"
             override def decorateItemClose(): String = "</foo>"
