@@ -419,9 +419,6 @@
         }
 
         restartComet();
-
-        // Under the impression that a parentless node needn't be deleted.
-        // It should be a candidate for GC after it goes out of scope
       }
       function onFailure(err) {
         // Try again??
