@@ -1784,6 +1784,12 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   @volatile var cometGetTimeout = 140000
 
+  val putAjaxFnsInContainerSession = new LiftRulesGuardedSetting[Boolean]("putAjaxFnsInContainerSession", false)
+
+  val containerSerializer = new LiftRulesGuardedSetting[UntypedContainerSerializer]("containerSerializer", ContainerSerializer.javaSerializer)
+
+  val testContainerSerialization = new LiftRulesGuardedSetting[() => Boolean]("testContainerSerialization", () => false)
+
   /**
    * Compute the headers to be sent to the browser in addition to anything else
    * that's sent.

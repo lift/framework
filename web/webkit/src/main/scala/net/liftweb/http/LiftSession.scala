@@ -405,7 +405,13 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   private val fullPageLoad = new BooleanThreadGlobal
 
-  private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] = new ConcurrentHashMap
+  private[this] val ajaxFns: ContainerMap[String, S.AFuncHolder] =
+    new ContainerMap[String, S.AFuncHolder]("net.liftweb.http.LiftSession.ajaxFns", httpSession)
+
+  private [this] def useAjaxFns: Boolean = LiftRules.putAjaxFnsInContainerSession.get || LiftRules.testContainerSerialization.get.apply()
+
+  private val nmessageCallback: ConcurrentHashMap[String, S.AFuncHolder] = new ConcurrentHashMap(ajaxFns.snapshot)
+
   private val functionOwnerRemovalListeners = LiftSession.onFunctionOwnersRemoved
 
   @volatile private[http] var notices: Seq[(NoticeType.Value, NodeSeq, Box[String])] = Nil
@@ -621,12 +627,24 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * Updates the internal functions mapping
    */
   def updateFunctionMap(funcs: Map[String, S.AFuncHolder], uniqueId: String, when: Long): Unit = {
-    funcs.foreach {
-      case (name, func) =>
-        nmessageCallback.put(name,
-          if (func.owner == Full(uniqueId)) func else func.duplicate(uniqueId))
+    import scala.collection.JavaConverters._
+
+    copyFunctions(funcs, nmessageCallback)
+
+    if(useAjaxFns) {
+      ajaxFns !! (copyFunctions(funcs, _))
+
+      if(LiftRules.testContainerSerialization.get.apply())
+        copyFunctions(ajaxFns.snapshot.asScala.toMap, nmessageCallback)
     }
   }
+
+  private def copyFunctions(from: Map[String, S.AFuncHolder], to:java.util.Map[String, S.AFuncHolder]):Unit =
+    from.foreach {
+      case (name, func) =>
+        to.put(name,
+          if (func.owner == Full(uniqueId)) func else func.duplicate(uniqueId))
+    }
 
   /**
    * Removes the function with the given `name`. Note that this will
@@ -634,6 +652,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    */
   def removeFunction(name: String) = {
     nmessageCallback.remove(name)
+    ajaxFns !! (_.remove(name))
   }
 
   /**
@@ -653,7 +672,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     nmessageCallback.foreach {
       case (functionName, funcHolder) if test(funcHolder) =>
         funcHolder.owner.foreach(removedOwners += _)
-        nmessageCallback.remove(functionName)
+        removeFunction(functionName)
 
       case (_, funcHolder) =>
         funcHolder.owner.foreach(availableOwners += _)
@@ -908,7 +927,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     }
 
       import scala.collection.JavaConversions._
-      (0 /: nmessageCallback)((l, v) => l + (v._2.owner match {
+    val numUpdated = (0 /: nmessageCallback)((l, v) => l + (v._2.owner match {
         case Full(owner) if (owner == ownerName) =>
           v._2.lastSeen = time
           1
@@ -917,6 +936,20 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           1
         case _ => 0
     }))
+
+    // Since some of the functions have been mutated, force a write of the fn map to the container.
+    if(numUpdated > 0) {
+      import scala.collection.JavaConverters._
+
+      if(useAjaxFns) {
+        ajaxFns !! (_ => ())
+
+        if(LiftRules.testContainerSerialization.get.apply())
+          copyFunctions(ajaxFns.snapshot.asScala.toMap, nmessageCallback)
+      }
+    }
+
+    numUpdated
   }
 
   /**
@@ -975,8 +1008,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * @param request -- the Req the led to this rendering
    * @param path -- the ParsePath that led to this page
    * @param code -- the HTTP response code (usually 200)
-   *
-   * @return a Box of LiftResponse with all the proper page rewriting
+    * @return a Box of LiftResponse with all the proper page rewriting
    */
   def processTemplate(template: Box[NodeSeq], request: Req, path: ParsePath, code: Int): Box[LiftResponse] = {
     overrideResponseCode.doWith(Empty) {
@@ -1163,8 +1195,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * Gets the named variable if it exists
    *
    * @param name -- the name of the session-local variable to get
-   *
-   * @return Full ( value ) if found, Empty otherwise
+    * @return Full ( value ) if found, Empty otherwise
    */
   private[liftweb] def get[T](name: String): Box[T] =
     Box.legacyNullTest(nmyVariables.get(name)).asInstanceOf[Box[T]]
@@ -1184,6 +1215,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     f map {
       fnc =>
         val func: String = {
+          // TODO: Figure out if this needs to be in httpSession fn map
           val funcName = Helpers.nextFuncName
           nmessageCallback.put(funcName, S.NFuncHolder(() => {
             fnc()
@@ -1410,7 +1442,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   /**
    * Split a string separated by a point or by a column in 2 parts. Uses default values if only one is found or if no parts are found
-   * @param in string to split
+    *
+    * @param in string to split
    * @return a pair containing the first and second parts
    */
   private def splitColonPair(in: String): (String, String) = {
@@ -2068,8 +2101,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * that way you'll have the scope of the current session.
    *
    * @param in the Actor to send messages to.
-   *
-   * @return a JsExp that contains a function that can be called with a parameter
+    * @return a JsExp that contains a function that can be called with a parameter
    *         and when the function is called, the parameter is JSON serialized and sent to
    *         the server
    */
@@ -2102,9 +2134,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    *              the translated message will be sent to the actor. If the
    *              translation fails, an error will be logged and the raw
    *              JsonAST.JValue will be sent to the actor
-   *
-   *
-   * @return a JsExp that contains a function that can be called with a parameter
+    * @return a JsExp that contains a function that can be called with a parameter
    *         and when the function is called, the parameter is JSON serialized and sent to
    *         the server
    */
@@ -2843,7 +2873,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
                       /**
                        * Send some JavaScript to execute on the client side
-                       * @param value
+                        *
+                        * @param value
                        */
                       def send(value: JsCmd): Unit = {
                         if (!done_?) {
@@ -2855,7 +2886,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
                       /**
                        * Send some javascript to execute on the client side
-                       * @param value
+                        *
+                        * @param value
                        */
                       def send(value: JsExp): Unit = {
                         if (!done_?) {
@@ -3064,19 +3096,22 @@ trait RoundTripHandlerFunc {
   /**
    * Send data back to the client. This may be called
    * many times and each time, more data gets sent back to the client.
-   * @param value the data to send back.
+    *
+    * @param value the data to send back.
    */
   def send(value: JValue): Unit
 
   /**
    * Send some JavaScript to execute on the client side
-   * @param value
+    *
+    * @param value
    */
   def send(value: JsCmd): Unit
 
   /**
    * Send some javascript to execute on the client side
-   * @param value
+    *
+    * @param value
    */
   def send(value: JsExp): Unit
 
@@ -3087,7 +3122,8 @@ trait RoundTripHandlerFunc {
 
   /**
    * If there's a failure related to the computation, call this method.
-   * @param msg
+    *
+    * @param msg
    */
   def failure(msg: String): Unit
 }
@@ -3095,3 +3131,44 @@ trait RoundTripHandlerFunc {
 final case class StreamRoundTrip[T](name: String, func: T => Stream[Any])(implicit val manifest: Manifest[T]) extends RoundTripInfo
 final case class SimpleRoundTrip[T](name: String, func: T => Any)(implicit val manifest: Manifest[T]) extends RoundTripInfo
 final case class HandledRoundTrip[T](name: String, func: (T, RoundTripHandlerFunc) => Unit)(implicit val manifest: Manifest[T]) extends RoundTripInfo
+
+class ContainerMap[K : Manifest, V : Manifest](val sessionKey: String, val httpSession: Box[HTTPSession]) {
+  import scala.collection.JavaConverters._
+  import java.util
+
+  private[this] val serializer: ContainerSerializer[util.Map[K, V]] = LiftRules.containerSerializer.get.typed
+
+  private[this] def maybeSetInSession(map: util.Map[K, V]): Unit =
+    if(LiftRules.putAjaxFnsInContainerSession.get)
+      httpSession.foreach(_.setAttribute(sessionKey, serializer.serialize(map)))
+
+  private[this] def maybeTestSerialization(map: util.Map[K, V]): Unit =
+    if(LiftRules.testContainerSerialization.get.apply())
+      serializer.deserialize(serializer.serialize(map))
+        .asScala.foreach { case (k, v) => this.map.put(k, v) }
+
+  private[this] val map: util.Map[K, V] = (for {
+    session <- httpSession if LiftRules.putAjaxFnsInContainerSession.get
+    bytes <- Box.asA[Array[Byte]](session.attribute(sessionKey))
+    m = serializer.deserialize(bytes)
+  } yield {
+    m
+  }).openOr {
+    val m = new ConcurrentHashMap[K, V]()
+    maybeSetInSession(m)
+    maybeTestSerialization(m)
+    m
+  }
+
+  def snapshot: util.Map[K, V] = util.Collections.unmodifiableMap(map)
+
+  def !![R](f: util.Map[K, V] => R): R = mutate(f)
+  def mutate[R](f: util.Map[K, V] => R): R = {
+    val rtrn = f(map)
+    maybeSetInSession(map)
+    maybeTestSerialization(map)
+    rtrn
+  }
+
+  def get(k: K): V = map.get(k)
+}
