@@ -199,7 +199,7 @@ object SessionMaster extends LiftActor with Loggable {
   def isDead(sessionId: String): Boolean = killedSessions.containsKey(sessionId)
 
   private val reaction: PartialFunction[Any, Unit] = {
-    case RemoveSession(sessionId) =>
+    case RemoveSession(sessionId) if sessionId != null =>
 
       val ses = lockRead(nsessions)
       (Box !! ses.get(sessionId)).foreach {
