@@ -839,7 +839,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
     * Adjusts LiftRules to allow a page's comets to "rehydrate" (i.e. reconnect to the page) after a server restart.
     * This works by reloading the page into an iframe and stealing all of the comets. When the refresh occurs,
-    * new comet actors will be instantiated, so beware that any state therein will NOT be reinstated.
+    * new comet actors will be instantiated, so beware that any state therein will NOT be reinstated. Applications
+    * utilizing this feature should be designed to reconstruct comet state from the DB, cookies, client info, etc
+    * as required.
     */
   def enableCometRehydration(): Unit = {
     LiftRules.redirectAsyncOnSessionLoss = false
