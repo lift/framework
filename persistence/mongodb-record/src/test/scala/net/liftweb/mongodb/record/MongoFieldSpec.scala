@@ -586,6 +586,14 @@ object MongoFieldSpec extends Specification with MongoTestKit with AroundEach {
         Empty
       )
     }
+    "set proper maxlength on form element" in {
+      val rec = MapTestRecord.createRecord
+      val session = new LiftSession("", randomString(20), Empty)
+      S.initIfUninitted(session) {
+        val maxLenAttribute: Box[String] = rec.id.toForm.map(f => (f \ "@maxlength").text)
+        maxLenAttribute must_== Full(rec.maxIdLength.toString)
+      }
+    }
   }
 
   "MongoMapField (Int)" should {
