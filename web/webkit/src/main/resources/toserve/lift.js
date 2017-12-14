@@ -74,6 +74,9 @@
       onDocumentReady: function() {
         consoleOrAlert("onDocumentReady function must be defined in settings");
       },
+      getComets: function() {
+        consoleOrAlert("getComets function must be defined in settings");
+      },
       cometGetTimeout: 140000,
       cometFailureRetryTimeout: 10000,
       cometOnSessionLost: function(contextPath) {
@@ -397,6 +400,34 @@
       }
     }
 
+    function rehydrateComets() {
+      function onSuccess(html) {
+        var iframe = document.createElement("iframe");
+        var doc = document.createElement("html");
+        iframe.appendChild(doc);
+        doc.innerHTML = html;
+
+        toWatch = {};
+
+        var newComets = settings.getComets(doc);
+        var oldComets = settings.getComets(document);
+        for (var i = 0, n = newComets.length; i < n; i++) {
+          var version = newComets[i].getAttribute("data-lift-comet-version");
+          var guid = newComets[i].children[0].getAttribute("id");
+          toWatch[guid] = version;
+          oldComets[i].outerHTML = newComets[i].outerHTML;
+        }
+
+        restartComet();
+      }
+      function onFailure(err) {
+        // Try again??
+        settings.logError(err);
+      }
+
+      settings.ajaxGet(location.toString(), {}, onSuccess, onFailure, "html");
+    }
+
 
     ////////////////////////////////////////////////
     ///// Promises /////////////////////////////////
@@ -605,6 +636,7 @@
       cometOnSessionLost: function(contextPath) {
         settings.cometOnSessionLost(contextPath);
       },
+      rehydrateComets: rehydrateComets,
       cometOnError: function(e) {
         settings.cometOnError(e);
       },
@@ -680,12 +712,16 @@
         contentType: contentType
       });
     },
-    ajaxGet: function(url, data, onSuccess, onFailure) {
+    ajaxGet: function(url, data, onSuccess, onFailure, dataType) {
+      if (!dataType) {
+        dataType = "script";
+      }
+
       return jQuery.ajax({
         url: url,
         data: data,
         type: "GET",
-        dataType: "script",
+        dataType: dataType,
         timeout: this.cometGetTimeout,
         cache: false,
         success: onSuccess,
@@ -695,6 +731,9 @@
           }
         }
       });
+    },
+    getComets: function(doc) {
+      return jQuery(doc).find("[data-lift-comet-version]").toArray();
     }
   };
 
@@ -792,6 +831,9 @@
                 onSuccess(obj);
               }
             }
+            else if (dataType === "html") {
+              onSuccess(xhr.responseText);
+            }
             else {
               settings.logError("Unknown data type: "+dataType);
             }
@@ -868,6 +910,22 @@
       xhr.send();
 
       return xhr;
+    },
+    getComets: function(doc) {
+      if(doc.querySelectorAll && typeof doc.querySelectorAll === 'function') {
+        var nodes = doc.querySelectorAll("[data-lift-comet-version]");
+        return Array.prototype.slice.call(nodes, 0);
+      }
+      else {
+        var divs = doc.getElementsByTagName("div");
+        var comets = [];
+        for (var i = 0, n = divs.length; i < n; i++) {
+          if (divs[i].getAttribute("data-lift-comet-version") !== null) {
+            comets.push(divs[i]);
+          }
+        }
+        return comets;
+      }
     }
   };
 
