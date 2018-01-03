@@ -40,7 +40,7 @@ sbt new lift/blank-app.g8
 
 Follow the prompts to create your Lift application.
 
-### Running the Server
+#### Running the Server
 
 In order to run the server, navigate to the application folder and run the `sbt` command. In the SBT prompt, run:
 
@@ -83,7 +83,7 @@ libraryDependencies ++= {
 [wpsbt]: https://github.com/lift/basic-app.g8/blob/master/src/main/g8/project/web-plugin.sbt
 [wpproj]: https://github.com/earldouglas/xsbt-web-plugin/
 
-### Running the Server
+#### Running the Server
 
 In order to run the server, navigate to the application folder and run the `sbt` command. In the SBT prompt, run:
 
