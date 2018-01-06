@@ -51,4 +51,15 @@ class BlockParsersTest extends FlatSpec with Matchers with BlockParsers{
         apply(p, List(new CodeLine("    ", "code"))) should equal (new CodeLine("    ", "code"))
         an [IllegalArgumentException] should be thrownBy(apply(p, List(new OtherLine("foo"))))
     }
+
+    it should "correctly override list items markup" in {
+        object MyDecorator extends Decorator {
+            override def decorateItemOpen(): String = "<foo>"
+            override def decorateItemClose(): String = "</foo>"
+        }
+        object MyTransformer extends Transformer {
+            override def deco(): Decorator = MyDecorator
+        }
+        MyTransformer.apply("* Content") should equal ("<ul>\n<foo>Content</foo></ul>\n")
+    }
 }

@@ -167,8 +167,9 @@ sealed trait BoxTrait {
    * @return A `Full` containing the transformed value if
    *         `pf.isDefinedAt(value)` and `Empty` otherwise.
    */
-  def apply[InType, OutType](pf: PartialFunction[InType, OutType])(value: InType): Box[OutType] =
-  if (pf.isDefinedAt(value)) Full(pf(value)) else Empty
+  def apply[InType, OutType](pf: PartialFunction[InType, OutType])(value: InType): Box[OutType] = {
+    apply(value)(pf)
+  }
 
   /**
    * Apply the specified `PartialFunction` to the specified `value` and return
@@ -180,8 +181,9 @@ sealed trait BoxTrait {
    * @return A `Full` containing the transformed value if
    *         `pf.isDefinedAt(value)` and `Empty` otherwise.
    */
-  def apply[InType, OutType](value: InType)(pf: PartialFunction[InType, OutType]): Box[OutType] =
-  if (pf.isDefinedAt(value)) Full(pf(value)) else Empty
+  def apply[InType, OutType](value: InType)(pf: PartialFunction[InType, OutType]): Box[OutType] = {
+    pf.andThen(Full.apply).applyOrElse(value, (_:  InType) => Empty)
+  }
 
   /**
    * This implicit transformation allows one to use a `Box` as an `Iterable` of
@@ -550,16 +552,16 @@ sealed abstract class Box[+A] extends Product with Serializable{
   def asA[B](implicit m: Manifest[B]): Box[B] = Empty
 
   /**
-   * Return this Box if `Full`, or the specified alternative if it is
-   * empty. Equivalent to `Option`'s `[[scala.Option.orElse orElse]]`.
-   */
-  def or[B >: A](alternative: => Box[B]): Box[B] = alternative
-
-  /**
    * Returns an `[[scala.collection.Iterator Iterator]]` over the value
    * contained in this `Box`, if any.
    */
   def elements: Iterator[A] = Iterator.empty
+
+  /**
+    * Return this Box if `Full`, or the specified alternative if it is
+    * empty. Equivalent to `Option`'s `[[scala.Option.orElse orElse]]`.
+    */
+  def or[B >: A](alternative: => Box[B]): Box[B]
 
   /**
    * Get a `java.util.Iterator` from the Box.
@@ -773,10 +775,8 @@ sealed abstract class Box[+A] extends Product with Serializable{
    * If the partial function is defined at the current Box's value, apply the
    * partial function.
    */
-  final def collect[B](pf: PartialFunction[A, B]): Box[B] = {
-    flatMap(value =>
-    if (pf.isDefinedAt(value)) Full(pf(value))
-    else Empty)
+  final def collect[B](pf: PartialFunction[A, B]): Box[B] = flatMap { value =>
+    Box(value)(pf)
   }
 
   /**
@@ -787,6 +787,47 @@ sealed abstract class Box[+A] extends Product with Serializable{
    */
   final def collectFirst[B](pf: PartialFunction[A, B]): Box[B] = {
     collect(pf)
+  }
+
+  /**
+    * Transforms this box using the `transformFn`. If `transformFn` is defined for this box,
+    * returns the result of applying `transformFn` to it. Otherwise, returns this box unchanged.
+    *
+    * If you want to change the content of a `Full` box, using `[[map]]` or `[[collect]]` might be better
+    * suited to that purpose. If you want to convert an `Empty`, `Failure` or a `ParamFailure` into a
+    * `Full` box, you should use `[[flip]]`.
+    *
+    * @example {{{
+    *
+    *  // Returns Full("alternative") because the partial function covers the case.
+    *  Full("error") transform { case Full("error") => Full("alternative") }
+    *
+    *  // Returns Full(1), this Full box unchanged, because the partial function doesn't cover the case.
+    *  Full(1) transform { case Full(2) => Failure("error") }
+    *
+    *  // Returns this Failure("another-error") unchanged because the partial function doesn't cover the case.
+    *  Failure("another-error") transform { case Failure("error", Empty, Empty) => Full("alternative") }
+    *
+    *  // Returns Full("alternative") for an Empty box since `partialFn` is defined for Empty
+    *  Empty transform { case Empty => Full("alternative") }
+    *
+    *  // Returns Empty because the partial function is not defined for Empty
+    *  Empty transform { case Failure("error", Empty, Empty) => Full("alternative") }
+    *
+    *  }}}
+    */
+  def transform[B >: A](transformFn: PartialFunction[Box[A], Box[B]]): Box[B] = {
+    transformFn.applyOrElse(this, (thisBox: Box[A]) => thisBox)
+  }
+
+  /**
+    * Returns a `Full` box containing the results of applying `flipFn` to this box if it is a `Failure`,
+    * `ParamFailure` or `Empty`. Returns `Empty` if this box is `Full`. In other words, it "flips" the
+    * full/empty status of this Box.
+    */
+  def flip[B](flipFn: EmptyBox => B): Box[B] = this match {
+    case e: EmptyBox => Full(flipFn(e))
+    case _ => Empty
   }
 }
 

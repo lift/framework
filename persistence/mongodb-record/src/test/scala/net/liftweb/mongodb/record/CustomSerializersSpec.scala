@@ -48,7 +48,7 @@ object Child extends JsonObjectMeta[Child]
 class Person extends MongoRecord[Person] with ObjectIdPk[Person] {
   def meta = Person
 
-  object children extends MongoJsonObjectListField(this, Child)
+  object children extends JsonObjectListField(this, Child)
 
   object firstBorn extends JsonObjectField(this, Child) {
     def defaultValue = Child("", now)
@@ -64,7 +64,7 @@ object Person extends Person with MongoMetaRecord[Person]
 class Person2 extends MongoRecord[Person2] with ObjectIdPk[Person2] {
   def meta = Person2
 
-  object children extends MongoJsonObjectListField(this, Child)
+  object children extends JsonObjectListField(this, Child)
 
   object firstBorn extends JsonObjectField(this, Child) {
     def defaultValue = Child("", now)
@@ -97,7 +97,7 @@ object Team extends JsonObjectMeta[Team]
 class League extends MongoRecord[League] with ObjectIdPk[League] {
   def meta = League
 
-  object teams extends MongoJsonObjectListField(this, Team)
+  object teams extends JsonObjectListField(this, Team)
 
   object champion extends JsonObjectField(this, Team) {
     def defaultValue = Team("", "", "")
@@ -119,7 +119,7 @@ object Team2 extends JsonObjectMeta[Team2]
 class League2 extends MongoRecord[League2] with ObjectIdPk[League2] {
   def meta = League2
 
-  object teams extends MongoJsonObjectListField(this, Team2)
+  object teams extends JsonObjectListField(this, Team2)
 
   object champion extends JsonObjectField(this, Team2) {
     def defaultValue = Team2(ObjectId.get, "", ObjectId.get)

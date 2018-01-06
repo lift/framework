@@ -817,8 +817,7 @@ object JsonAST {
   }
 
   private def appendEscapedString(buf: Appendable, s: String, settings: RenderSettings) {
-    for (i <- 0 until s.length) {
-      val c = s.charAt(i)
+    s.foreach { c =>
       val strReplacement = c match {
         case '"'  => "\\\""
         case '\\' => "\\\\"

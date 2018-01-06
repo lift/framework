@@ -24,13 +24,13 @@ import net.liftweb.common._
 import net.liftweb.util._
 
 class HTTPServletSession(session: HttpSession) extends HTTPSession {
-  private val LiftMagicID = "$lift_magic_session_thingy$"
+  private[this] val servletSessionIdentifier = LiftRules.servletSessionIdentifier
 
   def sessionId: String = session.getId
 
-  def link(liftSession: LiftSession) = session.setAttribute(LiftMagicID, SessionToServletBridge(liftSession.underlyingId))
+  def link(liftSession: LiftSession) = session.setAttribute(servletSessionIdentifier, SessionToServletBridge(liftSession.underlyingId))
 
-  def unlink(liftSession: LiftSession) = session.removeAttribute(LiftMagicID)
+  def unlink(liftSession: LiftSession) = session.removeAttribute(servletSessionIdentifier)
 
   def maxInactiveInterval: Long = session.getMaxInactiveInterval
 
@@ -72,4 +72,3 @@ case class SessionToServletBridge(uniqueId: String) extends HttpSessionBindingLi
   }
 
 }
-

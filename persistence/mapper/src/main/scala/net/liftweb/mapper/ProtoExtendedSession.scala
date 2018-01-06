@@ -59,8 +59,16 @@ trait UserIdAsString {
   def userIdAsString: String
 }
 
+/**
+ * The root trait for defining the session cookie path for extended sessions
+ * that defines the default session cookie path: "/".
+ */
+trait ProtoSessionCookiePath {
+  def sessionCookiePath: String = "/"
+}
+
 trait MetaProtoExtendedSession[T <: ProtoExtendedSession[T]] extends
-KeyedMetaMapper[Long, T] {
+KeyedMetaMapper[Long, T] with ProtoSessionCookiePath {
   self: T =>
 
   def CookieName = "ext_id"
@@ -92,7 +100,7 @@ KeyedMetaMapper[Long, T] {
     val inst = create.userId(uid.userIdAsString).saveMe
     val cookie = HTTPCookie(CookieName, inst.cookieId.get).
     setMaxAge(((inst.expiration.get - millis) / 1000L).toInt).
-    setPath("/")
+    setPath(sessionCookiePath)
     S.addCookie(cookie)
   }
 
@@ -120,10 +128,27 @@ KeyedMetaMapper[Long, T] {
             case Full(es) => logUserIdIn(es.userId.get)
             case _ =>
           }
-        
+
         case _ =>
       }
     }
   }
 }
 
+/**
+ * Mix this in to your extended session singleton to set the cookie path
+ * to the context path for your application. This is useful if you have
+ * multiple applications on a single application server and want to ensure
+ * their cookies don't cross-pollinate.
+ *
+ * Example usage:
+ *
+ * {{{
+ * case class AppExtendedSession extends ProtoExtendedSession[AppExtendedSession]
+ * object MetaAppExtendedSession extends MetaProtoExtendedSession[AppExtendedSession]
+ *   with ContextPathExtendedCookie
+ * }}}
+ */
+trait ContextPathExtendedCookie extends ProtoSessionCookiePath {
+  override def sessionCookiePath = S.contextPath
+}

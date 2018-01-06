@@ -13,62 +13,87 @@ Lift applications are:
 
 Because Lift applications are written in [Scala](http://www.scala-lang.org), an elegant JVM language, you can still use your favorite Java libraries and deploy to your favorite Servlet Container and app server. Use the code you've already written and deploy to the container you've already configured!
 
-## Issues
-
-Issues on the Lift GitHub project are intended to describe actionable,
-already-discussed items. Committers on the project may open issues for
-themselves at any time, but non-committers should visit the [Lift mailing
-list](https://groups.google.com/forum/#!forum/liftweb) and start a discussion
-for any issue that they wish to open.
-
-## Pull Requests
-
-We will accept pull requests into the [Lift codebase](https://github.com/lift)
-if the pull requests meet the following criteria:
-
-* The request handles an issue that has been discussed on the [Lift mailing list](http://groups.google.com/forum/#!forum/liftweb)
-  and whose solution has been requested (and in general adheres to the spirit of
-  the issue guidelines outlined in [CONTRIBUTING.md](https://github.com/lift/framework/blob/master/CONTRIBUTING.md)).
-* The request includes a signature at the bottom of the `/contributors.md` file.
-
-For more details, see [CONTRIBUTING.md](https://github.com/lift/framework/blob/master/CONTRIBUTING.md).
-
 ## Getting Started
 
 **Compatibility note:**
 As of Lift 3.0, you'll need to be running Java 8 to use Lift. For those using Java 6 or Java 7,
 you'll need to use Lift 2.6 until you can upgrade your Java installation.
 
-You can create a new Lift project using your favorite build system by adding Lift as a dependency:
+You can create a new Lift project using your favorite build system by adding Lift as a dependency.
+Below we walk through setting up Lift in sbt and Maven.
 
-#### sbt
+### With sbt (new project)
 
-We recommend using the latest sbt version, which is currently 0.13.15, but anything 0.13.6+ will work
-with the instructions below.
+If you're using a recent version of sbt (e.g. 0.13.16), you can create a new Lift application using
+our Giter8. To create a new, basic Lift application that has some example code, simply execute:
 
-Create or update your `project/plugins.sbt` file with the `xsbt-web-plugin`:
+```
+sbt new lift/basic-app.g8
+```
 
-	addSbtPlugin("com.github.siasia" %% "xsbt-web-plugin" % "3.0.2")
+Or, if you're more on the advanced side of the room, you can also create a new, entirely blank
+application:
 
-Then, add the plugin and Lift to your `build.sbt` file:
+```
+sbt new lift/blank-app.g8
+```
 
-	enablePlugins(JettyPlugin)
+Follow the prompts to create your Lift application.
 
-	libraryDependencies ++= {
-		val liftVersion = "3.1.0"
-		Seq(
-                  "net.liftweb"       %% "lift-webkit" % liftVersion % "compile",
-                  "ch.qos.logback" % "logback-classic" % "1.1.3"
-		)
-	}
+#### Running the Server
 
-You can [learn more on the cookbook](http://cookbook.liftweb.net/#LiftFromScratch).
+In order to run the server, navigate to the application folder and run the `sbt` command. In the SBT prompt, run:
 
-#### Maven:
+    ~jetty:start
 
-You can use one of the several archetypes -- `lift-archetype-blank`, `lift-archetype-basic`, `lift-archetype-jpa-basic` -- to generate a new Lift project. You must set `archetypeRepository` and `remoteRepositories` to `http://scala-tools.org/repo-releases` or `http://scala-tools.org/repo-snapshots`, depending on whether you are using a release or the latest SNAPSHOT.
+By default, the server should run on http://localhost:8080.
 
-Or, you can add Lift to your `pom.xml` like so:
+### With sbt (Existing project)
+
+If you're using Lift in an existing sbt project you'll need to:
+
+1. Add the xsbt-web-plugin if you don't already have it or some other way to start a servlet app.
+2. Add the lift dependencies.
+
+To add the xsbt-web-plugin download the most recent version of our [web-plugin.sbt][wpsbt] file
+to your `project/` folder.
+
+Then, enable the plugin for the container you want to use and in your `build.sbt` file. Below, we
+activate the JettyPlugin:
+
+```scala
+enablePlugins(JettyPlugin)
+```
+
+More information on using the plugin can be found on the [xsbt-web-plugin project][wpproj].
+
+After you've done this, you'll want to add Lift to your `libraryDependencies` in addition to
+Logback if you don't already have another SLF4J logging library in place. For example:
+
+```scala
+libraryDependencies ++= {
+  val liftVersion = "3.1.0"
+  Seq(
+    "net.liftweb"       %% "lift-webkit" % liftVersion % "compile",
+    "ch.qos.logback" % "logback-classic" % "1.2.5"
+  )
+}
+```
+
+[wpsbt]: https://github.com/lift/basic-app.g8/blob/master/src/main/g8/project/web-plugin.sbt
+[wpproj]: https://github.com/earldouglas/xsbt-web-plugin/
+
+#### Running the Server
+
+In order to run the server, navigate to the application folder and run the `sbt` command. In the SBT prompt, run:
+
+    ~jetty:start
+
+By default, the server should run on http://localhost:8080.
+
+### With Maven
+
+Add Lift to your `pom.xml` like so:
 
     <dependency>
       <groupId>net.liftweb</groupId>
@@ -76,10 +101,37 @@ Or, you can add Lift to your `pom.xml` like so:
       <version>3.1.0</version>
     </dependency>
 
-Where `${scala.version}` is `2.11` or `2.12`. Individual patch releases of the Scala compiler (e.g. 2.12.2)
-are binary compatible with everything in their release series, so you only need the first two version parts.
+Where `${scala.version}` is `2.11` or `2.12`. Individual patch releases of the Scala compiler
+(e.g. 2.12.2) are binary compatible with everything in their release series, so you only need the
+first two version parts.
 
-You can [learn more on the wiki](http://www.assembla.com/wiki/show/liftweb/Using_Maven).
+You can learn more about Maven integration [on the wiki](http://www.assembla.com/wiki/show/liftweb/Using_Maven).
+
+### Learning Lift
+
+There are lots of resources out there for learning Lift. Some of our favorites include:
+
+* [The Lift Cookbook](http://cookbook.liftweb.net/)
+* [Simply Lift](http://simply.liftweb.net)
+
+If you've found one that you particularly enjoy, please open a PR to update this README!
+
+## Issues & Pull Requests
+
+Per our [contributing guidelines][contribfile], Issues on the Lift GitHub project are intended to
+describe actionable, already-discussed items. Committers on the project may open issues for
+themselves at any time, but non-committers should visit the [Lift mailing
+list](https://groups.google.com/forum/#!forum/liftweb) and start a discussion
+for any issue that they wish to open.
+
+We will accept issues and pull requests into the Lift codebase if the pull requests meet the following criteria:
+
+* The request is for a [supported version of Lift][supfile]
+* The request adheres to our [contributing guidelines][contribfile], including having been discussed
+  on the Mailing List if its from a non-committer.
+
+[contribfile]: https://github.com/lift/framework/blob/master/CONTRIBUTING.md
+[sigfile]: https://github.com/lift/framework/blob/master/contributors.md
 
 ## Project Organization
 
@@ -89,17 +141,16 @@ The Lift Framework is divided into several components that are published indepen
 
 This repository, `framework`, contains the following components:
 
-#### core
-
-Core elements used by Lift projects. If you wish to reuse some of Lift's helpers and constructs, such as `Box`, this component may be all you need. However, a web application will most likely require one or more of Lift's components.
-
-#### web
-
-This component includes all of Lift's core HTTP and web handling. Including `lift-webkit` in your build process should be sufficient for basic applications and will include `lift-core` as a transitive dependency.
-
-#### persistence
-
-This component includes Mapper and Record, Lift's two ORMs. While you needn't use either and can use the ORM of your choice, Mapper and Record integrate nicely with Lift's idioms. Mapper is an ORM for relational databases, while Record is a broader ORM with support for both SQL databases and NoSQL datastores.
+* **core:** Core elements used by Lift projects. If you wish to reuse some of Lift's helpers and
+constructs, such as `Box`, this component may be all you need. However, a web application will most
+likely require one or more of Lift's other components.
+* **web:** This component includes all of Lift's core HTTP and web handling. Including `lift-webkit`
+in your build process should be sufficient for basic applications and will include `lift-core` as a
+transitive dependency.
+* **persistence:** This component includes Mapper and Record, Lift's two ORMs. While you needn't use
+either and can use the ORM of your choice, Mapper and Record integrate nicely with Lift's idioms.
+Mapper is an ORM for relational databases, while Record is a broader ORM with support for both SQL
+databases and NoSQL datastores.
 
 ### Other Repostories
 
@@ -107,9 +158,11 @@ There are a variety of other repositories available on the Lift GitHub page. Whi
 
 #### modules
 
-The [modules](https://github.com/liftmodules) repository contains the many add-on modules that are part of the Lift project. If you don't find a module you need here, consider [creating a module](http://www.assembla.com/spaces/liftweb/wiki/Modules) and sharing it with the community.
-
-Please note that the modules project does accept pull requests.
+The [modules](https://github.com/liftmodules) organization contains some of the many add-on modules
+that are part of the Lift project. If you don't find a module you need here, consider
+looking for it on the [Lift modules directory](https://liftweb.net/lift_modules) or
+[creating a module](http://www.assembla.com/spaces/liftweb/wiki/Modules) and sharing it with the
+community.
 
 #### examples
 
@@ -144,10 +197,6 @@ The Lift wiki is hosted on Assembla and can be found at [http://www.assembla.com
 ### ScalaDocs
 
 The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on the Liftweb.net site. You can access the source code–based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 3.0 release can be accessed at [http://liftweb.net/api/31/api/](http://liftweb.net/api/31/api/).
-
-### Cookbook
-
-You can find up-to-date information on the [Lift Cookbook](http://cookbook.liftweb.net/)
 
 ## License
 

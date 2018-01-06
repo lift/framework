@@ -16,26 +16,25 @@ package mongodb
 package record
 package field
 
-import scala.xml.{NodeSeq, Text}
+import scala.xml.NodeSeq
 import net.liftweb.common.{Box, Empty, Failure, Full}
-import net.liftweb.http.js.JE.{JsNull, Str}
 import net.liftweb.json._
-import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, Record}
+import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, OptionalTypedField}
 import net.liftweb.util.Helpers.tryo
-import com.mongodb.DBObject
+import com.mongodb.{BasicDBList, DBObject}
 
-abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
-  (rec: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
-  extends Field[JObjectType, OwnerType] with MandatoryTypedField[JObjectType] with MongoFieldFlavor[JObjectType] {
+import scala.collection.JavaConverters._
 
-  def owner = rec
+abstract class JsonObjectTypedField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
+(val owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
+  extends Field[JObjectType, OwnerType] with MongoFieldFlavor[JObjectType] {
 
   implicit val formats = owner.meta.formats
 
   /**
    * Convert the field value to an XHTML representation
    */
-  override def toForm: Box[NodeSeq] = Empty // FIXME
+  def toForm: Box[NodeSeq] = Empty // FIXME
 
   /** Encode the field value into a JValue */
   def asJValue: JValue = valueBox.map(_.asJObject) openOr (JNothing: JValue)
@@ -45,7 +44,7 @@ abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <
   * Returns Empty or Failure if the value could not be set
   */
   def setFromJValue(jvalue: JValue): Box[JObjectType] = jvalue match {
-    case JNothing|JNull if optional_? => setBox(Empty)
+    case JNothing | JNull if optional_? => setBox(Empty)
     case o: JObject => setBox(tryo(valueMeta.create(o)))
     case other => setBox(FieldHelpers.expectedA("JObject", other))
   }
@@ -68,7 +67,7 @@ abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <
   def setFromString(in: String): Box[JObjectType] = tryo(JsonParser.parse(in)) match {
     case Full(jv: JValue) => setFromJValue(jv)
     case f: Failure => setBox(f)
-    case other => setBox(Failure("Error parsing String into a JValue: "+in))
+    case _ => setBox(Failure(s"Error parsing String into a JValue: $in"))
   }
 
   /*
@@ -82,3 +81,55 @@ abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <
 
 }
 
+abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
+(@deprecatedName('rec) owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
+  extends JsonObjectTypedField(owner, valueMeta) with MandatoryTypedField[JObjectType] {
+
+  def this(owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType], value: JObjectType) = {
+    this(owner, valueMeta)
+    setBox(Full(value))
+  }
+}
+
+class OptionalJsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
+(owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
+  extends JsonObjectTypedField(owner, valueMeta) with OptionalTypedField[JObjectType] {
+
+  def this(owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType], valueBox: Box[JObjectType]) = {
+    this(owner, valueMeta)
+    setBox(valueBox)
+  }
+}
+
+/*
+* List of JsonObject case classes
+*/
+class JsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
+(owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])(implicit mf: Manifest[JObjectType])
+  extends MongoListField[OwnerType, JObjectType](owner: OwnerType) {
+
+  override def asDBObject: DBObject = {
+    val dbl = new BasicDBList
+    value.foreach { v => dbl.add(JObjectParser.parse(v.asJObject()(owner.meta.formats))(owner.meta.formats)) }
+    dbl
+  }
+
+  override def setFromDBObject(dbo: DBObject): Box[List[JObjectType]] =
+    setBox(Full(dbo.keySet.asScala.toList.map { k =>
+      valueMeta.create(JObjectParser.serialize(dbo.get(k))(owner.meta.formats).asInstanceOf[JObject])(owner.meta.formats)
+    }))
+
+  override def asJValue: JValue = JArray(value.map(_.asJObject()(owner.meta.formats)))
+
+  override def setFromJValue(jvalue: JValue) = jvalue match {
+    case JNothing | JNull if optional_? => setBox(Empty)
+    case JArray(arr) => setBox(Full(arr.map { jv =>
+      valueMeta.create(jv.asInstanceOf[JObject])(owner.meta.formats)
+    }))
+    case other => setBox(FieldHelpers.expectedA("JArray", other))
+  }
+}
+
+@deprecated("Use the more consistently named 'JsonObjectListField' instead. This class will be removed in Lift 4.", "3.2")
+class MongoJsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
+(@deprecatedName('rec) owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])(implicit mf: Manifest[JObjectType]) extends JsonObjectListField(owner, valueMeta)

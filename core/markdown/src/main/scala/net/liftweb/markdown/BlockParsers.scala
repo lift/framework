@@ -182,6 +182,9 @@ trait BlockParsers extends Parsers {
      * recursively builds the content of an item.
      */
     class ListItem(val lines:List[MarkdownLine], lookup:Map[String, LinkDefinition]) extends LineParsers {
+
+        override def deco(): Decorator = BlockParsers.this.deco
+
         def endsWithNewline = lines.size > 1 && (lines.last.isInstanceOf[EmptyLine])
 
         def addResult(level:Int, out:StringBuilder, paragraph_? : Boolean) {

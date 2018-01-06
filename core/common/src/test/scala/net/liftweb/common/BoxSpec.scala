@@ -67,8 +67,8 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Full(1) reduceLeft {(x: Int, y: Int) => x + y} must_== 1
     }
     "be used as an Option" in {
-      Full(1) orElse Some(2) must_== Some(1)
-      Empty orElse Some(2) must_== Some(2)
+      Full(1) orElse Some(2) must beSome(1)
+      Empty orElse Some(2) must beSome(2)
     }
     "be implicitly defined from an Option. The openOrThrowException method can be used on an Option for example" in {
       Some(1).openOrThrowException("This is a test") must_== 1
@@ -152,6 +152,30 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
         Full(Empty).flatten must_== Empty
       }
     }
+    "define a 'collect' method that takes a PartialFunction to transform its contents" in {
+      "If the partial-function is defined for the contents of this box, returns a full box containing the result of applying that partial function to this Box's contents" in {
+        Full("Albus") collect { case "Albus" => "Dumbledore"} must_== Full("Dumbledore")
+      }
+      "If the partial-function is not defined for the contents of this box, returns Empty" in {
+        Full("Hermione") collect { case "Albus" => "Dumbledore"} must beEmpty
+      }
+    }
+    "define a 'transform' method that takes a PartialFunction to transform this box into another box" in {
+      "If the partial-function is defined for this box, returns the result of applying the partial function to it" in {
+        Full(404) transform {
+          case Full(x: Int) if x != 200 => Failure("Server error")
+        } must_== Failure("Server error")
+      }
+      "If the partial-function is not defined for this box, returns itself unchanged" in {
+        Full("Intended Result") transform {
+          case _: EmptyBox => Full("Alternative")
+          case Full("Unexpected Result") => Full("Alternative")
+        } must_== Full("Intended Result")
+      }
+    }
+    "define a 'flip' method returning Empty" in {
+      Full(1) flip { _ => "No data found" } mustEqual Empty
+    }
     "define an 'elements' method returning an iterator containing its value" in {
       Full(1).elements.next must_== 1
     }
@@ -159,7 +183,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Full(1).toList must_== List(1)
     }
     "define a 'toOption' method returning a Some object containing its value" in {
-      Full(1).toOption must_== Some(1)
+      Full(1).toOption must beSome(1)
     }
     "return itself if asked for its status with the operator ?~" in {
       Full(1) ?~ "error" must_== Full(1)
@@ -298,6 +322,26 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "define a 'flatten' method returning Empty" in {
       Empty.flatten must beEmpty
     }
+    "define a 'collect' method returning Empty" in {
+      Empty collect { case _ => "Some Value" } must beEmpty
+    }
+    "define a 'transform' method that takes a PartialFunction to transform this Empty box into another box" in {
+      "If the partial-function is defined for Empty, returns the result of applying the partial function to it" in {
+        Empty transform {
+          case Failure("error", Empty, Empty) => Full("failure-alternative")
+          case Empty => Full("alternative")
+        } must_== Full("alternative")
+      }
+      "If the partial-function is not defined for Empty, returns Empty" in {
+        Empty transform { case Failure("The Phantom Menace", Empty, Empty) => Full("Return Of The Jedi") } must_== Empty
+      }
+    }
+    "define a 'flip' method returning a Full box" in {
+      Empty flip {
+        case Empty => "flipped-empty"
+        case _ => "flipped-failure"
+      } mustEqual Full("flipped-empty")
+    }
     "define an 'elements' method returning an empty iterator" in {
       Empty.elements.hasNext must beFalse
     }
@@ -305,7 +349,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Empty.toList must_== Nil
     }
     "define a 'toOption' method returning None" in {
-      Empty.toOption must_== None
+      Empty.toOption must beNone
     }
     "return a failure with a message if asked for its status with the operator ?~" in {
       Empty ?~ "nothing" must_== Failure("nothing", Empty, Empty)
@@ -358,7 +402,31 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Failure("error", Empty, Empty) flatMap {x: String => Full(x.toString)} must_== Failure("error", Empty, Empty)
       Failure("error", Empty, Empty).flatten must_== Failure("error", Empty, Empty)
     }
-    "return a itself when asked for its status with the operator ?~" in {
+    "define a 'collect' method returning itself" in {
+      Failure("error", Empty, Empty) collect { case _ => "Some Value" } must_== Failure("error", Empty, Empty)
+    }
+    "define a 'transform' method that takes a PartialFunction to transform this Failure into another box" in {
+      "If the partial-function is defined for this Failure, returns the result of applying the partial function to it" in {
+        Failure("The Phantom Menace") transform {
+          case Failure("The Phantom Menace", Empty, Empty) => Full("Return Of The Jedi")
+        } must_== Full("Return Of The Jedi")
+
+        Failure("The Phantom Menace") transform {
+          case Failure("The Phantom Menace", Empty, Empty) => Failure("Clones")
+          case _ => Full("Jedi")
+        } must_== Failure("Clones")
+      }
+      "If the partial-function is not defined for this Failure, returns itself unchanged" in {
+        Failure("Clones") transform { case Failure("The Phantom Menace", Empty, Empty) => Full("Jedi") } must_== Failure("Clones")
+      }
+    }
+    "define a 'flip' method returning a Full box" in {
+      Failure("error", Empty, Empty) flip {
+        case Empty => "flipped-empty"
+        case _: Failure => "flipped-failure"
+      } must_== Full("flipped-failure")
+    }
+    "return itself when asked for its status with the operator ?~" in {
       Failure("error", Empty, Empty) ?~ "nothing" must_== Failure("error", Empty, Empty)
     }
     "create a new failure with a chained message if asked for its status with the operator ?~!" in {

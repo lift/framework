@@ -143,6 +143,7 @@ object LiftRules extends LiftRulesMocker {
   type StatelessTestPF = PartialFunction[List[String], Boolean]
 
 
+
   /**
    * The test between the path of a request, the HTTP request, and whether that path
    * should result in stateless servicing of that path
@@ -299,6 +300,15 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * The HTTP authentication mechanism that Lift will perform. See <i>LiftRules.protectedResource</i>
    */
   @volatile var authentication: HttpAuthentication = NoAuthentication
+
+  /**
+   * A session identifier for [[net.liftweb.http.provider.servlet.HTTPServletSession]].
+   *
+   * Under most circumstances, you won't need to change this value. However, in some cases
+   * containers will be configured with backing datastores that don't play nice with the default
+   * value. In those cases you can change this string to get those working.
+   */
+  @volatile var servletSessionIdentifier: String = "$lift_magic_session_thingy$"
 
   /**
    * A function that takes the HTTPSession and the contextPath as parameters
@@ -766,7 +776,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * lift.cometOnSessionLost reloads the current page by default.
    */
   val noCometSessionCmd = new FactoryMaker[JsCmd](
-    () => JsCmds.Run("lift.cometOnSessionLost()")
+    () => JsCmds.Run(s"lift.cometOnSessionLost('${S.contextPath.replace("'", "\\'")}')")
   ) {}
 
   /**
@@ -827,6 +837,18 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var cometRenderTimeout: Long = 30.seconds
 
   /**
+    * Adjusts LiftRules to allow a page's comets to "rehydrate" (i.e. reconnect to the page) after a server restart.
+    * This works by reloading the page into an iframe and stealing all of the comets. When the refresh occurs,
+    * new comet actors will be instantiated, so beware that any state therein will NOT be reinstated. Applications
+    * utilizing this feature should be designed to reconstruct comet state from the DB, cookies, client info, etc
+    * as required.
+    */
+  def enableCometRehydration(): Unit = {
+    LiftRules.redirectAsyncOnSessionLoss = false
+    LiftRules.noCometSessionCmd.default.set(() => JsCmds.Run("lift.rehydrateComets()"))
+  }
+
+  /**
    * The dispatcher that takes a Snippet and converts it to a
    * DispatchSnippet instance
    */
@@ -841,6 +863,36 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   @volatile var snippetNamesToSearch: FactoryMaker[String => List[String]] =
       new FactoryMaker(() => (name: String) => name :: Nil) {}
+
+
+  /**
+   * Snippet timers are used to time and record the execution time of snippets. We provide
+   * two default implementations for you:
+   *   - NoOpSnippetTimer that does nothing
+   *   - LoggingSnippetTimer that logs snippet times.
+   *
+   * To enable snippet timing, invoke `LiftRules.installSnippetTimer`. Once enabled you can use
+   * the snippet timer like a regular `FactoryMaker`. If you only want snippet timing for certain
+   * sessions or requests, invoke `installSnippetTimer` with the `NoOpSnippetTimer` and change
+   * the value for the sessions or requests where you want snippet timing.
+   *
+   * Since this is a `FactoryMaker` you can programmatically override it for an individual request
+   * or session as you see fit. You can also implement your own timer!
+   */
+  val snippetTimer = new LiftRulesGuardedSetting[Option[FactoryMaker[SnippetTimer]]]("snippetTimer", None)
+
+  /**
+   * Enable snippet timing and install a default snippet timer.
+   * This method can only be invoked during boot.
+   *
+   * This method only enables snippet timing and sets the default snippet timer. If you want to
+   * change snipping timing behavior for specific sessions or requests, you'll want to interact
+   * with the underlying `FactoryMaker` after its set up.
+   */
+  def installSnippetTimer(default: SnippetTimer): Unit = {
+    val factoryMaker = new FactoryMaker[SnippetTimer](default) {}
+    snippetTimer.set(Some(factoryMaker))
+  }
 
   /**
    * Implementation for snippetNamesToSearch that looks first in a package named by taking the current template path.
@@ -1582,6 +1634,10 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   private def logSnippetFailure(sf: SnippetFailure) = logger.info("Snippet Failure: " + sf)
 
+  val guardedSettingViolationFunc = new LiftRulesGuardedSetting[LiftRulesGuardedSetting.SettingViolation => Unit]("guardedSettingViolationFunc",
+    violation => logger.warn("LiftRules guarded setting violation!!!", violation.toException)
+  )
+
   /**
    * Set to false if you do not want ajax/comet requests that are not
    * associated with a session to call their respective session
@@ -1903,7 +1959,13 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   private[http] def withMimeHeaders[T](map: Map[String, List[String]])(f: => T): T = _mimeHeaders.doWith(Full(map))(f)
 
-  @volatile var templateCache: Box[TemplateCache[(Locale, List[String]), NodeSeq]] = Empty
+  @volatile var templateCache: Box[TemplateCache[(Locale, List[String]), NodeSeq]] = {
+    if (Props.productionMode) {
+      Full(InMemoryCache(500))
+    } else {
+      Empty
+    }
+  }
 
   val dateTimeConverter: FactoryMaker[DateTimeConverter] = new FactoryMaker[DateTimeConverter]( () => DefaultDateTimeConverter ) {}
 
@@ -2294,4 +2356,3 @@ trait FormVendor {
   private object sessionForms extends SessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
   private object requestForms extends SessionVar[Map[String, List[FormBuilderLocator[_]]]](Map())
 }
-

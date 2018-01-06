@@ -72,9 +72,10 @@ trait StringPk[OwnerType <: MongoRecord[OwnerType]]
 {
   self: OwnerType =>
 
-  def defaultIdValue = StringHelpers.randomString(32)
+  def defaultIdValue = StringHelpers.randomString(maxIdLength)
+  def maxIdLength: Int = 32
 
-  object id extends StringField(this.asInstanceOf[OwnerType], 12) {
+  object id extends StringField(this.asInstanceOf[OwnerType], maxIdLength) {
     override def name = "_id"
     override def defaultValue = defaultIdValue
     override def shouldDisplay_? = false

@@ -199,6 +199,41 @@ object LiftSession {
     }
   }
 
+  private[http] class DataAttrNode(liftSession: LiftSession) {
+    val dataAttributeProcessors = LiftRules.dataAttributeProcessor.toList
+
+    def unapply(in: Node): Option[DataAttributeProcessorAnswer] = {
+      in match {
+        case element: Elem if dataAttributeProcessors.nonEmpty =>
+          element.attributes.toStream.flatMap {
+            case UnprefixedAttribute(key, value, _) if key.toLowerCase().startsWith("data-") =>
+              val dataProcessorName = key.substring(5).toLowerCase()
+              val dataProcessorInputValue = value.text
+              val filteredElement = removeAttribute(key, element)
+
+              NamedPF.applyBox(
+                (dataProcessorName, dataProcessorInputValue, filteredElement, liftSession),
+                dataAttributeProcessors
+              )
+            case _ => Empty
+          }.headOption
+
+        case _ => None
+      }
+    }
+  }
+
+  private[http] class TagProcessingNode(liftSession: LiftSession) {
+    val rules = LiftRules.tagProcessor.toList
+
+    def unapply(in: Node): Option[DataAttributeProcessorAnswer] = {
+      in match {
+        case e: Elem if !rules.isEmpty =>
+          NamedPF.applyBox((e.label, e, liftSession), rules)
+        case _ => None
+      }
+    }
+  }
 }
 
 object PageName extends RequestVar[String]("")
@@ -336,6 +371,12 @@ private[http] class BooleanThreadGlobal extends ThreadGlobal[Boolean] {
  */
 class LiftSession(private[http] val _contextPath: String, val underlyingId: String,
                   val httpSession: Box[HTTPSession]) extends LiftMerge with Loggable with HowStateful {
+
+  /**
+    * Private no-arg constructor needed for deserialization.
+    */
+  private[this] def this() = this("", "", Empty)
+
   def sessionHtmlProperties = LiftRules.htmlProperties.session.is.make openOr LiftRules.htmlProperties.default.is.vend
 
   val requestHtmlProperties: TransientRequestVar[HtmlProperties] =
@@ -371,9 +412,9 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   private case class CometId(cometType: String, cometName: Box[String])
 
-  private val nasyncComponents = new ConcurrentHashMap[CometId, LiftCometActor]
+  @transient private val nasyncComponents = new ConcurrentHashMap[CometId, LiftCometActor]
 
-  private val nasyncById = new ConcurrentHashMap[String, LiftCometActor]
+  @transient private val nasyncById = new ConcurrentHashMap[String, LiftCometActor]
 
   private val asyncSync = new Object
 
@@ -455,7 +496,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   def running_? = _running_?
 
-  private var cometList: Vector[(LiftActor, Req)] = Vector.empty
+  @transient private var cometList: Vector[(LiftActor, Req)] = Vector.empty
 
   private[http] def breakOutComet(): Unit = {
     val cl = asyncSync.synchronized {
@@ -1642,144 +1683,148 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
     val ret: NodeSeq =
       try {
-
         snippetName.map{snippet =>
           val (cls, method) = splitColonPair(snippet)
-          S.doSnippet(snippet)(
-            runWhitelist(snippet, cls, method, kids){(S.locateMappedSnippet(snippet).map(_(kids)) or
-              locSnippet(snippet)).openOr(
-              S.locateSnippet(snippet).map(_(kids)) openOr {
+          val snippetTimer = LiftRules.snippetTimer.get.map(_.vend).getOrElse(NoOpSnippetTimer)
 
-                (locateAndCacheSnippet(cls)) match {
-                  // deal with a stateless request when a snippet has
-                  // different behavior in stateless mode
-                  case Full(inst: StatelessBehavior) if !stateful_? =>
-                    if (inst.statelessDispatch.isDefinedAt(method))
-                    inst.statelessDispatch(method)(kids) else NodeSeq.Empty
+          snippetTimer.timeSnippet(snippet) {
+            S.doSnippet(snippet)(
+              runWhitelist(snippet, cls, method, kids){(S.locateMappedSnippet(snippet).map(_(kids)) or
+                locSnippet(snippet)).openOr(
+                S.locateSnippet(snippet).map(_(kids)) openOr {
 
-                  case Full(inst: StatefulSnippet) if !stateful_? =>
-                    reportSnippetError(page, snippetName,
-                      LiftRules.SnippetFailures.StateInStateless,
-                      NodeSeq.Empty,
-                      wholeTag)
+                  (locateAndCacheSnippet(cls)) match {
+                    // deal with a stateless request when a snippet has
+                    // different behavior in stateless mode
+                    case Full(inst: StatelessBehavior) if !stateful_? =>
+                      if (inst.statelessDispatch.isDefinedAt(method))
+                      inst.statelessDispatch(method)(kids) else NodeSeq.Empty
 
-                  case Full(inst: StatefulSnippet) =>
-                    if (inst.dispatch.isDefinedAt(method)) {
-                      val res = inst.dispatch(method)(kids)
+                    case Full(inst: StatefulSnippet) if !stateful_? =>
+                      reportSnippetError(page, snippetName,
+                        LiftRules.SnippetFailures.StateInStateless,
+                        NodeSeq.Empty,
+                        wholeTag)
 
-                      inst.mergeIntoForm(isForm, res, SHtml.hidden(() => inst.registerThisSnippet))
-                      /* (if (isForm && !res.isEmpty) SHtml.hidden(() => inst.registerThisSnippet) else NodeSeq.Empty) ++
-                      res*/
-                    } else reportSnippetError(page, snippetName,
-                      LiftRules.SnippetFailures.StatefulDispatchNotMatched,
-                      NodeSeq.Empty,
-                      wholeTag)
+                    case Full(inst: StatefulSnippet) =>
+                      if (inst.dispatch.isDefinedAt(method)) {
+                        val res = inst.dispatch(method)(kids)
 
-                  case Full(inst: DispatchSnippet) =>
-                    if (inst.dispatch.isDefinedAt(method)) inst.dispatch(method)(kids)
-                    else reportSnippetError(page, snippetName,
-                      LiftRules.SnippetFailures.StatefulDispatchNotMatched,
-                      NodeSeq.Empty,
-                      wholeTag)
+                        inst.mergeIntoForm(isForm, res, SHtml.hidden(() => inst.registerThisSnippet))
+                        /* (if (isForm && !res.isEmpty) SHtml.hidden(() => inst.registerThisSnippet) else NodeSeq.Empty) ++
+                        res*/
+                      } else reportSnippetError(page, snippetName,
+                        LiftRules.SnippetFailures.StatefulDispatchNotMatched,
+                        NodeSeq.Empty,
+                        wholeTag)
 
-                  case Full(inst) => {
-                    def gotIt: Box[NodeSeq] =
-                      for {
-                        meth <- tryo(inst.getClass.getMethod(method))
-                        if classOf[CssBindFunc].isAssignableFrom(meth.getReturnType)
-                      } yield meth.invoke(inst).asInstanceOf[CssBindFunc].apply(kids)
+                    case Full(inst: DispatchSnippet) =>
+                      if (inst.dispatch.isDefinedAt(method)) inst.dispatch(method)(kids)
+                      else reportSnippetError(page, snippetName,
+                        LiftRules.SnippetFailures.StatefulDispatchNotMatched,
+                        NodeSeq.Empty,
+                        wholeTag)
 
-                    import java.lang.reflect.{Type, ParameterizedType}
+                    case Full(inst) => {
+                      def gotIt: Box[NodeSeq] =
+                        for {
+                          meth <- tryo(inst.getClass.getMethod(method))
+                          if classOf[CssBindFunc].isAssignableFrom(meth.getReturnType)
+                        } yield meth.invoke(inst).asInstanceOf[CssBindFunc].apply(kids)
 
-                    def isFunc1(tpe: Type): Boolean = tpe match {
-                      case null => false
-                      case c: Class[_] => classOf[Function1[_, _]] isAssignableFrom c
-                      case _ => false
-                    }
+                      import java.lang.reflect.{Type, ParameterizedType}
 
-                    def isNodeSeq(tpe: Type): Boolean = tpe match {
-                      case null => false
-                      case c: Class[_] => classOf[NodeSeq] isAssignableFrom c
-                      case _ => false
-                    }
+                      def isFunc1(tpe: Type): Boolean = tpe match {
+                        case null => false
+                        case c: Class[_] => classOf[Function1[_, _]] isAssignableFrom c
+                        case _ => false
+                      }
 
-                    def testGeneric(tpe: Type): Boolean = tpe match {
-                      case null => false
-                      case pt: ParameterizedType =>
-                        if (isFunc1(pt.getRawType) &&
-                          pt.getActualTypeArguments.length == 2 &&
-                          isNodeSeq(pt.getActualTypeArguments()(0)) &&
-                          isNodeSeq(pt.getActualTypeArguments()(1)))
-                          true
-                        else testGeneric(pt.getRawType)
+                      def isNodeSeq(tpe: Type): Boolean = tpe match {
+                        case null => false
+                        case c: Class[_] => classOf[NodeSeq] isAssignableFrom c
+                        case _ => false
+                      }
 
-                      case clz: Class[_] =>
-                        if (clz == classOf[Object]) false
-                        else clz.getGenericInterfaces.find(testGeneric) match {
-                          case Some(_) => true
-                          case _ => testGeneric(clz.getSuperclass)
+                      def testGeneric(tpe: Type): Boolean = tpe match {
+                        case null => false
+                        case pt: ParameterizedType =>
+                          if (isFunc1(pt.getRawType) &&
+                            pt.getActualTypeArguments.length == 2 &&
+                            isNodeSeq(pt.getActualTypeArguments()(0)) &&
+                            isNodeSeq(pt.getActualTypeArguments()(1)))
+                            true
+                          else testGeneric(pt.getRawType)
+
+                        case clz: Class[_] =>
+                          if (clz == classOf[Object]) false
+                          else clz.getGenericInterfaces.find(testGeneric) match {
+                            case Some(_) => true
+                            case _ => testGeneric(clz.getSuperclass)
+                          }
+
+                        case _ => false
+                      }
+
+                      def isFuncNodeSeq(meth: Method): Boolean = {
+                        (classOf[Function1[_, _]] isAssignableFrom meth.getReturnType) &&
+                          testGeneric(meth.getGenericReturnType)
+                      }
+
+
+                      def nodeSeqFunc: Box[NodeSeq] =
+                        for {
+                          meth <- tryo(inst.getClass.getMethod(method))
+                          if isFuncNodeSeq(meth)
+                        } yield meth.invoke(inst).asInstanceOf[Function1[NodeSeq,
+                          NodeSeq]].apply(kids)
+
+
+                      (gotIt or nodeSeqFunc) openOr {
+
+                        val ar: Array[AnyRef] = List(Group(kids)).toArray
+                        ((Helpers.invokeMethod(inst.getClass, inst, method, ar, Array(classOf[NodeSeq]))) or
+                          Helpers.invokeMethod(inst.getClass, inst, method)) match {
+                          case CheckNodeSeq(md) => md
+                          case it =>
+                            val intersection = if (Props.devMode) {
+                              val methodNames = inst.getClass.getMethods().map(_.getName).toList.distinct
+                              val methodAlts = List(method, Helpers.camelify(method),
+                                Helpers.camelifyMethod(method))
+                              methodNames intersect methodAlts
+                            } else Nil
+
+                            reportSnippetError(page, snippetName,
+                              LiftRules.SnippetFailures.MethodNotFound,
+                              if (intersection.isEmpty) NodeSeq.Empty
+                              else
+                                <div>There are possible matching methods (
+                                  {intersection}
+                                  ),
+                                  but none has the required signature:
+                                  <pre>def
+                                    {method}
+                                    (in: NodeSeq): NodeSeq</pre>
+                                </div>,
+                              wholeTag)
                         }
-
-                      case _ => false
-                    }
-
-                    def isFuncNodeSeq(meth: Method): Boolean = {
-                      (classOf[Function1[_, _]] isAssignableFrom meth.getReturnType) &&
-                        testGeneric(meth.getGenericReturnType)
-                    }
-
-
-                    def nodeSeqFunc: Box[NodeSeq] =
-                      for {
-                        meth <- tryo(inst.getClass.getMethod(method))
-                        if isFuncNodeSeq(meth)
-                      } yield meth.invoke(inst).asInstanceOf[Function1[NodeSeq,
-                        NodeSeq]].apply(kids)
-
-
-                    (gotIt or nodeSeqFunc) openOr {
-
-                      val ar: Array[AnyRef] = List(Group(kids)).toArray
-                      ((Helpers.invokeMethod(inst.getClass, inst, method, ar, Array(classOf[NodeSeq]))) or
-                        Helpers.invokeMethod(inst.getClass, inst, method)) match {
-                        case CheckNodeSeq(md) => md
-                        case it =>
-                          val intersection = if (Props.devMode) {
-                            val methodNames = inst.getClass.getMethods().map(_.getName).toList.distinct
-                            val methodAlts = List(method, Helpers.camelify(method),
-                              Helpers.camelifyMethod(method))
-                            methodNames intersect methodAlts
-                          } else Nil
-
-                          reportSnippetError(page, snippetName,
-                            LiftRules.SnippetFailures.MethodNotFound,
-                            if (intersection.isEmpty) NodeSeq.Empty
-                            else
-                              <div>There are possible matching methods (
-                                {intersection}
-                                ),
-                                but none has the required signature:
-                                <pre>def
-                                  {method}
-                                  (in: NodeSeq): NodeSeq</pre>
-                              </div>,
-                            wholeTag)
                       }
                     }
+                    case Failure(_, Full(exception), _) => logger.warn("Snippet instantiation error", exception)
+                    reportSnippetError(page, snippetName,
+                      LiftRules.SnippetFailures.InstantiationException,
+                      NodeSeq.Empty,
+                      wholeTag)
+
+                    case _ => reportSnippetError(page, snippetName,
+                      LiftRules.SnippetFailures.ClassNotFound,
+                      NodeSeq.Empty,
+                      wholeTag)
+
                   }
-                  case Failure(_, Full(exception), _) => logger.warn("Snippet instantiation error", exception)
-                  reportSnippetError(page, snippetName,
-                    LiftRules.SnippetFailures.InstantiationException,
-                    NodeSeq.Empty,
-                    wholeTag)
-
-                  case _ => reportSnippetError(page, snippetName,
-                    LiftRules.SnippetFailures.ClassNotFound,
-                    NodeSeq.Empty,
-                    wholeTag)
-
-                }
-              })})}.openOr {
+                })})
+          }
+        } openOr {
           reportSnippetError(page, snippetName,
             LiftRules.SnippetFailures.NoNameSpecified,
             NodeSeq.Empty,
@@ -2007,41 +2052,9 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   private object _lastFoundSnippet extends ThreadGlobal[String]
 
-  private object DataAttrNode {
-    val dataAttributeProcessors = LiftRules.dataAttributeProcessor.toList
+  @transient private val DataAttrNode = new LiftSession.DataAttrNode(this)
 
-    def unapply(in: Node): Option[DataAttributeProcessorAnswer] = {
-      in match {
-        case element: Elem if dataAttributeProcessors.nonEmpty =>
-          element.attributes.toStream.flatMap {
-            case UnprefixedAttribute(key, value, _) if key.toLowerCase().startsWith("data-") =>
-              val dataProcessorName = key.substring(5).toLowerCase()
-              val dataProcessorInputValue = value.text
-              val filteredElement = removeAttribute(key, element)
-
-              NamedPF.applyBox(
-                (dataProcessorName, dataProcessorInputValue, filteredElement, LiftSession.this),
-                dataAttributeProcessors
-              )
-            case _ => Empty
-          }.headOption
-
-        case _ => None
-      }
-    }
-  }
-
-  private object TagProcessingNode {
-    val rules = LiftRules.tagProcessor.toList
-
-    def unapply(in: Node): Option[DataAttributeProcessorAnswer] = {
-      in match {
-        case e: Elem if !rules.isEmpty =>
-          NamedPF.applyBox((e.label, e, LiftSession.this), rules)
-        case _ => None
-      }
-    }
-  }
+  @transient private val TagProcessingNode = new LiftSession.TagProcessingNode(this)
 
   /**
    * Pass in a LiftActor and get a JavaScript expression (function(x) {...}) that
@@ -2102,6 +2115,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           in.!(xlate(p) match {
             case Full(v) => v
             case Empty => logger.error("Failed to deserialize JSON message "+p); p
+            case Failure(msg, Full(ex), _) => logger.error("Failed to deserialize JSON message "+p+". Error "+msg, ex); p
             case Failure(msg, _, _) => logger.error("Failed to deserialize JSON message "+p+". Error "+msg); p
           })
           JsCmds.Noop
@@ -2487,8 +2501,9 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * As with `findOrBuildComet[T]`, but specify the type as a `String`. If the
    * comet doesn't already exist, the comet type is first looked up via
-   * `LiftRules.cometCreationFactory`, and then as a class name in the comet
-   * packages designated by `LiftRules.buildPackage("comet")`.
+   * `LiftRules.cometCreationFactory`, then `LiftRules.cometCreation`, and
+   * finally  as a class name in the comet packages designated by
+   * `LiftRules.buildPackage("comet")`.
    */
   private[http] def findOrCreateComet(
     cometType: String,
@@ -2568,12 +2583,14 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   // Given a comet creation info, build a comet based on the comet type, first
-  // attempting to use LiftRules.cometCreationFactory and then building it by
+  // attempting to use `LiftRules.cometCreationFactory` and then attempting to
+  // find a match in `LiftRules.cometCreation`. Failing those, this will build it by
   // class name. Return a descriptive Failure if it's all gone sideways.
   //
   // Runs some base setup tasks before returning the comet.
   private def buildCometByCreationInfo(creationInfo: CometCreationInfo): Box[LiftCometActor] = {
-    LiftRules.cometCreationFactory.vend.apply(creationInfo) or {
+    LiftRules.cometCreationFactory.vend.apply(creationInfo) or
+    NamedPF.applyBox(creationInfo, LiftRules.cometCreation.toList) or {
       val cometType =
         findType[LiftCometActor](
           creationInfo.cometType,
@@ -2607,7 +2624,17 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
       constructor.newInstance(this, name, defaultXml, attributes).asInstanceOf[T]
     }
 
-    val attemptedComet = tryo(buildWithNoArgConstructor) or tryo(buildWithCreateInfoConstructor)
+    // We first attempt to use the no argument constructor. If we get a NoSuchMethodException,
+    // we _then_ try to use the create info constructor. If anything else happens, including
+    // others kinds of exceptions, we abort construction attempts intentionally so we surface
+    // the correct error.
+    val attemptedComet = tryo(buildWithNoArgConstructor) match {
+      case fail @ Failure(_, Full(e: java.lang.NoSuchMethodException), _) =>
+        fail or tryo(buildWithCreateInfoConstructor)
+
+      case other =>
+        other
+    }
 
     attemptedComet match {
       case fail @ Failure(_, Full(e: java.lang.NoSuchMethodException), _) =>
@@ -2668,10 +2695,10 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * marshalled to the server and the code is executed on the server.
    * The result can be an item (JValue) or a Stream of Items.
    *
-   * If the
-   * The // HERE
+   * @param info The RoundTripInfo to build on.
+   * @param onShutdown A callback that is invoked when the underlying comet is shut down.
    */
-  def buildRoundtrip(info: Seq[RoundTripInfo]): JsExp = {
+  def buildRoundtrip(info: Seq[RoundTripInfo], onShutdown: ()=>Unit = ()=>()): JsExp = {
     testStatefulFeature{
 
 
@@ -2720,6 +2747,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           case _ =>
 
         }
+
+        override def localShutdown(): Unit = onShutdown()
       }
 
         nasyncComponents.put(CometId(ca.theType openOr "Roundtrip Comet Actor", ca.name), ca)
