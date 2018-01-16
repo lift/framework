@@ -1,6 +1,7 @@
 # The Lift Web Framework
 
 [![Build Status](https://travis-ci.org/lift/framework.svg?branch=master)](https://travis-ci.org/lift/framework)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Flift%2Fframework.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Flift%2Fframework?ref=badge_shield)
 
 Lift is the most powerful, most secure web framework available today. There are [Seven Things](http://seventhings.liftweb.net/) that distinguish Lift from other web frameworks.
 
@@ -201,6 +202,9 @@ The ScalaDocs for each release of Lift, in additional to the actual JARs, are av
 ## License
 
 Lift is open source software released under the **Apache 2.0 license**.
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Flift%2Fframework.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Flift%2Fframework?ref=badge_large)
 
 ## Continuous Integration
 
