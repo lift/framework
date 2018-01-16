@@ -1335,6 +1335,13 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   }
 
   /**
+    * The root path for assets folder. Assets under this configurable path
+    * follow conventions, for example the default lazy loading spinner
+    * ('ajax-loader.gif') is under 'images' folder.
+    */
+  @volatile var assetPath: String = "/assets"
+
+  /**
    * Contains the URI path under which all built-in Lift-handled requests are
    * scoped. It does not include the context path and should not begin with a
    * /.

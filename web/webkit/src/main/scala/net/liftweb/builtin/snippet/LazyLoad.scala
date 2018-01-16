@@ -72,7 +72,7 @@ object LazyLoad extends DispatchSnippet {
               renderedTemplate
             }
           } openOr {
-            <div><img src="/images/ajax-loader.gif" alt="Loading"/></div>
+            <div><img src={s"${LiftRules.assetPath}/images/ajax-loader.gif"} alt="Loading"/></div>
           }
         )
       }
