@@ -118,7 +118,7 @@ object JsonAST {
      * nothing is found, you'll get a `JNothing`.
      */
     def \(nameToFind: String): JValue = {
-      findDirectByName(List(this), nameToFind) match {
+      findDirectByName(this :: Nil, nameToFind) match {
         case Nil => JNothing
         case x :: Nil => x
         case x => JArray(x)
