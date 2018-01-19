@@ -214,8 +214,8 @@ object JsonParser {
           case JField(name, value) =>
             vals.pop(classOf[JField])
             val obj = vals.peek(classOf[IntermediateJObject])
-            obj.fields.append(JField(name,v))
-          case a: IntermediateJArray => a.bits.append(v)
+            obj.fields += (JField(name,v))
+          case a: IntermediateJArray => a.bits += v
           case other => p.fail("expected field or array but got " + other)
       } else {
         vals.push(v)
