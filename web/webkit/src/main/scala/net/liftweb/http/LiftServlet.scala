@@ -159,15 +159,7 @@ class LiftServlet extends Loggable {
           )
         }
 
-        if (LiftRules.logServiceRequestTiming) {
-          logTime {
-            val ret = doService(req, resp)
-            val msg = "Service request (" + req.request.method + ") " + req.request.uri + " returned " + resp.getStatus + ","
-            (msg, ret)
-          }
-        } else {
-          doService(req, resp)
-        }
+        LiftRules.serviceRequestTimer.get.vend.logTime(req, resp)(doService)
       }
 
       req.request.resumeInfo match {
