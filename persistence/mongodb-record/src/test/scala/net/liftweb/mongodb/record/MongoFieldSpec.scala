@@ -27,7 +27,6 @@ import org.specs2.specification._
 import org.specs2.execute.AsResult
 import org.joda.time.DateTime
 import common._
-import json._
 import mongodb.BsonDSL._
 import util.Helpers.randomString
 import http.{LiftSession, S}
@@ -39,6 +38,7 @@ import common.Box._
 import xml.{Elem, NodeSeq, Text}
 import util.{FieldError, Helpers}
 import Helpers._
+import net.liftweb.json.JsonAST._
 import org.bson.Document
 import org.bson.types.ObjectId
 
