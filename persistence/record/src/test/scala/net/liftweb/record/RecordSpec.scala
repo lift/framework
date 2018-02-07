@@ -20,19 +20,16 @@ package record
 import java.util.Calendar
 
 import org.specs2.mutable.Specification
-import org.joda.time._
-
-import http.js.JE._
+import org.joda.time.DateTime
 import common._
-import http.{S, LiftSession}
-import json._
+import http.{LiftSession, S}
 import util._
 import util.Helpers._
-
 import field.Countries
 import fixtures._
-
-import JsonDSL._
+import net.liftweb.http.js.JE._
+import net.liftweb.json.JsonAST._
+import net.liftweb.json.JsonDSL._
 
 
 /**
