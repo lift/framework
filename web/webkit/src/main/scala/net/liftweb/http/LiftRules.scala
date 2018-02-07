@@ -1978,7 +1978,14 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   @volatile var logUnreadRequestVars = true
 
-/**
+  /** Controls whether or not the service handling timing messages (Service request (GET) ... took ... Milliseconds) are logged.
+    * If set to false NoOpServiceTimer is used.
+    * We should remove this setting in Lift-4 and only depend on serviceRequestTimer
+    * Defaults to true.
+    * */
+  @volatile var logServiceRequestTiming = true
+
+  /**
   * Handles logging of servicing a request
   * two default implementations:
   *   - NoOpServiceTimer that does nothing
