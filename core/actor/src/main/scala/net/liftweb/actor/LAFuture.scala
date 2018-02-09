@@ -171,7 +171,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
   /**
    * Has the future been aborted
    */
-  def aborted_? = synchronized {satisfied}
+  def aborted_? = synchronized {aborted}
 
   /**
    * Java-friendly alias for completed_?.
