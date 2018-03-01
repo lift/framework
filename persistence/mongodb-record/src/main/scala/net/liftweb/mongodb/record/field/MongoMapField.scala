@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 WorldWide Conferencing, LLC
+ * Copyright 2010-2018 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package mongodb
 package record
 package field
 
+import scala.collection.JavaConverters._
 import scala.xml.NodeSeq
 
 import net.liftweb.common.{Box, Empty, Failure, Full}
@@ -101,10 +102,8 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
 
   // set this field's value using a DBObject returned from Mongo.
   def setFromDBObject(dbo: DBObject): Box[Map[String, MapValueType]] = {
-    import scala.collection.JavaConversions._
-
     setBox(Full(
-      Map() ++ dbo.keySet.map {
+      Map() ++ dbo.keySet.asScala.map {
         k => (k.toString, dbo.get(k).asInstanceOf[MapValueType])
       }
     ))
@@ -112,7 +111,6 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
 
   // set this field's value using a bson.Document returned from Mongo.
   def setFromDocument(doc: Document): Box[Map[String, MapValueType]] = {
-    import scala.collection.JavaConverters._
     val map: Map[String, MapValueType] = doc.asScala.map {
       case (k, v) => k -> v.asInstanceOf[MapValueType]
     } (scala.collection.breakOut)

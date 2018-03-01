@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2018 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@
 package net.liftweb
 package mongodb
 
-import util.{ConnectionIdentifier, DefaultConnectionIdentifier}
+import net.liftweb.json.JsonAST.JObject
+import net.liftweb.util.{ConnectionIdentifier, DefaultConnectionIdentifier}
 
-import json.JsonAST.JObject
+import scala.collection.JavaConverters.asScalaIteratorConverter
 
 import java.util.UUID
 
@@ -120,13 +121,11 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   * Find all documents in this collection
   */
   def findAll: List[BaseDocument] = {
-    import scala.collection.JavaConversions._
-
     MongoDB.useCollection(connectionIdentifier, collectionName)(coll => {
       /** Mongo Cursors are both Iterable and Iterator,
        * so we need to reduce ambiguity for implicits
        */
-      (coll.find: Iterator[DBObject]).map(create).toList
+      coll.find.iterator.asScala.map(create).toList
     })
   }
 
@@ -134,8 +133,6 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
   * Find all documents using a DBObject query.
   */
   def findAll(qry: DBObject, sort: Option[DBObject], opts: FindOption*): List[BaseDocument] = {
-    import scala.collection.JavaConversions._
-
     val findOpts = opts.toList
 
     MongoDB.useCollection(connectionIdentifier, collectionName) ( coll => {
@@ -148,7 +145,7 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
       /** Mongo Cursors are both Iterable and Iterator,
        * so we need to reduce ambiguity for implicits
        */
-      (cur: Iterator[DBObject]).map(create).toList
+      cur.iterator.asScala.map(create).toList
     })
   }
 

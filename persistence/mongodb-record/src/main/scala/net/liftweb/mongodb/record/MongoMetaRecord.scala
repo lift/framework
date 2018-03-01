@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 WorldWide Conferencing, LLC
+ * Copyright 2010-2018 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import net.liftweb.record.MandatoryTypedField
 import org.bson.Document
 import org.bson.types.ObjectId
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.{Future, Promise}
 
 trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
@@ -149,7 +149,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     /** Mongo Cursors are both Iterable and Iterator,
       * so we need to reduce ambiguity for implicits
       */
-    (coll.find: Iterator[DBObject]).map(fromDBObject).toList
+    coll.find.iterator.asScala.map(fromDBObject).toList
   }
 
   /**
@@ -177,7 +177,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
       )
       sort.foreach(s => cur.sort(s))
       // This retrieves all documents and puts them in memory.
-      (cur: Iterator[DBObject]).map(fromDBObject).toList
+      cur.iterator.asScala.map(fromDBObject).toList
     }
   }
 
