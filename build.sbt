@@ -22,11 +22,13 @@ publishTo in ThisBuild := {
   }
 }
 scmInfo in ThisBuild   := Some(ScmInfo(url("https://github.com/lift/framework"), "scm:git:https://github.com/lift/framework.git"))
-pomExtra in ThisBuild  :=  Developers.toXml
+pomExtra in ThisBuild  := Developers.toXml
 
 credentials in ThisBuild += Credentials(BuildPaths.getGlobalSettingsDirectory(state.value, BuildPaths.getGlobalBase(state.value)) / ".credentials")
 
-initialize <<= (name, version, scalaVersion).apply(printLogo)
+initialize := {
+  printLogo(name.value, version.value, scalaVersion.value)
+}
 
 resolvers  in ThisBuild  ++= Seq(
   "snapshots"     at "https://oss.sonatype.org/content/repositories/snapshots",
@@ -161,34 +163,37 @@ lazy val webkit =
         jasmineCore,
         jasmineAjax
       ),
-      initialize in Test <<= (sourceDirectory in Test) { src =>
-        System.setProperty("net.liftweb.webapptest.src.test.webapp", (src / "webapp").absString)
+      initialize in Test := {
+        System.setProperty(
+          "net.liftweb.webapptest.src.test.webapp",
+          ((sourceDirectory in Test).value / "webapp").absString
+        )
       },
-      unmanagedSourceDirectories in Compile <+= (sourceDirectory in Compile, scalaBinaryVersion) {
-        (sourceDirectory, binaryVersion) =>
-          sourceDirectory / ("scala_" + binaryVersion)
+      unmanagedSourceDirectories in Compile += {
+        (sourceDirectory in Compile).value / ("scala_" + scalaBinaryVersion.value)
       },
-      unmanagedSourceDirectories in Test <+= (sourceDirectory in Test, scalaBinaryVersion) {
-        (sourceDirectory, binaryVersion) =>
-          sourceDirectory / ("scala_" + binaryVersion)
+      unmanagedSourceDirectories in Test += {
+        (sourceDirectory in Test).value / ("scala_" + scalaBinaryVersion.value)
       },
-      (compile in Compile) <<= (compile in Compile) dependsOn (WebKeys.assets),
+      compile in Compile := (compile in Compile).dependsOn(WebKeys.assets).value,
       /**
         * This is to ensure that the tests in net.liftweb.webapptest run last
         * so that other tests (MenuSpec in particular) run before the SiteMap
         * is set.
         */
-      testGrouping in Test <<= (definedTests in Test).map { tests =>
-        import Tests._
+      testGrouping in Test := {
+        (definedTests in Test).map { tests =>
+          import Tests._
 
-        val (webapptests, others) = tests.partition { test =>
-          test.name.startsWith("net.liftweb.webapptest")
-        }
+          val (webapptests, others) = tests.partition { test =>
+            test.name.startsWith("net.liftweb.webapptest")
+          }
 
-        Seq(
-          new Group("others", others, InProcess),
-          new Group("webapptests", webapptests, InProcess)
-        )
+          Seq(
+            new Group("others", others, InProcess),
+            new Group("webapptests", webapptests, InProcess)
+          )
+        }.value
       },
 
       scalacOptions in (Compile, doc) ++= {
@@ -223,8 +228,11 @@ lazy val mapper =
       description := "Mapper Library",
       parallelExecution in Test := false,
       libraryDependencies ++= Seq(h2, derby),
-      initialize in Test <<= (crossTarget in Test) { ct =>
-        System.setProperty("derby.stream.error.file", (ct / "derby.log").absolutePath)
+      initialize in Test := {
+        System.setProperty(
+          "derby.stream.error.file",
+          ((crossTarget in Test).value / "derby.log").absolutePath
+        )
       }
     )
 
@@ -243,8 +251,11 @@ lazy val mongodb =
     .settings(
       parallelExecution in Test := false,
       libraryDependencies ++= Seq(mongo_java_driver, mongo_java_driver_async),
-      initialize in Test <<= (resourceDirectory in Test) { rd =>
-        System.setProperty("java.util.logging.config.file", (rd / "logging.properties").absolutePath)
+      initialize in Test := {
+        System.setProperty(
+          "java.util.logging.config.file",
+          ((resourceDirectory in Test).value / "logging.properties").absolutePath
+        )
       }
     )
 
