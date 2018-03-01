@@ -29,6 +29,8 @@ import http.js._
 import S._
 import JE._
 
+import org.mindrot.jbcrypt.BCrypt
+
 object PasswordField {
   @volatile var blankPw = "*******"
   @volatile var minPasswordLength = 5

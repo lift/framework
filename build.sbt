@@ -222,7 +222,7 @@ lazy val mapper =
     .settings(
       description := "Mapper Library",
       parallelExecution in Test := false,
-      libraryDependencies ++= Seq(h2, derby),
+      libraryDependencies ++= Seq(h2, derby, jbcrypt),
       initialize in Test <<= (crossTarget in Test) { ct =>
         System.setProperty("derby.stream.error.file", (ct / "derby.log").absolutePath)
       }
@@ -231,6 +231,7 @@ lazy val mapper =
 lazy val record =
   persistenceProject("record")
     .dependsOn(proto)
+    .settings(libraryDependencies ++= Seq(jbcrypt))
 
 lazy val squeryl_record =
   persistenceProject("squeryl-record")

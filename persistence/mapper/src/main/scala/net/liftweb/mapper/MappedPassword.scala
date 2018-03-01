@@ -30,6 +30,8 @@ import net.liftweb.json._
 import net.liftweb.common._
 import net.liftweb.http.js._
 
+import org.mindrot.jbcrypt.BCrypt
+
 object MappedPassword {
   val blankPw = "*******"
 
