@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2018 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package net.liftweb
 package mongodb
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import java.util.{Date, UUID}
 import java.util.regex.Pattern
@@ -60,14 +60,14 @@ object JObjectParser extends SimpleInjector {
       case x if primitive_?(x.getClass) => primitive2jvalue(x)
       case x if datetype_?(x.getClass) => datetype2jvalue(x)(formats)
       case x if mongotype_?(x.getClass) => mongotype2jvalue(x)(formats)
-      case x: BasicDBList => JArray(x.toList.map( x => serialize(x)(formats)))
+      case x: BasicDBList => JArray(x.asScala.toList.map( x => serialize(x)(formats)))
       case x: BasicDBObject => JObject(
-        x.keySet.toList.map { f =>
+        x.keySet.asScala.toList.map { f =>
           JField(f.toString, serialize(x.get(f.toString))(formats))
         }
       )
       case x: Document => JObject(
-        x.keySet.toList.map { f =>
+        x.keySet.asScala.toList.map { f =>
           JField(f.toString, serialize(x.get(f.toString), formats))
         }
       )

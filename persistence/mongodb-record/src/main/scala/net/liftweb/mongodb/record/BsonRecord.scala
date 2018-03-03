@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2013 WorldWide Conferencing, LLC
+ * Copyright 2011-2018 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ package record
 import common._
 
 import java.util.regex.Pattern
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import net.liftweb.record.{Field, MetaRecord, Record}
 import net.liftweb.record.field._
@@ -155,7 +155,7 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
     * @return Unit
     */
   def setFieldsFromDBObject(inst: BaseRecord, dbo: DBObject): Unit = {
-    for (k <- dbo.keySet; field <- inst.fieldByName(k.toString)) {
+    for (k <- dbo.keySet.asScala; field <- inst.fieldByName(k.toString)) {
       field.setFromAny(dbo.get(k.toString))
     }
     inst.runSafe {
@@ -164,7 +164,7 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
   }
 
   def setFieldsFromDocument(inst: BaseRecord, doc: Document): Unit = {
-    for (k <- doc.keySet; field <- inst.fieldByName(k.toString)) {
+    for (k <- doc.keySet.asScala; field <- inst.fieldByName(k.toString)) {
       field.setFromAny(doc.get(k.toString))
     }
     inst.runSafe {
