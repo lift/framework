@@ -24,8 +24,8 @@ We'll add it to the top of our chat area in `chat.html`:
 ```
 
 The ideal way for this to work would be for you to be able to change the value
-of the field, and have it save. We can do exactly that using Lift's `ajaxText`
-helper in `Chat.scala`:
+of the field and have it save once the cursor leaves the field (i.e., on blur).
+We can do exactly that using Lift's `ajaxText` helper in `Chat.scala`:
 
 ```scala
 ...

@@ -8,19 +8,20 @@
 If you're developing a user-facing web site or application, one of Lift's
 greatest improvements over existing systems is view-first development.
 View-first development thoroughly separates the process of creating the user
-interface from the process of putting data from the system into it, in a way
-that lets you stay focused on users when you're creating the user interface and
-worry about the the interface between your backend and the HTML only when
+interface from the process of putting data from the system into it. This way,
+you can stay focused on users when you're creating the user interface and
+focus on the interface between your backend and the HTML only when
 you're working on the backend.
 
 The flip side of view-first development is that it takes some getting used to
-if one is accustomed to the typical web MVC framework. The first stop when
+if you are accustomed to the typical web MVC framework. The first stop when
 figuring out what's going on in a typical web MVC setup is the controller. In
-Lift, your first stop is your HTML file. Everything starts in the HTML, and in
-what it is that you want to present to the user. You don't just think about
-user interactions first, you *build* them first, and let them guide your
+Lift, your first stop is your HTML file. Everything starts in the HTML, where
+you decide what it is that you want to present to the user. You don't just think
+about user interactions first, you *build* them first, and let them guide your
 development forward and inform it at every step of the way. Turning a usability
-tested high fidelity mockup into a live page has never been so straightforward.
+tested, high-fidelity mockup into a live page has never been so
+straightforward.
 
 For our chat app, we're going to focus first on two use cases, formulated as
 user stories:

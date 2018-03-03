@@ -5,16 +5,17 @@
 
 # CSS Selector Transforms
 
-Because Lift operates by transforming HTML trees, it needs an easy way to
+Because Lift operates by transforming HTML trees, we need an easy way to
 specify those transformations. Otherwise we'd be doing a bunch of recursive
-tree searches and munges and it would get ugly and probably slow to boot. To
-deal with transformations easily, we use a small subset of CSS selectors, with
-a few Lift idiosyncrasies to maximize performance and address some use cases
-that are particularly useful when transforming trees.
+tree searches and munges, which would get ugly, unpleasant, and probably end up
+being a performance nightmare. To deal with transformations easily, we instead
+use a small subset of CSS selectors, with a few Lift variations that allow us to
+maximize performance and address additional use cases around tree
+transformation.
 
 We'll leave forms for the next section, as forms always come with a catalog of
 related functionality, and focus on binding the list of chat messages in this
-section. We'll also add a new one before every page load, so that we can see
+section. We'll also add a new message before every page load, so that we can see
 the list changing.
 
 First, we'll define a variable to hold the messages:
@@ -59,7 +60,7 @@ directory of the chat app and start up the application:
 
 ```
 $ sbt
-> container:start
+> jetty:start
 [info] Compiling 4 Scala sources to /Users/Shadowfiend/github/lift-example/target/scala-2.9.2/classes...
 [info] jetty-8.1.7.v20120910
 [info] NO JSP Support for /, did not find org.apache.jasper.servlet.JspServlet
@@ -87,7 +88,7 @@ every time we render the message list:
 Let's recompile and restart the server:
 
 ```
-> container:stop
+> jetty:stop
 [info] stopped o.e.j.w.WebAppContext{/,[file:/Users/Shadowfiend/github/lift-example/src/main/webapp/]}
 [success] Total time: 0 s, completed Oct 6, 2013 2:36:48 PM
 > container:start

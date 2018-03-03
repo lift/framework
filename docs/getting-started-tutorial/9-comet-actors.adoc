@@ -18,3 +18,5 @@ anything.
 Our first move will be to change how exactly we handle binding chat messages.
 First, we'll do a quick conversion that puts everything in a `CometActor`, but
 doesn't add any additional functionality. Instead of calling
+
+TODO Apparently I stopped midsentence here, so there's more to fill in ;)

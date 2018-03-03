@@ -112,7 +112,7 @@ listing messages by updating the `Chat` snippet:
 ```
 ...
   def messages = {
-    val messageEntries = Box.asA[List[ChatMessage]](ChatActor !? GetMessages).flatten
+    val messageEntries = Box.asA[List[ChatMessage]](ChatActor !? GetMessages) openOr List()
 
     ClearClearable &
     "li" #> messageEntries.map { entry =>
@@ -134,11 +134,12 @@ to the type `T`, and, if it succeeds, provides a `Full` `Box` with the
 converted value of the appropriate type. If it fails, it provides an `Empty`
 `Box` instead.
 
-To deal with the fact that the `Box` may be `Full` or `Empty`, we use `flatten`
+To deal with the fact that the `Box` may be `Full` or `Empty`, we use `openOr`
 on the `Box`. We do this because the type of `messageEntries` is now a
 `Box[List[ChatMessage]]`, meaning a box that *contains* a list of chat
-messages. `flatten` will give us the plain list of messages if the `Box` is
-`Full`, and an empty list if it's `Empty`, which is perfect.
+messages. `openOr` will give us the plain list of messages if the `Box` is
+`Full`, and return the second parameter, an empty `List`, if the `Box` is
+`Empty`.
 
 It's worth mentioning that it seems like we *know* we'll be getting a
 `List[ChatMessage]` from the actor. However, the compiler *doesn't*, and that

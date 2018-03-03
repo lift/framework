@@ -38,8 +38,9 @@ And to the input form:
 <form class="send-message" data-lift="Chat.sendMessage">
 ```
 
-These two indicate two methods in a class called `Chat`, which Lift searches
-for in the `code.snippet` package footnote:[This can be changed using
+The two references in the `data-lift` attributes we added indicate two methods
+in a class called `Chat`, which Lift searches for in the `code.snippet` package
+footnote:[This can be changed using
 link:++https://liftweb.net/api/30/api/index.html#net.liftweb.http.LiftRules@addToPackages(what:String):Unit++[`LiftRules.addPackage`.].
 We'll write a very basic version that just passes through the contents of the
 list and form unchanged, and then in the next section we'll start adding some
