@@ -125,7 +125,8 @@ lazy val util =
         javamail,
         log4j,
         htmlparser,
-        xerces
+        xerces,
+        jbcrypt
       )
     )
 
