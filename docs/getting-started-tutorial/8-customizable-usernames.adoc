@@ -13,7 +13,7 @@ Let's deal with the next use case:
 What we really want is a text box on the client that will let us edit the name.
 We'll add it to the top of our chat area in `chat.html`:
 
-```html
+```html:src/main/webapp/index.html
 ...
   <section id="chat">
     <header>
@@ -27,7 +27,7 @@ The ideal way for this to work would be for you to be able to change the value
 of the field and have it save once the cursor leaves the field (i.e., on blur).
 We can do exactly that using Lift's `ajaxText` helper in `Chat.scala`:
 
-```scala
+```scala:src/main/scala/code/snippet/Chat.scala
 ...
   def nameField = {
     "input" #> SHtml.ajaxText(username.is, username.set _)
@@ -45,7 +45,7 @@ a change occurs on the client, and we hook it up directly to the ``SessionVar``'
 However, maybe we want to provide some feedback to the user to let them know
 the name has been updated. We can get a little more detailed:
 
-```scala
+```scala:src/main/scala/code/snippet/Chat.scala
 ...
   def nameField = {
     "input" #> SHtml.ajaxText(username.is, { updatedUsername: String =>

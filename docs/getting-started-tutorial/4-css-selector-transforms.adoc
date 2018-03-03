@@ -20,7 +20,7 @@ the list changing.
 
 First, we'll define a variable to hold the messages:
 
-```
+```scala:src/main/scala/code/snippet/Chat.scala
 ...
 object Chat {
   var messageEntries = List[String]()
@@ -31,7 +31,7 @@ object Chat {
 Then, we can change the definition of the `messages` method to bind the
 contents of the message list:
 
-```
+```scala:src/main/scala/code/snippet/Chat.scala
 ...
 
 import net.liftweb.util.Helpers._
@@ -76,7 +76,7 @@ Once you see the success message, point your browser to
 there are no message entries. To fix this, we're going to add a chat message
 every time we render the message list:
 
-```
+```scala:src/main/scala/code/snippet/Chat.scala
 ...
   def messages = {
     messageEntries :+= "It is now " + formattedTimeNow
@@ -133,7 +133,7 @@ without getting nasty in our HTML?
 
 Lift lets us tag the extra elements with a class `clearable`:
 
-```
+```html:src/main/webapp/index.html
 ...
       <li>Hi!</li>
       <li class="clearable">Oh, hey there.</li>
@@ -146,7 +146,7 @@ Then, in our snippet, we can use a special transform called `ClearClearable`,
 which will remove all of the tagged elements before we start transforming the
 template:
 
-```
+```scala:src/main/scala/code/snippet/Chat.scala
 ...
   def messages = {
     messageEntries :+= "It is now " + formattedTimeNow

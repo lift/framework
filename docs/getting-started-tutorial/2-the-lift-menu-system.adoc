@@ -16,7 +16,7 @@ more complicated. All you have to do for the chat page is add a line to your
 `SiteMap.scala` that names the page and points to the file in the `webapp`
 directory:
 
-```
+```src/scala/bootstrap/liftweb/Boot.scala
 ...
     Menu.i("Chat") / "chat"
 ...

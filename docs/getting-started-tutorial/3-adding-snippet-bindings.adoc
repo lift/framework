@@ -28,13 +28,13 @@ Let's look at our chat app specifically. We're going to bind two things: the
 list of chat messages, and the text input that lets us actually chat. To the
 `ol` that contains the chat messages, we add:
 
-```
+```html:src/main/webapp/index.html
 <ol class="messages" data-lift="Chat.messages">
 ```
 
 And to the input form:
 
-```
+```html:src/main/webapp/index.html
 <form class="send-message" data-lift="Chat.sendMessage">
 ```
 
@@ -46,7 +46,7 @@ We'll write a very basic version that just passes through the contents of the
 list and form unchanged, and then in the next section we'll start adding some
 behavior. In `src/main/scala/code/snippet/Chat.scala`, add:
 
-```
+```scala:src/main/scala/code/snippet/Chat.scala
 package code
 package snippet
 

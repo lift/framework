@@ -25,7 +25,7 @@ connection.
 Let's look at a simple example with our chat application. Currently our form
 looks like this:
 
-```
+```html
     <form class="send-message" data-lift="Chat.sendMessage">
       <label for="new-message">Post message</label>
       <input id="new-message" type="text">
@@ -35,7 +35,7 @@ looks like this:
 
 Our `sendMessage` snippet looks like this:
 
-```
+```scala
 ...
   def sendMessage(contents: NodeSeq) = contents
 ...
@@ -45,7 +45,7 @@ We want to bind two things above. The first is the text field, which we want to
 bind so that we can get a message from the user, and the second is the submit
 button, so that we can process the new message. Here's how we can do that:
 
-```
+```scala:src/main/scala/code/snippet/Chat.scala
 ...
 import net.liftweb.http.SHtml
 
@@ -78,7 +78,7 @@ value of `message` to the existing message entries list.
 Before continuing, let's change the `messages` snippet so it doesn't keep
 adding a new message on each page load:
 
-```
+```scala:src/main/scala/code/snippet/Chat.scala
 ...
   def messages = {
     ClearClearable &

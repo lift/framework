@@ -22,7 +22,7 @@ http://aka.io[Akka], but they're only necessary in cases where you need more
 flexibility or fault tolerance. We'll stick to the easy stuff, starting with a
 new file at `src/main/scala/code/actor/ChatActor.scala`:
 
-```
+```scala:src/main/scala/code/actor/ChatActor.scala
 package code
 package actor
 
@@ -55,7 +55,7 @@ To ask the actor to add a message, we'll send it the `MessagePosted` message
 using the `!` operator. Here's how we can update our code in the `Chat`
 snippet:
 
-```
+```scala:src/main/scala/code/snippet/Chat.scala
 ...
 import actor._
 ...
@@ -80,7 +80,7 @@ isn't useful if we can't get them back out!
 
 To retrieve messages, we can add a new message for the `ChatActor`:
 
-```
+```scala:src/main/scala/code/actor/ChatActor.scala
 ...
 case class MessagePosted(message: ChatMessage)
 case object GetMessages
@@ -89,7 +89,7 @@ case object GetMessages
 
 And a handler for it:
 
-```
+```scala:src/main/scala/code/actor/ChatActor.scala
 ...
   def messageHandler = {
     ...
@@ -109,7 +109,7 @@ with it.
 To wait for a reply, we have to use the `!?` operator instead. We do this when
 listing messages by updating the `Chat` snippet:
 
-```
+```scala:src/main/scala/code/snippet/Chat.scala
 ...
   def messages = {
     val messageEntries = Box.asA[List[ChatMessage]](ChatActor !? GetMessages) openOr List()
