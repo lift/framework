@@ -55,7 +55,7 @@ package object http {
           // Actually complete the render once the future is fulfilled.
           asyncResolveProvider.resolveAsync(concreteResolvable, resolvedResult => deferredRender(resolvedResult))
 
-          <div id={placeholderId}><img src={s"${LiftRules.assetPath}images/ajax-loader.gif"} alt="Loading" /></div>
+          <div id={placeholderId}><img src={s"${LiftRules.assetRootPath}images/ajax-loader.gif"} alt="Loading" /></div>
         } openOr {
           Comment("FIX"+"ME: Asynchronous rendering failed for unknown reason.")
         }
