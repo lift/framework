@@ -127,7 +127,8 @@ lazy val util =
         javamail,
         log4j,
         htmlparser,
-        xerces
+        xerces,
+        jbcrypt
       )
     )
 
@@ -227,7 +228,7 @@ lazy val mapper =
     .settings(
       description := "Mapper Library",
       parallelExecution in Test := false,
-      libraryDependencies ++= Seq(h2, derby),
+      libraryDependencies ++= Seq(h2, derby, jbcrypt),
       initialize in Test := {
         System.setProperty(
           "derby.stream.error.file",
@@ -239,6 +240,7 @@ lazy val mapper =
 lazy val record =
   persistenceProject("record")
     .dependsOn(proto)
+    .settings(libraryDependencies ++= Seq(jbcrypt))
 
 lazy val squeryl_record =
   persistenceProject("squeryl-record")
