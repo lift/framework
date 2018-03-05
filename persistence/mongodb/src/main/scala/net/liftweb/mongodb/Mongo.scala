@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 WorldWide Conferencing, LLC
+ * Copyright 2010-2018 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,8 +122,8 @@ object MongoDB {
     * Calls close on each MongoClient instance and clears the HashMap.
     */
   def closeAll(): Unit = {
-    import scala.collection.JavaConversions._
-    dbs.values.foreach { case (mngo, _) =>
+    import scala.collection.JavaConverters._
+    dbs.values.asScala.foreach { case (mngo, _) =>
       mngo.close()
     }
     dbs.clear()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2015 WorldWide Conferencing, LLC
+ * Copyright 2011-2018 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,8 @@ object Dependencies {
   lazy val joda_time              = "joda-time"                  % "joda-time"          % "2.9.2"
   lazy val joda_convert           = "org.joda"                   % "joda-convert"       % "1.8.1"
   lazy val htmlparser             = "nu.validator.htmlparser"    % "htmlparser"         % "1.4"
-  lazy val mongo_java_driver      = "org.mongodb"                % "mongodb-driver"     % "3.4.1"
-  lazy val mongo_java_driver_async  = "org.mongodb"              % "mongodb-driver-async" % "3.4.1"
+  lazy val mongo_java_driver      = "org.mongodb"                % "mongodb-driver"     % "3.6.3"
+  lazy val mongo_java_driver_async  = "org.mongodb"              % "mongodb-driver-async" % "3.6.3"
   lazy val paranamer              = "com.thoughtworks.paranamer" % "paranamer"          % "2.8"
   lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.5"     cross CVMappingAll
   lazy val scalap: ModuleMap      = "org.scala-lang"             % "scalap"             % _
