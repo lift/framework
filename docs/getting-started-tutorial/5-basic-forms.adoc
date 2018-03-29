@@ -1,0 +1,106 @@
+:idprefix:
+:idseparator: -
+:toc: right
+:toclevels: 2
+
+# Basic Forms
+
+It's a recurring and important theme that Lift is secure by default. This
+manifests in the way that forms are constructed as well. Form fields in Lift
+are associated with a callback function that runs when the field is submitted
+with the form. On the client, the field name is always unique to this page
+load, and this unique field name is a cryptographically secure random value
+that is associated to the callback function you specify on the server
+footnote:[What about using your own field names, you may ask? You can always do
+that. To access a submitted field with a given name, you can use
+`S.param("field name")`. You'll get back a `Box` that will be `Full` and
+contain the value you submitted if it was submitted. The `Box` will be `Empty`
+if the field wasn't submitted in this request. However, be very careful about
+using this method, since it exposes you to CSRF attacks.]. This makes Lift
+forms resistant to many cross-site request forgery (CSRF) attacks, and
+resistant to https://liftweb.net/lift_and_breach[the BREACH attack that typical
+CSRF tokens are vulnerable to when served with gzip compression over a secure
+connection.
+
+Let's look at a simple example with our chat application. Currently our form
+looks like this:
+
+```html
+    <form class="send-message" data-lift="Chat.sendMessage">
+      <label for="new-message">Post message</label>
+      <input id="new-message" type="text">
+      <input type="submit" value="Post">
+    </form>
+```
+
+Our `sendMessage` snippet looks like this:
+
+```scala
+...
+  def sendMessage(contents: NodeSeq) = contents
+...
+```
+
+We want to bind two things above. The first is the text field, which we want to
+bind so that we can get a message from the user, and the second is the submit
+button, so that we can process the new message. Here's how we can do that:
+
+```scala:src/main/scala/code/snippet/Chat.scala
+...
+import net.liftweb.http.SHtml
+
+...
+  def sendMessage = {
+    var message: String = ""
+
+    "#new-message" #> SHtml.text(message, message = _) &
+    "type=submit" #> SHtml.submitButton(() => {
+      messageEntries ::= message
+    })
+  }
+...
+```
+
+First things first, we're using the `SHtml` singleton. This singleton contains
+Lift's form handling helpers. We're using two of them here. The first is
+`SHtml.text`. This returns an `input type="text"` whose initial value is the
+first parameter you pass to it. The second parameter is a function that runs
+when the field is submitted. It takes in a single `String`, which is the value
+the user submitted, and does something with it. In our case, we use Scala
+shorthand to indicate the field's handler will just assign the value submitted
+by the user to the `message` variable.
+
+The second form helper we're using is `SHtml.submitButton`. This returns an
+`input type="submit"` that runs the function you pass to it when the form is
+submitted. In this case, when the form submits, we're going to prepend the
+value of `message` to the existing message entries list.
+
+Before continuing, let's change the `messages` snippet so it doesn't keep
+adding a new message on each page load:
+
+```scala:src/main/scala/code/snippet/Chat.scala
+...
+  def messages = {
+    ClearClearable &
+    "li *" #> messageEntries
+  }
+...
+```
+
+Now we can restart the server, and when we reload the page we'll be able to
+post messages and see them appear on the list of entries.
+
+So now we have a basic chat page. We've fulfilled our two initial use cases:
+
+ - As a chatter, I want to post a message so that others can see it.
+ - As a chatter, I want to see messages from me and others so that I can keep
+   track of the conversation and contribute in context.
+
+But, this clearly isn't a particularly usable chat. For one, we don't actually
+know who's posting what message. For another, the current implementation of the
+messages relies on a single variable that updates when a user posts to it. This
+works fine when there's just one user posting a time, but once multiple users
+start submitting the post form simultaneously, we start getting into serious
+threading and data consistency issues.
+
+Let's link:6-adding-usernames.adoc[deal with usernames first].

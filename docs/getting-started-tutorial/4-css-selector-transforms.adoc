@@ -1,0 +1,172 @@
+:idprefix:
+:idseparator: -
+:toc: right
+:toclevels: 2
+
+# CSS Selector Transforms
+
+Because Lift operates by transforming HTML trees, we need an easy way to
+specify those transformations. Otherwise we'd be doing a bunch of recursive
+tree searches and munges, which would get ugly, unpleasant, and probably end up
+being a performance nightmare. To deal with transformations easily, we instead
+use a small subset of CSS selectors, with a few Lift variations that allow us to
+maximize performance and address additional use cases around tree
+transformation.
+
+We'll leave forms for the next section, as forms always come with a catalog of
+related functionality, and focus on binding the list of chat messages in this
+section. We'll also add a new message before every page load, so that we can see
+the list changing.
+
+First, we'll define a variable to hold the messages:
+
+```scala:src/main/scala/code/snippet/Chat.scala
+...
+object Chat {
+  var messageEntries = List[String]()
+...
+}
+```
+
+Then, we can change the definition of the `messages` method to bind the
+contents of the message list:
+
+```scala:src/main/scala/code/snippet/Chat.scala
+...
+
+import net.liftweb.util.Helpers._
+
+...
+  def messages = {
+    "li *" #> messageEntries
+  }
+...
+```
+
+In the previous section, we mentioned that Lift snippets can return
+`(NodeSeq)=>NodeSeq` functions. That is what's happening here: Lift's CSS
+selector transforms are actually functions that take a `NodeSeq` and return a
+`NodeSeq`, constructed using an easy-to-read syntax.
+
+What we do in this particular transformation is select all ``li``s. We then
+specify that we want to transform them by replacing their contents (`*`) by
+whatever is on the right. The right side, however, is a list, in this case of
+``String``s. When there's a list on the right side of a transformation, Lift
+repeats the matched element or elements once for each entry in the list, and
+binds the contents of each element in turn.
+
+Let's start up Lift and see what's going on. In your terminal, enter the
+directory of the chat app and start up the application:
+
+```
+$ sbt
+> jetty:start
+[info] Compiling 4 Scala sources to /Users/Shadowfiend/github/lift-example/target/scala-2.9.2/classes...
+[info] jetty-8.1.7.v20120910
+[info] NO JSP Support for /, did not find org.apache.jasper.servlet.JspServlet
+[info] started o.e.j.w.WebAppContext{/,[file:/Users/Shadowfiend/github/lift-example/src/main/webapp/]}
+[info] started o.e.j.w.WebAppContext{/,[file:/Users/Shadowfiend/github/lift-example/src/main/webapp/]}
+[info] Started SelectChannelConnector@0.0.0.0:8080
+[success] Total time: 4 s, completed Oct 6, 2013 2:31:01 PM
+>
+```
+
+Once you see the success message, point your browser to
+`http://localhost:8080/`. You should see an empty chat list, since currently
+there are no message entries. To fix this, we're going to add a chat message
+every time we render the message list:
+
+```scala:src/main/scala/code/snippet/Chat.scala
+...
+  def messages = {
+    messageEntries :+= "It is now " + formattedTimeNow
+    "li *" #> messageEntries
+  }
+...
+```
+
+Let's recompile and restart the server:
+
+```
+> jetty:stop
+[info] stopped o.e.j.w.WebAppContext{/,[file:/Users/Shadowfiend/github/lift-example/src/main/webapp/]}
+[success] Total time: 0 s, completed Oct 6, 2013 2:36:48 PM
+> container:start
+[info] Compiling 1 Scala source to /Users/Shadowfiend/github/lift-example/target/scala-2.9.2/classes...
+[info] jetty-8.1.7.v20120910
+[info] NO JSP Support for /, did not find org.apache.jasper.servlet.JspServlet
+[info] started o.e.j.w.WebAppContext{/,[file:/Users/Shadowfiend/github/lift-example/src/main/webapp/]}
+[info] started o.e.j.w.WebAppContext{/,[file:/Users/Shadowfiend/github/lift-example/src/main/webapp/]}
+[info] Started SelectChannelConnector@0.0.0.0:8080
+```
+
+Now if you pull up the page you'll see something that doesn't look quite right.
+The markup we're producing should look something like:
+
+```
+      <li>It is now 13:25 UTC</li>
+      <li>It is now 13:25 UTC</li>
+      <li>It is now 13:25 UTC</li>
+      <li>It is now 13:25 UTC</li>
+```
+
+If you reload the page, you'll get something like:
+
+```
+      <li>It is now 13:25 UTC</li>
+      <li>It is now 13:25 UTC</li>
+      <li>It is now 13:25 UTC</li>
+      <li>It is now 13:25 UTC</li>
+      <li>It is now 13:26 UTC</li>
+      <li>It is now 13:26 UTC</li>
+      <li>It is now 13:26 UTC</li>
+      <li>It is now 13:26 UTC</li>
+```
+
+What's causing all the repetition? Well, remember when we described what the
+CSS Selector Transform was doing, we said we “select all ``li``s”. We also said
+that the list on the right side means “Lift repeats the matched element **or
+elements**”. So we select all the ``li``s, but in the template there are 4, so
+that the template when viewed alone (say, for a user test, or when a frontend
+developer is editing it) has some content in it. How do we bridge the two
+without getting nasty in our HTML?
+
+Lift lets us tag the extra elements with a class `clearable`:
+
+```html:src/main/webapp/index.html
+...
+      <li>Hi!</li>
+      <li class="clearable">Oh, hey there.</li>
+      <li class="clearable">How are you?</li>
+      <li class="clearable">Good, you?</li>
+...
+```
+
+Then, in our snippet, we can use a special transform called `ClearClearable`,
+which will remove all of the tagged elements before we start transforming the
+template:
+
+```scala:src/main/scala/code/snippet/Chat.scala
+...
+  def messages = {
+    messageEntries :+= "It is now " + formattedTimeNow
+
+    ClearClearable &
+    "li *" #> messageEntries
+  }
+...
+```
+
+Notice that we combine the two CSS selector transforms here by using `&`. You
+can chain together as many CSS selector transforms as you want this way, as long
+as they don't modify the same parts of the same element. We'll deal with that
+limitation link:13-who-knows[a little later] footnote:[This is because CSS
+selector transforms are optimized for speed, and pass through the nodes a
+single time to make all of the transformations happen.].
+
+Now if we restart the server and look at the results, we'll see the right thing
+happening: one entry per message, and every time we reload the page we get a
+new entry.
+
+Now that we've got the list of messages rendering, it's time to get into the
+bread and butter of web development: link:5-basic-forms.adoc[forms].

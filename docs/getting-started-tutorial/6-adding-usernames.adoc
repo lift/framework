@@ -1,0 +1,153 @@
+:idprefix:
+:idseparator: -
+:toc: right
+:toclevels: 2
+
+# Adding Usernames
+
+We're about to add another use case to our chat system:
+
+ - As a chatter, I want to see who posted a message so that I have better
+   context for the conversation.
+
+The first thing we'll do is change the HTML to look like we want it to. Let's
+add the username:
+
+```html:src/main/webapp/index.html
+...
+      <li>
+        <span class="poster">Antonio</span> <span class="body">Hi!</span>
+      </li>
+      <li class="clearable">
+        <span class="poster">David</span> <span class="body">Oh, hey there.</span>
+      </li>
+      <li class="clearable">
+        <span class="poster">Antonio</span> <span class="body">How are you?</span>
+      </li>
+      <li class="clearable">
+        <span class="poster">Antonio</span> <span class="body">Good, you?</span>
+      </li>
+...
+```
+
+Initially, we'll generate a username for the current user. We can store it in a
+`SessionVar`. `SessionVar`s in Lift are used to store things that should exist
+for the duration of a user's session. A user's session exists as long as Lift
+is aware of the user viewing a page related to that session. If Lift sees no
+activity from a given session after 20 minutes foonote:[This is configurable,
+of course. See `LiftRules.sessionInactivityTimeout`.], the session will be
+thrown away, as will the associated `SessionVar` values and related data.
+
+For now, let's look at adding the `SessionVar` to the `Chat` snippet:
+
+```scala:src/main/scala/code/snippet/Chat.scala
+...
+object username extends SessionVar[String]("username")
+
+object Chat {
+...
+```
+
+Here, we create a new `SessionVar`, whose default value will be “username” if it
+is accessed without having been set. We can change that to be random:
+
+```scala:src/main/scala/code/snippet/Chat.scala
+object username extends SessionVar[String]("User " + randomString(5))
+```
+
+We're using a Lift helper called `randomString`. We just pass it a length and
+it gives us back a random string of that length. This'll make sure that each
+user session has a (reasonably) unique username.
+
+Now, we need to store usernames alongside messages. Let's do that by making the
+messageEntries list contain a case class instance instead of a simple `String`:
+
+```scala:src/main/scala/code/snippet/Chat.scala
+...
+case class ChatMessage(poster: String, body: String) // <1>
+class Chat {
+  var messageEntries = List[ChatMessage]() // <2>
+
+  def messages = {
+    ClearClearable &
+    "li" #> messageEntries.map { entry => // <3>
+      ".poster *" #> entry.poster &
+      ".body *" #> entry.body
+    }
+  }
+...
+```
+<1> First, we introduce a new case class, `ChatMessage`, that carries a poster
+    and a message body.
+<2> We also update `messageEntries` to be a list of ``ChatMessage``s instead of
+    plain ``String``s.
+<3> One of the big changes here is how we update the `messages` snippet method.
+    Before, we just mapped the content of `li` to the list of ``String``s.
+    However, `ChatMessage` objects can't be dealt with so simply. Instead, the
+    left side becomes a simple selection of `li`. The right side is now a list
+    of CSS selector transforms -- one for each `ChatMessage`. As before, Lift
+    copies the contents of the `li` once for each entry in the list, and then
+    transforms it according to that particular entry. In this case, rather than
+    just putting a string into the `li`, we set the contents of the `.poster`
+    and `.body` elements inside it.
+
+Now let's update the binding of the `sendMessage` form to deal with the new
+`ChatMessage` class:
+
+```scala:src/main/scala/code/snippet/Chat.scala
+  def sendMessage = {
+    var message = ChatMessage("", "") // <1>
+
+    "#new-message" #> SHtml.text( // <2>
+      message,
+      { messageBody: String => message = Full(ChatMessage(username.get, messageBody)) } // <3>
+    ) &
+    "type=submit" #> SHtml.submitButton(() => { // <4>
+      for (body <- message) {
+        messageEntries ::= message
+      }
+    })
+  }
+}
+```
+<1> Before, we used an empty `String` as our starting value for the message.
+    However, we can't do that anymore here. Our only option would be to use
+    `null`, but `null` is very dangerous footnote:[Why is not dealing with
+    `null` desirable? Using a `Box` lets you deal with "this value isn't there"
+    as an inherent type. `null`, on the other hand, is something that can
+    masquerade as any value (for example, you can put `null` into either a
+    `ChatMessage` or a `String`), and the compiler can't check for you that you
+    made sure this optional value was set before using it. With a `Box`, the
+    compiler will enforce the checks so that you'll know if there's a
+    possibility of a value not being set.] and, as a rule, we avoid using it in
+    Scala. Instead, we use an `Empty` `Box`, and, when we receive a message
+    body, we create a `Full` `Box` with the newly posted `ChatMessage`.
+<2> Here, we update the handler for the `#new-message` text field. Before, the
+    handler function was `message = _`; when `message` was a `String`, we could
+    simply assign the message the user sent directly to it, and we were good to
+    go. However, `message` is now a `ChatMessage` -- it has to carry not only
+    the message body that the user typed, but also their username. To do that,
+    we write a complete handler function that takes in the body that the user
+    submitted with the form and, combined with the current user's username,
+    creates a  `ChatMessage`. This `ChatMessage` is what we now put into the
+    `message` variable.
+<3> Notably, `username.get` is how you fetch the current value of the `username`
+    `SessionVar`. Don't confuse it with the `.get` on `Option`, which is very
+    dangerous! If you prefer to use a method that is less easily confused with
+    ``Option``'s `.get` (as many Lift developers and committers do), you can use
+    `.is` instead, which does the same thing.
+<4> As a result of the `Box` wrapping the submitted `ChatMessage`, we have to
+    update the submission handler. We use a `for` comprehension to unpack the
+    value of `message`. The body of that comprehension won't run unless
+    `message` is `Full`, so we can't try to insert an empty message into the
+    message list.
+
+Now that we have a reasonably nice chat system with actual usernames, it's time
+to look at the underlying issue of *consistency*. If two users posted a chat
+message at the same time right now, who knows what would happen to the
+`messageEntries` list? We could end up with only one of their messages, or with
+both, or with an undefined state of nastiness.
+
+Before letting a user set their own username, let's deal with this issue by
+serializing the posting of and access to messages using a simple mechanism:
+link:7-using-actors-for-chat.adoc[an actor].
