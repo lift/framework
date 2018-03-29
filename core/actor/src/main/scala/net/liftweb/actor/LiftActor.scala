@@ -130,7 +130,6 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
     */
 
     def remove() {
-      val newPrev = prev
       prev.next = next
       next.prev = prev
     }
