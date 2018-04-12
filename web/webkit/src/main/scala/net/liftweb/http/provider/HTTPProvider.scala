@@ -132,6 +132,9 @@ trait HTTPProvider {
   }
 
   private def postBoot {
+    if (!LiftRules.logServiceRequestTiming) {
+      LiftRules.installServiceRequestTimer(NoOpServiceTimer)
+    }
     try {
       ResourceBundle getBundle (LiftRules.liftCoreResourceName)
     } catch {

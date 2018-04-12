@@ -1994,8 +1994,29 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   @volatile var logUnreadRequestVars = true
 
-  /** Controls whether or not the service handling timing messages (Service request (GET) ... took ... Milliseconds) are logged. Defaults to true. */
+  /** Controls whether or not the service handling timing messages (Service request (GET) ... took ... Milliseconds) are logged.
+    * If set to false NoOpServiceTimer is used.
+    * We should remove this setting in Lift-4 and only depend on serviceRequestTimer
+    * Defaults to true.
+    * */
   @volatile var logServiceRequestTiming = true
+
+  /**
+  * Handles logging of servicing a request
+  * two default implementations:
+  *   - NoOpServiceTimer that does nothing
+  *   - StandardServiceTimer that logs time it takes to serve the request (Service request (GET) ... took ... Milliseconds).
+  *     This is the default used.
+  *
+  *     Set custom in Boot:
+  *     LiftRules.installServiceRequestTimer(MyCustomServiceTimer)
+  */
+  val serviceRequestTimer = new LiftRulesGuardedSetting[FactoryMaker[ServiceRequestTimer]]("serviceRequestTimer", new FactoryMaker[ServiceRequestTimer](StandardServiceTimer){})
+
+  def installServiceRequestTimer(default: ServiceRequestTimer): Unit = {
+    val factoryMaker = new FactoryMaker[ServiceRequestTimer](default) {}
+    serviceRequestTimer.set(factoryMaker)
+  }
 
   /** Provides a function that returns random names for form variables, page ids, callbacks, etc. */
   @volatile var funcNameGenerator: () => String = defaultFuncNameGenerator(Props.mode)
