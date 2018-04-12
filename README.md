@@ -75,7 +75,7 @@ libraryDependencies ++= {
   val liftVersion = "3.2.0"
   Seq(
     "net.liftweb"       %% "lift-webkit" % liftVersion % "compile",
-    "ch.qos.logback" % "logback-classic" % "1.2.5"
+    "ch.qos.logback" % "logback-classic" % "1.2.3"
   )
 }
 ```
