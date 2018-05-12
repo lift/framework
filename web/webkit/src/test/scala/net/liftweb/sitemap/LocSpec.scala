@@ -91,6 +91,15 @@ object LocSpec extends Specification  {
         }
       }
     }
+
+    "not throw Exceptions on param methods before SiteMap assignment" in {
+      val testMenu = Menu.param[Param]("Test", "Test", s => Empty, p => "bacon") / "foo" / "bar" >> Loc.MatchWithoutCurrentValue
+      val testLoc = testMenu.toLoc
+
+      testLoc.allParams must not(throwA[Exception])
+      testLoc.currentValue must not(throwA[Exception])
+      testLoc.siteMap must not(throwA[Exception])
+      testLoc.breadCrumbs must not(throwA[Exception])
+    }
   }
 }
-

@@ -127,10 +127,16 @@ trait Loc[T] {
 
   def params: List[Loc.LocParam[T]]
 
-  def allParams: List[Loc.AnyLocParam] =
-    (params.asInstanceOf[List[Loc.AnyLocParam]]) :::
-     parentParams :::
-     siteMap.globalParams
+  def allParams: List[Loc.AnyLocParam] = {
+    if (_menu == null) {
+      // Params are impossible without a menu
+      Nil
+    } else {
+      (params.asInstanceOf[List[Loc.AnyLocParam]]) :::
+       parentParams :::
+       siteMap.globalParams
+    }
+  }
 
   private def parentParams: List[Loc.AnyLocParam] =
     _menu match {
@@ -154,7 +160,10 @@ trait Loc[T] {
 
   def hideIfNoKids_? = placeHolder_? || _hideIfNoKids_?
 
-  def siteMap: SiteMap = _menu.siteMap
+  // This implementation is less than ideal, but changing the type would
+  // have been a breaking API change. This at least avoids this method
+  // throwing an NPE
+  def siteMap: SiteMap = Option(_menu).map(_.siteMap).getOrElse(null)
 
   def createDefaultLink: Option[NodeSeq] =
     currentValue.flatMap(p => link.createLink(p)).toOption.
@@ -401,7 +410,13 @@ trait Loc[T] {
     )
   }
 
-  def breadCrumbs: List[Loc[_]] = _menu.breadCrumbs ::: List(this)
+  def breadCrumbs: List[Loc[_]] = {
+    if (_menu != null) {
+      _menu.breadCrumbs ::: List(this)
+    } else {
+      List(this)
+    }
+  }
 
   def buildKidMenuItems(kids: Seq[Menu]): List[MenuItem] = {
     kids.toList.flatMap(_.loc.buildItem(Nil, false, false)) ::: supplementalKidMenuItems
@@ -512,7 +527,6 @@ object Loc {
 
     init()
   }
-
 
   /**
    * Algebraic data type for parameters that modify handling of a Loc
