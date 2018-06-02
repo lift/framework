@@ -34,7 +34,7 @@ As of January 27th, 2018 the current support status looks like this:
 |< 2.5    |                 |                  | Not supported                   |
 |2.5      |June 2013        | 2.5.4 (Jan 2016) | Security fixes (until Lift 4.0) |
 |2.6      |January 2015     | 2.6.3 (Jan 2016) | Security fixes (until Lift 5.0) |
-|3.0      |November 2016    | 3.0.2 (Sep 2016) | Minor fixes (until May 2018)    |
+|3.0      |November 2016    | 3.0.2 (Sep 2017) | Security fixes (until Lift 6.0) |
 |3.1      |July 2017        | 3.1.1 (Sep 2017) | Minor fixes (until Jan 2019)    |
 |3.2      |January 2018     | 3.2.0 (Jan 2018) | Minor fixes (until July 2019)   |
 
