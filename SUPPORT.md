@@ -27,7 +27,7 @@ of Lift:
   * Major releases aren't on a regular schedule, but we will announce and update this policy with
   actual dates when major releases become planned.
 
-As of January 27th, 2018 the current support status looks like this:
+As of June 2nd, 2018 the current support status looks like this:
 
 |Version  |Initial Release  | Last Release     | Current Support Status          |
 |---------|-----------------|------------------|---------------------------------|
