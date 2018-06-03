@@ -58,11 +58,15 @@ object Dependencies {
 
   // Provided scope:
   // Scope provided by container, available only in compile and test classpath, non-transitive by default.
-  lazy val logback         = "ch.qos.logback"    % "logback-classic"       % "1.2.3"      % "provided"
-  lazy val log4j           = "log4j"             % "log4j"                 % "1.2.17"     % "provided"
-  lazy val slf4j_log4j12   = "org.slf4j"         % "slf4j-log4j12"         % slf4jVersion % "provided"
-  lazy val persistence_api = "javax.persistence" % "persistence-api"       % "1.0.2"      % "provided"
+  lazy val logback         = "ch.qos.logback"    % "logback-classic"       % "1.2.3"        % "provided"
+  lazy val log4j           = "log4j"             % "log4j"                 % "1.2.17"       % "provided"
+  lazy val slf4j_log4j12   = "org.slf4j"         % "slf4j-log4j12"         % slf4jVersion   % "provided"
+  lazy val persistence_api = "javax.persistence" % "persistence-api"       % "1.0.2"        % "provided"
   lazy val servlet_api     = "javax.servlet"     % "javax.servlet-api"     % "3.1.0"        % "provided"
+  lazy val jquery          = "org.webjars.bower" % "jquery"                % "1.11.3"       % "provided"
+  lazy val jasmineCore     = "org.webjars.bower" % "jasmine-core"          % "2.4.1"        % "provided"
+  lazy val jasmineAjax     = "org.webjars.bower" % "jasmine-ajax"          % "3.2.0"        % "provided"
+
 
 
   // Runtime scope:
@@ -87,8 +91,4 @@ object Dependencies {
   lazy val specs2Mock  = "org.specs2"                 %% "specs2-mock"              % "3.8.6"   % "test"
   lazy val scalatest   = "org.scalatest"              %% "scalatest"                % "3.0.1"   % "test"
   lazy val junit       = "junit"                       % "junit"                    % "4.8.2"   % "test"
-
-  lazy val jquery          = "org.webjars.bower" % "jquery"          % "1.11.3" % "provided"
-  lazy val jasmineCore     = "org.webjars.bower" % "jasmine-core"    % "2.4.1"  % "provided"
-  lazy val jasmineAjax     = "org.webjars.bower" % "jasmine-ajax"    % "3.2.0"  % "provided"
 }
