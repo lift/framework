@@ -196,7 +196,7 @@ The Lift wiki is hosted on Assembla and can be found at [http://www.assembla.com
 
 ### ScalaDocs
 
-The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on the Liftweb.net site. You can access the source code–based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 3.0 release can be accessed at [http://liftweb.net/api/31/api/](http://liftweb.net/api/31/api/).
+The ScalaDocs for each release of Lift, in additional to the actual JARs, are available on the Liftweb.net site. You can access the source code–based documentation for releases via the site's homepage or by navigating directly to the URL for the specific release. For instance, the Lift 3.2 release can be accessed at [http://liftweb.net/api/32/api/](http://liftweb.net/api/32/api/).
 
 ## License
 
