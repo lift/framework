@@ -25,7 +25,7 @@ object Dependencies {
 
   lazy val CVMappingAll  = crossMapped("2.11.7" -> "2.11")
 
-  lazy val slf4jVersion = "1.7.2"
+  lazy val slf4jVersion = "1.7.25"
 
   // Compile scope:
   // Scope available in all classpath, transitive by default.
