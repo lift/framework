@@ -72,7 +72,7 @@ Logback if you don't already have another SLF4J logging library in place. For ex
 
 ```scala
 libraryDependencies ++= {
-  val liftVersion = "3.2.0"
+  val liftVersion = "3.3.0"
   Seq(
     "net.liftweb"       %% "lift-webkit" % liftVersion % "compile",
     "ch.qos.logback" % "logback-classic" % "1.2.3"
@@ -98,7 +98,7 @@ Add Lift to your `pom.xml` like so:
     <dependency>
       <groupId>net.liftweb</groupId>
       <artifactId>lift-webkit_${scala.version}</artifactId>
-      <version>3.2.0</version>
+      <version>3.3.0</version>
     </dependency>
 
 Where `${scala.version}` is `2.11` or `2.12`. Individual patch releases of the Scala compiler
