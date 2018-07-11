@@ -27,7 +27,7 @@ of Lift:
   * Major releases aren't on a regular schedule, but we will announce and update this policy with
   actual dates when major releases become planned.
 
-As of June 2nd, 2018 the current support status looks like this:
+As of July 11th, 2018 the current support status looks like this:
 
 |Version  |Initial Release  | Last Release     | Current Support Status          |
 |---------|-----------------|------------------|---------------------------------|
@@ -37,7 +37,8 @@ As of June 2nd, 2018 the current support status looks like this:
 |3.0      |November 2016    | 3.0.2 (Sep 2017) | Security fixes (until Lift 6.0) |
 |3.1      |July 2017        | 3.1.1 (Sep 2017) | Minor fixes (until Jan 2019)    |
 |3.2      |January 2018     | 3.2.0 (Jan 2018) | Minor fixes (until July 2019)   |
-|3.3      |July 2018 (est)  | Pre-release      | Active development              |
+|3.3      |July 2018        | 3.3.0 (Jul 2018) | Minor fixes (until Jan 2020)    |
+|3.4      |Jan 2019 (est)   | N/A              | Active development              |
 
 Per this support policy please ensure you're using a currently supported version of Lift before:
 
