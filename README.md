@@ -130,6 +130,7 @@ We will accept issues and pull requests into the Lift codebase if the pull reque
 * The request adheres to our [contributing guidelines][contribfile], including having been discussed
   on the Mailing List if its from a non-committer.
 
+[supfile]: https://github.com/lift/framework/blob/master/SUPPORT.md
 [contribfile]: https://github.com/lift/framework/blob/master/CONTRIBUTING.md
 [sigfile]: https://github.com/lift/framework/blob/master/contributors.md
 
