@@ -515,6 +515,41 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     }
   }
 
+  "A Box tryo method" should {
+    "return Full" in {
+      Box.tryo(1) must_== Full(1)
+    }
+
+    "return Failure(_, Full(NPE), _) in case of NPE" in {
+      val obj: Object = null
+
+      Box.tryo(obj.toString) must beLike {
+        case Failure(_, Full(ex), _) => ex.getClass must_== classOf[NullPointerException]
+      }
+    }
+
+    "return Empty in case of NPE and ignore list with NPE" in {
+      val ignore: List[Class[_]] = List(classOf[NullPointerException])
+
+      Box.tryo(ignore)(throw new NullPointerException) must_== Empty
+    }
+
+    "return Failure(_, Full(NPE), _) in case of non empty ignore list without NPE" in {
+      val ignore: List[Class[_]] = List(classOf[IllegalArgumentException])
+
+      Box.tryo(ignore)(throw new NullPointerException) must beLike {
+        case Failure(_, Full(ex), _) => ex.getClass must_== classOf[NullPointerException]
+      }
+    }
+
+    "not throw NPE in case of nullable ignore list" in {
+      val ignore: List[Class[_]] = null
+
+      Box.tryo(ignore)(throw new IllegalArgumentException) must beLike {
+        case Failure(_, Full(ex), _) => ex.getClass must_== classOf[IllegalArgumentException]
+      }
+    }
+  }
 }
 
 
