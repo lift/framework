@@ -1,39 +1,28 @@
 language: scala
-
 dist: trusty
-
 sudo: false
-
 scala:
   - 2.11.11
   - 2.12.7
-
 cache:
   directories:
     - '$HOME/node_modules'
     - $HOME/.ivy2
-
 services:
   - mongodb
-
 jdk:
   - oraclejdk8
-
 script: ./travis.sh
-
 branches:
   only:
     - master
     - /^release-branch-.*$/
-
 node_js:
   - "4.1"
-
 before_script:
   - "cd web/webkit"
   - "npm install"
   - "cd -"
-
 notifications:
   webhooks:
     urls:
