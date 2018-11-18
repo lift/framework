@@ -12,6 +12,10 @@ services:
   - mongodb
 jdk:
   - oraclejdk8
+matrix:
+  include:
+  - scala: 2.12.7
+    jdk: oraclejdk11
 script: ./travis.sh
 branches:
   only:
