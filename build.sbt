@@ -27,7 +27,7 @@ pomExtra in ThisBuild  := Developers.toXml
 credentials in ThisBuild += Credentials(BuildPaths.getGlobalSettingsDirectory(state.value, BuildPaths.getGlobalBase(state.value)) / ".credentials")
 
 initialize := {
-  printLogo(name.value, version.value, scalaVersion.value)
+  //printLogo(name.value, version.value, scalaVersion.value)
 }
 
 resolvers  in ThisBuild  ++= Seq(
@@ -46,9 +46,11 @@ lazy val framework =
       case _ =>
         Seq()
     }) //workaround for scala/scala-dev#249
-    .settings(aggregatedSetting(sources in(Compile, doc)),
-              aggregatedSetting(dependencyClasspath in(Compile, doc)),
-              publishArtifact := false)
+    /*.settings(
+      (sources / aggregate) in (Compile, doc),
+      aggregatedSetting(dependencyClasspath in(Compile, doc)),
+      publishArtifact := false
+    )*/
 
 // Core Projects
 // -------------
@@ -155,8 +157,8 @@ lazy val webkit =
         commons_fileupload,
         rhino,
         servlet_api,
-        specs2.copy(configurations = Some("provided")),
-        specs2Matchers.copy(configurations = Some("provided")),
+        specs2,
+        specs2Matchers,
         jetty6,
         jwebunit,
         mockito_all,
@@ -205,7 +207,6 @@ lazy val webkit =
         } //workaround for scala/scala-dev#249
       }
     )
-    .settings(yuiCompressor.Plugin.yuiSettings: _*)
     .enablePlugins(SbtWeb)
 
 // Persistence Projects

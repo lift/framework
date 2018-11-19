@@ -16,14 +16,10 @@
 
 import sbt._
 import Keys._
-import net.liftweb.sbt.LiftBuildPlugin.{crossMapped, defaultOrMapped}
-
 
 object Dependencies {
 
   type ModuleMap = String => ModuleID
-
-  lazy val CVMappingAll  = crossMapped("2.11.7" -> "2.11")
 
   lazy val slf4jVersion = "1.7.25"
 
@@ -40,11 +36,11 @@ object Dependencies {
   lazy val mongo_java_driver      = "org.mongodb"                % "mongodb-driver"     % "3.7.1"
   lazy val mongo_java_driver_async  = "org.mongodb"              % "mongodb-driver-async" % "3.7.1"
   lazy val paranamer              = "com.thoughtworks.paranamer" % "paranamer"          % "2.8"
-  lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.5"     cross CVMappingAll
+  lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.5"
   lazy val scalap: ModuleMap      = "org.scala-lang"             % "scalap"             % _
   lazy val scala_compiler: ModuleMap = "org.scala-lang"          % "scala-compiler"     % _
-  lazy val scalaz7_core           = "org.scalaz"                 % "scalaz-core"        % "7.2.24"   cross CVMappingAll
-  lazy val squeryl                = "org.squeryl"                % "squeryl"            % "0.9.5-7"   cross CVMappingAll
+  lazy val scalaz7_core           = "org.scalaz"                 % "scalaz-core"        % "7.2.24"
+  lazy val squeryl                = "org.squeryl"                % "squeryl"            % "0.9.5-7"
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
   lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "1.0.6"
   lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.7.10"

@@ -17,8 +17,6 @@
 import sbt._
 import Keys._
 
-import net.liftweb.sbt.LiftBuildPlugin._
-
 object LiftSbtHelpers {
   def coreProject = liftProject("core") _
   def webProject = liftProject("web") _
@@ -39,7 +37,6 @@ object LiftSbtHelpers {
 
   def liftProject(id: String, base: File): Project = {
     Project(id, base)
-      .settings(liftBuildSettings: _*)
       .settings(scalacOptions ++= List("-feature", "-language:implicitConversions"))
       .settings(
         autoAPIMappings := true,
