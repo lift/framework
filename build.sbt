@@ -27,7 +27,7 @@ pomExtra in ThisBuild  := Developers.toXml
 credentials in ThisBuild += Credentials(BuildPaths.getGlobalSettingsDirectory(state.value, BuildPaths.getGlobalBase(state.value)) / ".credentials")
 
 initialize := {
-  //printLogo(name.value, version.value, scalaVersion.value)
+  printLogo(name.value, version.value, scalaVersion.value)
 }
 
 resolvers  in ThisBuild  ++= Seq(
