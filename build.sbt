@@ -46,11 +46,7 @@ lazy val framework =
       case _ =>
         Seq()
     }) //workaround for scala/scala-dev#249
-    /*.settings(
-      (sources / aggregate) in (Compile, doc),
-      aggregatedSetting(dependencyClasspath in(Compile, doc)),
-      publishArtifact := false
-    )*/
+    .enablePlugins(ScalaUnidocPlugin)
 
 // Core Projects
 // -------------
