@@ -19,7 +19,7 @@ package record
 package field
 
 import reflect.Manifest
-import xml._
+import scala.xml._
 
 import common._
 import Box.option2Box

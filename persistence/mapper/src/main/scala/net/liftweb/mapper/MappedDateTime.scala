@@ -32,7 +32,7 @@ import json._
 import S._
 import js._
 
-import xml.{Text, NodeSeq}
+import scala.xml.{Text, NodeSeq}
 
 abstract class MappedDateTime[T<:Mapper[T]](val fieldOwner: T) extends MappedField[Date, T] {
   private val data = FatLazy(defaultValue)

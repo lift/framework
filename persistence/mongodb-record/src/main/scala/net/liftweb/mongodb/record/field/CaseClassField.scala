@@ -20,7 +20,7 @@ import net.liftweb.record._
 import net.liftweb.record.RecordHelpers.jvalueToJsExp
 import net.liftweb.record.field._
 import net.liftweb.http.js.JE.{JsObj, Num, Str, JsNull}
-import xml.{Text, NodeSeq}
+import scala.xml.{Text, NodeSeq}
 import net.liftweb.mongodb.JObjectParser
 import com.mongodb.{BasicDBList, DBObject}
 import net.liftweb.common.{Failure, Empty, Full, Box}

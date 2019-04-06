@@ -1,6 +1,6 @@
 package net.liftweb.util
 
-import xml.{Elem, NodeSeq}
+import scala.xml.{Elem, NodeSeq}
 import net.liftweb.common.Box
 import net.liftweb.markdown.ThreadLocalTransformer
 

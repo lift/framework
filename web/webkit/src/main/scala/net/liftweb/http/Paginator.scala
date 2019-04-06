@@ -16,7 +16,7 @@
 package net.liftweb
 package http
 
-import xml.{NodeSeq, Text}
+import scala.xml.{NodeSeq, Text}
 
 import common.Loggable
 import util._

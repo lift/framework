@@ -1,7 +1,7 @@
 package net.liftweb.util
 
 import net.liftweb.common.Box
-import xml.NodeSeq
+import scala.xml.NodeSeq
 import util.parsing.json.JSONArray
 import net.liftweb.json.JsonAST.JValue
 import scala.reflect.runtime.universe._

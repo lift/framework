@@ -20,7 +20,7 @@ package http
 import java.util.{Locale, ResourceBundle, TimeZone}
 
 import scala.collection.mutable.{HashMap, ListBuffer}
-import xml._
+import scala.xml._
 import common._
 import actor.{LAFuture, LAScheduler}
 import util._

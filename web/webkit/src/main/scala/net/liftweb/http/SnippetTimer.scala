@@ -1,6 +1,6 @@
 package net.liftweb.http
 
-import xml.NodeSeq
+import scala.xml.NodeSeq
 import net.liftweb.util.TimeHelpers._
 import net.liftweb.util.Props
 

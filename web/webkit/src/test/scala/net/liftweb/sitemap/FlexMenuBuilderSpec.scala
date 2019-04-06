@@ -19,7 +19,7 @@ package net.liftweb.sitemap
 import net.liftweb.http.{S, LiftRules}
 import net.liftweb.common.{Full, Empty}
 import net.liftweb.mockweb.WebSpec
-import xml.{Elem, Group, NodeSeq}
+import scala.xml.{Elem, Group, NodeSeq}
 
 object FlexMenuBuilderSpec extends WebSpec(FlexMenuBuilderSpecBoot.boot _) {
   "FlexMenuBuilder Specification".title

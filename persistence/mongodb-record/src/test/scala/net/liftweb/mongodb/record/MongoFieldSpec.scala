@@ -35,7 +35,7 @@ import http.js.JsExp
 import net.liftweb.record._
 import common.Box._
 
-import xml.{Elem, NodeSeq, Text}
+import scala.xml.{Elem, NodeSeq, Text}
 import util.{FieldError, Helpers}
 import Helpers._
 import net.liftweb.json.JsonAST._

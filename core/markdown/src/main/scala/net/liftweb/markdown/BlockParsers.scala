@@ -23,8 +23,8 @@ import scala.language.postfixOps
 
 import collection.immutable.StringOps
 import collection.mutable.ListBuffer
-import xml.{Group, Node, Text, NodeSeq, Elem => XmlElem, TopScope, XML}
-import xml.parsing.XhtmlParser
+import scala.xml.{Group, Node, Text, NodeSeq, Elem => XmlElem, TopScope, XML}
+import scala.xml.parsing.XhtmlParser
 import util.parsing.combinator.{Parsers, RegexParsers}
 
 /**
@@ -112,7 +112,7 @@ trait BlockParsers extends Parsers {
             out.append(indent(level)).append(deco.decorateCodeBlockClose)
         }
     }
-    
+
     class FencedCodeBlock(language:String, lines:List[MarkdownLine]) extends MarkdownBlock{
         def addResult(level:Int, out:StringBuilder) {
             out.append(indent(level)).append(deco.decorateCodeBlockOpen)
@@ -263,8 +263,8 @@ trait BlockParsers extends Parsers {
         if (in.first.getClass == c) Success(in.first.asInstanceOf[T], in.rest)
         else                        Failure("Not a fitting line.", in)
     }
-    
-    /** 
+
+    /**
      * Parses a line of any type *but* T
      */
     def notLine[T](c:Class[T]):Parser[MarkdownLine] = Parser {in =>
@@ -324,25 +324,25 @@ trait BlockParsers extends Parsers {
     def codeBlock:Parser[CodeBlock] = line(classOf[CodeLine]) ~ ((optEmptyLines ~ line(classOf[CodeLine]))*) ^^ {
         case l ~ pairs => new CodeBlock( l :: pairs.map({case (a~b) => a++List(b)}).flatten )
     }
-    
+
     /**
-     * Parses a fenced code block: a line starting a fenced code block with 
+     * Parses a fenced code block: a line starting a fenced code block with
      * "```", followed by any lines that do not stop it, optionally followed
-     * by the ending line. Optionally parsing the stopping line causes the 
-     * code block to extend to the end of the document. (This is the github 
-     * behavior, where omitting the line closing the code block causes the 
+     * by the ending line. Optionally parsing the stopping line causes the
+     * code block to extend to the end of the document. (This is the github
+     * behavior, where omitting the line closing the code block causes the
      * block to extend to the end of the document as well)
      */
-    def fencedCodeBlock:Parser[FencedCodeBlock] = 
+    def fencedCodeBlock:Parser[FencedCodeBlock] =
           (line(classOf[ExtendedFencedCode])|line(classOf[FencedCode])) ~
-          (notLine(classOf[FencedCode])*) ~                                            
+          (notLine(classOf[FencedCode])*) ~
           opt(line(classOf[FencedCode]))^^ {
         case (start:ExtendedFencedCode) ~ lines ~ _ => new FencedCodeBlock(start.languageFormat, lines)
         case _ ~ lines ~ _ => new FencedCodeBlock("", lines)
     }
-      
-                                            //line(classOf[FencedCodeStart]) ~ 
-                                            //((not(line(classOf[FencedCodeEnd]))*) ~ 
+
+                                            //line(classOf[FencedCodeStart]) ~
+                                            //((not(line(classOf[FencedCodeEnd]))*) ~
                                             //opt(line(classOf[FencedCodeEnd])) ^^ {
     //    case start ~ lines ~ end => new CodeBlock(lines.map(_.fullLine))
     //}
@@ -355,7 +355,7 @@ trait BlockParsers extends Parsers {
 
     /**
      * Parses a blockquote fragment: a block starting with a blockquote line followed
-     * by more blockquote or paragraph lines, ends optionally with empty lines 
+     * by more blockquote or paragraph lines, ends optionally with empty lines
      */
     def blockquoteFragment:Parser[List[MarkdownLine]] =
         line(classOf[BlockQuoteLine]) ~ ((line(classOf[BlockQuoteLine]) | line(classOf[OtherLine]))*) ~ (optEmptyLines) ^^ {

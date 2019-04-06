@@ -18,7 +18,7 @@ package net.liftweb
 package builtin
 package snippet
 
-import xml._
+import scala.xml._
 import http._
 import common._
 import actor._

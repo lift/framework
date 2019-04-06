@@ -18,7 +18,7 @@ package net.liftweb
 package mapper
 package view
 
-import xml.{NodeSeq, Text}
+import scala.xml.{NodeSeq, Text}
 
 import common.{Box, Full, Empty}
 import util.Helpers

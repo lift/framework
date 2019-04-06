@@ -29,7 +29,7 @@ import http._
 import S._
 import js._
 import json._
-import xml.{Text, NodeSeq}
+import scala.xml.{Text, NodeSeq}
 import scala.reflect.runtime.universe._
 /**
  * Represents a date without hour, minute or second fields. The underlying type is

@@ -4,7 +4,7 @@ import net.liftweb.http.{TransientRequestVar, RequestVar, LiftRules}
 import net.liftweb.util._
 import Helpers._
 import org.mozilla.javascript.{NativeJavaObject, ScriptableObject, Context}
-import xml.NodeSeq
+import scala.xml.NodeSeq
 import net.liftweb.actor.LAFuture
 import net.liftweb.common._
 

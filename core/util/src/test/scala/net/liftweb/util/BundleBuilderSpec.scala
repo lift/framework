@@ -19,7 +19,7 @@ package util
 
 import java.util.Locale
 
-import xml.NodeSeq
+import scala.xml.NodeSeq
 
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification

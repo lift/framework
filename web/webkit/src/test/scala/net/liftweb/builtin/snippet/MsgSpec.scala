@@ -17,7 +17,7 @@
 package net.liftweb
 package builtin.snippet
 
-import xml._
+import scala.xml._
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 

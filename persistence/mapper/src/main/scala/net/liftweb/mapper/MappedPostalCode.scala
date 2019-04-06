@@ -19,7 +19,7 @@ package mapper
 
 import java.util.{Locale, TimeZone}
 
-import xml.{Text, Elem}
+import scala.xml.{Text, Elem}
 
 import common._
 import util._
