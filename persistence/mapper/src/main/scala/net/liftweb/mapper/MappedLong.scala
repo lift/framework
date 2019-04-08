@@ -23,7 +23,7 @@ import net.liftweb.util.Helpers._
 import net.liftweb.util._
 import net.liftweb.common._
 import java.util.Date
-import xml.{Text, NodeSeq}
+import scala.xml.{Text, NodeSeq}
 import net.liftweb.http.{S, SHtml}
 import net.liftweb.http.js._
 import net.liftweb.json._

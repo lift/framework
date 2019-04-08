@@ -26,7 +26,7 @@ import net.liftweb.common._
 import net.liftweb.http.js._
 import net.liftweb.json._
 import scala.reflect.runtime.universe._
-import xml.{Text, NodeSeq}
+import scala.xml.{Text, NodeSeq}
 import json.JsonAST.JValue
 
 

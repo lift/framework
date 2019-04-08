@@ -46,9 +46,7 @@ lazy val framework =
       case _ =>
         Seq()
     }) //workaround for scala/scala-dev#249
-    .settings(aggregatedSetting(sources in(Compile, doc)),
-              aggregatedSetting(dependencyClasspath in(Compile, doc)),
-              publishArtifact := false)
+    .enablePlugins(ScalaUnidocPlugin)
 
 // Core Projects
 // -------------
@@ -155,8 +153,8 @@ lazy val webkit =
         commons_fileupload,
         rhino,
         servlet_api,
-        specs2.copy(configurations = Some("provided")),
-        specs2Matchers.copy(configurations = Some("provided")),
+        specs2Prov,
+        specs2MatchersProv,
         jetty6,
         jwebunit,
         mockito_all,
@@ -205,7 +203,6 @@ lazy val webkit =
         } //workaround for scala/scala-dev#249
       }
     )
-    .settings(yuiCompressor.Plugin.yuiSettings: _*)
     .enablePlugins(SbtWeb)
 
 // Persistence Projects

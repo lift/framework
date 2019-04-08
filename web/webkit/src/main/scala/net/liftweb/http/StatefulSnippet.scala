@@ -21,7 +21,7 @@ import net.liftweb.common._
 import net.liftweb._
 import util._
 import Helpers._
-import xml.{NodeSeq, Elem}
+import scala.xml.{NodeSeq, Elem}
 
 /**
  * The same StatefulSnippet instance is used across a given page rendering.

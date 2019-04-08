@@ -19,7 +19,7 @@ package record
 package field
 
 import java.util.TimeZone
-import xml._
+import scala.xml._
 
 import common._
 import util._

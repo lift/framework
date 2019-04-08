@@ -18,7 +18,7 @@ package net.liftweb
 package http
 
 import common.Full
-import xml.NodeSeq
+import scala.xml.NodeSeq
 
 /**
  * This trait adds a named comet actor on the page. *

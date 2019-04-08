@@ -25,7 +25,7 @@ import net.liftweb.http.js._
 import JsCmds._
 import net.liftweb.common.{Box, Empty}
 import common.Full
-import xml.Text
+import scala.xml.Text
 
 
 /**

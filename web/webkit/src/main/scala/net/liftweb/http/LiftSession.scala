@@ -26,7 +26,7 @@ import collection.JavaConversions
 import collection.mutable.{HashMap, ListBuffer}
 import js.JE.{JsObj, JsRaw, AnonFunc}
 import js.JsCmds._Noop
-import xml._
+import scala.xml._
 
 import common._
 import actor._
@@ -39,7 +39,7 @@ import json._
 import org.mozilla.javascript.Scriptable
 import org.mozilla.javascript.UniqueTag
 import json.JsonAST.{JString, JValue}
-import xml.Group
+import scala.xml.Group
 
 
 object LiftSession {

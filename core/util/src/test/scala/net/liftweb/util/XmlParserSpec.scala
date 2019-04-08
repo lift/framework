@@ -19,7 +19,7 @@ package util
 
 import java.io.ByteArrayInputStream
 
-import xml.{Text, Unparsed}
+import scala.xml.{Text, Unparsed}
 
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification

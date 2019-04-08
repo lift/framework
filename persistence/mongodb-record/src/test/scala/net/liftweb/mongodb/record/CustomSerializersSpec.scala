@@ -31,7 +31,7 @@ import org.bson.types.ObjectId
 import org.specs2.mutable.Specification
 
 import net.liftweb.record.field._
-import xml.{Elem, NodeSeq}
+import scala.xml.{Elem, NodeSeq}
 import util.Helpers
 
 package customserializersspecs {

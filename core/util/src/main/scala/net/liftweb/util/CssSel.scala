@@ -2,7 +2,7 @@ package net.liftweb
 package util
 
 import common._
-import xml._
+import scala.xml._
 import collection.mutable.ListBuffer
 import scala.annotation.implicitNotFound
 
@@ -414,7 +414,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
                 calcedList.collect({
                   case e: Elem => e.attribute("id")
                 }).flatten.map(_.toString)).toSet
-              val merged = calcedList.foldLeft((availableIds, Nil: List[Seq[xml.Node]])) {
+              val merged = calcedList.foldLeft((availableIds, Nil: List[Seq[scala.xml.Node]])) {
                 (idsAndResult, a) =>
                   val (ids, result) = idsAndResult
                   a match {

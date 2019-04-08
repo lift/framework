@@ -18,7 +18,7 @@ package net.liftweb
 package util
 
 import common._
-import xml.NodeSeq
+import scala.xml.NodeSeq
 
 /**
  * Defines the association of this reference with a markup tag ID
@@ -62,7 +62,7 @@ trait ReadableField extends FieldIdentifier with ValueHolder with Bindable {
    * The display name of this field (e.g., "First Name")
    */
   def displayName: String = name
-  
+
   /**
    * Default read-only rendering of field
    */
@@ -128,7 +128,7 @@ trait StringValidators {
 
   import scala.xml.Text
   import java.util.regex.Pattern
-    
+
   type ValueType
 
   protected def valueTypeToBoxString(in: ValueType): Box[String]
@@ -136,37 +136,37 @@ trait StringValidators {
 
   def maxLen: Int
 
-  def crop(in: ValueType): ValueType = 
+  def crop(in: ValueType): ValueType =
     boxStrToValType(valueTypeToBoxString(in).map{
       case null => null
       case s => s.substring(0, math.min(s.length, maxLen))
     })
 
-  def removeRegExChars(regEx: String)(in: ValueType): ValueType= 
+  def removeRegExChars(regEx: String)(in: ValueType): ValueType=
     boxStrToValType(valueTypeToBoxString(in).map{
       case null => null
       case s => s.replaceAll(regEx, "")
     })
 
-  def toLower(in: ValueType): ValueType = 
+  def toLower(in: ValueType): ValueType =
     boxStrToValType(valueTypeToBoxString(in).map{
       case null => null
       case s => s.toLowerCase
     })
 
-  def toUpper(in: ValueType): ValueType = 
+  def toUpper(in: ValueType): ValueType =
     boxStrToValType(valueTypeToBoxString(in).map{
       case null => null
       case s => s.toUpperCase
     })
 
-  def trim(in: ValueType): ValueType = 
+  def trim(in: ValueType): ValueType =
     boxStrToValType(valueTypeToBoxString(in).map{
       case null => null
       case s => s.trim
     })
 
-  def notNull(in: ValueType): ValueType = 
+  def notNull(in: ValueType): ValueType =
     boxStrToValType(valueTypeToBoxString(in) match {
       case Full(str) if null ne str => Full(str)
       case _ => Full("")
@@ -176,7 +176,7 @@ trait StringValidators {
    * A validation helper.  Make sure the string is at least a particular
    * length and generate a validation issue if not.
    */
-  def valMinLen(len: Int, msg: => String)(value: ValueType): List[FieldError] = 
+  def valMinLen(len: Int, msg: => String)(value: ValueType): List[FieldError] =
     valueTypeToBoxString(value) match {
       case Full(str) if (null ne str) && str.length >= len => Nil
       case _ => List(FieldError(this, Text(msg)))
@@ -206,7 +206,7 @@ trait StringValidators {
 /**
  * A base field that also has a confirm method
  */
-trait ConfirmField extends BaseField {  
+trait ConfirmField extends BaseField {
   /**
    * Is this field on the confirm screen
    */

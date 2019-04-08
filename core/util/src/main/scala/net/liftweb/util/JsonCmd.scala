@@ -18,7 +18,7 @@ package net.liftweb
 package util
 
 import common._
-import xml.NodeSeq
+import scala.xml.NodeSeq
 
 trait HasParams {
   def param(name: String): Box[String]
@@ -74,4 +74,3 @@ class ResponseInfoHolder {
 
   def overrodeDocType = _setDocType
 }
-

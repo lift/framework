@@ -17,7 +17,7 @@
 package net.liftweb
 package common
 
-import xml.{NodeSeq, Text}
+import scala.xml.{NodeSeq, Text}
 
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
