@@ -644,7 +644,7 @@ trait Crudify {
         pointer <- fieldsForList
         field <- computeFieldFromPointer(c, pointer).toList
       } yield {
-        ".value *" #> field.asHtml
+        ".row-item *" #> field.asHtml
       }
     }
   }
