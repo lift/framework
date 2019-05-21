@@ -1,12 +1,13 @@
 package net.liftweb
 
-import net.liftweb.common.{Box, Empty, Full}
+import net.liftweb.common.{Box, Full}
 import net.liftweb.fixtures._
-import net.liftweb.http.{LiftRules, LiftSession, WithLiftContext}
+import net.liftweb.http.{Req, S}
 import net.liftweb.proto.Crudify
 import net.liftweb.util.{BaseField, FieldError, LiftValue}
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
+import org.specs2.specification.Scope
 
 import scala.xml.{NodeSeq, Text}
 
@@ -76,12 +77,13 @@ object CrudifySpec extends Specification with XmlMatchers {
 
   "Crudify `showAllTemplate`" should {
 
-    class SpecCrudifyWithContext extends
-      WithLiftContext(new LiftRules(), new LiftSession("/context-path", "underlying id", Empty)) with
-      SpecCrudify {
+    class SpecCrudifyWithContext extends SpecCrudify with Scope {
+      val repo: SpecCrudRepo = SpecCrudType.defaultRepo
 
-      val repo:SpecCrudRepo = SpecCrudType.defaultRepo
-      lazy val all: NodeSeq = doCrudAll(this.showAllTemplate())
+      def all: NodeSeq = S.statelessInit(Req.nil)({
+        doCrudAll(this.showAllTemplate())
+      })
+
     }
 
     "render proper rows count" in new SpecCrudifyWithContext {
