@@ -2,6 +2,7 @@ package net.liftweb
 package fixtures
 
 import net.liftweb.common.Box
+import net.liftweb.http.{Req, RewriteRequest, RewriteResponse, S}
 import net.liftweb.util.FieldError
 
 import scala.collection.mutable
@@ -21,9 +22,7 @@ object SpecCrudType {
   type FieldType = SpecField[SpecCrudType]
 
   /** Default initial [[SpecCrudRepo]] content */
-  val DEFAULT_REPO_CONTENT = List("1" -> new SpecCrudType("1", "first"),
-    "2" -> new SpecCrudType("2", "second"),
-    "3" -> new SpecCrudType("3", "third"))
+  val DEFAULT_REPO_CONTENT = (0 until 100).map(n => n.toString -> new SpecCrudType(n.toString, s"Line number $n"))
 
   /** Default fields for [[SpecCrudType]] */
   val FIELDS: List[FieldType] = List(
@@ -57,17 +56,25 @@ case class SpecField[T](fieldName: String, getter: T => String, setter: (T, Stri
   * Helper class for creating fake data repository for using as [[net.liftweb.proto.Crudify.CrudBridge]] and for others
   * methods needed by [[net.liftweb.proto.Crudify]] implementation
   *
-  * @param initalContent initial content for repor
+  * @param initialContent initial content for repor
   */
-class SpecCrudRepo(initalContent: (String, SpecCrudType)*) {
-  private val dict: mutable.Map[String, SpecCrudType] = mutable.LinkedHashMap(initalContent: _*)
+class SpecCrudRepo(initialContent: (String, SpecCrudType)*) {
+  private val dict: mutable.Map[String, SpecCrudType] = mutable.LinkedHashMap(initialContent: _*)
 
   /** Return items count in repo */
   def size: Int = dict.size
 
-  /** Return repo content */
-  //TODO: support for pagination
-  def all: List[SpecCrudType] = dict.values.toList
+  /**
+    * Return repo content part restricted by `start` and `count` parameters
+    *
+    * @param start first returned item index
+    * @param count maximal returned items count
+    * @return Repo items starting form `start` and truncated to `count` size
+    */
+  def content(start: Long, count: Int): List[SpecCrudType] = {
+    val startIndex = start.toInt
+    dict.values.slice(startIndex, startIndex + count).toList
+  }
 
   /** Find content in repo by [[String]] `id` param */
   def find(id: String): Box[SpecCrudType] = {
@@ -91,6 +98,38 @@ class SpecCrudRepo(initalContent: (String, SpecCrudType)*) {
 
   /** Return [[String]] representation of instance primary field */
   def primaryKeyFieldAsString(target: SpecCrudType): String = target.id
+}
+
+/** Helper object for calling method inside context of `Lift` request */
+object RequestContext {
+
+  /**
+    * Produce `GET` HTTP request to build `Lift` context
+    *
+    * @param params HTTP request param
+    * @return Test HTTP `GET` request filled with `params`
+    */
+  def get(params: Map[String, String] = Map.empty): Req = {
+    Req(Req.nil, List({
+      case r: RewriteRequest =>
+        RewriteResponse(r.path, params, stopRewriting = true)
+    }))
+  }
+
+  /**
+    * Call `function` inside `Lift` context produced from `request`
+    * Make functions like `S ?` or `S.param` works during call of `function`
+    *
+    * @param request  HTTP request filled with needed params
+    * @param function target function to execute in context of given `Lift` request
+    * @tparam T `function` return type
+    * @return result of `function` execution
+    */
+  def withRequest[T](request: Req)(function: => T): T = {
+    S.statelessInit(request)({
+      function
+    })
+  }
 }
 
 

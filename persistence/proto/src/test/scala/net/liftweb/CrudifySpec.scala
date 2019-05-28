@@ -1,8 +1,8 @@
 package net.liftweb
 
 import net.liftweb.common.{Box, Full}
+import net.liftweb.fixtures.RequestContext._
 import net.liftweb.fixtures._
-import net.liftweb.http.{Req, S}
 import net.liftweb.proto.Crudify
 import net.liftweb.util.{BaseField, FieldError, LiftValue}
 import org.specs2.matcher.XmlMatchers
@@ -30,7 +30,7 @@ object CrudifySpec extends Specification with XmlMatchers {
 
     override def fieldsForDisplay: List[FieldPointerType] = SpecCrudType.FIELDS
 
-    override def findForList(start: Long, count: Int): List[TheCrudType] = repo.all
+    override def findForList(start: Long, count: Int): List[TheCrudType] = repo.content(start, count)
 
     override def findForParam(in: String): Box[TheCrudType] = repo.find(in)
 
@@ -80,14 +80,29 @@ object CrudifySpec extends Specification with XmlMatchers {
     class SpecCrudifyWithContext extends SpecCrudify with Scope {
       val repo: SpecCrudRepo = SpecCrudType.defaultRepo
 
-      def all: NodeSeq = S.statelessInit(Req.nil)({
+      def all: NodeSeq = withRequest(get()) {
         doCrudAll(this.showAllTemplate())
-      })
+      }
 
     }
 
     "render proper rows count" in new SpecCrudifyWithContext {
-      all \\ "tbody" \\ "tr" must have size repo.size
+      all \\ "tbody" \\ "tr" must have size rowsPerPage
+    }
+
+    "honor rowsPerPage settings" in new SpecCrudifyWithContext {
+      override def rowsPerPage = 1
+
+      all \\ "tbody" \\ "tr" must have size 1
+    }
+
+    "use `first` params for pagination" in new SpecCrudifyWithContext {
+      withRequest(get(Map("first" -> "10"))) {
+        val result = doCrudAll(this.showAllTemplate())
+        val rowData = (result \\ "tbody" \\ "tr" \\ "td").take(fieldsForDisplay.size).map(_.text)
+        val repoData = repo.content(10, 1).flatMap(i => List(i.id, i.value))
+        rowData === repoData
+      }
     }
 
     "render proper headers content" in new SpecCrudifyWithContext {
@@ -96,14 +111,14 @@ object CrudifySpec extends Specification with XmlMatchers {
       renderedHeaders must contain(exactly(SpecCrudType.FIELDS.map(_.fieldName): _*))
     }
 
-    "render proper colums content" in new SpecCrudifyWithContext {
+    "render proper columns content" in new SpecCrudifyWithContext {
       val tr: NodeSeq = all \\ "tbody" \\ "tr"
       val renderedValues: List[List[String]] = tr.map(row => {
         (row \ "td")
           .filter(td => (td \ "@class").nonEmpty)
           .map(_.text).toList
       }).toList
-      val expectedValues: List[List[String]] = repo.all.map(i => List(i.id, i.value))
+      val expectedValues: List[List[String]] = repo.content(0, rowsPerPage).map(i => List(i.id, i.value))
       renderedValues === expectedValues
     }
   }
