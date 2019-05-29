@@ -1,90 +1,30 @@
 package net.liftweb
 
-import net.liftweb.common.{Box, Full}
 import net.liftweb.fixtures.RequestContext._
 import net.liftweb.fixtures._
-import net.liftweb.proto.Crudify
-import net.liftweb.util.{BaseField, FieldError, LiftValue}
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 
-import scala.xml.{NodeSeq, Text}
+import scala.xml.NodeSeq
 
 object CrudifySpec extends Specification with XmlMatchers {
   "Crudify Trait Specification".title
 
-  /** Spec class implementation of [[net.liftweb.proto.Crudify]] trait */
-  trait SpecCrudify extends Crudify {
+  class SpecCrudifyWithContext extends SpecCrudify with Scope {
+    val repo: SpecCrudRepo = SpecCrudType.defaultRepo
+    val firstItem: SpecCrudType = repo.content(0, 1).head
 
-    def repo: SpecCrudRepo
-
-    override type TheCrudType = SpecCrudType
-
-    override type FieldPointerType = SpecCrudType.FieldType
-
-
-    override def calcPrefix: List[String] = List("Prefix")
-
-    override def create: SpecCrudType = new SpecCrudType("", "")
-
-    override def fieldsForDisplay: List[FieldPointerType] = SpecCrudType.FIELDS
-
-    override def findForList(start: Long, count: Int): List[TheCrudType] = repo.content(start, count)
-
-    override def findForParam(in: String): Box[TheCrudType] = repo.find(in)
-
-
-    override protected implicit def buildBridge(from: TheCrudType): CrudBridge = new CrudBridge {
-
-      override def delete_! : Boolean = repo.delete_!(from)
-
-
-      override def save: Boolean = repo.save(from)
-
-      override def validate: List[FieldError] = repo.validate(from)
-
-
-      override def primaryKeyFieldAsString: String = repo.primaryKeyFieldAsString(from)
+    def all: NodeSeq = withRequest(get()) {
+      doCrudAll(this.showAllTemplate())
     }
 
-    override protected implicit def buildFieldBridge(from: FieldPointerType): FieldPointerBridge = new FieldPointerBridge {
-      override def displayHtml: NodeSeq = from.displayHtml
-    }
-
-    override protected def computeFieldFromPointer(instance: TheCrudType, pointer: FieldPointerType): Box[BaseField] = {
-      val result: BaseField = new BaseField with LiftValue[String] {
-        override def setFilter: List[String => String] = Nil
-
-        override def validations: List[String => List[FieldError]] = Nil
-
-        override def validate: List[FieldError] = Nil
-
-        override def toForm: Box[NodeSeq] = Full(Text(get))
-
-        override def name: String = pointer.fieldName
-
-        override def set(in: String): String = {
-          pointer.setter(instance, in)
-          in
-        }
-
-        override def get: String = pointer.getter(instance)
-      }
-      Full(result)
+    def viewItem(item: SpecCrudType = firstItem): NodeSeq = withRequest(get()) {
+      displayRecord(item)(viewTemplate())
     }
   }
 
-  "Crudify `showAllTemplate`" should {
-
-    class SpecCrudifyWithContext extends SpecCrudify with Scope {
-      val repo: SpecCrudRepo = SpecCrudType.defaultRepo
-
-      def all: NodeSeq = withRequest(get()) {
-        doCrudAll(this.showAllTemplate())
-      }
-
-    }
+  "doCrudAll method `showAllTemplate`" should {
 
     "render proper rows count" in new SpecCrudifyWithContext {
       all \\ "tbody" \\ "tr" must have size rowsPerPage
@@ -108,7 +48,7 @@ object CrudifySpec extends Specification with XmlMatchers {
     "render proper headers content" in new SpecCrudifyWithContext {
       val th: NodeSeq = all \\ "thead" \\ "th"
       val renderedHeaders = th.map(_.text).filterNot(_ == "&nbsp;")
-      renderedHeaders must contain(exactly(SpecCrudType.FIELDS.map(_.fieldName): _*))
+      renderedHeaders must contain(exactly(fieldsForDisplay.map(_.fieldName): _*))
     }
 
     "render proper columns content" in new SpecCrudifyWithContext {
@@ -120,6 +60,28 @@ object CrudifySpec extends Specification with XmlMatchers {
       }).toList
       val expectedValues: List[List[String]] = repo.content(0, rowsPerPage).map(i => List(i.id, i.value))
       renderedValues === expectedValues
+    }
+  }
+
+
+  "displayRecord on `viewTemplate`" should {
+
+    "render row for each field" in new SpecCrudifyWithContext {
+      viewItem() \\ "table" \\ "tr" must have size fieldsForDisplay.size
+    }
+
+    "render correct field names" in new SpecCrudifyWithContext {
+      val filedNames: Seq[String] = (viewItem() \\ "table" \\ "tr" \\ "td").
+        filter(e => (e \ "@class").text == "name")
+        .map(_.text)
+      filedNames must contain(exactly(fieldsForDisplay.map(_.fieldName): _*))
+    }
+
+    "render correct field values" in new SpecCrudifyWithContext {
+      val filedNames: Seq[String] = (viewItem() \\ "table" \\ "tr" \\ "td").
+        filter(e => (e \ "@class").text == "value")
+        .map(_.text)
+      filedNames must contain(exactly(firstItem.id, firstItem.value))
     }
   }
 }

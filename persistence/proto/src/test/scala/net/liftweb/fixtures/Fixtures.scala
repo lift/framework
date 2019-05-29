@@ -1,9 +1,10 @@
 package net.liftweb
 package fixtures
 
-import net.liftweb.common.Box
+import net.liftweb.common.{Box, Full}
 import net.liftweb.http.{Req, RewriteRequest, RewriteResponse, S}
-import net.liftweb.util.FieldError
+import net.liftweb.proto.Crudify
+import net.liftweb.util.{BaseField, FieldError, LiftValue}
 
 import scala.collection.mutable
 import scala.xml.{NodeSeq, Text}
@@ -99,6 +100,69 @@ class SpecCrudRepo(initialContent: (String, SpecCrudType)*) {
   /** Return [[String]] representation of instance primary field */
   def primaryKeyFieldAsString(target: SpecCrudType): String = target.id
 }
+
+
+/** Spec class implementation of [[net.liftweb.proto.Crudify]] trait */
+trait SpecCrudify extends Crudify {
+
+  def repo: SpecCrudRepo
+
+  override type TheCrudType = SpecCrudType
+
+  override type FieldPointerType = SpecCrudType.FieldType
+
+
+  override def calcPrefix: List[String] = List("Prefix")
+
+  override def create: SpecCrudType = new SpecCrudType("", "")
+
+  override def fieldsForDisplay: List[FieldPointerType] = SpecCrudType.FIELDS
+
+  override def findForList(start: Long, count: Int): List[TheCrudType] = repo.content(start, count)
+
+  override def findForParam(in: String): Box[TheCrudType] = repo.find(in)
+
+
+  override protected implicit def buildBridge(from: TheCrudType): CrudBridge = new CrudBridge {
+
+    override def delete_! : Boolean = repo.delete_!(from)
+
+
+    override def save: Boolean = repo.save(from)
+
+    override def validate: List[FieldError] = repo.validate(from)
+
+
+    override def primaryKeyFieldAsString: String = repo.primaryKeyFieldAsString(from)
+  }
+
+  override protected implicit def buildFieldBridge(from: FieldPointerType): FieldPointerBridge = new FieldPointerBridge {
+    override def displayHtml: NodeSeq = from.displayHtml
+  }
+
+  override protected def computeFieldFromPointer(instance: TheCrudType, pointer: FieldPointerType): Box[BaseField] = {
+    val result: BaseField = new BaseField with LiftValue[String] {
+      override def setFilter: List[String => String] = Nil
+
+      override def validations: List[String => List[FieldError]] = Nil
+
+      override def validate: List[FieldError] = Nil
+
+      override def toForm: Box[NodeSeq] = Full(Text(get))
+
+      override def name: String = pointer.fieldName
+
+      override def set(in: String): String = {
+        pointer.setter(instance, in)
+        in
+      }
+
+      override def get: String = pointer.getter(instance)
+    }
+    Full(result)
+  }
+}
+
 
 /** Helper object for calling method inside context of `Lift` request */
 object RequestContext {
