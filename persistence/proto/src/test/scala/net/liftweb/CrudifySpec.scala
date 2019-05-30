@@ -2,6 +2,7 @@ package net.liftweb
 
 import net.liftweb.fixtures.RequestContext._
 import net.liftweb.fixtures._
+import net.liftweb.http.Req
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
@@ -15,12 +16,16 @@ object CrudifySpec extends Specification with XmlMatchers {
     val repo: SpecCrudRepo = SpecCrudType.defaultRepo
     val firstItem: SpecCrudType = repo.content(0, 1).head
 
-    def all: NodeSeq = withRequest(get()) {
+    def all: NodeSeq = withRequest(Req.nil) {
       doCrudAll(this.showAllTemplate())
     }
 
-    def viewItem(item: SpecCrudType = firstItem): NodeSeq = withRequest(get()) {
+    def viewItem(item: SpecCrudType = firstItem): NodeSeq = withRequest(Req.nil) {
       displayRecord(item)(viewTemplate())
+    }
+
+    def editItem(item: SpecCrudType = firstItem): NodeSeq = withSession(Req.nil) {
+      crudDoForm(item, "EditMsg")(editTemplate())
     }
   }
 
@@ -37,7 +42,7 @@ object CrudifySpec extends Specification with XmlMatchers {
     }
 
     "use `first` params for pagination" in new SpecCrudifyWithContext {
-      withRequest(get(Map("first" -> "10"))) {
+      withRequest(params(Map("first" -> "10"))) {
         val result = doCrudAll(this.showAllTemplate())
         val rowData = (result \\ "tbody" \\ "tr" \\ "td").take(fieldsForDisplay.size).map(_.text)
         val repoData = repo.content(10, 1).flatMap(i => List(i.id, i.value))
@@ -82,6 +87,36 @@ object CrudifySpec extends Specification with XmlMatchers {
         filter(e => (e \ "@class").text == "value")
         .map(_.text)
       filedNames must contain(exactly(firstItem.id, firstItem.value))
+    }
+  }
+
+  "crudDoForm on `editTemplate`" in {
+
+    "render row for each field" in new SpecCrudifyWithContext {
+      val trElements = (editItem() \\ "table" \\ "tr")
+        .filter(tr => (tr \ "@class").text == "field")
+
+      trElements must haveSize(fieldsForDisplay.length)
+    }
+
+    "render label for each field" in new SpecCrudifyWithContext {
+      val labels = (editItem() \\ "table" \\ "tr" \\ "td" \\ "label")
+        .map(_.text)
+
+      labels must contain(exactly(fieldsForDisplay.map(_.fieldName): _*))
+    }
+
+    "render inputs for each field" in new SpecCrudifyWithContext {
+      val values = (editItem() \\ "table" \\ "tr" \\ "td" \\ "input")
+        .map(i => (i \ "@value").text)
+
+      values must contain(exactly(firstItem.id, firstItem.value))
+    }
+
+    "render save button" in new SpecCrudifyWithContext {
+      val button = editItem() \\ "table" \\ "tr" \\ "td" \\ "button"
+      button must haveSize(1)
+      button must \\("button", "type" -> "submit")
     }
   }
 }

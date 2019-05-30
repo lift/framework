@@ -1,13 +1,14 @@
 package net.liftweb
 package fixtures
 
-import net.liftweb.common.{Box, Full}
-import net.liftweb.http.{Req, RewriteRequest, RewriteResponse, S}
+import net.liftweb.common.{Box, Empty, Full}
+import net.liftweb.http.S.SFuncHolder
+import net.liftweb.http.{LiftSession, Req, RewriteRequest, RewriteResponse, S}
 import net.liftweb.proto.Crudify
 import net.liftweb.util.{BaseField, FieldError, LiftValue}
 
 import scala.collection.mutable
-import scala.xml.{NodeSeq, Text}
+import scala.xml.{Attribute, MetaData, NodeSeq, Null, Text}
 
 /**
   * Helper type represents content for [[net.liftweb.proto.Crudify]]
@@ -148,7 +149,18 @@ trait SpecCrudify extends Crudify {
 
       override def validate: List[FieldError] = Nil
 
-      override def toForm: Box[NodeSeq] = Full(Text(get))
+      override def toForm: Box[NodeSeq] = {
+        Full(
+          S.fmapFunc(SFuncHolder(set)) {
+            funcName =>
+                <input type="text" maxlength="70" name={funcName} value={get}/>
+          } % idAttribute()
+        )
+      }
+
+      override def displayNameHtml: Box[NodeSeq] = {
+        Full(<label>{displayName}</label> % idAttribute("for"))
+      }
 
       override def name: String = pointer.fieldName
 
@@ -158,6 +170,13 @@ trait SpecCrudify extends Crudify {
       }
 
       override def get: String = pointer.getter(instance)
+
+      override def fieldId: Option[NodeSeq] = Some(Text(displayName))
+
+      def idAttribute(name:String = "id"): MetaData = fieldId match {
+        case Some(nodeSeq) => Attribute.apply(name, nodeSeq, Null)
+        case _ => Null
+      }
     }
     Full(result)
   }
@@ -166,14 +185,15 @@ trait SpecCrudify extends Crudify {
 
 /** Helper object for calling method inside context of `Lift` request */
 object RequestContext {
+  val testSession = new LiftSession("/context-path", "underlying id", Empty)
 
   /**
-    * Produce `GET` HTTP request to build `Lift` context
+    * Produce HTTP request field with params to build Lift` context
     *
-    * @param params HTTP request param
-    * @return Test HTTP `GET` request filled with `params`
+    * @param params HTTP request params
+    * @return Test HTTP request filled with params`
     */
-  def get(params: Map[String, String] = Map.empty): Req = {
+  def params(params: Map[String, String]): Req = {
     Req(Req.nil, List({
       case r: RewriteRequest =>
         RewriteResponse(r.path, params, stopRewriting = true)
@@ -191,6 +211,21 @@ object RequestContext {
     */
   def withRequest[T](request: Req)(function: => T): T = {
     S.statelessInit(request)({
+      function
+    })
+  }
+
+  /**
+    * Call `function` inside session based `Lift` context  produced from `request`
+    * Make functions like `S.fmapFunc` or `SHtml.onSubmitUnit` works during call of `function`
+    *
+    * @param request  HTTP request filled with needed params
+    * @param function target function to execute in context of given `Lift` request
+    * @tparam T `function` return type
+    * @return result of `function` execution
+    */
+  def withSession[T](request: Req)(function: => T): T = {
+    S.init(Some(request), testSession)({
       function
     })
   }
