@@ -5,10 +5,10 @@ import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.http.S.SFuncHolder
 import net.liftweb.http.{LiftSession, Req, RewriteRequest, RewriteResponse, S}
 import net.liftweb.proto.Crudify
-import net.liftweb.util.{BaseField, FieldError, LiftValue}
+import net.liftweb.util.{BaseField, FieldError, FieldIdentifier, LiftValue}
 
 import scala.collection.mutable
-import scala.xml.{Attribute, MetaData, NodeSeq, Null, Text}
+import scala.xml._
 
 /**
   * Helper type represents content for [[net.liftweb.proto.Crudify]]
@@ -16,7 +16,10 @@ import scala.xml.{Attribute, MetaData, NodeSeq, Null, Text}
   * @param id    fake data `id` field
   * @param value fake data `value` field
   */
-class SpecCrudType(var id: String, var value: String)
+case class SpecCrudType(var id: String, var value: String) {
+  val _id = id
+  val _value = value
+}
 
 /** Helper object for [[net.liftweb.proto.Crudify]] trait testing */
 object SpecCrudType {
@@ -24,7 +27,7 @@ object SpecCrudType {
   type FieldType = SpecField[SpecCrudType]
 
   /** Default initial [[SpecCrudRepo]] content */
-  val DEFAULT_REPO_CONTENT = (0 until 100).map(n => n.toString -> new SpecCrudType(n.toString, s"Line number $n"))
+  def DEFAULT_REPO_CONTENT = (0 until 100).map(n => n.toString -> new SpecCrudType(n.toString, s"Line number $n"))
 
   /** Default fields for [[SpecCrudType]] */
   val FIELDS: List[FieldType] = List(
@@ -43,7 +46,7 @@ object SpecCrudType {
   * @param setter    convert given [[String]] and it as set `fieldName` value in [[T]] instance
   * @tparam T target fake data holder type ([[SpecCrudType]] for now)
   */
-case class SpecField[T](fieldName: String, getter: T => String, setter: (T, String) => Unit) {
+case class SpecField[T](fieldName: String, getter: T => String, setter: (T, String) => Unit) extends FieldIdentifier {
 
   /**
     * Field name as HTML
@@ -51,6 +54,8 @@ case class SpecField[T](fieldName: String, getter: T => String, setter: (T, Stri
     * @return Element with represents field name in HTML
     */
   def displayHtml: NodeSeq = Text(fieldName)
+
+  override def uniqueFieldId: Box[String] = Full(fieldName)
 }
 
 
@@ -88,14 +93,26 @@ class SpecCrudRepo(initialContent: (String, SpecCrudType)*) {
     dict.remove(target.id).isDefined
   }
 
-  /** Save new instance to repo or replcace previous value inside repo if present */
+  /** Save new instance to repo or replace previous value inside repo if present */
   def save(target: SpecCrudType): Boolean = {
-    dict += target.id -> target
+    dict.remove(target._id) //remove previous id if present
+    val newValue = SpecCrudType(target.id, target.value)
+    dict += newValue.id -> newValue
     true
   }
 
   /** Validate instance */
-  def validate(target: SpecCrudType): List[FieldError] = Nil
+  def validate(target: SpecCrudType): List[FieldError] = {
+    val numbersOnly = "(\\d+)".r
+    target.id match {
+      case numbersOnly(_) =>
+        Nil
+      case _ =>
+        List(
+          FieldError(SpecCrudType.FIELDS.head, "Id filed must be numeric")
+        )
+    }
+  }
 
 
   /** Return [[String]] representation of instance primary field */
@@ -173,7 +190,9 @@ trait SpecCrudify extends Crudify {
 
       override def fieldId: Option[NodeSeq] = Some(Text(displayName))
 
-      def idAttribute(name:String = "id"): MetaData = fieldId match {
+      override def uniqueFieldId: Box[String] = Some(pointer.fieldName)
+
+      def idAttribute(name: String = "id"): MetaData = fieldId match {
         case Some(nodeSeq) => Attribute.apply(name, nodeSeq, Null)
         case _ => Null
       }

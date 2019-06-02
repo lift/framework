@@ -1,13 +1,15 @@
 package net.liftweb
 
+import net.liftweb.common.{Box, Empty, Full}
 import net.liftweb.fixtures.RequestContext._
 import net.liftweb.fixtures._
-import net.liftweb.http.Req
+import net.liftweb.http.{Req, ResponseShortcutException, S}
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 
-import scala.xml.NodeSeq
+import scala.collection.immutable
+import scala.xml.{NodeSeq, Text}
 
 object CrudifySpec extends Specification with XmlMatchers {
   "Crudify Trait Specification".title
@@ -90,7 +92,34 @@ object CrudifySpec extends Specification with XmlMatchers {
     }
   }
 
-  "crudDoForm on `editTemplate`" in {
+  "crudDoForm on `editTemplate`" should {
+
+    trait FormHelpers {
+      this: SpecCrudifyWithContext =>
+      def buildEditForm(): NodeSeq = {
+        crudDoForm(firstItem, "Edit Notice")(editTemplate())
+      }
+
+      def setId(form: NodeSeq, newId: String): Unit = {
+        val setIdFunc: String = ((form \\ "input").find(i => (i \\ "@id").text == "id").head \\ "@name").text
+        S.functionMap(setIdFunc).asInstanceOf[Any => Any].apply(List(newId))
+      }
+
+      def setValue(form: NodeSeq, newValue: String): Unit = {
+        val setValueFunc: String = ((form \\ "input").find(i => (i \\ "@id").text == "value").head \\ "@name").text
+        S.functionMap(setValueFunc).asInstanceOf[Any => Any].apply(List(newValue))
+      }
+
+      def submitForm(form: NodeSeq, expectRedirect: Boolean = true): Unit = {
+        val submitFunc: String = ((form \\ "button").find(i => (i \\ "@type").text == "submit").head \\ "@name").text
+        val lazySubmit = () => S.functionMap(submitFunc).asInstanceOf[Any => Any].apply(List(""))
+        if (expectRedirect) {
+          lazySubmit() must throwA[ResponseShortcutException]
+        } else {
+          lazySubmit()
+        }
+      }
+    }
 
     "render row for each field" in new SpecCrudifyWithContext {
       val trElements = (editItem() \\ "table" \\ "tr")
@@ -117,6 +146,59 @@ object CrudifySpec extends Specification with XmlMatchers {
       val button = editItem() \\ "table" \\ "tr" \\ "td" \\ "button"
       button must haveSize(1)
       button must \\("button", "type" -> "submit")
+    }
+
+    "render error message for each filed" in new SpecCrudifyWithContext with FormHelpers {
+      fieldsForDisplay.map { fp =>
+        withSession(Req.nil) {
+          S.error(fp.fieldName, s"Dummy error for ${fp.fieldName}")
+          val form = buildEditForm()
+          val filedRow = (form \\ "tr").filter(tr => {
+            (tr \\ "td" \\ "input" \\ "@id").text == fp.fieldName
+          })
+          filedRow must \\("span").textIs(s"Dummy error for ${fp.fieldName}")
+        }
+      }
+    }
+
+    "produce notice on update" in new SpecCrudifyWithContext with FormHelpers {
+      withSession(Req.nil) {
+        val form = buildEditForm()
+        submitForm(form)
+
+        val notices: immutable.Seq[(NodeSeq, Box[String])] = S.notices
+        notices.map(_._1).map(_.text) must contain(exactly("Edit Notice"))
+      }
+    }
+
+    "validate input" in new SpecCrudifyWithContext with FormHelpers {
+      withSession(Req.nil) {
+        val form = buildEditForm()
+        setId(form, "INVALID")
+        submitForm(form, expectRedirect = false)
+        S.errors == List((Text("Id filed must be numeric"), Full("id")))
+      }
+    }
+
+    "allow to save modified content" in new SpecCrudifyWithContext with FormHelpers {
+      withSession(Req.nil) {
+        val form = buildEditForm()
+        val oldId = firstItem.id
+        val newId = "300"
+        val newValue = "UPDATED LINE 300"
+
+        setId(form, newId)
+        setValue(form, newValue)
+        submitForm(form)
+
+        repo.find(oldId) === Empty
+        val updated = repo.find(newId)
+
+        updated.isDefined must beTrue
+        val item = updated.openOrThrowException("Guarded before")
+        item.id === newId
+        item.value === newValue
+      }
     }
   }
 }
