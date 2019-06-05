@@ -29,6 +29,10 @@ object CrudifySpec extends Specification with XmlMatchers {
     def editItem(item: SpecCrudType = firstItem): NodeSeq = withSession(Req.nil) {
       crudDoForm(item, "EditMsg")(editTemplate())
     }
+
+    def deleteItem(item: SpecCrudType = firstItem): NodeSeq = withSession(Req.nil) {
+      crudyDelete(item)(deleteTemplate())
+    }
   }
 
   "doCrudAll method `showAllTemplate`" should {
@@ -92,34 +96,34 @@ object CrudifySpec extends Specification with XmlMatchers {
     }
   }
 
-  "crudDoForm on `editTemplate`" should {
+  trait FormHelpers {
+    this: SpecCrudifyWithContext =>
+    def buildEditForm(): NodeSeq = {
+      crudDoForm(firstItem, "Edit Notice")(editTemplate())
+    }
 
-    trait FormHelpers {
-      this: SpecCrudifyWithContext =>
-      def buildEditForm(): NodeSeq = {
-        crudDoForm(firstItem, "Edit Notice")(editTemplate())
-      }
+    def setId(form: NodeSeq, newId: String): Unit = {
+      val setIdFunc: String = ((form \\ "input").find(i => (i \\ "@id").text == "id").head \\ "@name").text
+      S.functionMap(setIdFunc).asInstanceOf[Any => Any].apply(List(newId))
+    }
 
-      def setId(form: NodeSeq, newId: String): Unit = {
-        val setIdFunc: String = ((form \\ "input").find(i => (i \\ "@id").text == "id").head \\ "@name").text
-        S.functionMap(setIdFunc).asInstanceOf[Any => Any].apply(List(newId))
-      }
+    def setValue(form: NodeSeq, newValue: String): Unit = {
+      val setValueFunc: String = ((form \\ "input").find(i => (i \\ "@id").text == "value").head \\ "@name").text
+      S.functionMap(setValueFunc).asInstanceOf[Any => Any].apply(List(newValue))
+    }
 
-      def setValue(form: NodeSeq, newValue: String): Unit = {
-        val setValueFunc: String = ((form \\ "input").find(i => (i \\ "@id").text == "value").head \\ "@name").text
-        S.functionMap(setValueFunc).asInstanceOf[Any => Any].apply(List(newValue))
-      }
-
-      def submitForm(form: NodeSeq, expectRedirect: Boolean = true): Unit = {
-        val submitFunc: String = ((form \\ "button").find(i => (i \\ "@type").text == "submit").head \\ "@name").text
-        val lazySubmit = () => S.functionMap(submitFunc).asInstanceOf[Any => Any].apply(List(""))
-        if (expectRedirect) {
-          lazySubmit() must throwA[ResponseShortcutException]
-        } else {
-          lazySubmit()
-        }
+    def submitForm(form: NodeSeq, expectRedirect: Boolean = true): Unit = {
+      val submitFunc: String = ((form \\ "button").find(i => (i \\ "@type").text == "submit").head \\ "@name").text
+      val lazySubmit = () => S.functionMap(submitFunc).asInstanceOf[Any => Any].apply(List(""))
+      if (expectRedirect) {
+        lazySubmit() must throwA[ResponseShortcutException]
+      } else {
+        lazySubmit()
       }
     }
+  }
+
+  "crudDoForm on `editTemplate`" should {
 
     "render row for each field" in new SpecCrudifyWithContext {
       val trElements = (editItem() \\ "table" \\ "tr")
@@ -200,5 +204,60 @@ object CrudifySpec extends Specification with XmlMatchers {
         item.value === newValue
       }
     }
+  }
+
+  "crudyDelete on `deleteTemplate`" should {
+
+    "render row for each field" in new SpecCrudifyWithContext {
+      val trElements = (deleteItem() \\ "table" \\ "tr")
+        .filter(tr => (tr \ "@class").text == "field")
+
+      trElements must haveSize(fieldsForDisplay.length)
+    }
+
+    "render label for each field" in new SpecCrudifyWithContext {
+      val labels = (deleteItem() \\ "table" \\ "tr" \\ "td" \\ "label")
+        .map(_.text)
+
+      labels must contain(exactly(fieldsForDisplay.map(_.fieldName): _*))
+    }
+
+    "render values for each field" in new SpecCrudifyWithContext {
+      val values = (deleteItem() \\ "table" \\ "tr" \\ "td")
+        .filter(td => (td \\ "@class").text == "value")
+        .map(_.text)
+
+      values must contain(exactly(firstItem.id, firstItem.value))
+    }
+
+    "render delete button" in new SpecCrudifyWithContext {
+      withSession(Req.nil) {
+        val form = crudyDelete(firstItem)(deleteTemplate())
+        val button = form
+        button must haveSize(1)
+        button must \\("button", "type" -> "submit")
+        button must \\("button").textIs(deleteButton)
+      }
+    }
+
+    "produce notice on delete" in new SpecCrudifyWithContext with FormHelpers {
+      withSession(Req.nil) {
+        val form = crudyDelete(firstItem)(deleteTemplate())
+        submitForm(form)
+
+        val notices: immutable.Seq[(NodeSeq, Box[String])] = S.notices
+        notices.map(_._1).map(_.text) must contain(exactly(S ? "Deleted"))
+      }
+    }
+
+    "remove item from repo on submit" in new SpecCrudifyWithContext with FormHelpers {
+      withSession(Req.nil) {
+        val form = crudyDelete(firstItem)(deleteTemplate())
+        submitForm(form)
+
+        repo.find(firstItem.id) === Empty
+      }
+    }
+
   }
 }
