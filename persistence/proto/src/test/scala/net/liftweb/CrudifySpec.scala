@@ -72,6 +72,36 @@ object CrudifySpec extends Specification with XmlMatchers {
       val expectedValues: List[List[String]] = repo.content(0, rowsPerPage).map(i => List(i.id, i.value))
       renderedValues === expectedValues
     }
+
+    "render only next link on first page" in new SpecCrudifyWithContext {
+      withRequest(Req.nil) {
+        val html = doCrudAll(this.showAllTemplate())
+        val nextLinkContainer = (html \\ "td").find(td => (td \ "@class").text == "next")
+        val prevLinkContainer = (html \\ "td").find(td => (td \ "@class").text == "previous")
+        nextLinkContainer must beSome[NodeSeq]
+        val nextLink = nextLinkContainer.get
+        nextLink must \\("a", "href")
+        nextLink must \\("a").textIs(nextWord)
+        prevLinkContainer must beNone
+      }
+    }
+
+    "render both naviagation links inbeetwen" in new SpecCrudifyWithContext {
+      withRequest(params(Map("first" -> s"$rowsPerPage"))) {
+        val html = doCrudAll(this.showAllTemplate())
+        val nextLinkContainer = (html \\ "td").find(td => (td \ "@class").text == "next")
+        val prevLinkContainer = (html \\ "td").find(td => (td \ "@class").text == "previous")
+        prevLinkContainer must beSome[NodeSeq]
+        nextLinkContainer must beSome[NodeSeq]
+
+        val prevLink = prevLinkContainer.get
+        prevLink must \\("a", "href")
+        prevLink must \\("a").textIs(previousWord)
+        val nextLink = nextLinkContainer.get
+        nextLink must \\("a", "href")
+        nextLink must \\("a").textIs(nextWord)
+      }
+    }
   }
 
 
