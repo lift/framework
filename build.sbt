@@ -7,8 +7,8 @@ homepage in ThisBuild              := Some(url("http://www.liftweb.net"))
 licenses in ThisBuild              += ("Apache License, Version 2.0", url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
 startYear in ThisBuild             := Some(2006)
 organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
-scalaVersion in ThisBuild          := "2.12.6"
-crossScalaVersions in ThisBuild    := Seq("2.12.6", "2.11.11")
+scalaVersion in ThisBuild          := "2.13.0"
+crossScalaVersions in ThisBuild    := Seq("2.13.0","2.12.6", "2.11.11")
 
 libraryDependencies in ThisBuild ++= Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalatest)
 
@@ -87,7 +87,7 @@ lazy val json =
     .settings(
       description := "JSON Library",
       parallelExecution in Test := false,
-      libraryDependencies ++= Seq(scalap(scalaVersion.value), paranamer)
+      libraryDependencies ++= Seq(scalap(scalaVersion.value), paranamer, scala_xml)
     )
 
 lazy val documentationHelpers =
