@@ -681,7 +681,7 @@ trait Crudify {
    * Override this method to change how the next link is generated
    */
   protected def crudAllNext(first: Long, list: List[TheCrudType]): (NodeSeq)=>NodeSeq = {
-    if (first < rowsPerPage) {
+    if (list.length < rowsPerPage) {
       ClearNodes
     } else {
       "^ <*>" #>
