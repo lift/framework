@@ -393,8 +393,11 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
           }
         }
 
-        case x if x.isInstanceOf[EmptyBox] || x == Full(DontMergeAttributes) => {
+        case x if x.isInstanceOf[EmptyBox] ||
+          x == Full(DontMergeClass) ||
+          x == Full(DontMergeAttributes) => {
           val calced = bind.calculate(realE).map(findElemIfThereIsOne _)
+          val skipClassMerge = x == Full(DontMergeClass) || x == Full(DontMergeAttributes)
 
           calced.length match {
             case 0 => NodeSeq.Empty
@@ -402,7 +405,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
               calced.head match {
                 case Group(g) => g
                 case e: Elem => new Elem(e.prefix,
-                  e.label, mergeAll(e.attributes, false, x == Full(DontMergeAttributes)),
+                  e.label, mergeAll(e.attributes, false, skipClassMerge),
                   e.scope, e.minimizeEmpty, e.child: _*)
                 case x => x
               }
@@ -425,7 +428,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
                         id => ids.contains(id)
                       } getOrElse (false)
                       val newIds = targetId filter (_ => keepId) map (i => ids - i) getOrElse (ids)
-                      val newElem = new Elem(e.prefix, e.label, mergeAll(e.attributes, !keepId, x == Full(DontMergeAttributes)), e.scope, e.minimizeEmpty, e.child: _*)
+                      val newElem = new Elem(e.prefix, e.label, mergeAll(e.attributes, !keepId, skipClassMerge), e.scope, e.minimizeEmpty, e.child: _*)
                       (newIds, newElem :: result)
                     }
                     case x => (ids, x :: result)
