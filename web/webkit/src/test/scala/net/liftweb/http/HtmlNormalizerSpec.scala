@@ -90,7 +90,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           true
         )
 
-      List("testJs1", 
+      List("testJs1",
            "testJs2",
            "testJs3",
            "testJs4",
@@ -153,7 +153,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
 
       js.toJsCmd must be matching("""(?s)\Qlift.onEvent("lift-event-js-\E[^"]+\Q","event",function(event) {doStuff;});
         |lift.onEvent("hello","event",function(event) {doStuff2;});
-        |lift.onEvent("lift-event-js-\E[^"]+\Q","event",function(event) {doStuff3;});\E""".stripMargin('|').lines.mkString("\n").r
+        |lift.onEvent("lift-event-js-\E[^"]+\Q","event",function(event) {doStuff3;});\E""".stripMargin('|').linesIterator.mkString("\n").r
       )
     }
 
@@ -179,7 +179,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
       js.toJsCmd must be matching("""(?s)\Qlift.onEvent("lift-event-js-\E[^"]+\Q","click",function(event) {doStuff; event.preventDefault();});
         |lift.onEvent("hello","submit",function(event) {doStuff2; event.preventDefault();});
         |lift.onEvent("hello2","click",function(event) {doStuff3; event.preventDefault();});
-        |lift.onEvent("lift-event-js-\E[^"]+\Q","submit",function(event) {/doStuff4; event.preventDefault();});\E""".stripMargin('|').lines.mkString("\n").r
+        |lift.onEvent("lift-event-js-\E[^"]+\Q","submit",function(event) {/doStuff4; event.preventDefault();});\E""".stripMargin('|').linesIterator.mkString("\n").r
       )
     }
 
