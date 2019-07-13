@@ -21,8 +21,12 @@ trait Tryo {
     try {
       Full(f)
     } catch {
-      case c if ignore.exists(_.isAssignableFrom(c.getClass)) => onError.foreach(_(c)); Empty
-      case c if (ignore == null || ignore.isEmpty) => onError.foreach(_(c)); Failure(c.getMessage, Full(c), Empty)
+      case c: Throwable =>
+        onError.foreach(_(c))
+        if (ignore == null || !ignore.exists(_.isAssignableFrom(c.getClass)))
+          Failure(c.getMessage, Full(c), Empty)
+        else
+          Empty
     }
   }
 
