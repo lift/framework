@@ -14,7 +14,7 @@ jdk:
   - openjdk8
 matrix:
   include:
-  - scala: 2.12.7
+  - scala: 2.12.8
     jdk: openjdk11
 script: ./travis.sh
 branches:
