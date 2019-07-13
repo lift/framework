@@ -2,20 +2,16 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+Our [Support policy](https://github.com/lift/framework/blob/master/SUPPORT.md) outlines
+what versions are supported for bugfixes and security releases.
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+Report security issues by sending an email to security at liftweb dot net. A committer
+will respond within 3 business days to let you know that we've received the report.
+We'll attempt to confirm our ability to replicate the issue. This will go quicker if
+you can provide us with a sample project in a private GitHub repo. We'll tell you
+who to share it with by email.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Once we've confirmed the issue, development of a fix will begin immediately and we'll
+keep you in the loop as we progress.
