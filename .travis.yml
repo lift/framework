@@ -11,11 +11,11 @@ cache:
 services:
   - mongodb
 jdk:
-  - oraclejdk8
+  - openjdk8
 matrix:
   include:
   - scala: 2.12.7
-    jdk: oraclejdk11
+    jdk: openjdk11
 script: ./travis.sh
 branches:
   only:
