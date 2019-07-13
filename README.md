@@ -48,6 +48,18 @@ In order to run the server, navigate to the application folder and run the `sbt`
 
 By default, the server should run on http://localhost:8080.
 
+The above command will do what you probably want; the application will recompile and restart whenever you change HTML, resources or Scala code.
+
+If your efforts are primarily dedicated to the frontend, you may find that it's not efficient to recompile and restart the application every time you change CSS or HTML.
+
+In this case, a good alternative command is
+
+    jetty:quickstart
+
+The difference between *start* and *quickstart* is that start serves assets from your target directory where the exploded WAR is, and quickstart serves from the src directory where you're editing the files.
+
+Note that there is not a leading tilde *~* on the quickstart command.  This is so that compile is not triggered when resources change.  Your changed resources will be served directly.  Note that in this mode Scala changes must be manually compiled. 
+
 ### With sbt (Existing project)
 
 If you're using Lift in an existing sbt project you'll need to:
@@ -85,11 +97,7 @@ libraryDependencies ++= {
 
 #### Running the Server
 
-In order to run the server, navigate to the application folder and run the `sbt` command. In the SBT prompt, run:
-
-    ~jetty:start
-
-By default, the server should run on http://localhost:8080.
+The same run process as above applies to this project configuration.
 
 ### With Maven
 

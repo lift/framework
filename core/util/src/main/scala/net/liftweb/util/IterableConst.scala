@@ -2,7 +2,7 @@ package net.liftweb
 package util
 
 import common._
-import xml._
+import scala.xml._
 import java.util.{List => JavaList}
 // import scala.collection.JavaConverters._
 
@@ -142,4 +142,3 @@ object IterableConst {
 
   implicit def optionStringPromotable[T](o: Option[T])(implicit view:T=>StringPromotable) = optionString(o.map(view(_).toString))
 }
-

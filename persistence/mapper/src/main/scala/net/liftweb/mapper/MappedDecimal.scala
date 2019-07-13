@@ -27,7 +27,7 @@ import net.liftweb.util._
 import net.liftweb.common._
 import net.liftweb.json._
 import net.liftweb.http.js._
-import xml.{Text, NodeSeq}
+import scala.xml.{Text, NodeSeq}
 
 /**
  * <p>

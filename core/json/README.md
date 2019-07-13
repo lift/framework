@@ -217,7 +217,7 @@ Merging & Diffing
 -----------------
 
 Two JSONs can be merged and diffed with each other.
-Please see more examples in src/test/scala/net/liftweb/json/MergeExamples.scala and src/test/scala/net/liftweb/json/DiffExamples.scala
+Please see more examples in [MergeExamples.scala](./src/test/scala/net/liftweb/json/MergeExamples.scala) and [DiffExamples.scala](src/test/scala/net/liftweb/json/DiffExamples.scala)
 
     scala> import net.liftweb.json._
 
@@ -273,7 +273,7 @@ Querying JSON
 ------------
 
 JSON values can be extracted using for-comprehensions.
-Please see more examples in src/test/scala/net/liftweb/json/JsonQueryExamples.scala
+Please see more examples in [JsonQueryExamples.scala](./src/test/scala/net/liftweb/json/JsonQueryExamples.scala)
 
     scala> import net.liftweb.json._
     scala> val json = parse("""
@@ -416,7 +416,7 @@ Extracting values
 Case classes can be used to extract values from parsed JSON. Non-existing values
 can be extracted into scala.Option and strings can be automatically converted into
 java.util.Dates.
-Please see more examples in src/test/scala/net/liftweb/json/ExtractionExamplesSpec.scala
+Please see more examples in [ExtractionExamplesSpec.scala](./src/test/scala/net/liftweb/json/ExtractionExamplesSpec.scala)
 
     scala> import net.liftweb.json._
     scala> implicit val formats = DefaultFormats // Brings in default date formats etc.
@@ -513,7 +513,7 @@ Serialization
 =============
 
 Case classes can be serialized and deserialized.
-Please see other examples in src/test/scala/net/liftweb/json/SerializationExamples.scala
+Please see other examples in [SerializationExamples.scala](./src/test/scala/net/liftweb/json/SerializationExamples.scala)
 
     scala> import net.liftweb.json._
     scala> import net.liftweb.json.Serialization.{read, write}
@@ -659,7 +659,7 @@ XML support
 ===========
 
 JSON structure can be converted to XML node and vice versa.
-Please see more examples in src/test/scala/net/liftweb/json/XmlExamples.scala
+Please see more examples in [XmlExamples.scala](./src/test/scala/net/liftweb/json/XmlExamples.scala)
 
     scala> import net.liftweb.json.Xml.{toJson, toXml}
     scala> val xml =

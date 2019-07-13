@@ -26,7 +26,7 @@ import java.util.Date
 import net.liftweb.http._
 import reflect.runtime.universe._
 import net.liftweb.json._
-import xml.{Text, NodeSeq}
+import scala.xml.{Text, NodeSeq}
 import js._
 
 

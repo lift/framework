@@ -17,7 +17,7 @@
 package net.liftweb
 package http
 
-import xml.{Node, NodeSeq, Group}
+import scala.xml.{Node, NodeSeq, Group}
 
 import common._
 import actor._

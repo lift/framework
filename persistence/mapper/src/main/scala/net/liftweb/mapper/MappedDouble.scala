@@ -24,7 +24,7 @@ import net.liftweb.util._
 import Helpers._
 import java.util.Date
 import net.liftweb.http._
-import xml.{Text, NodeSeq}
+import scala.xml.{Text, NodeSeq}
 import js._
 import net.liftweb.json._
 

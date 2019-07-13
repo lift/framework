@@ -18,7 +18,7 @@ package net.liftweb.sitemap
 
 import net.liftweb.common._
 import net.liftweb.http.{LiftRules, S}
-import xml.{Elem, Text, NodeSeq}
+import scala.xml.{Elem, Text, NodeSeq}
 import net.liftweb.util.Helpers
 
 

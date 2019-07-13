@@ -18,7 +18,7 @@ package net.liftweb
 package http
 package rest
 
-import xml._
+import scala.xml._
 
 import org.specs2.mutable.Specification
 import org.specs2.matcher.Matcher

@@ -189,7 +189,7 @@ object Xml {
     }
   }
 
-  private[json] class XmlNode(name: String, children: Seq[Node]) extends Elem(null, name, xml.Null, TopScope, true, children :_*)
+  private[json] class XmlNode(name: String, children: Seq[Node]) extends Elem(null, name, scala.xml.Null, TopScope, true, children :_*)
 
-  private[json] class XmlElem(name: String, value: String) extends Elem(null, name, xml.Null, TopScope, true, Text(value))
+  private[json] class XmlElem(name: String, value: String) extends Elem(null, name, scala.xml.Null, TopScope, true, Text(value))
 }

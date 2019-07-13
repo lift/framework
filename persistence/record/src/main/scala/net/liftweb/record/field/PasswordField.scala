@@ -18,7 +18,7 @@ package net.liftweb
 package record
 package field
 
-import xml._
+import scala.xml._
 
 import common._
 import json._

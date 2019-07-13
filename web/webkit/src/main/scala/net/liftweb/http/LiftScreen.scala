@@ -17,7 +17,7 @@
 package net.liftweb
 package http
 
-import xml._
+import scala.xml._
 import reflect.Manifest
 
 import common._

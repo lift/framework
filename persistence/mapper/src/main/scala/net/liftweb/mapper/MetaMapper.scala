@@ -25,7 +25,7 @@ import scala.language.existentials
 
 import scala.collection.mutable.{ListBuffer, HashMap}
 import scala.collection.immutable.{SortedMap, TreeMap}
-import xml._
+import scala.xml._
 
 import common._
 import json._

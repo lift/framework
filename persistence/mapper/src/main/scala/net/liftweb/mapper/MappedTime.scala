@@ -30,7 +30,7 @@ import S._
 import js._
 import json._
 
-import xml.{Text, NodeSeq}
+import scala.xml.{Text, NodeSeq}
 
 /**
  * Represents a time with hour, minute and second fields. The underlying type is

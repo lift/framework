@@ -17,7 +17,7 @@
 package net.liftweb
 package util
 
-import xml.Elem
+import scala.xml.Elem
 
 import org.specs2.mutable.Specification
 import org.specs2.execute.PendingUntilFixed
