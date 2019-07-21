@@ -45,7 +45,7 @@ object LiftSbtHelpers {
 
           findManagedDependency(cp, "org.scala-lang.modules", "scala-xml").map {
             case (revision, file)  =>
-              (file -> url("http://www.scala-lang.org/api/" + version))
+              (file -> url("https://scala.github.io/scala-xml/api/" + revision))
           }.toMap
         }
       )
