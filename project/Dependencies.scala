@@ -39,7 +39,7 @@ object Dependencies {
   lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.5"
   lazy val scalap: ModuleMap      = "org.scala-lang"             % "scalap"             % _
   lazy val scala_compiler: ModuleMap = "org.scala-lang"          % "scala-compiler"     % _
-  lazy val scalaz7_core           = "org.scalaz"                %% "scalaz-core"        % "7.3.0-M30"
+  lazy val scalaz7_core           = "org.scalaz"                %% "scalaz-core"        % "7.2.28"
   lazy val squeryl                = "org.squeryl"               %% "squeryl"            % "0.9.14"
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
   lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "1.2.0"

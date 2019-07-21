@@ -29,7 +29,7 @@ import java.util.{HashMap => JHash}
 import javax.servlet._
 import javax.servlet.http._
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import scala.xml.NodeSeq
 
@@ -383,7 +383,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
 
   def getAttribute(key: String): Object = attributes.get(key).getOrElse(null)
 
-  def getAttributeNames(): JEnum[String] = attributes.keys.iterator
+  def getAttributeNames(): JEnum[String] = attributes.keys.iterator.asJavaEnumeration
 
   def getCharacterEncoding(): String = charEncoding
 
@@ -399,7 +399,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
 
   def getLocale(): Locale = locales.headOption.getOrElse(Locale.getDefault)
 
-  def getLocales(): JEnum[Locale] = locales.iterator
+  def getLocales(): JEnum[Locale] = locales.iterator.asJavaEnumeration
 
   def getLocalName(): String = localName
 
@@ -416,12 +416,12 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
       case (k,v) => newMap += k -> (newMap(k) ::: v :: Nil) // Ugly, but it works and keeps order
     }
 
-    newMap.map{case (k,v) => (k,v.toArray)}.asInstanceOf[Map[String,Array[String]]]
+    newMap.map{case (k,v) => (k,v.toArray)}.asInstanceOf[Map[String,Array[String]]].asJava
 //    asMap(newMap.map{case (k,v) => (k,v.toArray)}.asInstanceOf[Map[Object,Object]])
   }
 
   def getParameterNames(): JEnum[String] =
-    parameters.map(_._1).distinct.iterator
+    parameters.map(_._1).distinct.iterator.asJavaEnumeration
 
   def getParameterValues(key: String): Array[String] =
     parameters.filter(_._1 == key).map(_._2).toArray
@@ -481,10 +481,10 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
     case _ => null
   }
 
-  def getHeaderNames(): JEnum[String] = headers.keys.iterator
+  def getHeaderNames(): JEnum[String] = headers.keys.iterator.asJavaEnumeration
 
   def getHeaders(s: String): JEnum[String] =
-    headers.getOrElse(s, Nil).iterator
+    headers.getOrElse(s, Nil).iterator.asJavaEnumeration
 
   def getIntHeader(h: String): Int = {
     Box.!!(getHeader(h)).map(_.toInt) openOr -1
@@ -552,7 +552,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   }
 
   def getParts(): Collection[Part] = {
-    Seq[Part]()
+    Seq[Part]().asJava
   }
 
   def getPart(partName: String): Part = {

@@ -18,7 +18,7 @@ package net.liftweb
 package util
 
 import java.util.concurrent._
-import Helpers.TimeSpan
+import util.Helpers.TimeSpan
 import common._
 import actor.ThreadPoolRules
 
@@ -100,7 +100,7 @@ sealed trait Schedule extends Loggable {
    * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
    */
   def schedule[T](to: SimpleActor[T], msg: T, delay: TimeSpan): ScheduledFuture[Unit] =
-  this.schedule(() => Helpers.tryo( to ! msg ), delay)
+  this.schedule(() => util.Helpers.tryo( to ! msg ), delay)
 
   /**
    * Schedules the sending of a message to occur after the specified delay.
@@ -109,7 +109,7 @@ sealed trait Schedule extends Loggable {
    * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
    */
   def perform[T](to: SimpleActor[T], msg: T, delay: Long): ScheduledFuture[Unit] =
-  this.schedule(() => Helpers.tryo( to ! msg ), TimeSpan(delay))
+  this.schedule(() => util.Helpers.tryo( to ! msg ), TimeSpan(delay))
 
    /**
    * Schedules the sending of a message to occur after the specified delay.

@@ -195,15 +195,6 @@ sealed trait BoxTrait {
   def box2Iterable[T](in: Box[T]): Iterable[T] = in.toList
 
   /**
-   * This implicit transformation allows one to use a `Box` as an `Iterable` of
-   * zero or one elements.
-   *
-   * @return A single-element `List` with the contents if the box is `Full`
-   *         and `[[scala.collection.immutable.Nil Nil]]` otherwise.
-   */
-  implicit def box2IterableOnce[T](in: Box[T]): IterableOnce[T] = in.toOption
-
-  /**
    * This implicit transformation allows one to use an `Option` as a `Box`.
    *
    * @return `Full` with the contents if the `Option` is `Some` and `Empty`

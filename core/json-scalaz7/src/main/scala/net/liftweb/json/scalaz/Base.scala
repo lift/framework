@@ -22,7 +22,6 @@ import scalaz.std.option._
 import scalaz.std.list._
 import scalaz.syntax.traverse._
 import net.liftweb.json._
-import scala.collection.breakOut
 
 trait Base { this: Types =>
   implicit def boolJSON: JSON[Boolean] = new JSON[Boolean] {
@@ -115,6 +114,6 @@ trait Base { this: Types =>
     }
   }
   implicit def mapJSONW[A: JSONW]: JSONW[Map[String, A]] = new JSONW[Map[String, A]] {
-    def write(values: Map[String, A]) = JObject(values.map { case (k, v) => JField(k, toJSON(v)) }(breakOut): _*)
+    def write(values: Map[String, A]) = JObject(values.view.map { case (k, v) => JField(k, toJSON(v)) }.to(Seq): _*)
   }
 }

@@ -101,7 +101,7 @@ trait CombParserHelpers {
   /**
    * @return a list of elements (Elem) from a String
    */
-  implicit def strToLst(in: String): List[Elem] = (new scala.collection.immutable.StringOps(in)).toList
+  implicit def strToLst(in: String): List[Elem] = (new scala.collection.immutable.WrappedString(in)).toList
 
   /**
    * @return a parser for a digit

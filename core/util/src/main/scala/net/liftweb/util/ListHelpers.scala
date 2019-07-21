@@ -170,8 +170,8 @@ trait ListHelpers {
    * Convert a java.util.Enumeration to a List[T]
    */
   def enumToList[T](enum: java.util.Enumeration[T]): List[T] = {
-    import scala.collection.JavaConversions._
-    enum.toList
+    import scala.collection.JavaConverters._
+    enum.asScala.toList
   }
 
   /**
