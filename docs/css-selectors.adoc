@@ -266,14 +266,15 @@ Remove from attribute rule: `[attribute-name!]`::
   its own separated by a space. For example, `^ [class!]` will remove the
   class named by the transformation result from all root elements.
 
-Don't merge attributes rule: `!!`::
+Don't merge class attribute rule: `!!`::
   By default, if the transformation yields a single element and the element
   matched by the selector is being replaced by that result, the attributes from
   the matched element are merged into the attributes of the transformation's
-  element. This modifier prevents that from happening. For example, by default
-  doing `"input" #> <div />` and applying it to `<input type="text">` would
-  yield `<div type="text" />`. Doing `"input !!" #> <div />` would instead yield
-  `<div />`.
+  element. This modifier prevents *ONLY* class attribute merging from happening.
+  For example, by default doing `"input" #> <div class="c1"/>` and applying it to
+  `<input class="c2" type="text"/>` would yield `<div type="text" class="c1 c2"/>`.
+  Doing `"input !!" #> <div class="c1" />` would instead yield
+  `<div type="text" class="c1"/>`.
 
 Lift node rule: `^^`::
   This rule will lift the first selected element all the way to the root of the

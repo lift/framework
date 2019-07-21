@@ -503,7 +503,26 @@ object CssBindHelpersSpec extends Specification with XmlMatchers {
       (res \ "@class").length must_== 0
     }
 
+    "don't merge class attribute" in {
+      val func = "p !!" #> <span class="replacement">10</span>
+      val res = func.apply(<p class="first second">Test</p>)
+      (res \ "@class").text must_== "replacement"
+    }
 
+    "merge other attributes when using don't merge class modification" in {
+      val func = "p !!" #> <span data-two="2" class="replacement">10</span>
+      val res = func.apply(<p data-one="1" class="first second">Test</p>)
+      (res \ "@data-one").text must_== "1"
+      (res \ "@data-two").text must_== "2"
+      (res \ "@class").text must_== "replacement"
+    }
+
+    "leave node class attribute for replacement without class" in {
+      // TODO: Since was agreed not to change current behaviour, create test for it (https://groups.google.com/forum/#!topic/liftweb/Nswcxoykspc)
+      val func = "p !!" #> <span>10</span>
+      val res = func.apply(<p class="first second">Test</p>)
+      (res \ "@class").text must_== "first second"
+    }
 
     "Remove a subnode's class attribute" in {
 
