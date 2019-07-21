@@ -2,7 +2,7 @@ language: scala
 dist: trusty
 sudo: false
 scala:
-  - 2.11.11
+  - 2.11.12
   - 2.12.8
 cache:
   directories:
