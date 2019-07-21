@@ -214,7 +214,7 @@ object LiftJavaScriptSpec extends Specification  {
   }
 
   def formatjs(line:String):String = formatjs(line :: Nil)
-  def formatjs(lines:List[String]):String = lines.map { _.stripMargin.lines.toList match {
+  def formatjs(lines:List[String]):String = lines.map { _.stripMargin.linesIterator.toList match {
     case init :+ last => (init.map(_ + " ") :+ last).mkString
     case Nil => ""
   }}.mkString("\n")
