@@ -150,6 +150,7 @@ lazy val webkit =
       description := "Webkit Library",
       parallelExecution in Test := false,
       libraryDependencies ++= Seq(
+        scala_parallel_collections,
         commons_fileupload,
         rhino,
         servlet_api,

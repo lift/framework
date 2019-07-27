@@ -21,9 +21,14 @@ package servlet
 
 import java.io.InputStream
 import java.util.Locale
+
 import javax.servlet.http.HttpServletRequest
+
+import scala.collection.JavaConverters._
+
 import org.apache.commons.fileupload.servlet._
 import org.apache.commons.fileupload.ProgressListener
+
 import net.liftweb.common._
 import net.liftweb.util._
 import Helpers._
@@ -140,14 +145,12 @@ class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val 
 
     def hasNext = what.hasNext
 
-    import scala.collection.JavaConversions._
-
     def next = what.next match {
       case f if (f.isFormField) => NormalParamHolder(f.getFieldName, new String(readWholeStream(f.openStream), "UTF-8"))
       case f => {
         val headers = f.getHeaders()
-        val names: List[String] = if (headers eq null) Nil else headers.getHeaderNames().asInstanceOf[java.util.Iterator[String]].toList
-        val map: Map[String, List[String]] = Map(names.map(n => n -> headers.getHeaders(n).asInstanceOf[java.util.Iterator[String]].toList) :_*)
+        val names: List[String] = if (headers eq null) Nil else headers.getHeaderNames().asInstanceOf[java.util.Iterator[String]].asScala.toList
+        val map: Map[String, List[String]] = Map(names.map(n => n -> headers.getHeaders(n).asInstanceOf[java.util.Iterator[String]].asScala.toList) :_*)
         LiftRules.withMimeHeaders(map) {
           LiftRules.handleMimeFile(f.getFieldName, f.getContentType, f.getName, f.openStream)
         }

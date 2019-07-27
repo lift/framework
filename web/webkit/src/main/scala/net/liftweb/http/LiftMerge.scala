@@ -17,7 +17,7 @@
 package net.liftweb
 package http
 
-import scala.collection.Map
+import scala.collection.{Map,Seq}
 import scala.collection.mutable.{HashMap, ArrayBuffer, ListBuffer}
 import scala.xml._
 

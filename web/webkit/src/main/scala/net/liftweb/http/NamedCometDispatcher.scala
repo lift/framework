@@ -17,6 +17,8 @@
 package net.liftweb
 package http
 
+import scala.collection.parallel.CollectionConverters._
+
 import common.{Box, Full, Loggable}
 import actor.LiftActor
 

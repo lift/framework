@@ -21,7 +21,7 @@ import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 
 import scala.collection.mutable.{HashMap, ListBuffer}
-import collection.JavaConversions
+import scala.collection.JavaConverters._
 
 import collection.mutable.{HashMap, ListBuffer}
 import js.JE.{JsObj, JsRaw, AnonFunc}
@@ -649,8 +649,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     var availableOwners = Set[String]()
     var removedOwners = Set[String]()
 
-    import scala.collection.JavaConversions._
-    nmessageCallback.foreach {
+    nmessageCallback.asScala.foreach {
       case (functionName, funcHolder) if test(funcHolder) =>
         funcHolder.owner.foreach(removedOwners += _)
         nmessageCallback.remove(functionName)
@@ -704,9 +703,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   def doCometActorCleanup(): Unit = {
-    import scala.collection.JavaConversions._
-
-    this.nasyncComponents.values.foreach(_ ! ShutdownIfPastLifespan)
+    this.nasyncComponents.values.asScala.foreach(_ ! ShutdownIfPastLifespan)
   }
 
   /**
@@ -907,8 +904,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
       }
     }
 
-      import scala.collection.JavaConversions._
-      (0 /: nmessageCallback)((l, v) => l + (v._2.owner match {
+      (0 /: nmessageCallback.asScala)((l, v) => l + (v._2.owner match {
         case Full(owner) if (owner == ownerName) =>
           v._2.lastSeen = time
           1
@@ -923,14 +919,10 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * Returns true if there are functions bound for this owner
    */
   private[http] def hasFuncsForOwner(owner: String): Boolean = {
-    import scala.collection.JavaConversions._
-
-    !nmessageCallback.find(_._2.owner == owner).isEmpty
+    !nmessageCallback.asScala.find(_._2.owner == owner).isEmpty
   }
 
   private def shutDown() = {
-    import scala.collection.JavaConversions._
-
     var done: List[() => Unit] = Nil
 
     S.initIfUninitted(this) {
@@ -942,8 +934,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
         SessionMaster.sendMsg(RemoveSession(this.underlyingId))
 
-        import scala.collection.JavaConversions._
-        nasyncComponents.foreach {
+        nasyncComponents.asScala.foreach {
           case (_, comp) => done ::= (() => tryo(comp ! ShutDown))
         }
         cleanUpSession()
@@ -1224,7 +1215,6 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   object currentSourceContext extends TransientRequestVar[Any](Empty)
 
   def runSourceContext(value: Any, xform: NodeSeq => NodeSeq, ns: NodeSeq): NodeSeq = {
-    import scala.collection.JavaConversions._
     value match {
       case null => NodeSeq.Empty
       case None => NodeSeq.Empty
@@ -1244,9 +1234,19 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
         runSourceContext(ar.toList, xform, ns)
       case n: java.lang.Iterable[_] => runSourceContext(n.iterator(), xform, ns)
       case n: java.util.Iterator[_] =>
-        for {i <- n.toSeq; nodes <- currentSourceContext.doWith(i)(processSurroundAndInclude("Source", xform(ns)))} yield nodes
+        for {
+          i <- n.asScala.toSeq
+          nodes <- currentSourceContext.doWith(i)(processSurroundAndInclude("Source", xform(ns)))
+        } yield {
+          nodes
+        }
       case en: java.util.Enumeration[_] =>
-      for {i <- en.toSeq; nodes <- currentSourceContext.doWith(i)(processSurroundAndInclude("Source", xform(ns)))} yield nodes
+        for {
+          i <- en.asScala.toSeq
+          nodes <- currentSourceContext.doWith(i)(processSurroundAndInclude("Source", xform(ns)))
+        } yield {
+          nodes
+        }
       case se: scala.collection.Iterable[_] => runSourceContext(se.iterator,xform, ns)
       case se: scala.collection.Iterator[_] =>
         for {i <- se.toSeq; nodes <- currentSourceContext.doWith(i)(processSurroundAndInclude("Source", xform(ns)))} yield nodes
@@ -2321,11 +2321,9 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * Finds all Comet actors by type
    */
   def findComet(theType: String): List[LiftCometActor] = {
-    import scala.collection.JavaConversions._
-
     testStatefulFeature {
-      import scala.collection.JavaConversions._
-      nasyncComponents.flatMap {
+      // FIXME Regression?
+      nasyncComponents.asScala.flatMap[LiftCometActor] {
         case (CometId(name, _), value) if name == theType => Full(value)
         case _ => Empty
       }.toList
@@ -2468,7 +2466,6 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
         }
       }
 
-      import scala.collection.JavaConversions._
       val id = Full(act.uniqueId)
 
       removeFunctionsIf(_.owner == id)
