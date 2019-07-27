@@ -105,10 +105,32 @@ object Box extends BoxTrait with Tryo {
 
 }
 
+private[common] sealed trait OptionImplicits {
+  /**
+   * This implicit transformation allows one to use an `Option` as a `Box`.
+   *
+   * @return `Full` with the contents if the `Option` is `Some` and `Empty`
+   *         otherwise.
+   */
+  implicit def option2Box[T](in: Option[T]): Box[T] = Box(in)
+
+  /**
+   * This implicit transformation allows one to use a `Box` as an `Option`.
+   *
+   * Note that `Box` implements `get` specifically to avoid usage of `.get` on
+   * `Box` instances. Boxes should be opened using `openOrThrowException` and
+   * their contents compared using `== Full(expectedValue)`.
+   *
+   * @return `Some` with the contents if the box is `Full` and `[[scala.None None]]`
+   *         otherwise.
+   */
+  implicit def box2Option[T](in: Box[T]): Option[T] = in.toOption
+}
+
 /**
  * Implementation for the `[[Box$ Box]]` singleton.
  */
-sealed trait BoxTrait {
+sealed trait BoxTrait extends OptionImplicits {
   val primitiveMap: Map[Class[_], Class[_]] = Map(
     java.lang.Boolean.TYPE -> classOf[java.lang.Boolean],
     java.lang.Character.TYPE -> classOf[java.lang.Character],
@@ -182,7 +204,7 @@ sealed trait BoxTrait {
    *         `pf.isDefinedAt(value)` and `Empty` otherwise.
    */
   def apply[InType, OutType](value: InType)(pf: PartialFunction[InType, OutType]): Box[OutType] = {
-    pf.andThen(Full.apply).applyOrElse(value, (_:  InType) => Empty)
+    pf.andThen(Full.apply(_)).applyOrElse(value, (_:  InType) => Empty)
   }
 
   /**
@@ -193,26 +215,6 @@ sealed trait BoxTrait {
    *         and `[[scala.collection.immutable.Nil Nil]]` otherwise.
    */
   implicit def box2Iterable[T](in: Box[T]): Iterable[T] = in.toList
-
-  /**
-   * This implicit transformation allows one to use an `Option` as a `Box`.
-   *
-   * @return `Full` with the contents if the `Option` is `Some` and `Empty`
-   *         otherwise.
-   */
-  implicit def option2Box[T](in: Option[T]): Box[T] = Box(in)
-
-  /**
-   * This implicit transformation allows one to use a `Box` as an `Option`.
-   *
-   * Note that `Box` implements `get` specifically to avoid usage of `.get` on
-   * `Box` instances. Boxes should be opened using `openOrThrowException` and
-   * their contents compared using `== Full(expectedValue)`.
-   *
-   * @return `Some` with the contents if the box is `Full` and `[[scala.None None]]`
-   *         otherwise.
-   */
-  implicit def box2Option[T](in: Box[T]): Option[T] = in.toOption
 
   /**
    * This method allows one to encapsulate any object in a Box in a null-safe
