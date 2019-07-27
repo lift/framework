@@ -8,7 +8,7 @@ licenses in ThisBuild              += ("Apache License, Version 2.0", url("http:
 startYear in ThisBuild             := Some(2006)
 organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
 scalaVersion in ThisBuild          := "2.12.8"
-crossScalaVersions in ThisBuild    := Seq("2.12.8", "2.11.11")
+crossScalaVersions in ThisBuild    := Seq("2.12.8", "2.11.12")
 
 libraryDependencies in ThisBuild ++= Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalatest)
 
