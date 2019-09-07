@@ -7,8 +7,16 @@ homepage in ThisBuild              := Some(url("http://www.liftweb.net"))
 licenses in ThisBuild              += ("Apache License, Version 2.0", url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
 startYear in ThisBuild             := Some(2006)
 organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
-scalaVersion in ThisBuild          := "2.12.8"
-crossScalaVersions in ThisBuild    := Seq("2.12.8", "2.11.12")
+
+val scala211Version = "2.11.12"
+val scala212Version = "2.12.9"
+val scala213Version = "2.13.0"
+
+val crossUpTo212 = Seq(scala212Version, scala211Version)
+val crossUpTo213 = scala213Version +: crossUpTo212
+
+scalaVersion in ThisBuild          := scala212Version
+crossScalaVersions in ThisBuild    := crossUpTo212 // default everyone to 2.12 for now
 
 libraryDependencies in ThisBuild ++= Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalatest)
 
