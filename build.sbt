@@ -67,6 +67,7 @@ lazy val common =
       description := "Common Libraties and Utilities",
       libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, scala_xml, scala_parser)
     )
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val actor =
   coreProject("actor")
