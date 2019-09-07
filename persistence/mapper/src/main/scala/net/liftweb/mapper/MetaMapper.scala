@@ -42,7 +42,7 @@ trait BaseMetaMapper {
 
   def dbTableName: String
   def _dbTableNameLC: String
-  def mappedFields: scala.collection.Seq[BaseMappedField];
+  def mappedFields: Seq[BaseMappedField];
   def dbAddTable: Box[() => Unit]
 
   def dbIndexes: List[BaseIndex[RealType]]
@@ -271,7 +271,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   //type OtherMapper = KeyedMapper[_, (T forSome {type T})]
   //type OtherMetaMapper = KeyedMetaMapper[_, OtherMapper]
 
-  def findAllFields(fields: scala.collection.Seq[SelectableField],
+  def findAllFields(fields: Seq[SelectableField],
                     by: QueryParam[A]*): List[A] =
   findMapFieldDb(dbDefaultConnectionIdentifier,
                  fields, by :_*)(v => Full(v))
@@ -554,8 +554,6 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
         }
     }
   }
-
-  // def find(by: QueryParam): Box[A] = find(List(by))
 
   private def _addOrdering(in: String, params: List[QueryParam[A]]): String = {
     params.flatMap{
@@ -1872,7 +1870,7 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
     else this.find(key)
   }
 
-  def find(key: Any): Box[A] =
+  def find(key: Any)(implicit dummy: DummyImplicit): Box[A] =
   key match {
     case qp: QueryParam[A] => find(List(qp.asInstanceOf[QueryParam[A]]) :_*)
     case prod: Product if (testProdArity(prod)) => find(convertToQPList(prod) :_*)
@@ -1947,8 +1945,14 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
     }
   }
 
+  def find(by: QueryParam[A]): Box[A] =
+  findDb(dbDefaultConnectionIdentifier, by)
+
   def find(by: QueryParam[A]*): Box[A] =
   findDb(dbDefaultConnectionIdentifier, by :_*)
+
+  def findDb(dbId: ConnectionIdentifier, by: QueryParam[A]): Box[A] =
+  findDb(dbId, mappedFields, by)
 
   def findDb(dbId: ConnectionIdentifier, by: QueryParam[A]*): Box[A] =
   findDb(dbId, mappedFields, by :_*)

@@ -106,7 +106,7 @@ trait ManyToMany extends BaseKeyedMapper {
             case None =>
               val newJoin = joinMeta.create
               thisField.actualField(newJoin) match {
-                case mfk: MappedForeignKey[K,O,T] => mfk.set(primaryKeyField.get.asInstanceOf[K])
+                case mfk: MappedForeignKey[_,_,_] => mfk.asInstanceOf[MappedForeignKey[K, _, _]].set(primaryKeyField.get.asInstanceOf[K])
               }
               otherFK(newJoin)(_.apply(e))
               newJoin
@@ -151,12 +151,12 @@ trait ManyToMany extends BaseKeyedMapper {
       _joins = before ++ ownedJoins ++ after
     }
 
-    def +=:(elem: T2) = {
+    def prepend(elem: T2) = {
       _joins ::= own(elem)
       this
     }
 
-    def +=(elem: T2) = {
+    def addOne(elem: T2) = {
       _joins ++= List(own(elem))
       this
     }

@@ -161,7 +161,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo 
   def formFields: List[MappedField[_, A]] =
   getSingleton.formFields(this)
 
-   def allFields: scala.collection.Seq[BaseField] = formFields
+   def allFields: Seq[BaseField] = formFields
 
   /**
    * map the fields titles and forms to generate a list
@@ -176,7 +176,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo 
    * @param func called with displayHtml, fieldId, form
    */
   def flatMapFieldTitleForm[T]
-  (func: (NodeSeq, Box[NodeSeq], NodeSeq) => scala.collection.Seq[T]): List[T] =
+  (func: (NodeSeq, Box[NodeSeq], NodeSeq) => Seq[T]): List[T] =
   getSingleton.flatMapFieldTitleForm(this, func)
 
     /**
@@ -184,7 +184,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo 
    * @param func called with displayHtml, fieldId, form
    */
   def flatMapFieldTitleForm2[T]
-  (func: (NodeSeq, MappedField[_, A], NodeSeq) => scala.collection.Seq[T]): List[T] =
+  (func: (NodeSeq, MappedField[_, A], NodeSeq) => Seq[T]): List[T] =
   getSingleton.flatMapFieldTitleForm2(this, func)
 
   /**
@@ -292,11 +292,11 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo 
    * selector transforms that will transform a form for those fields
    * into a fully-bound form that will interact with this instance.
    */
-  def fieldMapperTransforms(fieldTransform: (BaseOwnedMappedField[A] => NodeSeq)): scala.collection.Seq[CssSel] = {
+  def fieldMapperTransforms(fieldTransform: (BaseOwnedMappedField[A] => NodeSeq)): Seq[CssSel] = {
     getSingleton.fieldMapperTransforms(fieldTransform, this)
   }
   
-  private var fieldTransforms_i: scala.collection.Seq[CssSel] = Vector()
+  private var fieldTransforms_i: Seq[CssSel] = Vector()
 
   /**
    * A list of CSS selector transforms that will help render the fields
@@ -431,7 +431,7 @@ trait KeyedMapper[KeyType, OwnerType<:KeyedMapper[KeyType, OwnerType]] extends M
 
   override def comparePrimaryKeys(other: OwnerType) = primaryKeyField.get == other.primaryKeyField.get
 
-  def reload: OwnerType = getSingleton.find(By(primaryKeyField, primaryKeyField.get)) openOr this
+  def reload: OwnerType = getSingleton.find(By(primaryKeyField, primaryKeyField.get): QueryParam[OwnerType]) openOr this
 
   def asSafeJs(f: KeyObfuscator): JsExp = getSingleton.asSafeJs(this, f)
 
