@@ -155,6 +155,7 @@ lazy val testkit =
       description := "Testkit for Webkit Library",
       libraryDependencies ++= Seq(commons_httpclient, servlet_api)
     )
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val webkit =
   webProject("webkit")
