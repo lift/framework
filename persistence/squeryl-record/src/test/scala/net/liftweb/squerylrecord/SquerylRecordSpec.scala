@@ -21,7 +21,7 @@ import org.squeryl.dsl.StringExpression
 import org.squeryl.dsl.DateExpression
 
 import org.specs2.mutable.Specification
-import org.specs2.specification.AroundExample
+import org.specs2.specification.AroundEach
 import org.specs2.execute.{ AsResult , Result }
 
 import record.{ BaseField, Record }
@@ -39,7 +39,7 @@ import util.Helpers
 /**
  * Systems under specification for SquerylRecord.
  */
-class SquerylRecordSpec extends Specification with AroundExample {
+class SquerylRecordSpec extends Specification with AroundEach {
   "SquerylRecord Specification".title
   sequential
 

@@ -20,7 +20,7 @@ package mapper
 import java.util.Locale
 
 import org.specs2.mutable.Specification
-import org.specs2.specification.BeforeExample
+import org.specs2.specification.BeforeEach
 
 import common._
 import json._
@@ -34,7 +34,7 @@ import http.provider.HTTPRequest
  * Systems under specification for Mapper. The model classes here are
  * defined in MapperSpecsModel.scala
  */
-class MapperSpec extends Specification with BeforeExample {
+class MapperSpec extends Specification with BeforeEach {
   "Mapper Specification".title
   // Do everything in order.
   sequential

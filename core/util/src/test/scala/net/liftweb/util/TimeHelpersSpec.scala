@@ -28,12 +28,11 @@ import org.specs2.ScalaCheck
 import org.specs2.execute.AsResult
 import org.specs2.matcher.MatchersImplicits
 import org.specs2.mutable.{Around, Specification}
-import org.specs2.time.NoTimeConversions
 
 /**
  * Systems under specification for TimeHelpers.
  */
-object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen with NoTimeConversions {
+object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen {
   "TimeHelpers Specification".title
 
   "A TimeSpan" can {
