@@ -242,7 +242,6 @@ private[json] object Meta {
 
   object Reflection {
     import java.lang.reflect._
-    import scala.collection.JavaConversions._
 
     sealed abstract class Kind
     case object `* -> *` extends Kind

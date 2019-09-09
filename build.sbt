@@ -98,8 +98,9 @@ lazy val json =
     .settings(
       description := "JSON Library",
       parallelExecution in Test := false,
-      libraryDependencies ++= Seq(scalap(scalaVersion.value), paranamer)
+      libraryDependencies ++= Seq(scalap(scalaVersion.value), paranamer,  scala_xml)
     )
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val documentationHelpers =
   coreProject("documentation-helpers")
