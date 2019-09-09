@@ -97,10 +97,10 @@ object SessionMaster extends LiftActor with Loggable {
    * because Nginx children stick around for long polling.
    */
   def breakOutAllComet() {
-    import scala.collection.JavaConversions._
+    import scala.collection.JavaConverters._
 
     val ses = lockRead(nsessions)
-    ses.valuesIterator.foreach {
+    ses.asScala.valuesIterator.foreach {
       _.session.breakOutComet()
     }
   }
@@ -178,10 +178,10 @@ object SessionMaster extends LiftActor with Loggable {
    * Shut down all sessions
    */
   private[http] def shutDownAllSessions() {
-    import scala.collection.JavaConversions._
+    import scala.collection.JavaConverters._
 
     val ses = lockRead(nsessions)
-    ses.foreach {
+    ses.asScala.foreach {
       case (key, sess) =>
         if (!sess.session.markedForShutDown_?) {
           sess.session.markedForShutDown_? = true
@@ -225,17 +225,17 @@ object SessionMaster extends LiftActor with Loggable {
       }
 
     case CheckAndPurge =>
-      import scala.collection.JavaConversions._
+      import scala.collection.JavaConverters._
 
     /* remove dead sessions that are more than 45 minutes old */
     val now = Helpers.millis - 45.minutes
 
-    val removeKeys: Iterable[String] = killedSessions.filter(_._2 < now).map(_._1)
+    val removeKeys: Iterable[String] = killedSessions.asScala.filter(_._2 < now).map(_._1)
     removeKeys.foreach(s => killedSessions.remove(s))
 
       val ses = Map(lockRead {
         nsessions
-      }.toList :_*)
+      }.asScala.toList :_*)
 
       for {
         f <- sessionCheckFuncs

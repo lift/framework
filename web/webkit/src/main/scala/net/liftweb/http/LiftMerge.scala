@@ -182,14 +182,14 @@ private[http] trait LiftMerge {
                 node match {
                   case e: Elem if e.label == "node" &&
                                   e.prefix == "lift_deferred" =>
-                    val deferredNodes: Seq[NodesAndEventJs] =
+                    val deferredNodes: Seq[NodesAndEventJs] = {
                       for {
                         idAttribute <- e.attributes("id").take(1)
                         id = idAttribute.text
                         nodes <- processedSnippets.get(id)
                       } yield {
                         normalizeMergeAndExtractEvents(nodes, startingState)
-                      }
+                      }}.toSeq
 
                     deferredNodes.foldLeft(soFar.append(normalizedResults))(_ append _)
 
@@ -319,4 +319,3 @@ private[http] trait LiftMerge {
     }
   }
 }
-

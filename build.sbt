@@ -176,6 +176,12 @@ lazy val webkit =
         jasmineCore,
         jasmineAjax
       ),
+      libraryDependencies ++= {
+        CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((2, scalaMajor)) if scalaMajor >= 13 => Seq(scala_parallel_collections)
+          case _ => Seq.empty
+        }
+      },
       initialize in Test := {
         System.setProperty(
           "net.liftweb.webapptest.src.test.webapp",
@@ -218,6 +224,7 @@ lazy val webkit =
       }
     )
     .enablePlugins(SbtWeb)
+    .settings(crossScalaVersions := crossUpTo213)
 
 // Persistence Projects
 // --------------------

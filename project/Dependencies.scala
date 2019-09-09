@@ -43,6 +43,7 @@ object Dependencies {
   lazy val squeryl                = "org.squeryl"               %% "squeryl"            % "0.9.5-7"
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
   lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "1.2.0"
+  lazy val scala_parallel_collections =  "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0"
   lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.7.10"
   lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "1.1.2"
   lazy val xerces                 = "xerces" % "xercesImpl" % "2.11.0"

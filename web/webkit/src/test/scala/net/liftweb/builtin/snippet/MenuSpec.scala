@@ -25,7 +25,7 @@ import http._
 import mockweb._
 import MockWeb._
 import mocks._
-import sitemap._
+import sitemap.{Menu => _, _}
 import util.Helpers.randomString
 
 object MenuSpec extends Specification {
