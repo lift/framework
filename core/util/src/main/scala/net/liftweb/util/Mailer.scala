@@ -28,7 +28,6 @@ import scala.xml.{Text, Elem, Node, NodeSeq}
 import common._
 import actor._
 
-import Mailer._
 
 /**
  * Utilities for sending email.
@@ -79,6 +78,7 @@ object Mailer extends Mailer {
  * implement your own mailer functionality
  */
 trait Mailer extends SimpleInjector {
+  import Mailer._
   private val logger = Logger(classOf[Mailer])
 
   implicit def xmlToMailBodyType(html: NodeSeq): MailBodyType = XHTMLMailBodyType(html)
@@ -225,7 +225,7 @@ trait Mailer extends SimpleInjector {
   def blockingSendMail(from: From, subject: Subject, rest: MailTypes*) {
     msgSendImpl(from, subject, rest.toList)
   }
-  
+
   def msgSendImpl(from: From, subject: Subject, info: List[MailTypes]) {
     val session = authenticator match {
       case Full(a) => jndiSession openOr Session.getInstance(buildProps, a)
@@ -243,7 +243,7 @@ trait Mailer extends SimpleInjector {
     message.setSubject(subj)
     info.foreach {
       case MessageHeader(name, value) => message.addHeader(name, value)
-      case _ => 
+      case _ =>
     }
 
     val bodyTypes = info.flatMap {case x: MailBodyType => Some[MailBodyType](x); case _ => None}
@@ -359,4 +359,3 @@ trait Mailer extends SimpleInjector {
     msgSender ! MessageInfo(from, subject, rest.toList)
   }
 }
-

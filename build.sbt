@@ -141,6 +141,7 @@ lazy val util =
         jbcrypt
       )
     )
+    .settings(crossScalaVersions := crossUpTo213)
 
 // Web Projects
 // ------------
