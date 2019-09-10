@@ -122,6 +122,7 @@ lazy val json_ext =
       description := "Extentions to JSON Library",
       libraryDependencies ++= Seq(commons_codec, joda_time, joda_convert)
     )
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val util =
   coreProject("util")
