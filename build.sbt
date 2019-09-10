@@ -236,10 +236,12 @@ lazy val db =
   persistenceProject("db")
     .dependsOn(util, webkit)
     .settings(libraryDependencies += mockito_all)
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val proto =
   persistenceProject("proto")
     .dependsOn(webkit)
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val mapper =
   persistenceProject("mapper")
