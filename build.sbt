@@ -262,6 +262,7 @@ lazy val record =
   persistenceProject("record")
     .dependsOn(proto)
     .settings(libraryDependencies ++= Seq(jbcrypt))
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val squeryl_record =
   persistenceProject("squeryl-record")
