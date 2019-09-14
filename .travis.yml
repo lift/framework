@@ -21,6 +21,12 @@ matrix:
   - scala: 2.12.9
     jdk: openjdk12
     env: DISABLE_PUBLISH=true
+  - scala: 2.13.0
+    jdk: openjdk11
+    env: DISABLE_PUBLISH=true
+  - scala: 2.13.0
+    jdk: openjdk12
+    env: DISABLE_PUBLISH=true
 script: ./travis.sh
 branches:
   only:
