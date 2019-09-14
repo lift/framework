@@ -48,12 +48,6 @@ lazy val liftProjects = core ++ web ++ persistence
 lazy val framework =
   liftProject("lift-framework", file("."))
     .aggregate(liftProjects: _*)
-    .settings(scalacOptions in (Compile, doc) ++= Seq(scalaVersion.value).flatMap {
-      case v if v.startsWith("2.12") =>
-        Seq("-no-java-comments")
-      case _ =>
-        Seq()
-    }) //workaround for scala/scala-dev#249
     .enablePlugins(ScalaUnidocPlugin)
 
 // Core Projects
@@ -73,12 +67,6 @@ lazy val actor =
   coreProject("actor")
     .dependsOn(common)
     .settings(
-      scalacOptions in (Compile, doc) ++= Seq(scalaVersion.value).flatMap {
-        case v if v.startsWith("2.12") =>
-          Seq("-no-java-comments")
-        case _ =>
-          Seq()
-      },  //workaround for scala/scala-dev#249
       description := "Simple Actor",
       parallelExecution in Test := false
     )
@@ -216,13 +204,6 @@ lazy val webkit =
         }.value
       },
 
-      scalacOptions in (Compile, doc) ++= {
-        if (scalaVersion.value.startsWith("2.12")) {
-          Seq("-no-java-comments")
-        } else {
-          Seq()
-        } //workaround for scala/scala-dev#249
-      }
     )
     .enablePlugins(SbtWeb)
     .settings(crossScalaVersions := crossUpTo213)
