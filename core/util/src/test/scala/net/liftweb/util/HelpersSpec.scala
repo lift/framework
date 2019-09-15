@@ -21,6 +21,6 @@ import org.specs2.mutable.Specification
 import common._
 
 
-object HelpersSpec extends Specification {
+class HelpersSpec extends Specification {
 }
 

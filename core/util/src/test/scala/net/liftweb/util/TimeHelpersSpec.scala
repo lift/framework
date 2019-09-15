@@ -32,7 +32,7 @@ import org.specs2.mutable.{Around, Specification}
 /**
  * Systems under specification for TimeHelpers.
  */
-object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen {
+class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen {
   "TimeHelpers Specification".title
 
   "A TimeSpan" can {

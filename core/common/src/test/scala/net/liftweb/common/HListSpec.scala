@@ -23,7 +23,7 @@ import org.specs2.mutable.Specification
 /**
  * System under specification for Heterogeneous List.
  */
-object HListSpec extends Specification {
+class HListSpec extends Specification {
 
   "An HList" should {
 

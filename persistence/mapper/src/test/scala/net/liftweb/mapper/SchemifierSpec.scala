@@ -25,7 +25,7 @@ import common._
 /**
  * Systems under specification for Schemifier.
  */
-object SchemifierSpec extends Specification  {
+class SchemifierSpec extends Specification  {
   "Schemifier Specification".title
 
   val provider = DbProviders.H2MemoryProvider

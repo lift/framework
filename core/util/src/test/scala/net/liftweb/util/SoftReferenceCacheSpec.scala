@@ -3,7 +3,7 @@ package net.liftweb.util
 import org.specs2.mutable._
 import net.liftweb.common._
 
-object SoftReferenceCacheSpec extends Specification {
+class SoftReferenceCacheSpec extends Specification {
   
   sequential
 

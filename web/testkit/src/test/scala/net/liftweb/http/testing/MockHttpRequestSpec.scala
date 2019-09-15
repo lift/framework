@@ -24,7 +24,7 @@ import json.JsonDSL._
 /**
  * System under specification for MockHttpRequest.
  */
-object MockHttpRequestSpec extends Specification  {
+class MockHttpRequestSpec extends Specification  {
   "MockHttpRequest Specification".title
 
   val IF_MODIFIED_HEADER = "If-Modified-Since"

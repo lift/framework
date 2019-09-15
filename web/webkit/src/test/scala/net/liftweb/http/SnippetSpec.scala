@@ -28,7 +28,7 @@ import util.Helpers._
 /**
  * System under specification for SnippetSpec.
  */
-object SnippetSpec extends Specification with XmlMatchers {
+class SnippetSpec extends Specification with XmlMatchers {
   "SnippetSpec Specification".title
 
   def makeReq = Full(new Req(Req.NilPath, "", GetRequest, Empty, null,

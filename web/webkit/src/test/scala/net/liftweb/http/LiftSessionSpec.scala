@@ -24,7 +24,7 @@ import net.liftweb.util.Helpers.tryo
 import org.specs2.specification.BeforeEach
 import org.specs2.mutable.Specification
 
-object LiftSessionSpec extends Specification with BeforeEach {
+class LiftSessionSpec extends Specification with BeforeEach {
   sequential
 
   private var receivedMessages = Vector[Int]()

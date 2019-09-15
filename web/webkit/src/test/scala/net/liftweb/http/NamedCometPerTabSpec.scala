@@ -27,7 +27,7 @@ import js.JsCmds
 /**
  * System under specification for NamedComet* files.
  */
-object NamedCometPerTabSpec extends Specification  {
+class NamedCometPerTabSpec extends Specification  {
   "NamedCometPerTabSpec Specification".title
 
   class CometA extends NamedCometActorTrait{

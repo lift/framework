@@ -28,7 +28,7 @@ import Helpers._
 /**
  * Systems under specification for Lift Schedule.
  */
-object ScheduleSpec extends Specification with PendingUntilFixed with PingedService with BeforeEach {
+class ScheduleSpec extends Specification with PendingUntilFixed with PingedService with BeforeEach {
   "Schedule Specification".title
 
   def before = Schedule.restart

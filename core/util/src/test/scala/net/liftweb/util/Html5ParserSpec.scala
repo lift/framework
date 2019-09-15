@@ -29,7 +29,7 @@ import Helpers._
 /**
  * Systems under specification for Html5 Parser.
  */
-object Html5ParserSpec extends Specification with PendingUntilFixed with Html5Parser with Html5Writer {
+class Html5ParserSpec extends Specification with PendingUntilFixed with Html5Parser with Html5Writer {
   "Html5Parser Specification".title
 
   "Htm5 Writer" should {

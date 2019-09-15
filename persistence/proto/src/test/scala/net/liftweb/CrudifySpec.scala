@@ -11,7 +11,7 @@ import org.specs2.specification.Scope
 import scala.collection.immutable
 import scala.xml.{NodeSeq, Text}
 
-object CrudifySpec extends Specification with XmlMatchers {
+class CrudifySpec extends Specification with XmlMatchers {
   "Crudify Trait Specification".title
 
   class SpecCrudifyWithContext extends SpecCrudify with Scope {

@@ -24,7 +24,7 @@ import org.specs2.mutable.Specification
 /**
  * Systems under specification for VCardParser.
  */
-object VCardParserSpec extends Specification with XmlMatchers {
+class VCardParserSpec extends Specification with XmlMatchers {
   "VCardParser Specification".title
 
   "VCard" should {

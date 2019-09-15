@@ -29,7 +29,7 @@ import fixtures._
 /**
  * Systems under specification for RecordField.
  */
-object RecordRulesSpec extends Specification {
+class RecordRulesSpec extends Specification {
   "Record Rules Specification".title
   sequential
 

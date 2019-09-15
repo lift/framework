@@ -22,7 +22,7 @@ import org.specs2.mutable.Specification
 /**
  * Systems under specification for ConnectionIdentifier.
  */
-object ConnectionIdentifierSpec extends Specification {
+class ConnectionIdentifierSpec extends Specification {
   "ConnectionIdentifier Specification".title
 
   "Connection identifier" should {

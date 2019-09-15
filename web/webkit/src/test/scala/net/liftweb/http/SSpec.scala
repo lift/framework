@@ -23,7 +23,7 @@ import util.Helpers
 import util.Props.RunModes
 import LiftRules.defaultFuncNameGenerator
 
-object SSpec extends Specification with XmlMatchers {
+class SSpec extends Specification with XmlMatchers {
   "S Specification".title
 
   sequential

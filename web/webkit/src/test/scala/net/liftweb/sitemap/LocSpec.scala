@@ -29,7 +29,7 @@ import org.specs2.mutable.Specification
 /**
  * Systems under specification for Loc.
  */
-object LocSpec extends Specification  {
+class LocSpec extends Specification  {
   "Loc Specification".title
 
   case class Param(s: String)

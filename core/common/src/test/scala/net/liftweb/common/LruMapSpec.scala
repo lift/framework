@@ -23,7 +23,7 @@ import org.specs2.mutable.Specification
 /**
  * Systems under specification for LRU Map.
  */
-object LruMapSpec extends Specification {
+class LruMapSpec extends Specification {
 
   "An LRU Map" should {
 

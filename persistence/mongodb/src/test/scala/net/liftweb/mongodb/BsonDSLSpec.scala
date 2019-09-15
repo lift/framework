@@ -32,7 +32,7 @@ import org.specs2.mutable.Specification
 
 import com.mongodb.{BasicDBList, DBObject}
 
-object BsonDSLSpec extends Specification  {
+class BsonDSLSpec extends Specification  {
   "BsonDSL Specification".title
 
   "BsonDSL" should {

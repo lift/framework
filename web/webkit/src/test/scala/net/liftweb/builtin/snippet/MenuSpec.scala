@@ -28,7 +28,7 @@ import mocks._
 import sitemap.{Menu => _, _}
 import util.Helpers.randomString
 
-object MenuSpec extends Specification {
+class MenuSpec extends Specification {
   "Menu Specification".title
 
   sequential

@@ -31,7 +31,7 @@ import mocks.MockHttpServletRequest
  * System under specification for MockWeb. This does the double duty as both a spec
  * against the MockWeb object as well as an example of how to use it.
  */
-object MockWebSpec extends Specification  {
+class MockWebSpec extends Specification  {
   "MockWeb Specification".title
 
   import MockWeb._

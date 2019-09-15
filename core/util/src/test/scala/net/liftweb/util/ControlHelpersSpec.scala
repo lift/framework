@@ -26,7 +26,7 @@ import ControlHelpers._
 /**
  * Systems under specification for ControlHelpers.
  */
-object ControlHelpersSpec extends Specification  {
+class ControlHelpersSpec extends Specification  {
   "ControlHelpers Specification".title
 
   "the tryo function" should {

@@ -39,7 +39,7 @@ import provider._
 /**
  * System under specification for Req.
  */
-object ReqSpec extends Specification with XmlMatchers with Mockito {
+class ReqSpec extends Specification with XmlMatchers with Mockito {
   "Req Specification".title
 
   private val iPhoneUserAgents = 

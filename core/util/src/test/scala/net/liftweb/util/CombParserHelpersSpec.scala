@@ -26,7 +26,7 @@ import Gen._
 import Prop._
 
 
-object CombParserHelpersSpec extends Specification with ScalaCheck {
+class CombParserHelpersSpec extends Specification with ScalaCheck {
   "CombParserHelpers Specification".title
 
   object ParserHelpers extends CombParserHelpers with Parsers

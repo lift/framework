@@ -25,7 +25,7 @@ import Helpers._
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 
-object IoHelpersSpec extends Specification with IoHelpers {
+class IoHelpersSpec extends Specification with IoHelpers {
   "IoHelpers Specification".title
 
   "Io helpers" should {

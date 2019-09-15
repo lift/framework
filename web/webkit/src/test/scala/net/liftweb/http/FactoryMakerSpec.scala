@@ -25,7 +25,7 @@ import common._
 /**
  * System under specification for FactoryMaker.
  */
-object FactoryMakerSpec extends Specification  {
+class FactoryMakerSpec extends Specification  {
   "FactoryMaker Specification".title
 
 

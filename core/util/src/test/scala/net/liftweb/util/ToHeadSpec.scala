@@ -28,7 +28,7 @@ import Helpers.secureXML
 /**
  * Systems under specification for ToHead.
  */
-object ToHeadSpec extends Specification with XmlMatchers {
+class ToHeadSpec extends Specification with XmlMatchers {
   "ToHead Specification".title
 
   "lift <head> merger" should {

@@ -26,7 +26,7 @@ import Box._
 
 
 /* commented out because it tests the compilation phase and we want the compiler to "do the right thing"
-object TypeBoundsTest extends Specification with ScalaCheck {
+class TypeBoundsTest extends Specification with ScalaCheck {
   "Type Bounds Spec".title
 
   "Type bounds" can {

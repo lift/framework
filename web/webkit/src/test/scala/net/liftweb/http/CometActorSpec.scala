@@ -25,7 +25,7 @@ import actor.LAScheduler
 import common._
 import js.JsCmds._
 
-object CometActorSpec extends Specification {
+class CometActorSpec extends Specification {
   private case object TestMessage
 
   private val testSession = new LiftSession("Test Session", "", Empty)

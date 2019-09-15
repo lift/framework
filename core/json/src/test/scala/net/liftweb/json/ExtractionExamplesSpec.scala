@@ -20,7 +20,7 @@ package json
 import java.util.Date
 import org.specs2.mutable.Specification
 
-object ExtractionExamples extends Specification {
+class ExtractionExamples extends Specification {
   "Extraction Examples Specification".title
 
   implicit val formats = DefaultFormats

@@ -24,7 +24,7 @@ import org.specs2.mutable.Specification
 /**
  * Systems under specification for PCDataXmlParser.
  */
-object PCDataXmlParserSpec extends Specification with XmlMatchers {
+class PCDataXmlParserSpec extends Specification with XmlMatchers {
   "PCDataXmlParser Specification".title
 val data1 = """
 

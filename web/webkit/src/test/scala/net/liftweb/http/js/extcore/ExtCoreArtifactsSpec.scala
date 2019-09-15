@@ -25,7 +25,7 @@ import org.specs2.mutable.Specification
 /**
  * System under specification for ExtCoreArtifacts.
  */
-object ExtCoreArtifactsSpec extends Specification  {
+class ExtCoreArtifactsSpec extends Specification  {
   "ExtCoreArtifacts Specification".title
 
   "ExtCoreArtifacts.toggle" should {

@@ -40,7 +40,7 @@ package queryexamplesfixtures {
   }
 }
 
-object QueryExamplesSpec extends Specification with MongoTestKit {
+class QueryExamplesSpec extends Specification with MongoTestKit {
   "QueryExamples Specification".title
 
   import queryexamplesfixtures._

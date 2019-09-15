@@ -25,7 +25,7 @@ import json._
 /**
  * Systems under specification for JsonCommand.
  */
-object JsonCommandSpec extends Specification  {
+class JsonCommandSpec extends Specification  {
   "JsonCommand Specification".title
 
   private def parse(in: String): JValue = JsonParser.parse(in)

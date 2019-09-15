@@ -25,7 +25,7 @@ import org.specs2.mutable.After
 import common._
 import Props.RunModes._
 
-object PropsSpec extends Specification {
+class PropsSpec extends Specification {
   "Props Specification".title
 
   case class TestProps() extends Props

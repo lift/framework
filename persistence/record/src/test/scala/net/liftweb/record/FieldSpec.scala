@@ -38,7 +38,7 @@ import scala.xml.{NodeSeq, Elem, Node, Text}
 /**
  * Systems under specification for RecordField.
  */
-object FieldSpec extends Specification {
+class FieldSpec extends Specification {
   "Record Field Specification".title
   sequential
 

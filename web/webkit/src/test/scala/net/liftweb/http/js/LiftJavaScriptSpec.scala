@@ -35,7 +35,7 @@ import util.Helpers._
 /**
   * System under specification for LiftJavaScript.
   */
-object LiftJavaScriptSpec extends Specification  {
+class LiftJavaScriptSpec extends Specification  {
   sequential
   "LiftJavaScript Specification".title
 

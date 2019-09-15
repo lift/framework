@@ -153,7 +153,7 @@ object EnumRec extends EnumRec with MongoMetaRecord[EnumRec] {
 /**
  * Systems under specification for CustomSerializers.
  */
-object CustomSerializersSpec extends Specification  with MongoTestKit {
+class CustomSerializersSpec extends Specification  with MongoTestKit {
   "CustomSerializers Specification".title
 
   import customserializersspecs._

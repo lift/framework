@@ -30,7 +30,7 @@ import util.ControlHelpers.tryo
 /**
  * System under specification for XMLApi.
  */
-object XmlApiSpec extends Specification  {
+class XmlApiSpec extends Specification  {
   "XMLApi Specification".title
 
   object XMLApiExample extends XMLApiHelper {

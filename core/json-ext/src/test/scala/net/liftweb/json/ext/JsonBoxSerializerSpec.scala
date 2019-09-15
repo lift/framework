@@ -27,7 +27,7 @@ import json.Serialization.{read, write => swrite}
 /**
  * System under specification for JsonBoxSerializer.
  */
-object JsonBoxSerializerSpec extends Specification  {
+class JsonBoxSerializerSpec extends Specification  {
   "JsonBoxSerializer Specification".title
 
   implicit val formats = net.liftweb.json.DefaultFormats + new JsonBoxSerializer

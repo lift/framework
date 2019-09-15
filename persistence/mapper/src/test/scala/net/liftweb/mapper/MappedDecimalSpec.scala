@@ -25,7 +25,7 @@ import common._
 /**
  * Systems under specification for MappedDate.
  */
-object MappedDecimalSpec extends Specification  {
+class MappedDecimalSpec extends Specification  {
   "MappedDecimal Specification".title
   sequential
 

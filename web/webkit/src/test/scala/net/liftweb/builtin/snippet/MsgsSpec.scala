@@ -27,7 +27,7 @@ import util.Helpers.secureXML
 /**
  * System under specification for Msgs.
  */
-object MsgsSpec extends Specification with XmlMatchers {
+class MsgsSpec extends Specification with XmlMatchers {
   "Msgs Specification".title
 
   def withSession[T](f: => T) : T =

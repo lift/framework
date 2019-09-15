@@ -25,7 +25,7 @@ import common._
 /**
  * Systems under specification for MappedDate.
  */
-object MappedDateSpec extends Specification  {
+class MappedDateSpec extends Specification  {
   "MappedDate Specification".title
 
   "MappedDate" should {
