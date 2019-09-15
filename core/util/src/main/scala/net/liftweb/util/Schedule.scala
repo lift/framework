@@ -18,9 +18,11 @@ package net.liftweb
 package util
 
 import java.util.concurrent._
-import Helpers.TimeSpan
-import common._
+
 import actor.ThreadPoolRules
+import common._
+import util.Helpers
+import util.Helpers.TimeSpan
 
 class ScheduleJBridge {
   def schedule: Schedule = Schedule
