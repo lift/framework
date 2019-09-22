@@ -24,15 +24,11 @@ import net.liftweb.util.Helpers.tryo
 import org.specs2.specification.BeforeEach
 import org.specs2.mutable.Specification
 
-class LiftSessionSpec extends Specification with BeforeEach {
-  sequential
-
+object LiftSessionSpec {
   private var receivedMessages = Vector[Int]()
   private object NoOp
 
-  override def before = receivedMessages = Vector[Int]()
-
-  private[this] class TestCometActor extends CometActor {
+  private[LiftSessionSpec] class TestCometActor extends CometActor {
     def render = NodeSeq.Empty
 
     override def lowPriority = {
@@ -44,7 +40,7 @@ class LiftSessionSpec extends Specification with BeforeEach {
     }
   }
 
-  private[this] class ExplodesInConstructorCometActor extends CometActor {
+  private[LiftSessionSpec] class ExplodesInConstructorCometActor extends CometActor {
     def render = NodeSeq.Empty
 
     throw new RuntimeException("boom, this explodes in the constructor!")
@@ -52,6 +48,14 @@ class LiftSessionSpec extends Specification with BeforeEach {
       case _ =>
     }
   }
+}
+
+class LiftSessionSpec extends Specification with BeforeEach {
+  import LiftSessionSpec._
+
+  sequential
+
+  override def before = receivedMessages = Vector[Int]()
 
   "A LiftSession" should {
 
