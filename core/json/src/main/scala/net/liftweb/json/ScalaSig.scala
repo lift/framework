@@ -19,7 +19,27 @@ package json
 
 import scala.tools.scalap.scalax.rules.scalasig._
 
+import java.util.concurrent.ConcurrentHashMap
+
+import scala.collection.JavaConverters._
+import scala.collection.concurrent.{Map=>ConcurrentScalaMap}
+
 private[json] object ScalaSigReader {
+  // Originally, we used `method.children` and expected all children of a
+  // MethodSymbol to be parameters. In Scala 2.13, a change was made that never
+  // returns parameters in `children`. To get around this, we look up parameter
+  // symbols separately here.
+  //
+  // This works across Scala versions, so we don't scope it to 2.13
+  // specifically. See Scala bug 11747, currently at
+  // https://github.com/scala/bug/issues/11747 , for more.
+  private def paramSymbolsFor(method: MethodSymbol): Seq[Symbol] = {
+    method
+      .applyScalaSigRule(ScalaSigParsers.symbols)
+      .filter(symbol => symbol.parent == Some(method) && symbol.isParam)
+  }
+
+
   def readConstructor(argName: String, clazz: Class[_], typeArgIndex: Int, argNames: List[String]): Class[_] = {
     val cl = findClass(clazz)
     val cstr = findConstructor(cl, argNames).getOrElse(Meta.fail("Can't find constructor for " + clazz))
@@ -54,7 +74,7 @@ private[json] object ScalaSigReader {
 
   private def findConstructor(c: ClassSymbol, argNames: List[String]): Option[MethodSymbol] = {
     val ms = c.children collect { case m: MethodSymbol if m.name == "<init>" => m }
-    ms.find(m => m.children.map(_.name) == argNames)
+    ms.find(m => paramSymbolsFor(m).map(_.name) == argNames)
   }
 
   private def findField(c: ClassSymbol, name: String): Option[MethodSymbol] = 
@@ -73,7 +93,7 @@ private[json] object ScalaSigReader {
         }
       case x => Meta.fail("Unexpected type info " + x)
     }
-    toClass(findPrimitive(s.children(argIdx).asInstanceOf[SymbolInfoSymbol].infoType))
+    toClass(findPrimitive(paramSymbolsFor(s)(argIdx).asInstanceOf[SymbolInfoSymbol].infoType))
   }
 
   private def findArgTypeForField(s: MethodSymbol, typeArgIdx: Int): Class[_] = {
