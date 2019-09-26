@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 WorldWide Conferencing, LLC
+ * Copyright 2010-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,20 @@ import net.liftweb.common._
 import net.liftweb.json._
 import net.liftweb.record._
 import net.liftweb.util.Helpers.tryo
-import org.bson.Document
+
+import org.bson._
+import org.bson.codecs.{BsonDocumentCodec, BsonTypeCodecMap, Codec, DecoderContext, EncoderContext}
+import org.bson.codecs.configuration.CodecRegistry
 
 import scala.xml.NodeSeq
 
 trait JObjectTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[JObject]
-  with Field[JObject, OwnerType] with MongoFieldFlavor[JObject] {
+  with Field[JObject, OwnerType]
+  with MongoFieldFlavor[JObject]
+  with BsonDocumentJObjectField[JObject]
+{
+
+  override implicit val formats = owner.meta.formats
 
   def setFromJValue(jvalue: JValue): Box[JObject] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
@@ -59,10 +67,12 @@ trait JObjectTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[J
 
   def toForm: Box[NodeSeq] = Empty
 
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
   def asDBObject: DBObject = valueBox
     .map { v => JObjectParser.parse(v)(owner.meta.formats) }
     .openOr(new BasicDBObject)
 
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
   def setFromDBObject(obj: DBObject): Box[JObject] =
     Full(JObjectParser.serialize(obj)(owner.meta.formats).asInstanceOf[JObject])
 

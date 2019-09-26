@@ -257,8 +257,9 @@ lazy val mongodb =
   persistenceProject("mongodb")
     .dependsOn(json_ext, util)
     .settings(
+      crossScalaVersions := crossUpTo213,
       parallelExecution in Test := false,
-      libraryDependencies ++= Seq(mongo_java_driver, mongo_java_driver_async),
+      libraryDependencies ++= Seq(mongo_scala_driver, mongo_java_driver, mongo_java_driver_async),
       initialize in Test := {
         System.setProperty(
           "java.util.logging.config.file",
@@ -270,4 +271,7 @@ lazy val mongodb =
 lazy val mongodb_record =
   persistenceProject("mongodb-record")
     .dependsOn(record, mongodb)
-    .settings(parallelExecution in Test := false)
+    .settings(
+      crossScalaVersions := crossUpTo213,
+      parallelExecution in Test := false
+    )

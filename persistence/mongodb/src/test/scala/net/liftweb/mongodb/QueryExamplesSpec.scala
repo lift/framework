@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 WorldWide Conferencing, LLC
+ * Copyright 2011-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ package queryexamplesfixtures {
   object Person extends MongoDocumentMeta[Person] {
     override def formats = allFormats
     // index name
-    createIndex(("name" -> 1))
+    override def indexes = Seq(MongoIndex(("name" -> 1)))
 
     // implicit formats already exists
     def findAllBornAfter(dt: Date) = findAll(("birthDate" -> ("$gt" -> dt)))
@@ -47,6 +47,8 @@ class QueryExamplesSpec extends Specification with MongoTestKit {
 
   "Query examples" in {
     checkMongoIsRunning
+
+    Person.createIndexes()
 
     val fredsBirthDate = Calendar.getInstance
     fredsBirthDate.set(1970, 1, 1, 19, 0)

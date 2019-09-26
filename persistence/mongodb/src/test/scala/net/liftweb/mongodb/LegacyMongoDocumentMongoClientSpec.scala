@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 WorldWide Conferencing, LLC
+ * Copyright 2010-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import org.specs2.mutable.Specification
 
 import json._
 
-package mongoclienttestdocs {
+package legacymongoclienttestdocs {
   case class SessCollection(_id: ObjectId, name: String, dbtype: String, count: Int)
     extends MongoDocument[SessCollection] {
 
@@ -46,10 +46,10 @@ package mongoclienttestdocs {
 /**
  * Systems under specification for MongoDocumentMongoClient.
  */
-class MongoDocumentMongoClientSpec extends Specification with MongoTestKit {
-  "MongoDocumentMongoClient Specification".title
+class LegacyMongoDocumentMongoClientSpec extends Specification with MongoTestKit {
+  "LegacyMongoDocumentMongoClient Specification".title
 
-  import mongoclienttestdocs._
+  import legacymongoclienttestdocs._
 
   "MongoClient example" in {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2017 WorldWide Conferencing, LLC
+ * Copyright 2014-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import org.specs2.mutable.Specification
 /**
  * System under specification for MongoDirectMonoClient.
  */
-class MongoDirectMongoClientSpec extends Specification with MongoTestKit {
-  "MongoDirectMongoClient Specification".title
+class LegacyMongoDirectMongoClientSpec extends Specification with MongoTestKit {
+  "LegacyMongoDirectMongoClient Specification".title
 
   "MongoClient example" in {
 
@@ -65,4 +65,3 @@ class MongoDirectMongoClientSpec extends Specification with MongoTestKit {
     success
   }
 }
-

@@ -1,5 +1,5 @@
 /*
-* Copyright 2010-2015 WorldWide Conferencing, LLC
+* Copyright 2010-2020 WorldWide Conferencing, LLC
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -16,23 +16,26 @@ package mongodb
 package record
 package field
 
+import net.liftweb.common.{Failure, Empty, Full, Box}
+import net.liftweb.http.js.JsExp
+import net.liftweb.http.js.JE.{JsObj, JsRaw, Num, Str, JsNull}
+import net.liftweb.json._
 import net.liftweb.record._
 import net.liftweb.record.RecordHelpers.jvalueToJsExp
 import net.liftweb.record.field._
-import net.liftweb.http.js.JE.{JsObj, Num, Str, JsNull}
-import scala.xml.{Text, NodeSeq}
-import net.liftweb.mongodb.JObjectParser
-import com.mongodb.{BasicDBList, DBObject}
-import net.liftweb.common.{Failure, Empty, Full, Box}
 import net.liftweb.util.Helpers
-import net.liftweb.json._
-import reflect.Manifest
-import net.liftweb.http.js.JsExp
-import org.bson.Document
+
 import scala.collection.JavaConverters._
+import scala.reflect.Manifest
+import scala.xml.{Text, NodeSeq}
+
+import org.bson._
+import org.bson.codecs.{BsonDocumentCodec, BsonTypeCodecMap, Codec, DecoderContext, EncoderContext}
+import org.bson.codecs.configuration.CodecRegistry
+import com.mongodb.{BasicDBList, DBObject}
 
 abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](val owner: OwnerType)(implicit mf: Manifest[CaseType])
-  extends Field[CaseType, OwnerType] with MongoFieldFlavor[CaseType] {
+  extends Field[CaseType, OwnerType] with MongoFieldFlavor[CaseType] with BsonableField[CaseType] {
 
   // override this for custom formats
   def formats: Formats = DefaultFormats
@@ -40,7 +43,6 @@ abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](val
   implicit lazy val _formats = formats
 
   override type MyType = CaseType
-
 
   def toForm: Box[NodeSeq] = Empty
 
@@ -51,6 +53,42 @@ abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](val
     case s => setBox(Helpers.tryo[CaseType] { s.extract[CaseType] })
   }
 
+  def setFromBsonReader(reader: BsonReader, context: DecoderContext, registry: CodecRegistry, bsonTypeCodecMap: BsonTypeCodecMap): Box[MyType] = {
+    reader.getCurrentBsonType match {
+      case BsonType.DOCUMENT =>
+        val doc = readValueToBsonDocument(reader, context, registry)
+        setFromJValue(BsonParser.serialize(doc))
+      case BsonType.NULL =>
+        reader.readNull()
+        Empty
+      case bsonType =>
+        Failure(s"Invalid BsonType for field ${name}: ${bsonType}")
+    }
+  }
+
+  def writeToBsonWriter(writer: BsonWriter, context: EncoderContext, registry: CodecRegistry, bsonTypeCodecMap: BsonTypeCodecMap): Unit = {
+    asJValue match {
+      case jo: JObject =>
+        writer.writeName(name)
+        val codec = (new BsonDocumentCodec(registry)).asInstanceOf[Codec[Any]]
+        context.encodeWithChildContext(codec, writer, BsonParser.parse(jo))
+      case JNull if optional_? =>
+      case JNull =>
+        writer.writeName(name)
+        writer.writeNull()
+      case _ =>
+    }
+  }
+
+  /**
+   * Returns the field's value as a valid JavaScript expression
+   */
+  override def asJs = asJValue match {
+    case JNothing => JsNull
+    case jv => JsRaw(compactRender(jv))
+  }
+
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
   def asDBObject: DBObject = asJValue match {
     case JNothing | JNull => null
     case other => JObjectParser.parse(other.asInstanceOf[JObject])
@@ -61,6 +99,7 @@ abstract class CaseClassTypedField[OwnerType <: Record[OwnerType], CaseType](val
     setFromJValue(jv)
   }
 
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
   def setFromDBObject(dbo: DBObject): Box[CaseType] = {
     val jvalue = JObjectParser.serialize(dbo)
     setFromJValue(jvalue)
@@ -107,8 +146,10 @@ class OptionalCaseClassField[OwnerType <: Record[OwnerType], CaseType](owner: Ow
 }
 
 class CaseClassListField[OwnerType <: Record[OwnerType], CaseType](val owner: OwnerType)(implicit mf: Manifest[CaseType])
-  extends Field[List[CaseType], OwnerType] with MandatoryTypedField[List[CaseType]] with MongoFieldFlavor[List[CaseType]] {
-
+  extends Field[List[CaseType], OwnerType]
+  with MandatoryTypedField[List[CaseType]]
+  with BsonableField[List[CaseType]]
+{
   // override this for custom formats
   def formats: Formats = DefaultFormats
   implicit lazy val _formats = formats
@@ -123,16 +164,54 @@ class CaseClassListField[OwnerType <: Record[OwnerType], CaseType](val owner: Ow
 
   def asJValue: JValue = JArray(value.map(v => Extraction.decompose(v)))
 
+  /**
+   * Returns the field's value as a valid JavaScript expression
+   */
+  def asJs = asJValue match {
+    case JNothing => JsNull
+    case jv => JsRaw(compactRender(jv))
+  }
+
   def setFromJValue(jvalue: JValue): Box[MyType] = jvalue match {
     case JArray(contents) => setBox(Full(contents.flatMap(s => Helpers.tryo[CaseType]{ s.extract[CaseType] })))
     case _ => setBox(Empty)
   }
 
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
   def setFromDocumentList(list: java.util.List[Document]): Box[MyType] = {
     val objs = list.asScala.map { JObjectParser.serialize }
     setFromJValue(JArray(objs.toList))
   }
 
+  def setFromBsonReader(reader: BsonReader, context: DecoderContext, registry: CodecRegistry, bsonTypeCodecMap: BsonTypeCodecMap): Box[MyType] = {
+    reader.getCurrentBsonType match {
+      case BsonType.ARRAY =>
+        setFromJValue(JArray(readArrayToBsonDocument(reader, context, registry).map { BsonParser.serialize _ }))
+      case BsonType.NULL =>
+        reader.readNull()
+        Empty
+      case bsonType =>
+        Failure(s"Invalid BsonType for field ${name}: ${bsonType}")
+    }
+  }
+
+  def writeToBsonWriter(writer: BsonWriter, context: EncoderContext, registry: CodecRegistry, bsonTypeCodecMap: BsonTypeCodecMap): Unit = {
+    writer.writeName(name)
+    writer.writeStartArray()
+
+    asJValue match {
+      case JArray(list) =>
+        list.foreach { v =>
+          val codec = (new BsonDocumentCodec(registry)).asInstanceOf[Codec[Any]]
+          context.encodeWithChildContext(codec, writer, BsonParser.parse(v.asInstanceOf[JObject]))
+        }
+      case _ =>
+    }
+
+    writer.writeEndArray()
+  }
+
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
   def asDBObject: DBObject = {
     val dbl = new BasicDBList
 
@@ -145,6 +224,7 @@ class CaseClassListField[OwnerType <: Record[OwnerType], CaseType](val owner: Ow
     dbl
   }
 
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
   def setFromDBObject(dbo: DBObject): Box[MyType] = {
     val jvalue = JObjectParser.serialize(dbo)
     setFromJValue(jvalue)

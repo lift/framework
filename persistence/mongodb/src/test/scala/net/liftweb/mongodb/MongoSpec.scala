@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 WorldWide Conferencing, LLC
+ * Copyright 2014-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,15 +38,15 @@ class MongoSpec extends Specification  {
     // make sure mongo is running
     try {
       // this will throw an exception if it can't connect to the db
-      mc.getConnectPoint
+      mc.listDatabaseNames()
     } catch {
       case _: MongoTimeoutException =>
         skipped("MongoDB is not running")
     }
 
     // using an undefined identifier throws an exception
-    MongoDB.use(DefaultConnectionIdentifier) { db =>
-      db.getCollectionNames
+    MongoDB.useDatabase(DefaultConnectionIdentifier) { db =>
+      db.listCollections
     } must throwA(new MongoException("Mongo not found: ConnectionIdentifier(lift)"))
 
     // remove defined db

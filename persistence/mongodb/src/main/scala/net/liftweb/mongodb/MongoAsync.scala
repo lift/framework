@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 WorldWide Conferencing, LLC
+ * Copyright 2017-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package net.liftweb.mongodb
 import java.util.concurrent.ConcurrentHashMap
 
 import com.mongodb.MongoException
-import com.mongodb.async.client.{MongoClient, MongoCollection, MongoDatabase}
+import com.mongodb.async.client.{MongoCollection, MongoDatabase}
 import com.mongodb.async.SingleResultCallback
 import net.liftweb.util.ConnectionIdentifier
 import org.bson.Document
@@ -50,6 +50,7 @@ private[mongodb] class SingleBooleanVoidCallback(f: () => Unit) extends SingleRe
   * Example:
   *
   * {{{
+  * import com.mongodb.MongoClientSettings
   * import com.mongodb.async.client.MongoClients
   * import net.liftweb.util.{ConnectionIdentifier, DefaultConnectionIdentifier}
   * import org.bson.codecs.configuration.CodecRegistries
@@ -65,7 +66,7 @@ private[mongodb] class SingleBooleanVoidCallback(f: () => Unit) extends SingleRe
   * }
   *
   * val codecRegistry = CodecRegistries.fromRegistries(
-  *   com.mongodb.MongoClient.getDefaultCodecRegistry(),
+  *   MongoClientSettings.getDefaultCodecRegistry(),
   *   CodecRegistries.fromCodecs(new LongPrimitiveCodec, new IntegerPrimitiveCodec)
   * )
 
@@ -74,6 +75,7 @@ private[mongodb] class SingleBooleanVoidCallback(f: () => Unit) extends SingleRe
   *
   * }}}
   */
+@deprecated("Use MongoScalaAsync instead", "3.4.2")
 object MongoAsync {
 
   /**
@@ -84,6 +86,7 @@ object MongoAsync {
   /**
     * Define a Mongo db using a MongoDatabase instance.
     */
+  @deprecated("Use MongoScalaAsync instead", "3.4.2")
   def defineDb(id: ConnectionIdentifier, db: MongoDatabase): Unit = {
     dbs.put(id, db)
   }
@@ -98,6 +101,7 @@ object MongoAsync {
   /**
     * Executes function {@code f} with the mongo database identified by {@code name}.
     */
+  @deprecated("Use MongoScalaAsync instead", "3.4.2")
   def use[T](name: ConnectionIdentifier)(f: (MongoDatabase) => T): T = {
     val db = getDatabase(name) match {
       case Some(mongo) => mongo
@@ -110,6 +114,7 @@ object MongoAsync {
     * Executes function {@code f} with the collection named {@code collectionName} from
     * the mongo database identified by {@code name}.
     */
+  @deprecated("Use MongoScalaAsync instead", "3.4.2")
   def useCollection[T](name: ConnectionIdentifier, collectionName: String)(f: (MongoCollection[Document]) => T): T = {
     val coll = getCollection(name, collectionName) match {
       case Some(collection) => collection
@@ -126,6 +131,7 @@ object MongoAsync {
   /**
     * Clear the HashMap.
     */
+  @deprecated("Use MongoScalaAsync instead", "3.4.2")
   def clear(): Unit = {
     dbs.clear()
   }
@@ -133,6 +139,7 @@ object MongoAsync {
   /**
     * Remove a specific ConnectionIdentifier from the HashMap.
     */
+  @deprecated("Use MongoScalaAsync instead", "3.4.2")
   def remove(id: ConnectionIdentifier): Option[MongoDatabase] = {
     Option(dbs.remove(id))
   }

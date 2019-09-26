@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 WorldWide Conferencing, LLC
+ * Copyright 2017-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import org.specs2.mutable.Specification
 
 import org.specs2.concurrent.ExecutionEnv
 
-class MongoRecordAsyncSpec(implicit ee: ExecutionEnv) extends Specification with MongoAsyncTestKit {
+class MongoRecordAsyncSpec(implicit ee: ExecutionEnv) extends Specification with MongoScalaAsyncTestKit {
   "MongoRecord Async Specification".title
 
   import fixtures.FieldTypeTestRecord
@@ -36,7 +36,7 @@ class MongoRecordAsyncSpec(implicit ee: ExecutionEnv) extends Specification with
         .mandatoryLongField(42L)
         .mandatoryIntField(27)
 
-      FieldTypeTestRecord.insertAsync(obj) must beEqualTo[Boolean](true).await
+      FieldTypeTestRecord.insertOneAsync(obj) must beEqualTo[Boolean](true).await
 
       val fetched = FieldTypeTestRecord.find(obj.id.get)
 
@@ -58,7 +58,7 @@ class MongoRecordAsyncSpec(implicit ee: ExecutionEnv) extends Specification with
         .mandatoryLongField(42L)
         .mandatoryIntField(27)
 
-      FieldTypeTestRecord.replaceOneAsync(obj) must beEqualTo[FieldTypeTestRecord](obj).await
+      FieldTypeTestRecord.replaceOneScalaAsync(obj) must beEqualTo[FieldTypeTestRecord](obj).await
 
       val fetched = FieldTypeTestRecord.find(obj.id.get)
 
@@ -74,7 +74,7 @@ class MongoRecordAsyncSpec(implicit ee: ExecutionEnv) extends Specification with
         .mandatoryLongField(44L)
         .mandatoryIntField(29)
 
-      FieldTypeTestRecord.replaceOneAsync(obj) must beEqualTo[FieldTypeTestRecord](obj).await
+      FieldTypeTestRecord.replaceOneScalaAsync(obj) must beEqualTo[FieldTypeTestRecord](obj).await
 
       val fetched2 = FieldTypeTestRecord.find(obj.id.get)
 
@@ -94,7 +94,7 @@ class MongoRecordAsyncSpec(implicit ee: ExecutionEnv) extends Specification with
 
       val obj = FieldTypeTestRecord.createRecord
 
-      FieldTypeTestRecord.replaceOneAsync(obj, false) must beEqualTo[FieldTypeTestRecord](obj).await
+      FieldTypeTestRecord.replaceOneScalaAsync(obj, false) must beEqualTo[FieldTypeTestRecord](obj).await
       FieldTypeTestRecord.find(obj.id.get).isDefined must_== false
     }
   }

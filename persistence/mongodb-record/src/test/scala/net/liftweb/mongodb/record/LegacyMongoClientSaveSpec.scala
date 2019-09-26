@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 WorldWide Conferencing, LLC
+ * Copyright 2014-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.specs2.mutable.Specification
 import com.mongodb._
 
 
-package mongoclientsaverecords {
+package legacymongoclientsaverecords {
 
   import field._
 
@@ -44,12 +44,12 @@ package mongoclientsaverecords {
 
 
 /**
-  * Systems under specification for MongoClientSave.
+  * Systems under specification for LegacyMongoClientSave.
   */
-class MongoClientSaveSpec extends Specification with MongoTestKit {
-  "MongoClientSave Specification".title
+class LegacyMongoClientSaveSpec extends Specification with MongoTestKit {
+  "LegacyMongoClientSave Specification".title
 
-  import mongoclientsaverecords._
+  import legacymongoclientsaverecords._
 
   "MongoMetaRecord with Mongo save" in {
 

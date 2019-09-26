@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 WorldWide Conferencing, LLC
+ * Copyright 2010-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ package record
 import java.util.{Date, Locale, UUID}
 import java.util.regex.Pattern
 
-import org.bson.types.ObjectId
 import org.joda.time.DateTime
 import org.specs2.mutable.Specification
 
@@ -35,6 +34,8 @@ import util.Helpers.snakify
 import net.liftweb.record.RecordRules
 import net.liftweb.record.field.Countries
 
+import org.bson.Document
+import org.bson.types.ObjectId
 import com.mongodb._
 
 
@@ -45,6 +46,7 @@ class MongoRecordSpec extends Specification with MongoTestKit {
   "MongoRecord Specification".title
 
   import fixtures._
+  import testmodels._
   val session = new LiftSession("hello", "", Empty)
 
   override def before = {
@@ -245,17 +247,18 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       .mandatoryMongoRefListField(Nil)
 
     val ltrJson =
-      ("_id" -> ("$uuid" -> ltr.id.toString)) ~
-      ("mandatoryStringListField" -> List("abc", "def", "ghi")) ~
-      ("mandatoryIntListField" -> List(4, 5, 6)) ~
+      ("mandatoryMongoRefListField" -> JArray(Nil)) ~
       ("mandatoryJsonObjectListField" -> List(
         (("intField" -> 1) ~ ("stringField" -> "jsonobj1") ~ ("mapField" -> ("x" -> "1"))),
         (("intField" -> 2) ~ ("stringField" -> "jsonobj2") ~ ("mapField" -> ("x" -> "2")))
       )) ~
+      ("mandatoryStringListField" -> List("abc", "def", "ghi")) ~
+      ("_id" -> ("$uuid" -> ltr.id.toString)) ~
+      ("mandatoryIntListField" -> List(4, 5, 6)) ~
       ("caseClassListField" -> List(
         ("intField" -> 1) ~ ("stringField" -> "str") ~ ("enum" -> 1)
-      )) ~
-      ("mandatoryMongoRefListField" -> JArray(Nil))
+      ))
+
 
     val mtr = MapTestRecord.createRecord
       .mandatoryStringMapField(Map("a" -> "abc", "b" -> "def", "c" -> "ghi"))
@@ -579,368 +582,369 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       }
     }
 
-    "retrieve MongoRef objects properly" in {
-      S.initIfUninitted(session) {
-        val ntr = NullTestRecord.createRecord
-        val btr = BoxTestRecord.createRecord
-
-        fttr.save()
-        ltr.save()
-        mtr.save()
-        ntr.save()
-        btr.save()
-
-        val rftr = RefFieldTestRecord.createRecord
-          .mandatoryObjectIdRefField(fttr.id.get)
-          .mandatoryUUIDRefField(ltr.id.get)
-          .mandatoryStringRefField(mtr.id.get)
-          .mandatoryIntRefField(ntr.id.get)
-          .mandatoryLongRefField(btr.id.get)
-          .mandatoryObjectIdRefListField(List(fttr.id.get))
-          .mandatoryUUIDRefListField(List(ltr.id.get))
-          .mandatoryStringRefListField(List(mtr.id.get))
-          .mandatoryIntRefListField(List(ntr.id.get))
-          .mandatoryLongRefListField(List(btr.id.get))
-
-        // single objects
-        rftr.mandatoryObjectIdRefField.obj mustEqual Full(fttr)
-        rftr.mandatoryUUIDRefField.obj mustEqual Full(ltr)
-        rftr.mandatoryStringRefField.obj mustEqual Full(mtr)
-        rftr.mandatoryIntRefField.obj mustEqual Full(ntr)
-        rftr.mandatoryLongRefField.obj mustEqual Full(btr)
-
-        val fttr2 = FieldTypeTestRecord.createRecord.save()
-
-        rftr.mandatoryObjectIdRefField.cached_? mustEqual true
-        rftr.mandatoryObjectIdRefField(fttr2.id.get)
-        rftr.mandatoryObjectIdRefField.cached_? mustEqual false
-        rftr.mandatoryObjectIdRefField.find mustEqual Full(fttr2)
-        rftr.mandatoryObjectIdRefField.obj mustEqual Full(fttr2)
-        rftr.mandatoryObjectIdRefField.cached_? mustEqual true
-
-        // lists
-        rftr.mandatoryObjectIdRefListField.objs mustEqual List(fttr)
-        rftr.mandatoryUUIDRefListField.objs mustEqual List(ltr)
-        rftr.mandatoryStringRefListField.objs mustEqual List(mtr)
-        rftr.mandatoryIntRefListField.objs mustEqual List(ntr)
-        rftr.mandatoryLongRefListField.objs mustEqual List(btr)
-
-        val fttr3 = FieldTypeTestRecord.createRecord.save()
-        val objList = List(fttr2, fttr3)
-
-        rftr.mandatoryObjectIdRefListField.cached_? mustEqual true
-        rftr.mandatoryObjectIdRefListField(objList.map(_.id.get))
-        rftr.mandatoryObjectIdRefListField.cached_? mustEqual false
-        rftr.mandatoryObjectIdRefListField.findAll mustEqual objList
-        rftr.mandatoryObjectIdRefListField.objs mustEqual objList
-        rftr.mandatoryObjectIdRefListField.cached_? mustEqual true
-      }
-    }
-
-    "use defaultValue when field is not present in the database" in {
-      S.initIfUninitted(session) {
-        val missingFieldDocId = ObjectId.get
-
-        // create a dbobject with no fields manually
-        val builder = BasicDBObjectBuilder.start
-          .add("_id", missingFieldDocId)
-
-        FieldTypeTestRecord.useColl { coll => coll.save(builder.get) }
-
-        val recFromDb = FieldTypeTestRecord.find(missingFieldDocId)
-
-        recFromDb must beLike {
-          case Full(r) =>
-            r.mandatoryBooleanField.get must_== false
-            r.legacyOptionalBooleanField
-            r.optionalBooleanField.get must beEmpty
-            r.mandatoryCountryField.get must_== Countries.C1
-            r.legacyOptionalCountryField.valueBox must beEmpty
-            r.optionalCountryField.get must beEmpty
-            r.mandatoryDecimalField.get must_== 0.00
-            r.legacyOptionalDecimalField.valueBox must beEmpty
-            r.optionalDecimalField.get must beEmpty
-            r.mandatoryDoubleField.get must_== 0d
-            r.legacyOptionalDoubleField.valueBox must beEmpty
-            r.optionalDoubleField.get must beEmpty
-            r.mandatoryEmailField.get must_== ""
-            r.legacyOptionalEmailField.valueBox must beEmpty
-            r.optionalEmailField.get must beEmpty
-            r.mandatoryEnumField.get must_== MyTestEnum.ONE
-            r.legacyOptionalEnumField.valueBox must beEmpty
-            r.optionalEnumField.get must beEmpty
-            r.mandatoryIntField.get must_== 0
-            r.legacyOptionalIntField.valueBox must beEmpty
-            r.optionalIntField.get must beEmpty
-            r.mandatoryLocaleField.get must_== Locale.getDefault.toString
-            r.legacyOptionalLocaleField.valueBox must beEmpty
-            r.optionalLocaleField.get must beEmpty
-            r.mandatoryLongField.get must_== 0L
-            r.legacyOptionalLongField.valueBox must beEmpty
-            r.optionalLongField.get must beEmpty
-            r.mandatoryPostalCodeField.get must_== ""
-            r.legacyOptionalPostalCodeField.valueBox must beEmpty
-            r.optionalPostalCodeField.get must beEmpty
-            r.mandatoryStringField.get must_== ""
-            r.legacyOptionalStringField.valueBox must beEmpty
-            r.optionalStringField.get must beEmpty
-            r.mandatoryTextareaField.get must_== ""
-            r.legacyOptionalTextareaField.valueBox must beEmpty
-            r.optionalTextareaField.get must beEmpty
-            // r.mandatoryTimeZoneField.get must_== "America/Chicago"
-            r.legacyOptionalTimeZoneField.valueBox must beEmpty
-            r.optionalTimeZoneField.get must beEmpty
-        }
-      }
-    }
-
-    "reset dirty flags on save" in {
-      val fttr = FieldTypeTestRecord.createRecord.save()
-      fttr.mandatoryDecimalField(BigDecimal("3.14"))
-      fttr.dirty_? must_== true
-      fttr.save()
-      fttr.dirty_? must_== false
-    }
-
-    "update dirty fields for a FieldTypeTestRecord" in {
-      S.initIfUninitted(session) {
-        val fttr = FieldTypeTestRecord.createRecord
-          .legacyOptionalStringField("legacy optional string")
-          .optionalStringField("optional string")
-          .save()
-
-        fttr.mandatoryBooleanField(true)
-        fttr.mandatoryBooleanField.dirty_? must_== true
-
-        fttr.mandatoryDecimalField(BigDecimal("3.14"))
-        fttr.mandatoryDecimalField.dirty_? must_== true
-
-        fttr.mandatoryDoubleField(1999)
-        fttr.mandatoryDoubleField.dirty_? must_== true
-
-        fttr.mandatoryEnumField(MyTestEnum.TWO)
-        fttr.mandatoryEnumField.dirty_? must_== true
-
-        fttr.mandatoryIntField(99)
-        fttr.mandatoryIntField.dirty_? must_== true
-
-        fttr.mandatoryLongField(100L)
-        fttr.mandatoryLongField.dirty_? must_== true
-
-        fttr.mandatoryStringField("string")
-        fttr.mandatoryStringField.dirty_? must_== true
-
-        fttr.optionalStringField(Empty)
-        fttr.optionalStringField.dirty_? must_== true
-
-        fttr.legacyOptionalStringField(Empty)
-        fttr.legacyOptionalStringField.dirty_? must_== true
-
-        fttr.dirty_? must_== true
-        fttr.update
-        fttr.dirty_? must_== false
-
-        val fromDb = FieldTypeTestRecord.find(fttr.id.get)
-        fromDb.isDefined must_== true
-        fromDb foreach { rec =>
-          rec must_== fttr
-          rec.dirty_? must_== false
-        }
-
-        val fttr2 = FieldTypeTestRecord.createRecord.save()
-
-        fttr2.legacyOptionalStringField("legacy optional string")
-        fttr2.legacyOptionalStringField.dirty_? must_== true
-
-        fttr2.optionalStringField("optional string")
-        fttr2.optionalStringField.dirty_? must_== true
-
-        fttr2.dirty_? must_== true
-        fttr2.update
-        fttr2.dirty_? must_== false
-
-        val fromDb2 = FieldTypeTestRecord.find(fttr2.id.get)
-        fromDb2 must beLike {
-          case Full(rec) =>
-            rec must_== fttr2
-            rec.dirty_? must_== false
-        }
-      }
-    }
-
-    "update dirty fields for a MongoFieldTypeTestRecord" in {
-      val mfttr = MongoFieldTypeTestRecord.createRecord
-        .legacyOptionalDateField(new Date)
-        .legacyOptionalObjectIdField(ObjectId.get)
-        .save()
-
-      Thread.sleep(100) // sleep so dates will be different
-
-      mfttr.mandatoryDateField(new Date)
-      mfttr.mandatoryDateField.dirty_? must_== true
-
-      mfttr.mandatoryJsonObjectField(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")))
-      mfttr.mandatoryJsonObjectField.dirty_? must_== true
-
-      mfttr.mandatoryObjectIdField(ObjectId.get)
-      mfttr.mandatoryObjectIdField.dirty_? must_== true
-
-      mfttr.mandatoryUUIDField(UUID.randomUUID)
-      mfttr.mandatoryUUIDField.dirty_? must_== true
-
-      mfttr.legacyOptionalDateField(Empty)
-      mfttr.legacyOptionalDateField.dirty_? must_== true
-
-      mfttr.legacyOptionalObjectIdField(Empty)
-      mfttr.legacyOptionalObjectIdField.dirty_? must_== true
-
-      mfttr.dirty_? must_== true
-      mfttr.update
-      mfttr.dirty_? must_== false
-
-      val fromDb = MongoFieldTypeTestRecord.find(mfttr.id.get)
-      fromDb.isDefined must_== true
-      fromDb foreach { rec =>
-        rec must_== mfttr
-        rec.dirty_? must_== false
-      }
-
-      val mfttr2 = MongoFieldTypeTestRecord.createRecord.save()
-
-      mfttr2.legacyOptionalDateField(new Date)
-      mfttr2.legacyOptionalDateField.dirty_? must_== true
-
-      mfttr2.optionalDateField(new Date)
-      mfttr2.optionalDateField.dirty_? must_== true
-
-      mfttr2.optionalObjectIdField(ObjectId.get)
-      mfttr2.optionalObjectIdField.dirty_? must_== true
-
-      mfttr2.optionalUUIDField(UUID.randomUUID())
-      mfttr2.optionalUUIDField.dirty_? must_== true
-
-      mfttr2.dirty_? must_== true
-      mfttr2.update
-      mfttr2.dirty_? must_== false
-
-      val fromDb2 = MongoFieldTypeTestRecord.find(mfttr2.id.get)
-      fromDb2 must beLike {
-        case Full(rec) =>
-          rec must_== mfttr2
-          rec.dirty_? must_== false
-      }
-    }
-
-    "update dirty fields for a PatternFieldTestRecord" in {
-      val pftrd = PatternFieldTestRecord.createRecord.save()
-
-      pftrd.mandatoryPatternField(Pattern.compile("^Mon", Pattern.CASE_INSENSITIVE))
-      pftrd.mandatoryPatternField.dirty_? must_== true
-
-      pftrd.dirty_? must_== true
-      pftrd.update
-      pftrd.dirty_? must_== false
-
-      val fromDb = PatternFieldTestRecord.find(pftrd.id.get)
-      fromDb must beLike {
-        case Full(rec) =>
-          rec must_== pftrd
-          rec.dirty_? must_== false
-      }
-    }
-
-    "update dirty fields for a ListTestRecord" in {
-      val ltr = ListTestRecord.createRecord.save()
-
-      ltr.mandatoryStringListField(List("abc", "def", "ghi"))
-      ltr.mandatoryStringListField.dirty_? must_== true
-
-      ltr.mandatoryIntListField(List(4, 5, 6))
-      ltr.mandatoryIntListField.dirty_? must_== true
-
-      ltr.mandatoryJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2"))))
-      ltr.mandatoryJsonObjectListField.dirty_? must_== true
-
-      ltr.caseClassListField(List(CaseClassTestObject(1,"str",MyTestEnum.TWO)))
-      ltr.caseClassListField.dirty_? must_== true
-
-      ltr.dirty_? must_== true
-      ltr.update
-      ltr.dirty_? must_== false
-
-      val fromDb = ListTestRecord.find(ltr.id.get)
-      fromDb must beLike {
-        case Full(rec) =>
-          rec must_== ltr
-          rec.dirty_? must_== false
-      }
-    }
-
-    "update dirty fields for a MapTestRecord" in {
-      val mtr = MapTestRecord.save()
-
-      mtr.mandatoryStringMapField(Map("a" -> "abc", "b" -> "def", "c" -> "ghi"))
-      mtr.mandatoryStringMapField.dirty_? must_== true
-
-      mtr.mandatoryIntMapField(Map("a" -> 4, "b" -> 5, "c" -> 6))
-      mtr.mandatoryIntMapField.dirty_? must_== true
-
-      mtr.dirty_? must_== true
-      mtr.update
-      mtr.dirty_? must_== false
-
-      val fromDb = MapTestRecord.find(mtr.id.get)
-      fromDb must beLike {
-        case Full(rec) =>
-          rec must_== mtr
-          rec.dirty_? must_== false
-      }
-    }
-
-    "update dirty fields for a SubRecordTestRecord" in {
-      val ssr1 = SubSubRecord.createRecord.name("SubSubRecord1")
-      val ssr2 = SubSubRecord.createRecord.name("SubSubRecord2")
-
-      val sr1 = SubRecord.createRecord
-        .name("SubRecord1")
-        .subsub(ssr1)
-        .subsublist(ssr1 :: ssr2 :: Nil)
-        .slist("s1" :: "s2" :: Nil)
-        .smap(Map("a" -> "s1", "b" -> "s2"))
-        .pattern(Pattern.compile("^Mon", Pattern.CASE_INSENSITIVE))
-
-      val srtr = SubRecordTestRecord.createRecord
-        .mandatoryBsonRecordField(sr1)
-        .save()
-
-      val sr2 = sr1.copy.name("SubRecord2")
-
-      srtr.mandatoryBsonRecordField(sr2)
-      srtr.mandatoryBsonRecordField.dirty_? must_== true
-
-      srtr.mandatoryBsonRecordListField(List(sr1,sr2))
-      srtr.mandatoryBsonRecordListField.dirty_? must_== true
-
-      srtr.dirty_? must_== true
-      srtr.update
-      srtr.dirty_? must_== false
-
-      val fromDb = SubRecordTestRecord.find(srtr.id.get)
-      fromDb must beLike {
-        case Full(rec) =>
-          rec must_== srtr
-          rec.dirty_? must_== false
-      }
-    }
-
-    "support custom field name" in {
-      RecordRules.fieldName.doWith((_, name) => snakify(name)) {
-        val rec = CustomFieldName.createRecord
-        rec.customField.name must_== "custom_field"
-        rec.save()
-
-        CustomFieldName.find(rec.id.get) must_== Full(rec)
-      }
-    }
+    // "retrieve MongoRef objects properly" in {
+    //   S.initIfUninitted(session) {
+    //     val ntr = NullTestRecord.createRecord
+    //     val btr = BoxTestRecord.createRecord
+
+    //     fttr.save()
+    //     ltr.save()
+    //     mtr.save()
+    //     ntr.save()
+    //     btr.save()
+
+    //     val rftr = RefFieldTestRecord.createRecord
+    //       .mandatoryObjectIdRefField(fttr.id.get)
+    //       .mandatoryUUIDRefField(ltr.id.get)
+    //       .mandatoryStringRefField(mtr.id.get)
+    //       .mandatoryIntRefField(ntr.id.get)
+    //       .mandatoryLongRefField(btr.id.get)
+    //       .mandatoryObjectIdRefListField(List(fttr.id.get))
+    //       .mandatoryUUIDRefListField(List(ltr.id.get))
+    //       .mandatoryStringRefListField(List(mtr.id.get))
+    //       .mandatoryIntRefListField(List(ntr.id.get))
+    //       .mandatoryLongRefListField(List(btr.id.get))
+
+    //     // single objects
+    //     rftr.mandatoryObjectIdRefField.obj mustEqual Full(fttr)
+    //     rftr.mandatoryUUIDRefField.obj mustEqual Full(ltr)
+    //     rftr.mandatoryStringRefField.obj mustEqual Full(mtr)
+    //     rftr.mandatoryIntRefField.obj mustEqual Full(ntr)
+    //     rftr.mandatoryLongRefField.obj mustEqual Full(btr)
+
+    //     val fttr2 = FieldTypeTestRecord.createRecord.save()
+
+    //     rftr.mandatoryObjectIdRefField.cached_? mustEqual true
+    //     rftr.mandatoryObjectIdRefField(fttr2.id.get)
+    //     rftr.mandatoryObjectIdRefField.cached_? mustEqual false
+    //     rftr.mandatoryObjectIdRefField.find mustEqual Full(fttr2)
+    //     rftr.mandatoryObjectIdRefField.obj mustEqual Full(fttr2)
+    //     rftr.mandatoryObjectIdRefField.cached_? mustEqual true
+
+    //     // lists
+    //     rftr.mandatoryObjectIdRefListField.objs mustEqual List(fttr)
+    //     rftr.mandatoryUUIDRefListField.objs mustEqual List(ltr)
+    //     rftr.mandatoryStringRefListField.objs mustEqual List(mtr)
+    //     rftr.mandatoryIntRefListField.objs mustEqual List(ntr)
+    //     rftr.mandatoryLongRefListField.objs mustEqual List(btr)
+
+    //     val fttr3 = FieldTypeTestRecord.createRecord.save()
+    //     val objList = List(fttr2, fttr3)
+
+    //     rftr.mandatoryObjectIdRefListField.cached_? mustEqual true
+    //     rftr.mandatoryObjectIdRefListField(objList.map(_.id.get))
+    //     rftr.mandatoryObjectIdRefListField.cached_? mustEqual false
+    //     rftr.mandatoryObjectIdRefListField.findAll mustEqual objList
+    //     rftr.mandatoryObjectIdRefListField.objs mustEqual objList
+    //     rftr.mandatoryObjectIdRefListField.cached_? mustEqual true
+    //   }
+    // }
+
+    // "use defaultValue when field is not present in the database" in {
+    //   S.initIfUninitted(session) {
+    //     val missingFieldDocId = ObjectId.get
+
+    //     // create a Document with no fields manually
+    //     val doc = new Document("_id", missingFieldDocId)
+
+    //     FieldTypeTestRecord.useDatabase { db =>
+    //       db.getCollection(FieldTypeTestRecord.collectionName, classOf[Document]).insertOne(doc)
+    //     }
+
+    //     val recFromDb = FieldTypeTestRecord.find(missingFieldDocId)
+
+    //     recFromDb must beLike {
+    //       case Full(r) =>
+    //         r.mandatoryBooleanField.get must_== false
+    //         r.legacyOptionalBooleanField
+    //         r.optionalBooleanField.get must beEmpty
+    //         r.mandatoryCountryField.get must_== Countries.C1
+    //         r.legacyOptionalCountryField.valueBox must beEmpty
+    //         r.optionalCountryField.get must beEmpty
+    //         r.mandatoryDecimalField.get must_== 0.00
+    //         r.legacyOptionalDecimalField.valueBox must beEmpty
+    //         r.optionalDecimalField.get must beEmpty
+    //         r.mandatoryDoubleField.get must_== 0d
+    //         r.legacyOptionalDoubleField.valueBox must beEmpty
+    //         r.optionalDoubleField.get must beEmpty
+    //         r.mandatoryEmailField.get must_== ""
+    //         r.legacyOptionalEmailField.valueBox must beEmpty
+    //         r.optionalEmailField.get must beEmpty
+    //         r.mandatoryEnumField.get must_== MyTestEnum.ONE
+    //         r.legacyOptionalEnumField.valueBox must beEmpty
+    //         r.optionalEnumField.get must beEmpty
+    //         r.mandatoryIntField.get must_== 0
+    //         r.legacyOptionalIntField.valueBox must beEmpty
+    //         r.optionalIntField.get must beEmpty
+    //         r.mandatoryLocaleField.get must_== Locale.getDefault.toString
+    //         r.legacyOptionalLocaleField.valueBox must beEmpty
+    //         r.optionalLocaleField.get must beEmpty
+    //         r.mandatoryLongField.get must_== 0L
+    //         r.legacyOptionalLongField.valueBox must beEmpty
+    //         r.optionalLongField.get must beEmpty
+    //         r.mandatoryPostalCodeField.get must_== ""
+    //         r.legacyOptionalPostalCodeField.valueBox must beEmpty
+    //         r.optionalPostalCodeField.get must beEmpty
+    //         r.mandatoryStringField.get must_== ""
+    //         r.legacyOptionalStringField.valueBox must beEmpty
+    //         r.optionalStringField.get must beEmpty
+    //         r.mandatoryTextareaField.get must_== ""
+    //         r.legacyOptionalTextareaField.valueBox must beEmpty
+    //         r.optionalTextareaField.get must beEmpty
+    //         // r.mandatoryTimeZoneField.get must_== "America/Chicago"
+    //         r.legacyOptionalTimeZoneField.valueBox must beEmpty
+    //         r.optionalTimeZoneField.get must beEmpty
+    //     }
+    //   }
+    // }
+
+    // "reset dirty flags on save" in {
+    //   val fttr = FieldTypeTestRecord.createRecord.save()
+    //   fttr.mandatoryDecimalField(BigDecimal("3.14"))
+    //   fttr.dirty_? must_== true
+    //   fttr.save()
+    //   fttr.dirty_? must_== false
+    // }
+
+    // "update dirty fields for a FieldTypeTestRecord" in {
+    //   S.initIfUninitted(session) {
+    //     val fttr = FieldTypeTestRecord.createRecord
+    //       .legacyOptionalStringField("legacy optional string")
+    //       .optionalStringField("optional string")
+    //       .save()
+
+    //     fttr.mandatoryBooleanField(true)
+    //     fttr.mandatoryBooleanField.dirty_? must_== true
+
+    //     fttr.mandatoryDecimalField(BigDecimal("3.14"))
+    //     fttr.mandatoryDecimalField.dirty_? must_== true
+
+    //     fttr.mandatoryDoubleField(1999)
+    //     fttr.mandatoryDoubleField.dirty_? must_== true
+
+    //     fttr.mandatoryEnumField(MyTestEnum.TWO)
+    //     fttr.mandatoryEnumField.dirty_? must_== true
+
+    //     fttr.mandatoryIntField(99)
+    //     fttr.mandatoryIntField.dirty_? must_== true
+
+    //     fttr.mandatoryLongField(100L)
+    //     fttr.mandatoryLongField.dirty_? must_== true
+
+    //     fttr.mandatoryStringField("string")
+    //     fttr.mandatoryStringField.dirty_? must_== true
+
+    //     fttr.optionalStringField(Empty)
+    //     fttr.optionalStringField.dirty_? must_== true
+
+    //     fttr.legacyOptionalStringField(Empty)
+    //     fttr.legacyOptionalStringField.dirty_? must_== true
+
+    //     fttr.dirty_? must_== true
+    //     fttr.update
+    //     fttr.dirty_? must_== false
+
+    //     val fromDb = FieldTypeTestRecord.find(fttr.id.get)
+    //     fromDb.isDefined must_== true
+    //     fromDb foreach { rec =>
+    //       rec must_== fttr
+    //       rec.dirty_? must_== false
+    //     }
+
+    //     val fttr2 = FieldTypeTestRecord.createRecord.save()
+
+    //     fttr2.legacyOptionalStringField("legacy optional string")
+    //     fttr2.legacyOptionalStringField.dirty_? must_== true
+
+    //     fttr2.optionalStringField("optional string")
+    //     fttr2.optionalStringField.dirty_? must_== true
+
+    //     fttr2.dirty_? must_== true
+    //     fttr2.update
+    //     fttr2.dirty_? must_== false
+
+    //     val fromDb2 = FieldTypeTestRecord.find(fttr2.id.get)
+    //     fromDb2 must beLike {
+    //       case Full(rec) =>
+    //         rec must_== fttr2
+    //         rec.dirty_? must_== false
+    //     }
+    //   }
+    // }
+
+    // "update dirty fields for a MongoFieldTypeTestRecord" in {
+    //   val mfttr = MongoFieldTypeTestRecord.createRecord
+    //     .legacyOptionalDateField(new Date)
+    //     .legacyOptionalObjectIdField(ObjectId.get)
+    //     .save()
+
+    //   Thread.sleep(100) // sleep so dates will be different
+
+    //   mfttr.mandatoryDateField(new Date)
+    //   mfttr.mandatoryDateField.dirty_? must_== true
+
+    //   mfttr.mandatoryJsonObjectField(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")))
+    //   mfttr.mandatoryJsonObjectField.dirty_? must_== true
+
+    //   mfttr.mandatoryObjectIdField(ObjectId.get)
+    //   mfttr.mandatoryObjectIdField.dirty_? must_== true
+
+    //   mfttr.mandatoryUUIDField(UUID.randomUUID)
+    //   mfttr.mandatoryUUIDField.dirty_? must_== true
+
+    //   mfttr.legacyOptionalDateField(Empty)
+    //   mfttr.legacyOptionalDateField.dirty_? must_== true
+
+    //   mfttr.legacyOptionalObjectIdField(Empty)
+    //   mfttr.legacyOptionalObjectIdField.dirty_? must_== true
+
+    //   mfttr.dirty_? must_== true
+    //   mfttr.update
+    //   mfttr.dirty_? must_== false
+
+    //   val fromDb = MongoFieldTypeTestRecord.find(mfttr.id.get)
+    //   fromDb.isDefined must_== true
+    //   fromDb foreach { rec =>
+    //     rec must_== mfttr
+    //     rec.dirty_? must_== false
+    //   }
+
+    //   val mfttr2 = MongoFieldTypeTestRecord.createRecord.save()
+
+    //   mfttr2.legacyOptionalDateField(new Date)
+    //   mfttr2.legacyOptionalDateField.dirty_? must_== true
+
+    //   mfttr2.optionalDateField(new Date)
+    //   mfttr2.optionalDateField.dirty_? must_== true
+
+    //   mfttr2.optionalObjectIdField(ObjectId.get)
+    //   mfttr2.optionalObjectIdField.dirty_? must_== true
+
+    //   mfttr2.optionalUUIDField(UUID.randomUUID())
+    //   mfttr2.optionalUUIDField.dirty_? must_== true
+
+    //   mfttr2.dirty_? must_== true
+    //   mfttr2.update
+    //   mfttr2.dirty_? must_== false
+
+    //   val fromDb2 = MongoFieldTypeTestRecord.find(mfttr2.id.get)
+    //   fromDb2 must beLike {
+    //     case Full(rec) =>
+    //       rec must_== mfttr2
+    //       rec.dirty_? must_== false
+    //   }
+    // }
+
+    // "update dirty fields for a PatternFieldTestRecord" in {
+    //   val pftrd = PatternFieldTestRecord.createRecord.save()
+
+    //   pftrd.mandatoryPatternField(Pattern.compile("^Mon", Pattern.CASE_INSENSITIVE))
+    //   pftrd.mandatoryPatternField.dirty_? must_== true
+
+    //   pftrd.dirty_? must_== true
+    //   pftrd.update
+    //   pftrd.dirty_? must_== false
+
+    //   val fromDb = PatternFieldTestRecord.find(pftrd.id.get)
+    //   fromDb must beLike {
+    //     case Full(rec) =>
+    //       rec must_== pftrd
+    //       rec.dirty_? must_== false
+    //   }
+    // }
+
+    // "update dirty fields for a ListTestRecord" in {
+    //   val ltr = ListTestRecord.createRecord.save()
+
+    //   ltr.mandatoryStringListField(List("abc", "def", "ghi"))
+    //   ltr.mandatoryStringListField.dirty_? must_== true
+
+    //   ltr.mandatoryIntListField(List(4, 5, 6))
+    //   ltr.mandatoryIntListField.dirty_? must_== true
+
+    //   ltr.mandatoryJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2"))))
+    //   ltr.mandatoryJsonObjectListField.dirty_? must_== true
+
+    //   // ltr.caseClassListField(List(CaseClassTestObject(1,"str",MyTestEnum.TWO)))
+    //   // ltr.caseClassListField.dirty_? must_== true
+
+    //   ltr.dirty_? must_== true
+    //   ltr.update
+    //   ltr.dirty_? must_== false
+
+    //   val fromDb = ListTestRecord.find(ltr.id.get)
+    //   fromDb must beLike {
+    //     case Full(rec) =>
+    //       rec must_== ltr
+    //       rec.dirty_? must_== false
+    //   }
+    // }
+
+    // "update dirty fields for a MapTestRecord" in {
+    //   val mtr = MapTestRecord.save()
+
+    //   mtr.mandatoryStringMapField(Map("a" -> "abc", "b" -> "def", "c" -> "ghi"))
+    //   mtr.mandatoryStringMapField.dirty_? must_== true
+
+    //   mtr.mandatoryIntMapField(Map("a" -> 4, "b" -> 5, "c" -> 6))
+    //   mtr.mandatoryIntMapField.dirty_? must_== true
+
+    //   mtr.dirty_? must_== true
+    //   mtr.update
+    //   mtr.dirty_? must_== false
+
+    //   val fromDb = MapTestRecord.find(mtr.id.get)
+    //   fromDb must beLike {
+    //     case Full(rec) =>
+    //       rec must_== mtr
+    //       rec.dirty_? must_== false
+    //   }
+    // }
+
+    // "update dirty fields for a SubRecordTestRecord" in {
+    //   val ssr1 = SubSubRecord.createRecord.name("SubSubRecord1")
+    //   val ssr2 = SubSubRecord.createRecord.name("SubSubRecord2")
+
+    //   val sr1 = SubRecord.createRecord
+    //     .name("SubRecord1")
+    //     .subsub(ssr1)
+    //     .subsublist(ssr1 :: ssr2 :: Nil)
+    //     .slist("s1" :: "s2" :: Nil)
+    //     .smap(Map("a" -> "s1", "b" -> "s2"))
+    //     .pattern(Pattern.compile("^Mon", Pattern.CASE_INSENSITIVE))
+
+    //   val srtr = SubRecordTestRecord.createRecord
+    //     .mandatoryBsonRecordField(sr1)
+    //     .save()
+
+    //   val sr2 = sr1.copy.name("SubRecord2")
+
+    //   srtr.mandatoryBsonRecordField(sr2)
+    //   srtr.mandatoryBsonRecordField.dirty_? must_== true
+
+    //   srtr.mandatoryBsonRecordListField(List(sr1,sr2))
+    //   srtr.mandatoryBsonRecordListField.dirty_? must_== true
+
+    //   srtr.dirty_? must_== true
+    //   srtr.update
+    //   srtr.dirty_? must_== false
+
+    //   val fromDb = SubRecordTestRecord.find(srtr.id.get)
+    //   fromDb must beLike {
+    //     case Full(rec) =>
+    //       rec must_== srtr
+    //       rec.dirty_? must_== false
+    //   }
+    // }
+
+    // "support custom field name" in {
+    //   RecordRules.fieldName.doWith((_, name) => snakify(name)) {
+    //     val rec = CustomFieldName.createRecord
+    //     rec.customField.name must_== "custom_field"
+    //     rec.save()
+
+    //     CustomFieldName.find(rec.id.get) must_== Full(rec)
+    //   }
+    // }
   }
 }
