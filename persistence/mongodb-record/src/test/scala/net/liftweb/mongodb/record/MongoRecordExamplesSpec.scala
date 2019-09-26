@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 WorldWide Conferencing, LLC
+ * Copyright 2010-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,8 @@ import java.util.{Calendar, Date, UUID}
 import java.util.regex.Pattern
 
 import net.liftweb.common.{Box, Empty, Failure, Full}
-import net.liftweb.json.DefaultFormats
+import net.liftweb.http.{S, LiftSession}
+import net.liftweb.json._
 import net.liftweb.json.JsonDSL._
 import net.liftweb.record.field._
 import net.liftweb.util.TimeHelpers._
@@ -30,10 +31,9 @@ import net.liftweb.mongodb.record.field._
 
 import org.specs2.mutable.Specification
 
-import com.mongodb._
+import org.bson.Document
 import org.bson.types.ObjectId
-import http.{S, LiftSession}
-
+import com.mongodb._
 
 package mongotestrecords {
 
@@ -113,37 +113,7 @@ package mongotestrecords {
 
     // specialized list types
     object jsonobjlist extends JsonObjectListField(this, JsonDoc)
-
-    // these require custom setFromDBObject methods
-    object maplist extends MongoListField[ListDoc, Map[String, String]](this) {
-      override def asDBObject: DBObject = {
-        val dbl = new BasicDBList
-
-        value.foreach {
-          m => {
-            val dbo = new BasicDBObject
-
-            m.keys.foreach(k => {
-              dbo.put(k.toString, m.getOrElse(k, ""))
-            })
-
-            dbl.add(dbo)
-          }
-        }
-
-        dbl
-      }
-
-      override def setFromDBObject(dbo: DBObject): Box[List[Map[String, String]]] = {
-        val lst: List[Map[String, String]] =
-          dbo.keySet.asScala.toList.map(dbo.get).collect {
-            case bdbo: BasicDBObject if bdbo.containsField("name") && bdbo.containsField("type") =>
-              Map("name"-> bdbo.getString("name"), "type" -> bdbo.getString("type"))
-          }
-        Full(set(lst))
-      }
-    }
-
+    object maplist extends MongoListField[ListDoc, Map[String, String]](this) {}
   }
   object ListDoc extends ListDoc with MongoMetaRecord[ListDoc]
 
@@ -236,7 +206,7 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
         t.intfield.value must_== tr.intfield.value
         t.localefield.value must_== tr.localefield.value
         t.longfield.value must_== tr.longfield.value
-        t.passwordfield.isMatch(pwd) must_== true
+
         t.stringfield.value must_== tr.stringfield.value
         t.timezonefield.value must_== tr.timezonefield.value
         t.datetimefield.value must_== tr.datetimefield.value
@@ -253,6 +223,7 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
           t.person.value.children(i).age must_== tr.person.value.children(i).age
           t.person.value.children(i).birthdate must_== tr.person.value.children(i).birthdate
         }
+        t.passwordfield.isMatch(pwd) must_== true
       }
 
       if (!debug) TstRecord.drop
@@ -355,16 +326,9 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
     val mdq4 = MainDoc.findAll(("name" -> "md1"), ("name" -> 1), Empty)
     mdq4.size must_== 1
 
-    // Upsert - this should add a new row
-    val md5 = MainDoc.createRecord
-    md5.name.set("md5")
-    md5.refdocId.set(ref1.id.get)
-    MainDoc.update(("name" -> "nothing"), md5, Upsert)
-    MainDoc.findAll.size must_== 5
-
     // modifier operations $inc, $set, $push...
     val o2 = (("$inc" -> ("cnt" -> 1)) ~ ("$set" -> ("name" -> "md1a")))
-    MainDoc.update(("name" -> "md1"), o2)
+    MainDoc.updateOne(("name" -> "md1"), o2)
     // get the doc back from the db and compare
     val mdq5 = MainDoc.find("_id", md1.id.get)
     mdq5.isDefined must_== true
@@ -379,7 +343,6 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
       md2.delete_!
       md3.delete_!
       md4.delete_!
-      md5.delete_!
       ref1.delete_!
       ref2.delete_!
 
@@ -507,13 +470,15 @@ class MongoRecordExamplesSpec extends Specification with MongoTestKit {
     val sd1 = StrictDoc.createRecord.name("sd1")
     val sd2 = StrictDoc.createRecord.name("sd1")
 
-    sd1.save(true) must_== sd1
-    sd2.save(true) must throwA[MongoException]
-
-    sd1.save()
+    sd1.save() must_== sd1
+    sd2.save() must throwA[MongoException]
+    sd2.saveBox() must beLike {
+      case Failure(msg, _, _) => msg must contain("E11000")
+    }
 
     sd2.name("sd2")
-    sd2.save(true) must_== sd2
+    sd2.save() must_== sd2
+
 
     if (!debug) StrictDoc.drop
 

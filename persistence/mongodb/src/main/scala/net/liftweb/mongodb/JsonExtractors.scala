@@ -1,5 +1,5 @@
 /**
-  * Copyright 2014 WorldWide Conferencing, LLC
+  * Copyright 2014-2020 WorldWide Conferencing, LLC
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
@@ -91,6 +91,7 @@ object JsonDate {
   }
 
   def apply(dt: Date)(implicit formats: Formats): JValue = ("$dt" -> formats.dateFormat.format(dt))
+  def apply(dt: Long)(implicit formats: Formats): JValue = ("$dt" -> formats.dateFormat.format(new Date(dt)))
 }
 
 object JsonDateTime {

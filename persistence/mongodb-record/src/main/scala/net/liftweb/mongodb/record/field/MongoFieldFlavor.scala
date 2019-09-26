@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 WorldWide Conferencing, LLC
+ * Copyright 2010-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,17 @@ import com.mongodb.DBObject
 /**
 * Describes common aspects related to Mongo fields
 */
+@deprecated("Please use 'BsonableField' instead.", "3.4.2")
 trait MongoFieldFlavor[MyType] {
 
   /*
   * convert this field's value into a DBObject so it can be stored in Mongo.
   */
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
   def asDBObject: DBObject
 
   // set this field's value using a DBObject returned from Mongo.
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
   def setFromDBObject(obj: DBObject): Box[MyType]
 
   /**
@@ -49,4 +52,3 @@ trait MongoFieldFlavor[MyType] {
   def asJValue: JValue
 
 }
-

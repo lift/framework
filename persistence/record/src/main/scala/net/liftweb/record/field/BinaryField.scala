@@ -30,7 +30,7 @@ import JE._
 
 
 trait BinaryTypedField extends TypedField[Array[Byte]] {
-  
+
   def setFromAny(in: Any): Box[Array[Byte]] = genericSetFromAny(in)
 
   def setFromString(s: String): Box[Array[Byte]] = s match {
@@ -46,7 +46,7 @@ trait BinaryTypedField extends TypedField[Array[Byte]] {
   def asJValue: JValue = asJString(base64Encode _)
   def setFromJValue(jvalue: JValue) = setFromJString(jvalue)(s => tryo(base64Decode(s)))
 }
-  
+
 class BinaryField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends Field[Array[Byte], OwnerType] with MandatoryTypedField[Array[Byte]] with BinaryTypedField {
 

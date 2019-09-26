@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 WorldWide Conferencing, LLC
+ * Copyright 2010-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.bson.types.ObjectId
 /*
 * Field for storing a DBRef
 */
+@deprecated("DBref is being removed. See 'MongoRef' for an alternative", "3.4.2")
 class DBRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](rec: OwnerType, ref: RefType)
   extends Field[DBRef, OwnerType] with MandatoryTypedField[DBRef] {
 

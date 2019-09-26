@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 WorldWide Conferencing, LLC
+ * Copyright 2012-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import org.specs2.mutable.Specification
 
 import com.mongodb.DBObject
 
-class JObjectParserSpec extends Specification  {
-  "JObjectParser Specification".title
+class LegacyJObjectParserSpec extends Specification  {
+  "LegacyJObjectParser Specification".title
 
   def buildTestData: (ObjectId, DBObject) = {
     val oid = ObjectId.get

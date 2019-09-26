@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 WorldWide Conferencing, LLC
+ * Copyright 2010-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,24 +19,30 @@ package mongodb
 package record
 package field
 
+import scala.collection.mutable
 import scala.collection.JavaConverters._
 import scala.xml.NodeSeq
 
 import net.liftweb.common.{Box, Empty, Failure, Full}
+import net.liftweb.http.js.JsExp
 import net.liftweb.http.js.JE.{JsNull, JsRaw}
 import net.liftweb.json._
 import net.liftweb.record._
 import net.liftweb.util.Helpers.tryo
 
 import com.mongodb._
-import org.bson.Document
+import org.bson._
+import org.bson.codecs.{BsonDocumentCodec, BsonTypeCodecMap, Codec, DecoderContext, Encoder, EncoderContext}
+import org.bson.codecs.configuration.CodecRegistry
 
 /**
   * Note: setting optional_? = false will result in incorrect equals behavior when using setFromJValue
   */
 class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: OwnerType)
   extends Field[Map[String, MapValueType], OwnerType] with MandatoryTypedField[Map[String, MapValueType]]
-  with MongoFieldFlavor[Map[String, MapValueType]] {
+  with MongoFieldFlavor[Map[String, MapValueType]]
+  with BsonableField[Map[String, MapValueType]]
+{
 
   import mongodb.Meta.Reflection._
 
@@ -90,6 +96,7 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
   /*
   * Convert this field's value into a DBObject so it can be stored in Mongo.
   */
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
   def asDBObject: DBObject = {
     val dbo = new BasicDBObject
     value.keys.foreach { key =>
@@ -101,6 +108,7 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
   }
 
   // set this field's value using a DBObject returned from Mongo.
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
   def setFromDBObject(dbo: DBObject): Box[Map[String, MapValueType]] = {
     setBox(Full(
       Map() ++ dbo.keySet.asScala.map {
@@ -110,28 +118,45 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
   }
 
   // set this field's value using a bson.Document returned from Mongo.
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
   def setFromDocument(doc: Document): Box[Map[String, MapValueType]] = {
-    val map: Map[String, MapValueType] = doc.asScala.map {
-      case (k, v) => k -> v.asInstanceOf[MapValueType]
-    } (scala.collection.breakOut)
+    val map = scala.collection.mutable.Map[String, MapValueType]()
+
+    doc.keySet.asScala.foreach { k =>
+      map += k -> doc.get(k).asInstanceOf[MapValueType]
+    }
 
     setBox {
-      Full(map)
+      Full(map.toMap)
     }
   }
 
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
   def asDocument: Document = {
-    import scala.collection.JavaConverters._
-    val map: Map[String, AnyRef] = {
-      value.keys.map {
-        k => k -> value.getOrElse(k, "")
-          .asInstanceOf[AnyRef]
-      } (scala.collection.breakOut)
+    val doc = new Document()
+
+    value.keys.view.foreach { k =>
+      doc.append(k, value.getOrElse(k, "").asInstanceOf[AnyRef])
     }
 
-    new Document(map.asJava)
+    doc
   }
 
+  def setFromBsonReader(reader: BsonReader, context: DecoderContext, registry: CodecRegistry, bsonTypeCodecMap: BsonTypeCodecMap): Box[Map[String, MapValueType]] = {
+    reader.getCurrentBsonType match {
+      case BsonType.NULL =>
+        reader.readNull()
+        Empty
+      case BsonType.DOCUMENT =>
+        setBox(tryo(readMap(reader, context, registry, bsonTypeCodecMap).asInstanceOf[Map[String, MapValueType]]))
+      case bsonType =>
+        Failure(s"Invalid BsonType for field ${name}: ${bsonType}")
+    }
+  }
 
+  def writeToBsonWriter(writer: BsonWriter, context: EncoderContext, registry: CodecRegistry, bsonTypeCodecMap: BsonTypeCodecMap): Unit = {
+    writer.writeName(name)
+    writeMap(writer, value.asInstanceOf[Map[String, Any]], context.getChildContext, registry)
+  }
 }
 

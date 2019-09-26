@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 WorldWide Conferencing, LLC
+ * Copyright 2011-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,17 @@ import org.bson.types.ObjectId
 import org.specs2.mutable.Specification
 
 package queryexamplesfixtures {
+  import com.mongodb.client.model.Indexes._
+
   case class Person(_id: ObjectId, name: String, birthDate: Date, childId: UUID, petId: Option[ObjectId]) extends MongoDocument[Person] {
     def meta = Person
   }
   object Person extends MongoDocumentMeta[Person] {
     override def formats = allFormats
-    // index name
-    createIndex(("name" -> 1))
+
+    def createIndexes(): Unit =  {
+      Person.createIndex(ascending("name"))
+    }
 
     // implicit formats already exists
     def findAllBornAfter(dt: Date) = findAll(("birthDate" -> ("$gt" -> dt)))
@@ -47,6 +51,8 @@ class QueryExamplesSpec extends Specification with MongoTestKit {
 
   "Query examples" in {
     checkMongoIsRunning
+
+    Person.createIndexes()
 
     val fredsBirthDate = Calendar.getInstance
     fredsBirthDate.set(1970, 1, 1, 19, 0)

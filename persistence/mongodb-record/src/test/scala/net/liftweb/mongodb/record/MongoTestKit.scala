@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 WorldWide Conferencing, LLC
+ * Copyright 2010-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ object TestMongo {
   lazy val isMongoRunning: Boolean =
     try {
       // this will throw an exception if it can't connect to the db
-      mongo.getConnectPoint
+      mongo.listDatabases
       true
     } catch {
       case _: MongoTimeoutException =>
@@ -75,7 +75,7 @@ trait MongoTestKit extends Specification with BeforeAfterEach {
     if (!debug && TestMongo.isMongoRunning) {
       // drop the databases
       dbs.foreach { case (id, _) =>
-        MongoDB.use(id) { db => db.dropDatabase }
+        MongoDB.useDatabase(id) { db => db.drop() }
       }
     }
 

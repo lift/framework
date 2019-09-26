@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 WorldWide Conferencing, LLC
+ * Copyright 2011-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,22 @@ package net.liftweb
 package mongodb
 package record
 
-import common._
+import net.liftweb.common._
 
+import java.util.prefs.BackingStoreException
 import java.util.regex.Pattern
 import scala.collection.JavaConverters._
 
+import net.liftweb.mongodb.record.codecs.{RecordCodec, RecordTypedCodec}
+import net.liftweb.mongodb.record.field._
 import net.liftweb.record.{Field, MetaRecord, Record}
 import net.liftweb.record.field._
 
+import org.bson._
+import org.bson.codecs.{BsonTypeClassMap, Codec, DecoderContext, EncoderContext}
+import org.bson.codecs.configuration.{CodecRegistries, CodecRegistry}
+import org.bson.conversions.Bson
 import com.mongodb._
-import java.util.prefs.BackingStoreException
-import org.bson.Document
 
 /** Specialized Record that can be encoded and decoded from BSON (DBObject) */
 trait BsonRecord[MyType <: BsonRecord[MyType]] extends Record[MyType] {
@@ -40,13 +45,16 @@ trait BsonRecord[MyType <: BsonRecord[MyType]] extends Record[MyType] {
   /**
     * Encode a record instance into a DBObject
     */
+  @deprecated("RecordCodec is now used instead.", "3.4.2")
   def asDBObject: DBObject = meta.asDBObject(this)
 
+  @deprecated("RecordCodec is now used instead.", "3.4.2")
   def asDocument: Document = meta.asDocument(this)
 
   /**
     * Set the fields of this record from the given DBObject
     */
+  @deprecated("RecordCodec is now used instead.", "3.4.2")
   def setFieldsFromDBObject(dbo: DBObject): Unit = meta.setFieldsFromDBObject(this, dbo)
 
  /**
@@ -73,14 +81,49 @@ trait BsonRecord[MyType <: BsonRecord[MyType]] extends Record[MyType] {
 }
 
 /** Specialized MetaRecord that deals with BsonRecords */
-trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[BaseRecord] with JsonFormats {
+trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[BaseRecord] with JsonFormats with MongoCodecs {
   self: BaseRecord =>
+
+  def codecRegistry: CodecRegistry = MongoRecordRules.defaultCodecRegistry.vend
+
+  /**
+   * The `BsonTypeClassMap` to use with this record.
+   */
+  def bsonTypeClassMap: BsonTypeClassMap = MongoRecordRules.defaultBsonTypeClassMap.vend
+  def bsonTransformer: Transformer =  MongoRecordRules.defaultTransformer.vend
+
+  def codec: RecordTypedCodec[BaseRecord] =
+    RecordCodec(this, introspectedCodecRegistry, bsonTypeClassMap, bsonTransformer)
+
+  /**
+   * Check this record's fields and add any Codecs needed.
+   */
+  protected lazy val introspectedCodecRegistry: CodecRegistry = {
+    val fields = metaFields()
+
+    val codecs: List[Codec[_]] = fields.map { field => field match {
+      case f: BsonRecordTypedField[BaseRecord, _] =>
+        f.valueMeta.codec :: Nil
+      case f: BsonRecordListField[BaseRecord, _] =>
+        f.valueMeta.codec :: Nil
+      case f: BsonRecordMapField[BaseRecord, _] =>
+        f.valueMeta.codec :: Nil
+      case _ =>
+        Nil
+    }}.flatten
+
+    CodecRegistries.fromRegistries(
+      CodecRegistries.fromCodecs(codecs.distinct.asJava),
+      codecRegistry
+    )
+  }
 
   /**
     * Create a BasicDBObject from the field names and values.
     * - MongoFieldFlavor types (List) are converted to DBObjects
     *   using asDBObject
     */
+  @deprecated("RecordCodec is now used instead.", "3.4.2")
   def asDBObject(inst: BaseRecord): DBObject = {
     val dbo = BasicDBObjectBuilder.start // use this so regex patterns can be stored.
 
@@ -92,8 +135,9 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
     dbo.get
   }
 
+  @deprecated("RecordCodec is now used instead.", "3.4.2")
   def asDocument(inst: BaseRecord): Document = {
-    val dbo = new Document() // use this so regex patterns can be stored.
+    val dbo = new Document()
 
     for {
       field <- fields(inst)
@@ -103,10 +147,10 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
     dbo
   }
 
-
   /**
     * Return the value of a field suitable to be put in a DBObject
     */
+  @deprecated("RecordCodec is now used instead.", "3.4.2")
   def fieldDbValue(f: Field[_, BaseRecord]): Box[Any] = {
     import Meta.Reflection._
     import field.MongoFieldFlavor
@@ -141,6 +185,7 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
     * @param dbo - the DBObject
     * @return Box[BaseRecord]
     */
+  @deprecated("RecordCodec is now used instead.", "3.4.2")
   def fromDBObject(dbo: DBObject): BaseRecord = {
     val inst: BaseRecord = createRecord
     setFieldsFromDBObject(inst, dbo)
@@ -155,6 +200,7 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
     * @param dbo - The DBObject
     * @return Unit
     */
+  @deprecated("RecordCodec is now used instead.", "3.4.2")
   def setFieldsFromDBObject(inst: BaseRecord, dbo: DBObject): Unit = {
     for (k <- dbo.keySet.asScala; field <- inst.fieldByName(k.toString)) {
       field.setFromAny(dbo.get(k.toString))
@@ -177,5 +223,16 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
     val inst: BaseRecord = createRecord
     setFieldsFromDocument(inst, doc)
     inst
+  }
+
+  def diff(inst: BaseRecord, other: BaseRecord): Seq[(String, Any, Any)] = {
+    fields(inst).flatMap(field => {
+      val otherValue = other.fieldByName(field.name).flatMap(_.valueBox)
+      if (otherValue != field.valueBox) {
+        Seq((field.name, field.valueBox, otherValue))
+      } else {
+        Seq.empty[(String, String, String)]
+      }
+    })
   }
 }

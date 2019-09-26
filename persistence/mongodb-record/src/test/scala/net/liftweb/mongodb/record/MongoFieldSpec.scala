@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 WorldWide Conferencing, LLC
+ * Copyright 2006-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ class MongoFieldSpec extends Specification with MongoTestKit with AroundEach {
   sequential
 
   import fixtures._
+  import testmodels._
 
   lazy val session = new LiftSession("", randomString(20), Empty)
 

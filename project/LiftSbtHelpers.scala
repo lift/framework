@@ -37,7 +37,7 @@ object LiftSbtHelpers {
 
   def liftProject(id: String, base: File): Project = {
     Project(id, base)
-      .settings(scalacOptions ++= List("-feature", "-language:implicitConversions"))
+      .settings(scalacOptions ++= List("-feature", "-language:implicitConversions", "-deprecation"))
       .settings(
         autoAPIMappings := true,
         apiMappings ++= {
