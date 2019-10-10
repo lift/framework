@@ -3,8 +3,8 @@ dist: trusty
 sudo: false
 scala:
   - 2.11.12
-  - 2.12.9
-  - 2.13.0
+  - 2.12.10
+  - 2.13.1
 cache:
   directories:
     - '$HOME/node_modules'
