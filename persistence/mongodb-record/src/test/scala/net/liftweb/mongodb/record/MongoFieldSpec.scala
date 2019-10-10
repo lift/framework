@@ -45,7 +45,7 @@ import org.bson.types.ObjectId
 /**
  * Systems under specification for MongoField.
  */
-object MongoFieldSpec extends Specification with MongoTestKit with AroundEach {
+class MongoFieldSpec extends Specification with MongoTestKit with AroundEach {
   "MongoField Specification".title
   sequential
 

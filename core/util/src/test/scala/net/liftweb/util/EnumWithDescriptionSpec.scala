@@ -23,7 +23,7 @@ import org.specs2.mutable.Specification
 /**
  * Systems under specification for EnumWithDescription.
  */
-object EnumWithDescriptionSpec extends Specification  {
+class EnumWithDescriptionSpec extends Specification  {
   "EnumWithDescription Specification".title
 
   "An enumWithDescription" should {

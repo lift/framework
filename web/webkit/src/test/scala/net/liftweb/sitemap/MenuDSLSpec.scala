@@ -23,7 +23,7 @@ import org.specs2.mutable.Specification
 /**
  * Systems under specification for Menu DSL.
  */
-object MenuDslSpec extends Specification  {
+class MenuDslSpec extends Specification  {
   "Menu DSL Specification".title
 
   "The Menu DSL" should {

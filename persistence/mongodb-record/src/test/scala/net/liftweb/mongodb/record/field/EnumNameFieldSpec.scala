@@ -68,7 +68,7 @@ package enumnamefieldspecs {
 /**
  * Systems under specification for EnumNameField.
  */
-object EnumNameFieldSpec extends Specification with MongoTestKit {
+class EnumNameFieldSpec extends Specification with MongoTestKit {
   "EnumNameField Specification".title
 
   import enumnamefieldspecs._

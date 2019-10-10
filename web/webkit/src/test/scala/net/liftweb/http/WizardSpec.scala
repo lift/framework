@@ -26,7 +26,7 @@ import http._
 /**
  * System under specification for Wizard.
  */
-object WizardSpec extends Specification  {
+class WizardSpec extends Specification  {
   "Wizard Specification".title
 
   val session: LiftSession = new LiftSession("", Helpers.randomString(20), Empty)

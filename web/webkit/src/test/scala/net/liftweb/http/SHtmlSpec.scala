@@ -23,7 +23,7 @@ import util._
 import Helpers._
 import net.liftweb.mockweb.MockWeb._
 
-object SHtmlSpec extends Specification with XmlMatchers {
+class SHtmlSpec extends Specification with XmlMatchers {
   "SHtmlSpec Specification".title
 
   val html1= <span><input id="number"></input></span>

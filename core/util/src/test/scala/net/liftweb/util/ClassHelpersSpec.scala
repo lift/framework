@@ -26,7 +26,7 @@ import ClassHelpers._
 /**
  * Systems under specification for ClassHelpers.
  */
-object ClassHelpersSpec extends Specification  {
+class ClassHelpersSpec extends Specification  {
   "ClassHelpers Specification".title
 
   "The findType function" should {

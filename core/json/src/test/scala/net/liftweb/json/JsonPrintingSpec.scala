@@ -28,7 +28,7 @@ import org.scalacheck.Prop.forAll
 /**
  * System under specification for JSON Printing.
  */
-object JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
+class JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
   "JSON Printing Specification".title
 
   "rendering does not change semantics" in {

@@ -35,7 +35,7 @@ import net.liftweb.json.JsonDSL._
 /**
  * Systems under specification for Record.
  */
-object RecordSpec extends Specification {
+class RecordSpec extends Specification {
   "Record Specification".title
 
   "Record field introspection" should {

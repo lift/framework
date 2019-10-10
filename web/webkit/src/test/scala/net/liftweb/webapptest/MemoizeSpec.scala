@@ -35,7 +35,7 @@ object SessionInfo {
 /**
  * System under specification for Memoize.
  */
-object MemoizeSpec extends Specification  {
+class MemoizeSpec extends Specification  {
   "Memoize Specification".title
   sequential
 

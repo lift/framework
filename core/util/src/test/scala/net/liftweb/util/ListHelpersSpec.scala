@@ -25,7 +25,7 @@ import common._
 /**
  * Systems under specification for ListHelpers.
  */
-object ListHelpersSpec extends Specification  with ListHelpers {
+class ListHelpersSpec extends Specification  with ListHelpers {
   "ListHelpers Specification".title
 
   "ListHelpers.delta" should {

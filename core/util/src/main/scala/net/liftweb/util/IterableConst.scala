@@ -14,13 +14,13 @@ trait IterableConst {
   def constList(nodeSeq: NodeSeq): Seq[NodeSeq]
 }
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
  * The implementation for a NodeSeq Iterable Const
  */
 final case class NodeSeqIterableConst(it: Iterable[NodeSeq]) extends IterableConst {
-  def this(it: JavaList[NodeSeq]) = this(it: Iterable[NodeSeq])
+  def this(it: JavaList[NodeSeq]) = this(it.asScala)
 
   def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.toSeq
 }
@@ -29,7 +29,7 @@ final case class NodeSeqIterableConst(it: Iterable[NodeSeq]) extends IterableCon
  * The implementation for a NodeSeq => NodeSeq Iterable Const
  */
 final case class NodeSeqFuncIterableConst(it: Iterable[NodeSeq => NodeSeq]) extends IterableConst {
-  def this(it: JavaList[NodeSeq => NodeSeq]) = this(it: Iterable[NodeSeq => NodeSeq])
+  def this(it: JavaList[NodeSeq => NodeSeq]) = this(it.asScala)
 
   def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(it.map(_(nodeSeq)).toSeq)
 }
@@ -54,7 +54,7 @@ final case class OptionNodeSeqFuncIterableConst(it: Option[NodeSeq => NodeSeq]) 
  * Sequence of String iterable const
  */
 final case class SeqStringIterableConst(it: Iterable[String]) extends IterableConst {
-  def this(it: JavaList[String]) = this(it: Iterable[String])
+  def this(it: JavaList[String]) = this(it.asScala)
 
   def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.map(a => Text(a)).toSeq
 }
@@ -63,7 +63,7 @@ final case class SeqStringIterableConst(it: Iterable[String]) extends IterableCo
  * Sequence of Bindable iterable const
  */
 final case class SeqBindableIterableConst(it: Iterable[Bindable]) extends IterableConst {
-  def this(it: JavaList[Bindable]) = this(it: Iterable[Bindable])
+  def this(it: JavaList[Bindable]) = this(it.asScala)
 
   def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.map(_.asHtml).toSeq
 }

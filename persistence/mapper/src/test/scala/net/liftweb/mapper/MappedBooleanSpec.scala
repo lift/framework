@@ -25,7 +25,7 @@ import common._
 /**
  * Systems under specification for MappedDate.
  */
-object MappedBooleanSpec extends Specification  {
+class MappedBooleanSpec extends Specification  {
   "MappedBoolean Specification".title
   sequential
 

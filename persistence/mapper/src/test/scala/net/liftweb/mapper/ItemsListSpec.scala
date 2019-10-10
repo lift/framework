@@ -29,7 +29,7 @@ import view._
 /**
  * Systems under specification for ItemsList.
  */
-object ItemsListSpec extends Specification  {
+class ItemsListSpec extends Specification  {
   "ItemsList Specification".title
   sequential
 

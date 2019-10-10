@@ -28,7 +28,7 @@ import StringHelpers._
 /**
  * Systems under specification for StringHelpers.
  */
-object StringHelpersSpec extends Specification with ScalaCheck with StringGen {
+class StringHelpersSpec extends Specification with ScalaCheck with StringGen {
   "StringHelpers Specification".title
 
   "The snakify function" should {

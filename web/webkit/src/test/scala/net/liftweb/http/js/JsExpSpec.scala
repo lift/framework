@@ -29,7 +29,7 @@ import util.Helpers._
 /**
  * System under specification for JsExp.
  */
-object JsExpSpec extends Specification  {
+class JsExpSpec extends Specification  {
   "JsExp Specification".title
 
   "JsExp" should {

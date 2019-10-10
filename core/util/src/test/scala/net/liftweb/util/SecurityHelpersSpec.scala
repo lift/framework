@@ -27,7 +27,7 @@ import SecurityHelpers._
 /**
  * Systems under specification for SecurityHelpers.
  */
-object SecurityHelpersSpec extends Specification  {
+class SecurityHelpersSpec extends Specification  {
   "SecurityHelpers Specification".title
 
   "Security Helpers" should {

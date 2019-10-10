@@ -23,7 +23,7 @@ import org.scalacheck._
   import Arbitrary._
   import Prop.{forAll, forAllNoShrink}
 
-object JsonAstSpec extends Specification with JValueGen with ScalaCheck {
+class JsonAstSpec extends Specification with JValueGen with ScalaCheck {
   "Functor identity" in {
     val identityProp = (json: JValue) => json == (json map identity)
     forAll(identityProp)

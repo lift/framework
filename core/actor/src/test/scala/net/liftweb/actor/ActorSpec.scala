@@ -18,8 +18,7 @@ package net.liftweb
 package actor
 
 import org.specs2.mutable.Specification
-import org.specs2.time.TimeConversions._
-
+import scala.concurrent.duration._
 import common._
 
 

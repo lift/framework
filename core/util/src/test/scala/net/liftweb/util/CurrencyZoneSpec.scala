@@ -23,7 +23,7 @@ import org.specs2.mutable.Specification
 /**
  * Systems under specification for CurrencyZone.
  */
-object CurrencyZoneSpec extends Specification  {
+class CurrencyZoneSpec extends Specification  {
   "CurrencyZone Specification".title
 
   "Australian money" should {

@@ -25,7 +25,7 @@ import json._
 import JsonDSL._
 import util.Helpers._
 
-object HtmlFixerSpec extends Specification  {
+class HtmlFixerSpec extends Specification  {
   "HtmlFixer" should {
     val testFixer = new HtmlFixer {}
     val testSession = new LiftSession("/context-path", "underlying id", Empty)

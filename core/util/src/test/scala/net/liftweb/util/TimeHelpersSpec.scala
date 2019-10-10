@@ -28,12 +28,11 @@ import org.specs2.ScalaCheck
 import org.specs2.execute.AsResult
 import org.specs2.matcher.MatchersImplicits
 import org.specs2.mutable.{Around, Specification}
-import org.specs2.time.NoTimeConversions
 
 /**
  * Systems under specification for TimeHelpers.
  */
-object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen with NoTimeConversions {
+class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen {
   "TimeHelpers Specification".title
 
   "A TimeSpan" can {
@@ -232,10 +231,11 @@ object TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen
 object forAllTimeZones extends Around {
   import MatchersImplicits._
 
-  override def around[T: AsResult](f: => T) = synchronized { // setDefault is on static context so tests should be sequenced
-    import collection.convert.wrapAsScala._
+  override def around[T: AsResult](f: => T) = synchronized {
+    import scala.collection.JavaConverters._
+    // setDefault is on static context so tests should be sequenced
     // some timezones for java (used in formatters) and for Joda (other computations) has other offset
-    val commonJavaAndJodaTimeZones = (TimeZone.getAvailableIDs.toSet & DateTimeZone.getAvailableIDs.toSet).filter { timeZoneId =>
+    val commonJavaAndJodaTimeZones = (TimeZone.getAvailableIDs.toSet & DateTimeZone.getAvailableIDs.asScala.toSet).filter { timeZoneId =>
       TimeZone.getTimeZone(timeZoneId).getOffset(millis) == DateTimeZone.forID(timeZoneId).getOffset(millis)
     }
     val tzBefore = TimeZone.getDefault
@@ -272,4 +272,3 @@ trait TimeAmountsGen {
       (w, "week") :: (d, "day") :: (h, "hour") :: (m, "minute") :: (s, "second") :: (ml, "milli") :: Nil
     )
 }
-

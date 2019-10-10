@@ -29,7 +29,7 @@ import json.Serialization.{read, write => swrite}
 /**
  * System under specification for JodaTimeSerializer.
  */
-object JodaTimeSerializerSpec extends Specification  {
+class JodaTimeSerializerSpec extends Specification  {
   "JodaTimeSerializer Specification".title
 
   implicit val formats = Serialization.formats(NoTypeHints) ++ JodaTimeSerializers.all

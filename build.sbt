@@ -7,8 +7,16 @@ homepage in ThisBuild              := Some(url("http://www.liftweb.net"))
 licenses in ThisBuild              += ("Apache License, Version 2.0", url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
 startYear in ThisBuild             := Some(2006)
 organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
-scalaVersion in ThisBuild          := "2.12.8"
-crossScalaVersions in ThisBuild    := Seq("2.12.8", "2.11.12")
+
+val scala211Version = "2.11.12"
+val scala212Version = "2.12.9"
+val scala213Version = "2.13.0"
+
+val crossUpTo212 = Seq(scala212Version, scala211Version)
+val crossUpTo213 = scala213Version +: crossUpTo212
+
+scalaVersion in ThisBuild          := scala212Version
+crossScalaVersions in ThisBuild    := crossUpTo212 // default everyone to 2.12 for now
 
 libraryDependencies in ThisBuild ++= Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalatest)
 
@@ -40,12 +48,6 @@ lazy val liftProjects = core ++ web ++ persistence
 lazy val framework =
   liftProject("lift-framework", file("."))
     .aggregate(liftProjects: _*)
-    .settings(scalacOptions in (Compile, doc) ++= Seq(scalaVersion.value).flatMap {
-      case v if v.startsWith("2.12") =>
-        Seq("-no-java-comments")
-      case _ =>
-        Seq()
-    }) //workaround for scala/scala-dev#249
     .enablePlugins(ScalaUnidocPlugin)
 
 // Core Projects
@@ -59,20 +61,16 @@ lazy val common =
       description := "Common Libraties and Utilities",
       libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, scala_xml, scala_parser)
     )
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val actor =
   coreProject("actor")
     .dependsOn(common)
     .settings(
-      scalacOptions in (Compile, doc) ++= Seq(scalaVersion.value).flatMap {
-        case v if v.startsWith("2.12") =>
-          Seq("-no-java-comments")
-        case _ =>
-          Seq()
-      },  //workaround for scala/scala-dev#249
       description := "Simple Actor",
       parallelExecution in Test := false
     )
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val markdown =
   coreProject("markdown")
@@ -81,14 +79,16 @@ lazy val markdown =
       parallelExecution in Test := false,
       libraryDependencies ++= Seq(scalatest, junit, scala_xml, scala_parser)
     )
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val json =
   coreProject("json")
     .settings(
       description := "JSON Library",
       parallelExecution in Test := false,
-      libraryDependencies ++= Seq(scalap(scalaVersion.value), paranamer)
+      libraryDependencies ++= Seq(scalap(scalaVersion.value), paranamer,  scala_xml)
     )
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val documentationHelpers =
   coreProject("documentation-helpers")
@@ -110,6 +110,7 @@ lazy val json_ext =
       description := "Extentions to JSON Library",
       libraryDependencies ++= Seq(commons_codec, joda_time, joda_convert)
     )
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val util =
   coreProject("util")
@@ -129,6 +130,7 @@ lazy val util =
         jbcrypt
       )
     )
+    .settings(crossScalaVersions := crossUpTo213)
 
 // Web Projects
 // ------------
@@ -142,6 +144,7 @@ lazy val testkit =
       description := "Testkit for Webkit Library",
       libraryDependencies ++= Seq(commons_httpclient, servlet_api)
     )
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val webkit =
   webProject("webkit")
@@ -162,6 +165,12 @@ lazy val webkit =
         jasmineCore,
         jasmineAjax
       ),
+      libraryDependencies ++= {
+        CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((2, scalaMajor)) if scalaMajor >= 13 => Seq(scala_parallel_collections)
+          case _ => Seq.empty
+        }
+      },
       initialize in Test := {
         System.setProperty(
           "net.liftweb.webapptest.src.test.webapp",
@@ -195,15 +204,9 @@ lazy val webkit =
         }.value
       },
 
-      scalacOptions in (Compile, doc) ++= {
-        if (scalaVersion.value.startsWith("2.12")) {
-          Seq("-no-java-comments")
-        } else {
-          Seq()
-        } //workaround for scala/scala-dev#249
-      }
     )
     .enablePlugins(SbtWeb)
+    .settings(crossScalaVersions := crossUpTo213)
 
 // Persistence Projects
 // --------------------
@@ -214,10 +217,12 @@ lazy val db =
   persistenceProject("db")
     .dependsOn(util, webkit)
     .settings(libraryDependencies += mockito_all)
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val proto =
   persistenceProject("proto")
     .dependsOn(webkit)
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val mapper =
   persistenceProject("mapper")
@@ -238,6 +243,7 @@ lazy val record =
   persistenceProject("record")
     .dependsOn(proto)
     .settings(libraryDependencies ++= Seq(jbcrypt))
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val squeryl_record =
   persistenceProject("squeryl-record")

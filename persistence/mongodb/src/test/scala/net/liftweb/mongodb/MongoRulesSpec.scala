@@ -32,7 +32,7 @@ object CollectionNameTestDoc extends MongoDocumentMeta[CollectionNameTestDoc]
 /**
   * Systems under specification for MongoRules.
   */
-object MongoRulesSpec extends Specification {
+class MongoRulesSpec extends Specification {
   "Mongo Rules Specification".title
   sequential
 

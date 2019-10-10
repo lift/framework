@@ -22,7 +22,7 @@ import org.specs2.mutable.Specification
 /**
  * System under specification for JSON Formats.
  */
-object JsonFormatsSpec extends Specification with TypeHintExamples {
+class JsonFormatsSpec extends Specification with TypeHintExamples {
   "JsonFormats Specification".title
 
   implicit val formats = ShortTypeHintExamples.formats + FullTypeHintExamples.formats.typeHints

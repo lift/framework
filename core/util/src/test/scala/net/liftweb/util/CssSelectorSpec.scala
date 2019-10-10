@@ -28,7 +28,7 @@ import Helpers._
 /**
  * Systems under specification for CSS Selector.
  */
-object CssSelectorSpec extends Specification with XmlMatchers {
+class CssSelectorSpec extends Specification with XmlMatchers {
   "CSS Selector Specification".title
 
   "CssSelector" should {
@@ -228,7 +228,7 @@ object CssSelectorSpec extends Specification with XmlMatchers {
 
 }
 
-object CssBindHelpersSpec extends Specification with XmlMatchers {
+class CssBindHelpersSpec extends Specification with XmlMatchers {
 
   "css bind helpers" should {
     "clear clearable" in {

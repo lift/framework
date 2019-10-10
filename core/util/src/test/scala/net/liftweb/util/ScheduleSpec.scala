@@ -18,7 +18,7 @@ package net.liftweb
 package util
 
 import org.specs2.mutable.Specification
-import org.specs2.specification.BeforeExample
+import org.specs2.specification.BeforeEach
 import org.specs2.execute.PendingUntilFixed
 
 import actor._
@@ -28,7 +28,7 @@ import Helpers._
 /**
  * Systems under specification for Lift Schedule.
  */
-object ScheduleSpec extends Specification with PendingUntilFixed with PingedService with BeforeExample {
+class ScheduleSpec extends Specification with PendingUntilFixed with PingedService with BeforeEach {
   "Schedule Specification".title
 
   def before = Schedule.restart

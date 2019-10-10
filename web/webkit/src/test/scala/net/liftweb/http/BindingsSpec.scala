@@ -29,7 +29,7 @@ import util.Helpers._
 /**
  * System under specification for Bindings.
  */
-object BindingsSpec extends Specification with XmlMatchers {
+class BindingsSpec extends Specification with XmlMatchers {
   "Bindings Bindings".title
 
   case class MyClass(str: String, i: Int, other: MyOtherClass)

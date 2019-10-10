@@ -19,7 +19,7 @@ package mapper {
 
 import org.specs2.mutable.Specification
 
-object OneToManySpecs extends Specification  {
+class OneToManySpecs extends Specification  {
   "One to Many Specification".title
   sequential
 

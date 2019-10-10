@@ -6,7 +6,7 @@ import org.slf4j.{Logger=>SLF4JLogger}
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 
-object BoxLoggingSpec extends Specification with Mockito {
+class BoxLoggingSpec extends Specification with Mockito {
   class MockBoxLoggingClass extends BoxLogging {
     var loggedErrors = List[(String, Option[Throwable])]()
     var loggedWarns = List[(String, Option[Throwable])]()

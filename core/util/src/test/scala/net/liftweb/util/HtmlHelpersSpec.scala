@@ -27,7 +27,7 @@ import common._
 /**
  * Systems under specification for HtmlHelpers.
  */
-object HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
+class HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
   "HtmlHelpers Specification".title
 
   "findBox" should {

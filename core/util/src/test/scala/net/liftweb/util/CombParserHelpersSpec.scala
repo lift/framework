@@ -26,7 +26,7 @@ import Gen._
 import Prop._
 
 
-object CombParserHelpersSpec extends Specification with ScalaCheck {
+class CombParserHelpersSpec extends Specification with ScalaCheck {
   "CombParserHelpers Specification".title
 
   object ParserHelpers extends CombParserHelpers with Parsers
@@ -128,7 +128,7 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
       implicit def pick3Letters = AbcdStringGen.pickN(3, List("a", "b", "c"))
 
       forAll { (s: String) =>
-        (!(new scala.collection.immutable.StringOps(s)).isEmpty) ==> permuteAllParsers(s)
+        ((new scala.collection.immutable.StringOps(s)).nonEmpty) ==> permuteAllParsers(s)
       }
     }
     "provide a repNN parser succeeding if an input can be parsed n times with a parser" in {
@@ -136,7 +136,7 @@ object CombParserHelpersSpec extends Specification with ScalaCheck {
       implicit def pick3Letters = AbcdStringGen.pickN(3, List("a", "a", "a"))
 
       forAll { (s: String) =>
-        (!(new scala.collection.immutable.StringOps(s)).isEmpty) ==> repNNParser(s)
+        ((new scala.collection.immutable.StringOps(s)).nonEmpty) ==> repNNParser(s)
       }
     }
   }
@@ -179,4 +179,3 @@ object StringWithWhiteGen {
   implicit def genString: Arbitrary[String] =
     Arbitrary { genStringWithWhite }
 }
-

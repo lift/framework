@@ -37,7 +37,7 @@ class EnumObj extends LongKeyedMapper[EnumObj] with IdPK {
 
 object EnumObj extends EnumObj with LongKeyedMetaMapper[EnumObj] 
 
-object MappedEnumSpec extends Specification  {
+class MappedEnumSpec extends Specification  {
   "MappedEnum Specification".title
 
   "MappedEnum" should {

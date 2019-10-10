@@ -39,12 +39,13 @@ object Dependencies {
   lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.5"
   lazy val scalap: ModuleMap      = "org.scala-lang"             % "scalap"             % _
   lazy val scala_compiler: ModuleMap = "org.scala-lang"          % "scala-compiler"     % _
-  lazy val scalaz7_core           = "org.scalaz"                %% "scalaz-core"        % "7.2.24"
+  lazy val scalaz7_core           = "org.scalaz"                %% "scalaz-core"        % "7.2.28"
   lazy val squeryl                = "org.squeryl"               %% "squeryl"            % "0.9.5-7"
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
-  lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "1.0.6"
+  lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "1.2.0"
+  lazy val scala_parallel_collections =  "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0"
   lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.7.10"
-  lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "1.0.4"
+  lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "1.1.2"
   lazy val xerces                 = "xerces" % "xercesImpl" % "2.11.0"
 
   // Aliases
@@ -73,20 +74,21 @@ object Dependencies {
   // Aliases
   lazy val h2 = h2database
 
-
   // Test scope:
   // Scope available only in test classpath, non-transitive by default.
   // TODO: See if something alternative with lesser footprint can be used instead of mega heavy apacheds
-  lazy val apacheds    = "org.apache.directory.server" % "apacheds-server-integ"    % "1.5.5"   % "test" // TODO: 1.5.7
-  lazy val jetty6      = "org.mortbay.jetty"           % "jetty"                    % "6.1.26"  % "test"
-  lazy val jwebunit    = "net.sourceforge.jwebunit"    % "jwebunit-htmlunit-plugin" % "2.5"     % "test"
-  lazy val mockito_all = "org.mockito"                 % "mockito-all"              % "1.9.0"   % "test"
-  lazy val scalacheck  = "org.specs2"                 %% "specs2-scalacheck"        % "3.8.9"   % "test"
-  lazy val specs2      = "org.specs2"                 %% "specs2-core"              % "3.8.9"   % "test"
-  lazy val specs2Prov  = "org.specs2"                 %% "specs2-core"              % "3.8.9"   % "provided"
-  lazy val specs2Matchers = "org.specs2"              %% "specs2-matcher-extra"     % "3.8.9"   % "test"
-  lazy val specs2MatchersProv = "org.specs2"              %% "specs2-matcher-extra" % "3.8.9"   % "provided"
-  lazy val specs2Mock  = "org.specs2"                 %% "specs2-mock"              % "3.8.9"   % "test"
-  lazy val scalatest   = "org.scalatest"              %% "scalatest"                % "3.0.1"   % "test"
-  lazy val junit       = "junit"                       % "junit"                    % "4.8.2"   % "test"
+  lazy val apacheds    = "org.apache.directory.server" % "apacheds-server-integ"    % "1.5.5"  % "test" // TODO: 1.5.7
+  lazy val jetty6      = "org.mortbay.jetty"           % "jetty"                    % "6.1.26" % "test"
+  lazy val jwebunit    = "net.sourceforge.jwebunit"    % "jwebunit-htmlunit-plugin" % "2.5"    % "test"
+  lazy val mockito_all = "org.mockito"                 % "mockito-all"              % "1.9.0"  % "test"
+
+  lazy val specs2      = "org.specs2"        %% "specs2-core"          % "4.7.0"         % "test"
+  lazy val scalacheck  = "org.specs2"        %% "specs2-scalacheck"    % specs2.revision % "test"
+  lazy val specs2Prov  = "org.specs2"        %% "specs2-core"          % specs2.revision % "provided"
+  lazy val specs2Matchers = "org.specs2"     %% "specs2-matcher-extra" % specs2.revision % "test"
+  lazy val specs2MatchersProv = "org.specs2" %% "specs2-matcher-extra" % specs2.revision % "provided"
+  lazy val specs2Mock  = "org.specs2"        %% "specs2-mock"          % specs2.revision % "test"
+
+  lazy val scalatest   = "org.scalatest" %% "scalatest" % "3.0.8" % "test"
+  lazy val junit       = "junit"         % "junit"      % "4.8.2" % "test"
 }

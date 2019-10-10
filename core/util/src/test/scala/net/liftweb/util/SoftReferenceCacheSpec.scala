@@ -2,9 +2,8 @@ package net.liftweb.util
 
 import org.specs2.mutable._
 import net.liftweb.common._
-import org.specs2.specification.AroundExample
 
-object SoftReferenceCacheSpec extends Specification {
+class SoftReferenceCacheSpec extends Specification {
   
   sequential
 

@@ -22,7 +22,7 @@ import org.specs2.mutable.Specification
 /**
  * System under specification for ResourceServer.
  */
-object ResourceServerSpec extends Specification  {
+class ResourceServerSpec extends Specification  {
   "ResourceServer Specification".title
 
   "ResourceServer.pathRewriter" should {

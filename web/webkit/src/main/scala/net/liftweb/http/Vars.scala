@@ -21,11 +21,11 @@ import net.liftweb.common._
 import net.liftweb.util._
 import scala.collection.mutable.ListBuffer
 import java.util.concurrent.{ConcurrentHashMap, Callable}
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
  * The bridge between Scala *Vars implementations and
- * the 
+ * the
  */
 class VarsJBridge {
   def vendSessionVar[T](default: T, e: Exception): SessionVar[T] = {
@@ -513,7 +513,7 @@ private[http] object RequestVarHandler extends CoreRequestVarHandler {
     val cmp = Full(grp)
     for {
       bs <- backingStore.toList
-      (rv, _, _) <- bs.values if rv.snapshotGroup == cmp
+      (rv, _, _) <- bs.values.asScala if rv.snapshotGroup == cmp
     } yield rv
   }
 }
@@ -572,18 +572,18 @@ private[http] trait CoreRequestVarHandler {
     } yield {
       if (unread) {
         // Flag the variable as no longer being set-but-unread
-        ht(name) = (rvInstance: MyType, value.asInstanceOf[T], false)
+        ht.asScala(name) = (rvInstance: MyType, value.asInstanceOf[T], false)
       }
       value.asInstanceOf[T]
     }
 
   private[http] def set[T](name: String, from: MyType, value: T): Unit =
     for (ht <- backingStore)
-      ht(name) = (from, value, true)
+      ht.asScala(name) = (from, value, true)
 
   private[http] def clear(name: String): Unit =
     for (ht <- backingStore)
-      ht -= name
+      ht.asScala -= name
 
   private[http] def addCleanupFunc(f: Box[LiftSession] => Unit): Unit =
     for (cu <- Box.legacyNullTest(cleanup.value))
@@ -594,12 +594,12 @@ private[http] trait CoreRequestVarHandler {
       val tv = vals.value
 
       // remove all the session variables that are CleanRequestVarOnSessionTransition
-      val toRemove: Iterable[String] = tv.flatMap {
+      val toRemove: Iterable[String] = tv.asScala.flatMap {
         case (name, (it: CleanRequestVarOnSessionTransition, _, _)) => List(name)
         case _ => Nil
       }
 
-      toRemove.foreach(n => tv -= n)
+      toRemove.foreach(n => tv.asScala -= n)
 
 
       sessionThing.set(session)
@@ -614,9 +614,9 @@ private[http] trait CoreRequestVarHandler {
               cleanup.value.toList.foreach(clean => Helpers.tryo(clean(sessionThing.value)))
 
               if (Props.devMode && LiftRules.logUnreadRequestVars) {
-                vals.value.keys.filter(!_.startsWith(VarConstants.varPrefix + "net.liftweb"))
+                vals.value.keys.asScala.filter(!_.startsWith(VarConstants.varPrefix + "net.liftweb"))
                   .filter(!_.endsWith(VarConstants.initedSuffix))
-                  .foreach(key => vals.value(key) match {
+                  .foreach(key => vals.value.asScala(key) match {
                   case (rv, _, true) if rv.logUnreadVal => logger.warn("RequestVar %s was set but not read".format(key.replace(VarConstants.varPrefix, "")))
                   case _ =>
                 })

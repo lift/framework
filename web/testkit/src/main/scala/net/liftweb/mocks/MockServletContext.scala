@@ -20,7 +20,7 @@ package mocks
 import common.Logger
 
 import scala.collection.mutable.HashMap
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import java.io.PrintWriter
 import java.io.StringReader
@@ -124,7 +124,7 @@ class MockServletContext(var target: String) extends ServletContext {
   def createListener[T <: java.util.EventListener](listener: Class[T]): T = ???
   def createServlet[T <: javax.servlet.Servlet](servletClass: Class[T]): T = ???
 
-  def getDefaultSessionTrackingModes(): java.util.Set[SessionTrackingMode] = Set.empty[SessionTrackingMode]
+  def getDefaultSessionTrackingModes(): java.util.Set[SessionTrackingMode] = Set.empty[SessionTrackingMode].asJava
 
   def declareRoles(roles: String*): Unit = ()
   def getClassLoader(): ClassLoader = getClass.getClassLoader
@@ -197,8 +197,6 @@ class MockServletOutputStream(os: ByteArrayOutputStream) extends ServletOutputSt
 class MockHttpSession extends HttpSession {
   @volatile protected var values: Map[String, Object] = Map()
   @volatile protected var attr: Map[String, Object] = Map()
-
-  import scala.collection.JavaConversions._
 
   protected var maxii: Int = 0
   protected var creationTime: Long = System.currentTimeMillis

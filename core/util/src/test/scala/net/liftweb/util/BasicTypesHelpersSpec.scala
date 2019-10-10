@@ -29,7 +29,7 @@ import BasicTypesHelpers._
 /**
  * Systems under specification for BasicTypesHelpers.
  */
-object BasicTypesHelpersSpec extends Specification  with DataTables {
+class BasicTypesHelpersSpec extends Specification  with DataTables {
   "BasicTypesHelpers Specification".title
 
   "Basic types helpers" should {

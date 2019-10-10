@@ -35,7 +35,7 @@ trait MailerForTesting {
 /**
  * Systems under specification for Lift Mailer.
  */
-object MailerSpec extends Specification {
+class MailerSpec extends Specification {
   "Mailer Specification".title
   sequential
 

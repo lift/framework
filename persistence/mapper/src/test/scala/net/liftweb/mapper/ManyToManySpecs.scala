@@ -22,7 +22,7 @@ import org.specs2.mutable.Specification
 /**
  * Systems under specification for ManyToMany.
  */
-object ManyToManySpec extends Specification  {
+class ManyToManySpec extends Specification  {
   "ManyToMany Specification".title
   sequential
 
