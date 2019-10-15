@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2013 WorldWide Conferencing, LLC
+ * Copyright 2007-2019 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,9 +144,10 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
     other match {
       case that: Record[MyType] =>
         that.fields.corresponds(this.fields) { (a,b) =>
-          a.name == b.name && a.valueBox == b.valueBox
+          a == b
         }
-      case _ => false
+      case _ =>
+        false
     }
   }
 
