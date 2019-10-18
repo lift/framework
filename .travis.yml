@@ -15,16 +15,16 @@ jdk:
   - openjdk8
 matrix:
   include:
-  - scala: 2.12.9
+  - scala: 2.12.10
     jdk: openjdk11
     env: DISABLE_PUBLISH=true
-  - scala: 2.12.9
+  - scala: 2.12.10
     jdk: openjdk12
     env: DISABLE_PUBLISH=true
-  - scala: 2.13.0
+  - scala: 2.13.1
     jdk: openjdk11
     env: DISABLE_PUBLISH=true
-  - scala: 2.13.0
+  - scala: 2.13.1
     jdk: openjdk12
     env: DISABLE_PUBLISH=true
 script: ./travis.sh
