@@ -57,7 +57,7 @@ trait BsonRecord[MyType <: BsonRecord[MyType]] extends Record[MyType] {
   /**
     * Pattern.equals doesn't work properly so it needs a special check. If you use PatternField, be sure to override equals with this.
     */
-  @deprecated("PatternField now has a properly functioning `equals` method.", "3.4.0")
+  @deprecated("PatternField now has a properly functioning `equals` method.", "3.4.1")
   protected def equalsWithPatternCheck(other: Any): Boolean = {
     other match {
       case that: BsonRecord[MyType] =>
