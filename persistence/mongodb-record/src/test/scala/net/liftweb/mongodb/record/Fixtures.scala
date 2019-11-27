@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 WorldWide Conferencing, LLC
+ * Copyright 2010-2019 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -251,8 +251,6 @@ class PatternFieldTestRecord private () extends MongoRecord[PatternFieldTestReco
   object mandatoryPatternField extends PatternField(this)
   object optionalPatternField extends OptionalPatternField(this)
   object legacyOptionalPatternField extends PatternField(this) { override def optional_? = true }
-
-  override def equals(other: Any): Boolean = equalsWithPatternCheck(other)
 }
 
 object PatternFieldTestRecord extends PatternFieldTestRecord with MongoMetaRecord[PatternFieldTestRecord] {
@@ -345,8 +343,6 @@ class SubRecord private () extends BsonRecord[SubRecord] {
   object oid extends ObjectIdField(this)
   object pattern extends PatternField(this)
   object uuid extends UUIDField(this)
-
-  override def equals(other: Any): Boolean = equalsWithPatternCheck(other)
 }
 object SubRecord extends SubRecord with BsonMetaRecord[SubRecord] {
   override def formats = allFormats

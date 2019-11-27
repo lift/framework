@@ -1,5 +1,5 @@
 /*
-* Copyright 2010-2017 WorldWide Conferencing, LLC
+* Copyright 2010-2019 WorldWide Conferencing, LLC
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -62,6 +62,19 @@ abstract class PatternTypedField[OwnerType <: BsonRecord[OwnerType]](val owner: 
   }
 
   def asJValue: JValue = valueBox.map(v => JsonRegex(v)) openOr (JNothing: JValue)
+
+  override def equals(other: Any): Boolean = other match {
+    case that: PatternTypedField[OwnerType] =>
+      (that.valueBox, this.valueBox) match {
+        case (Full(a), Full(b)) =>
+          a.pattern == b.pattern &&
+          a.flags == b.flags
+        case _ =>
+          that.valueBox == this.valueBox
+      }
+    case _ =>
+      false
+  }
 }
 
 class PatternField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) owner: OwnerType) extends PatternTypedField[OwnerType](owner) with MandatoryTypedField[Pattern] {

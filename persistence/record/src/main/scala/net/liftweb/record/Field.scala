@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2012 WorldWide Conferencing, LLC
+ * Copyright 2007-2019 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -341,6 +341,15 @@ trait TypedField[ThisType] extends BaseField {
   def clear: Unit = optional_? match {
     case true  => setBox(Empty)
     case false => setBox(defaultValueBox)
+  }
+
+  override def equals(other: Any): Boolean = {
+    other match {
+      case that: TypedField[ThisType] =>
+        that.name == this.name && that.valueBox == this.valueBox
+      case _ =>
+        false
+    }
   }
 }
 
