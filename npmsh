@@ -2,6 +2,8 @@
 
 set -ev
 
+node -v
+
 cd web/webkit
 npm ci
 npm run lint

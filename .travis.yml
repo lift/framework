@@ -33,7 +33,7 @@ branches:
     - master
     - /^release-branch-.*$/
 node_js:
-  - "4.1"
+  - "10"
 before_script:
   - "cd web/webkit"
   - "npm install"
