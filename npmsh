@@ -5,7 +5,6 @@ set -ev
 node -v
 
 cd web/webkit
-npm ci
 npm run lint
 npm run test
 npm run minify
