@@ -20,7 +20,7 @@ package net.liftweb.markdown
  */
 
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.{Matchers,FlatSpec}
 import scala.xml.{Group, NodeSeq}
 

@@ -19,7 +19,7 @@ package net.liftweb.markdown
  * Christoph Henkelmann http://henkelmann.eu/
  */
 
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import collection.SortedMap

@@ -21,7 +21,7 @@ package net.liftweb.markdown
 
 import org.scalatest.{Matchers,FlatSpec}
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 
 /**
  * tests parsing of individual lines

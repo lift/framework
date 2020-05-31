@@ -18,7 +18,7 @@ val crossUpTo213 = scala213Version +: crossUpTo212
 scalaVersion in ThisBuild          := scala212Version
 crossScalaVersions in ThisBuild    := crossUpTo212 // default everyone to 2.12 for now
 
-libraryDependencies in ThisBuild ++= Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalatest)
+libraryDependencies in ThisBuild ++= Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalactic, scalatest)
 
 scalacOptions in ThisBuild ++= Seq("-deprecation")
 
@@ -79,7 +79,7 @@ lazy val markdown =
     .settings(
       description := "Markdown Parser",
       parallelExecution in Test := false,
-      libraryDependencies ++= Seq(scalatest, junit, scala_xml, scala_parser)
+      libraryDependencies ++= Seq(scalatest, scalatest_junit, scala_xml, scala_parser)
     )
     .settings(crossScalaVersions := crossUpTo213)
 
@@ -162,7 +162,7 @@ lazy val webkit =
         specs2MatchersProv,
         jetty6,
         jwebunit,
-        mockito_all,
+        mockito_scalatest,
         jquery,
         jasmineCore,
         jasmineAjax
@@ -218,7 +218,7 @@ lazy val persistence: Seq[ProjectReference] =
 lazy val db =
   persistenceProject("db")
     .dependsOn(util, webkit)
-    .settings(libraryDependencies += mockito_all)
+    .settings(libraryDependencies += mockito_scalatest)
     .settings(crossScalaVersions := crossUpTo213)
 
 lazy val proto =

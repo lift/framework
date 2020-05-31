@@ -22,7 +22,7 @@ package net.liftweb.markdown
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 
 /**
  * Tests Inline Parsing, i.e. emphasis , strong text, links, escapes etc.

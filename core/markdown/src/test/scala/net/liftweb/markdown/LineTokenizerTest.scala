@@ -21,7 +21,7 @@ package net.liftweb.markdown
 
 import org.scalatest.{Matchers,FlatSpec}
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 
 /**
  * Tests the Line Tokenizer that prepares input for parsing.
