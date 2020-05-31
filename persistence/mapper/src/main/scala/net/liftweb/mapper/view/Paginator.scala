@@ -17,14 +17,7 @@ package net.liftweb
 package mapper
 package view
 
-import scala.xml.{NodeSeq, Text, Elem}
-import net.liftweb.common.Loggable
-import net.liftweb.http.{S,DispatchSnippet,Paginator,PaginatorSnippet,
-  SortedPaginator,SortedPaginatorSnippet}
-import net.liftweb.http.S.?
-import net.liftweb.util.Helpers._
-import net.liftweb.mapper.{Mapper, MetaMapper, MappedField,
-         QueryParam, OrderBy, StartAt, MaxRows, Ascending, Descending}
+import net.liftweb.http.{ Paginator, PaginatorSnippet, SortedPaginator, SortedPaginatorSnippet }
 
 /**
  * Helper for when using paginators with a ModelSnippet.
@@ -52,8 +45,8 @@ class MapperPaginator[T <: Mapper[T]](val meta: MetaMapper[T]) extends Paginator
    */
   var constantParams: Seq[QueryParam[T]] = Nil
 
-  def count = meta.count(constantParams: _*)
-  def page = meta.findAll(constantParams ++ Seq[QueryParam[T]](MaxRows(itemsPerPage), StartAt(first)): _*)
+  def count: Long = meta.count(constantParams: _*)
+  def page: Seq[T] = meta.findAll(constantParams ++ Seq[QueryParam[T]](MaxRows(itemsPerPage), StartAt(first)): _*)
 }
 
 /**
@@ -77,7 +70,7 @@ class SortedMapperPaginator[T <: Mapper[T]](meta: MetaMapper[T],
     val headers = _headers.toList
     sort = (headers.indexWhere{case (_,`initialSort`)=>true; case _ => false}, true)
 
-    override def page = meta.findAll(constantParams ++ Seq[QueryParam[T]](mapperSort, MaxRows(itemsPerPage), StartAt(first)): _*)
+    override def page: Seq[T] = meta.findAll(constantParams ++ Seq[QueryParam[T]](mapperSort, MaxRows(itemsPerPage), StartAt(first)): _*)
     private def mapperSort = sort match {
       case (fieldIndex, ascending) =>
         OrderBy(

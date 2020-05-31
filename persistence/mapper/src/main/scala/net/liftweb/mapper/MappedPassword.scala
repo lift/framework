@@ -183,7 +183,7 @@ extends MappedField[String, T] {
   /**
    * Called after the field is saved to the database
    */
-  override protected[mapper] def doneWithSave() {
+  override protected[mapper] def doneWithSave(): Unit = {
   }
 
   protected def i_obscure_!(in : String) : String = in

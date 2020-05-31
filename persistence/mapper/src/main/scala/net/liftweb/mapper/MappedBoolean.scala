@@ -17,7 +17,7 @@
 package net.liftweb
 package mapper
 
-import java.sql.{ResultSet, Types}
+import java.sql.Types
 import java.lang.reflect.Method
 import net.liftweb.util.Helpers._
 import net.liftweb.http.{S, SHtml}
@@ -88,9 +88,9 @@ abstract class MappedBoolean[T<:Mapper[T]](val fieldOwner: T) extends MappedFiel
     })
 
 
-  protected def i_is_! = data openOr false
-  protected def i_was_! = orgData openOr false
-  protected[mapper] def doneWithSave() {orgData = data}
+  protected def i_is_! : Boolean = data openOr false
+  protected def i_was_! : Boolean = orgData openOr false
+  protected[mapper] def doneWithSave(): Unit = {orgData = data}
 
   protected def real_i_set_!(value : Boolean) : Boolean = {
     val boxed = Full(value)
@@ -103,7 +103,7 @@ abstract class MappedBoolean[T<:Mapper[T]](val fieldOwner: T) extends MappedFiel
   override def readPermission_? = true
   override def writePermission_? = true
 
-     def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JBool(get))
+  def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JBool(get))
 
   def real_convertToJDBCFriendly(value: Boolean): Object = new java.lang.Integer(if (value) 1 else 0)
 
@@ -136,7 +136,7 @@ abstract class MappedBoolean[T<:Mapper[T]](val fieldOwner: T) extends MappedFiel
     }
   }
 
-  private def allSet(in: Box[Boolean]) {
+  private def allSet(in: Box[Boolean]): Unit = {
     this.data = in
     this.orgData = in
   }

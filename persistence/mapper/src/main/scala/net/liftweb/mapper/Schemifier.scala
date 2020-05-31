@@ -17,13 +17,14 @@
 package net.liftweb
 package mapper
 
-import java.sql.{Connection, ResultSet, DatabaseMetaData}
+import java.sql.{Connection, DatabaseMetaData, ResultSet}
 
 import scala.collection.mutable.{HashMap, ListBuffer}
-
-import common.{Full, Box, Loggable}
+import common.{Box, Full, Loggable}
 import util.Helpers
 import Helpers._
+
+import scala.annotation.tailrec
 
 /**
  * Given a list of MetaMappers, make sure the database has the right schema
@@ -140,7 +141,8 @@ object Schemifier extends Loggable {
   def destroyTables_!!(dbId: ConnectionIdentifier, logFunc: (=> AnyRef) => Unit, stables: BaseMetaMapper*): Unit =
   destroyTables_!!(dbId, 0, logFunc,  stables.toList)
 
-  def destroyTables_!!(dbId: ConnectionIdentifier,cnt: Int, logFunc: (=> AnyRef) => Unit, stables: List[BaseMetaMapper]) {
+  @tailrec
+  def destroyTables_!!(dbId: ConnectionIdentifier, cnt: Int, logFunc: (=> AnyRef) => Unit, stables: List[BaseMetaMapper]): Unit = {
     val th = new HashMap[String, String]()
     (DB.use(dbId) {
         conn =>
@@ -154,7 +156,7 @@ object Schemifier extends Loggable {
             val st = conn.createStatement
             st.execute(ct)
             logFunc(ct)
-            st.close
+            st.close()
           } catch {
             case e: Exception => // dispose... probably just an SQL Exception
           }
@@ -162,7 +164,7 @@ object Schemifier extends Loggable {
 
         tables
       }) match {
-      case t if t.length > 0 && cnt < 1000 => destroyTables_!!(dbId, cnt + 1, logFunc, t)
+      case t if t.nonEmpty && cnt < 1000 => destroyTables_!!(dbId, cnt + 1, logFunc, t)
       case _ =>
     }
   }

@@ -19,8 +19,6 @@ package mapper
 
 import org.specs2.mutable.Specification
 
-import common._
-
 
 /**
  * Systems under specification for Schemifier.

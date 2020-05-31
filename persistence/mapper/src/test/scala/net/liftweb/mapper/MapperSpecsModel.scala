@@ -58,7 +58,7 @@ object MapperSpecsModel {
 
   MapperRules.displayNameCalculator.default.set(displayNameCalculator _)
 
-  def setup() {
+  def setup(): Unit = {
     // For now, do nothing. Just force this object to load
   }
 
@@ -66,7 +66,7 @@ object MapperSpecsModel {
 
   private def ignoreLogger(f: => AnyRef): Unit = ()
 
-  def cleanup() {
+  def cleanup(): Unit = {
     // Snake connection doesn't create FK constraints (put this here to be absolutely sure it gets set before Schemify)
     MapperRules.createForeignKeys_? = c => {
       c.jndiName != "snake"
@@ -81,9 +81,9 @@ object MapperSpecsModel {
 
 
 object SampleTag extends SampleTag with LongKeyedMetaMapper[SampleTag] {
-  override def dbAddTable = Full(populate _)
+  override def dbAddTable = Full(populate)
 
-  private def populate {
+  private def populate(): Unit = {
     val samp = SampleModel.findAll()
     val tags = List("Hello", "Moose", "Frog", "WooHoo", "Sloth",
                     "Meow", "Moof")
@@ -111,13 +111,13 @@ object SampleStatus extends Enumeration {
 }
 
 object SampleModel extends SampleModel with KeyedMetaMapper[Long, SampleModel] {
-  override def dbAddTable = Full(populate _)
+  override def dbAddTable = Full(populate)
 
   def encodeAsJson(in: SampleModel): JsonAST.JObject = encodeAsJSON_!(in)
 
   def buildFromJson(json: JsonAST.JObject): SampleModel = decodeFromJSON_!(json, false)
 
-  private def populate {
+  private def populate(): Unit = {
     create.firstName("Elwood").save
     create.firstName("Madeline").save
     create.firstName("Archer").status(SampleStatus.Disabled).save
@@ -148,9 +148,9 @@ class SampleModel extends KeyedMapper[Long, SampleModel] {
 
 
 object SampleTagSnake extends SampleTagSnake with LongKeyedMetaMapper[SampleTagSnake] {
-  override def dbAddTable = Full(populate _)
+  override def dbAddTable = Full(populate)
 
-  private def populate {
+  private def populate(): Unit = {
     val samp = SampleModelSnake.findAll()
     val tags = List("Hello", "Moose", "Frog", "WooHoo", "Sloth",
                     "Meow", "Moof")
@@ -179,13 +179,13 @@ class SampleTagSnake extends LongKeyedMapper[SampleTagSnake] with IdPK {
 
 
 object SampleModelSnake extends SampleModelSnake with KeyedMetaMapper[Long, SampleModelSnake] {
-  override def dbAddTable = Full(populate _)
+  override def dbAddTable = Full(populate)
 
   def encodeAsJson(in: SampleModelSnake): JsonAST.JObject = encodeAsJSON_!(in)
 
   def buildFromJson(json: JsonAST.JObject): SampleModelSnake = decodeFromJSON_!(json, false)
 
-  private def populate {
+  private def populate(): Unit = {
     create.firstName("Elwood").save
     create.firstName("Madeline").save
     create.firstName("Archer").save
@@ -220,9 +220,9 @@ class SampleModelSnake extends KeyedMapper[Long, SampleModelSnake] {
  * The singleton that has methods for accessing the database
  */
 object User extends User with MetaMegaProtoUser[User] {
-  override def dbAddTable = Full(populate _)
+  override def dbAddTable = Full(populate)
 
-  private def populate {
+  private def populate(): Unit = {
     create.firstName("Elwood").save
     create.firstName("Madeline").save
     create.firstName("Archer").save
@@ -277,9 +277,9 @@ class Dog extends LongKeyedMapper[Dog] with IdPK {
 
 
 object Dog extends Dog with LongKeyedMetaMapper[Dog] {
-  override def dbAddTable = Full(populate _)
+  override def dbAddTable = Full(populate)
 
-  private def populate {
+  private def populate(): Unit = {
     create.name("Elwood").save
     create.name("Madeline").save
     create.name("Archer").save
@@ -306,10 +306,10 @@ class Mixer extends LongKeyedMapper[Mixer] with IdPK {
 
 
 object Mixer extends Mixer with LongKeyedMetaMapper[Mixer] {
-  override def dbAddTable = Full(populate _)
+  override def dbAddTable = Full(populate)
   override def dbTableName = "MIXME_UP"
 
-  private def populate {
+  private def populate(): Unit = {
     create.name("Elwood").weight(33).save
     create.name("Madeline").weight(44).save
     create.name("Archer").weight(105).save
@@ -321,7 +321,7 @@ object Thing extends Thing with KeyedMetaMapper[String, Thing] {
 
   import java.util.UUID
   override def beforeCreate = List((thing: Thing) => {
-    thing.thing_id(UUID.randomUUID().toString())
+    thing.thing_id(UUID.randomUUID().toString)
   })
 }
 
@@ -401,9 +401,9 @@ class Dog2 extends LongKeyedMapper[Dog2] with CreatedUpdated {
 
 object Dog2 extends Dog2 with LongKeyedMetaMapper[Dog2] {
   override def dbTableName = "DOG2"
-  override def dbAddTable = Full(populate _)
+  override def dbAddTable = Full(populate)
 
-  private def populate {
+  private def populate(): Unit = {
     create.name("Elwood").actualAge(66).save
     create.name("Madeline").save
     create.name("Archer").save

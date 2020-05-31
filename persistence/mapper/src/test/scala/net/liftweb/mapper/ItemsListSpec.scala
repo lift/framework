@@ -19,10 +19,7 @@ package mapper
 
 import org.specs2.mutable.Specification
 
-import common._
-import json._
 import util._
-import Helpers._
 import view._
 
 

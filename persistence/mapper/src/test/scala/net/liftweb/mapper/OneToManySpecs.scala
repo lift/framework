@@ -26,7 +26,7 @@ class OneToManySpecs extends Specification  {
   val provider = DbProviders.H2MemoryProvider
 
   private def ignoreLogger(f: => AnyRef): Unit = ()
-  def setupDB {
+  def setupDB: Unit = {
     MapperRules.createForeignKeys_? = c => false
     provider.setupDB
     Schemifier.destroyTables_!!(ignoreLogger _,  Contact, Phone)

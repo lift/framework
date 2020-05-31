@@ -128,7 +128,7 @@ abstract class MappedDateTime[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
 
   protected def i_is_! = data.get
   protected def i_was_! = orgData.get
-  protected[mapper] def doneWithSave() {orgData.setFrom(data)}
+  protected[mapper] def doneWithSave(): Unit = {orgData.setFrom(data)}
 
   protected def i_obscure_!(in : Date) : Date = {
     new Date(0L)

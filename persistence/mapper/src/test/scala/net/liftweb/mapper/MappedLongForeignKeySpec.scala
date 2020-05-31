@@ -20,7 +20,6 @@ package mapper
 import org.specs2.mutable.Specification
 
 import common._
-import util._
 
 
 /**
@@ -35,7 +34,7 @@ class MappedLongForeignKeySpec extends Specification with org.specs2.specificati
 
   def provider = DbProviders.H2MemoryProvider
 
-  def before = MapperSpecsModel.cleanup()
+  def before: Unit = MapperSpecsModel.cleanup()
 
   "MappedLongForeignKey" should {
       (try {

@@ -17,11 +17,11 @@
 package net.liftweb
 package mapper
 
-import java.util.regex._
+import http.S
+import util.FieldError
+import proto._
+
 import scala.xml.Text
-import net.liftweb.http.{S}
-import net.liftweb.util.{FieldError}
-import net.liftweb.proto._
 
 object MappedEmail {
   def emailPattern = ProtoRules.emailRegexPattern.vend

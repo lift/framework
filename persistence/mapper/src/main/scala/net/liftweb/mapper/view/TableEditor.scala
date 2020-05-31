@@ -20,15 +20,13 @@ package view
 
 import scala.xml.{NodeSeq, Text}
 
-import common.{Box, Full, Empty}
+import common.Box
 import util.Helpers
 import Helpers._
 import http.{SHtml, S, DispatchSnippet, js}
 import S.?
 
 import js.JsCmds.{Script, Run}
-
-import mapper.{Mapper, MetaMapper, LongKeyedMetaMapper, MappedField}
 
 import Util._
 
@@ -80,7 +78,6 @@ trait ItemsList[T <: Mapper[T]] {
    * Anything else where both values are nonnull are sorted via their toString method (case sensitive)
    */
   def items: Seq[T] = {
-    import scala.util.Sorting._
     val unsorted: List[T] = current.filterNot(removed.contains) ++ added
     sortField match {
       case None =>
@@ -106,13 +103,13 @@ trait ItemsList[T <: Mapper[T]] {
   /**
    * Adds a new, unsaved item
    */
-  def add {
+  def add(): Unit = {
     added ::= metaMapper.create
   }
   /**
    * Marks an item pending for removal
    */
-  def remove(i: T) {
+  def remove(i: T): Unit = {
     if(added.exists(i.eq))
       added = added.filter(i.ne)
     else if(current.contains(i))
@@ -121,16 +118,16 @@ trait ItemsList[T <: Mapper[T]] {
   /**
    * Reset the ItemsList from the database: calls refresh, and 'added' and 'removed' are cleared.
    */
-  def reload {
-    refresh
+  def reload(): Unit = {
+    refresh()
     added = Nil
     removed = Nil
   }
   /**
    * Reloads the contents of 'current' from the database
    */
-  def refresh {
-    current = metaMapper.findAll
+  def refresh(): Unit = {
+    current = metaMapper.findAll()
   }
   /**
    * Sends to the database:
@@ -138,7 +135,7 @@ trait ItemsList[T <: Mapper[T]] {
    *  removed is deleted
    *  (current - removed) is saved
    */
-  def save {
+  def save(): Unit = {
     val (successAdd, failAdd) = added.partition(_.save)
     added = failAdd
 
@@ -152,14 +149,14 @@ trait ItemsList[T <: Mapper[T]] {
   }
 
 
-  def sortBy(field: MappedField[_, T]) = (sortField, ascending) match {
+  def sortBy(field: MappedField[_, T]): Unit = (sortField, ascending) match {
     case (Some(f), true) if f eq field =>
       ascending = false
     case _ | null =>
       sortField = Some(field)
       ascending = true
   }
-  def sortFn(field: MappedField[_, T]) = (sortField, ascending) match {
+  def sortFn(field: MappedField[_, T]): () => Unit = (sortField, ascending) match {
     case (Some(f), true) if f eq field =>
       () => ascending = false
     case _ | null =>
@@ -169,7 +166,7 @@ trait ItemsList[T <: Mapper[T]] {
       }
   }
 
-  reload
+  reload()
 }
 
 
@@ -185,7 +182,7 @@ object TableEditor {
   net.liftweb.http.LiftRules.addToPackages("net.liftweb.mapper.view")
 
   private[view] val map = new scala.collection.mutable.HashMap[String, TableEditorImpl[_]]
-  def registerTable[T<:Mapper[T]](name: String, meta: T with MetaMapper[T], title: String) =
+  def registerTable[T<:Mapper[T]](name: String, meta: T with MetaMapper[T], title: String): Unit =
     map(name) = new TableEditorImpl(title, meta)
 }
 
@@ -206,7 +203,7 @@ package snippet {
    */
   class TableEditor extends DispatchSnippet {
     private def getInstance: Box[TableEditorImpl[_]] = S.attr("table").map(TableEditor.map(_))
-    def dispatch = {
+    def dispatch: DispatchIt = {
       case "edit" =>
         val o = getInstance.openOrThrowException("if we don't have the table attr, we want the dev to know about it.")
         o.edit
@@ -220,8 +217,8 @@ package snippet {
  * @author nafg
  */
 protected class TableEditorImpl[T <: Mapper[T]](val title: String, meta: T with MetaMapper[T]) extends ItemsListEditor[T] {
-  var items = new ItemsList[T] {
-    def metaMapper = meta
+  var items: ItemsList[T] = new ItemsList[T] {
+    def metaMapper: T with MetaMapper[T] = meta
   }
 }
 
@@ -233,10 +230,10 @@ trait ItemsListEditor[T<:Mapper[T]] {
   def items: ItemsList[T]
   def title: String
 
-  def onInsert: Unit = items.add
+  def onInsert(): Unit = items.add()
   def onRemove(item: T): Unit = items.remove(item)
-  def onSubmit: Unit = try {
-    items.save
+  def onSubmit(): Unit = try {
+    items.save()
   } catch {
     case e: java.sql.SQLException =>
       S.error("Not all items could be saved!")

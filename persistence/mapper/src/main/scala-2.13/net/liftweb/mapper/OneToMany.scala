@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package net.liftweb
-package mapper
-
+package net.liftweb.mapper
 
 private[mapper] object RecursiveType {
   val rec: { type R0 <: Mapper[R0] } = null
@@ -46,7 +44,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
    * Returns false as soon as the parent or a one-to-many field returns false.
    * If they are all successful returns true.
    */
-  override def save = {
+  override def save: Boolean = {
     val ret = super.save &&
       oneToManyFields.forall(_.save)
     ret
@@ -58,7 +56,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
    * Returns false as soon as the parent or a one-to-many field returns false.
    * If they are all successful returns true.
    */
-  override def delete_! = DB.use(connectionIdentifier){_ =>
+  override def delete_! : Boolean = DB.use(connectionIdentifier){ _ =>
     if(oneToManyFields.forall{(_: MappedOneToManyBase[_ <: Mapper[_]]) match {
         case f: Cascade[_] => f.delete_!
         case _ => true
@@ -104,8 +102,8 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
    * @param reloadFunc A function that returns a sequence of children from storage.
    * @param foreign A function that gets the MappedForeignKey on the child that refers to this parent
    */
-  class MappedOneToManyBase[O <: Mapper[_]](val reloadFunc: ()=>Seq[O],
-                                      val foreign: O => MappedForeignKey[K,_,T] /*forSome { type X <: Mapper[X] }*/) extends scala.collection.mutable.Buffer[O] {
+  class MappedOneToManyBase[O <: Mapper[_]](val reloadFunc: () => Seq[O],
+                                            val foreign: O => MappedForeignKey[K,_,T]) extends scala.collection.mutable.Buffer[O] {
     private var inited = false
     private var _delegate: List[O] = _
     /**
@@ -114,17 +112,17 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
     private var unlinked: List[O] = Nil
     protected def delegate: List[O] = {
       if(!inited) {
-        refresh
+        refresh()
         inited = true
       }
       _delegate
     }
-    protected def delegate_=(d: List[O]) = _delegate = d
+    protected def delegate_=(d: List[O]): Unit = _delegate = d
 
     /**
      * Takes ownership of e. Sets e's foreign key to our primary key
      */
-    protected def own(e: O) = {
+    protected def own(e: O): O = {
       val f0 = foreign(e).asInstanceOf[Any]
       f0 match {
         case f: MappedLongForeignKey[O,T] with MappedForeignKey[K,_,T] =>
@@ -139,7 +137,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
     /**
      * Relinquishes ownership of e. Resets e's foreign key to its default value.
      */
-    protected def unown(e: O) = {
+    protected def unown(e: O): O = {
       val f = foreign(e)
       f.set(f.defaultValue)
       unlinked = unlinked filter {e.ne}
@@ -148,21 +146,22 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
     /**
      * Returns the backing List
      */
-    def all = delegate
+    def all: List[O] = delegate
 
     // 2.8: return this
-    def +=(elem: O) = {
+    def addOne(elem: O): MappedOneToManyBase.this.type = {
       delegate = delegate ++ List(own(elem))
       this
     }
     // 2.7
     //def readOnly = all
-    def length = delegate.length
+    def length: Int = delegate.length
     // 2.7
     //def elements = delegate.elements
     // 2.8
-    def iterator = delegate.iterator
-    def apply(n: Int) = delegate(n)
+    def iterator: Iterator[O] = delegate.iterator
+
+    def apply(n: Int): O = delegate(n)
 
     // 2.7
     /* def +:(elem: O) = {
@@ -170,38 +169,49 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       this
     } */
     // 2.8
-    def +=:(elem: O) = {
+    def prepend(elem: O): MappedOneToManyBase.this.type = {
       delegate ::= own(elem)
       this
     }
 
-    override def indexOf[B >: O](e: B): Int =
-      delegate.indexWhere(e.asInstanceOf[AnyRef].eq)
+    override def indexOf[B >: O](e: B): Int = delegate.indexWhere(e.asInstanceOf[AnyRef].eq)
+
+    override def insert(idx: Int, elem: O): Unit = insertAll(idx, List(elem))
 
     // 2.7
     // def insertAll(n: Int, iter: Iterable[O]) {
     // 2.8
-    def insertAll(n: Int, iter: Traversable[O]) {
+    def insertAll(n: Int, iter: IterableOnce[O]): Unit = {
       val (before, after) = delegate.splitAt(n)
-      iter foreach own
-      delegate = before ++ iter ++ after
+      delegate = before ++ iter.iterator.map(own) ++ after
     }
 
-    def update(n: Int, newelem: O) {
+    def patchInPlace(from: Int, patch: IterableOnce[O], replaced: Int): MappedOneToManyBase.this.type = {
+      val endIds = from + replaced
+      delegate.slice(from, endIds).foreach(unown)
+      delegate = delegate.take(from) ++ patch.iterator.map(own) ++ delegate.drop(endIds)
+      this
+    }
+
+    def update(n: Int, newelem: O): Unit = {
       unown(delegate(n))
-      val (before, after) = (delegate.take(n), delegate.drop(n+1))
-      delegate = before ++ List(own(newelem)) ++ after
+      delegate = delegate.take(n) ++ List(own(newelem)) ++ delegate.drop(n+1)
     }
 
-    def remove(n: Int) = {
+    def remove(n: Int): O = {
       val e = unown(delegate(n))
       delegate = delegate.filterNot(e.eq)
       e
     }
 
+    def remove(idx: Int, count: Int): Unit = {
+      val endIds = idx + count
+      delegate.slice(idx, endIds).foreach(unown)
+      delegate = delegate.take(idx) ++ delegate.drop(endIds)
+    }
 
-    def clear() {
-      while(delegate.length>0)
+    def clear(): Unit = {
+      while(delegate.nonEmpty)
         remove(0)
     }
 
@@ -210,7 +220,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
      * NOTE: This may leave children in an inconsistent state.
      * It is recommended to call save or clear() before calling refresh.
      */
-    def refresh {
+    def refresh(): Unit = {
       delegate = reloadFunc().toList
       if(saved_?)
         unlinked = Nil
@@ -223,7 +233,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
      * Returns false as soon as save on a child returns false.
      * Returns true if all children were saved successfully.
      */
-    def save = {
+    def save: Boolean = {
       unlinked foreach {u =>
         val f = foreign(u)
         if(f.obj.map(_ eq OneToMany.this) openOr true) // obj is Empty or this
@@ -237,7 +247,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       delegate.forall(_.save)
     }
 
-    override def toString = {
+    override def toString: String = {
       val c = getClass.getSimpleName
       val l = c.lastIndexOf("$")
       c.substring(c.lastIndexOf("$",l-1)+1, l) + delegate.mkString("[",", ","]")
@@ -257,7 +267,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       removed = removed filter {e.ne}
       super.own(e)
     }
-    override def save = {
+    override def save: Boolean = {
       val unowned = removed.filter{ e =>
         val f = foreign(e)
         f.get == f.defaultValue
@@ -272,7 +282,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
    * by this field should be deleted when the parent is deleted.
    */
   trait Cascade[O<:Mapper[_]] extends MappedOneToManyBase[O] {
-    def delete_! = {
+    def delete_! : Boolean = {
       delegate.forall { e =>
           if(foreign(e).get ==
             OneToMany.this.primaryKeyField.get) {
@@ -284,4 +294,3 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
     }
   }
 }
-

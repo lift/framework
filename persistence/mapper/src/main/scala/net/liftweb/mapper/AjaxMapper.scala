@@ -29,7 +29,7 @@ trait AjaxEditableField[FieldType,OwnerType <: Mapper[OwnerType]] extends Mapped
     if (editableField) {
       <xml:group>{
         toForm.map { form =>
-          SHtml.ajaxEditable(super.asHtml, form, () => {fieldOwner.save; onSave; net.liftweb.http.js.JsCmds.Noop})
+          SHtml.ajaxEditable(super.asHtml, form, () => {fieldOwner.save; onSave(); net.liftweb.http.js.JsCmds.Noop})
         } openOr super.asHtml
       }</xml:group>
     } else {
@@ -37,7 +37,7 @@ trait AjaxEditableField[FieldType,OwnerType <: Mapper[OwnerType]] extends Mapped
     }
 
   /** This method is called when the element's data are saved. The default is to do nothing */
-  def onSave {}
+  def onSave(): Unit = {}
 
   /** This method allows you to do programmatic control of whether the field will display
    *  as editable. The default is true */
