@@ -138,7 +138,7 @@ abstract class MappedDecimal[T <: Mapper[T]] (val fieldOwner : T, val context : 
   protected def i_is_! = data
   protected def i_was_! = orgData
 
-  override def doneWithSave() {
+  override def doneWithSave(): Unit = {
     orgData = data
   }
 

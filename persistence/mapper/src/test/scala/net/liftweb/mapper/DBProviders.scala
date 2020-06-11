@@ -36,27 +36,17 @@ object DbProviders {
   trait Provider {
     def name: String
     def setupDB: Unit
-    def required_? = Props.getBool(propsPrefix+"required", false)
+    def required_? : Boolean = Props.getBool(propsPrefix+"required", false)
     def propName: String
-    lazy val propsPrefix = "mapper.test."+propName+"."
+    lazy val propsPrefix: String = "mapper.test."+propName+"."
   }
 
   trait FileDbSetup {
     def filePath : String
     def vendor : Vendor
 
-    def setupDB {
+    def setupDB: Unit = {
       val f = new File(filePath)
-
-      def deleteIt(file: File) {
-        if (file.exists) {
-          if (file.isDirectory) file.listFiles.foreach{f => deleteIt(f)}
-          file.delete
-        }
-      }
-
-      // deleteIt(f)
-
       DB.defineConnectionManager(DefaultConnectionIdentifier, vendor)
       DB.defineConnectionManager(SnakeConnectionIdentifier, vendor)
     }
@@ -65,11 +55,11 @@ object DbProviders {
   trait DbSetup {
     def vendor : Vendor
 
-    def setupDB {
+    def setupDB: Unit = {
       DB.defineConnectionManager(DefaultConnectionIdentifier, vendor)
       DB.defineConnectionManager(SnakeConnectionIdentifier, vendor)
 
-      def deleteAllTables {
+      def deleteAllTables: Unit = {
         DB.use(DefaultConnectionIdentifier) {
           conn =>
           val md = conn.getMetaData
@@ -92,7 +82,7 @@ object DbProviders {
       Full(mkConn)
     }
 
-    def releaseConnection(conn: Connection) {
+    def releaseConnection(conn: Connection): Unit = {
       try {
         conn.close
       } catch {

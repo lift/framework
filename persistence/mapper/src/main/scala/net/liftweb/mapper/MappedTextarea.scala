@@ -17,11 +17,10 @@
 package net.liftweb
 package mapper
 
-import scala.xml.{NodeSeq, Elem}
-import net.liftweb.http.S
-import net.liftweb.http.S._
-import net.liftweb.util._
-import net.liftweb.common._
+import http.S
+import common._
+
+import scala.xml.Elem
 
 abstract class MappedTextarea[T<:Mapper[T]](owner : T, maxLen: Int) extends MappedString[T](owner, maxLen) {
   /**
@@ -37,7 +36,7 @@ abstract class MappedTextarea[T<:Mapper[T]](owner : T, maxLen: Int) extends Mapp
 	     case s => s}}</textarea>))}
   }
 
-  override def toString = {
+  override def toString: String = {
     val v = get
     if (v == null || v.length < 100) super.toString
     else v.substring(0,40)+" ... "+v.substring(v.length - 40)

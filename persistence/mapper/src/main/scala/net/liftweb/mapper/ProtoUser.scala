@@ -17,19 +17,12 @@
 package net.liftweb
 package mapper
 
-import net.liftweb.http._
-import js._
-import JsCmds._
-import scala.xml.{NodeSeq, Node, Text, Elem}
-import scala.xml.transform._
-import net.liftweb.sitemap._
-import net.liftweb.sitemap.Loc._
-import net.liftweb.util.Helpers._
-import net.liftweb.util._
-import net.liftweb.common._
-import net.liftweb.util.Mailer._
-import S._
-import net.liftweb.proto.{ProtoUser => GenProtoUser}
+import http._
+import util._
+import common._
+import proto.{ProtoUser => GenProtoUser}
+
+import scala.xml.{NodeSeq, Text}
 
 /**
  * ProtoUser is a base class that gives you a "User" that has a first name,

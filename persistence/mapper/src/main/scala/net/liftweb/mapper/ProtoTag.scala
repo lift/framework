@@ -35,7 +35,7 @@ trait MetaProtoTag[ModelType <: ProtoTag[ModelType]] extends KeyedMetaMapper[Lon
     else {
       find(By(name, tag)) match {
         case Full(t) => tagCache(tag) = t; t
-        case _ => val ret: ModelType = (createInstance).name(tag).saveMe
+        case _ => val ret: ModelType = createInstance.name(tag).saveMe
           tagCache(tag) = ret
           ret
       }

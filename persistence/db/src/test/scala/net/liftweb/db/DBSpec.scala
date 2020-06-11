@@ -19,12 +19,10 @@ package db
 
 import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
-import org.mockito.Matchers._
 
-import net.liftweb.common._
-import net.liftweb.db._
-import net.liftweb.util.DefaultConnectionIdentifier
-import net.liftweb.util.ControlHelpers._
+import common._
+import util.DefaultConnectionIdentifier
+import util.ControlHelpers._
 
 import java.sql._
 
@@ -35,8 +33,8 @@ class DBSpec extends Specification with Mockito {
     def f(success: Boolean): Unit
   }
 
-  def  dBVendor(connection: Connection) = new ProtoDBVendor {
-    def createOne = {
+  def dBVendor(connection: Connection): ProtoDBVendor = new ProtoDBVendor {
+    def createOne: Box[Connection] = {
       connection.createStatement returns mock[PreparedStatement]
       Full(connection)
     }

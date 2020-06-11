@@ -33,7 +33,7 @@ class DbSpec extends Specification  {
   val provider = DbProviders.H2MemoryProvider
   val logF = Schemifier.infoF _
   
-  def cleanup() {
+  def cleanup(): Unit = {
     provider.setupDB
     Schemifier.destroyTables_!!(DefaultConnectionIdentifier, logF ,  User)
     Schemifier.schemify(true, logF, DefaultConnectionIdentifier, User)

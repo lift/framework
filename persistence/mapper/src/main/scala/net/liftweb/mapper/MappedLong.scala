@@ -19,14 +19,16 @@ package mapper
 
 import java.sql.Types
 import java.lang.reflect.Method
-import net.liftweb.util.Helpers._
-import net.liftweb.util._
-import net.liftweb.common._
 import java.util.Date
+
+import common._
+import util.Helpers._
+import util._
+import http.SHtml
+import http.js._
+import json._
+
 import scala.xml.{Text, NodeSeq}
-import net.liftweb.http.{S, SHtml}
-import net.liftweb.http.js._
-import net.liftweb.json._
 
 
 abstract class MappedLongIndex[T<:Mapper[T]](theOwner: T) extends MappedLong[T](theOwner) with IndexedField[Long] {
@@ -80,21 +82,19 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
   private var orgData: Seq[ENUM#Value] = defaultValue
 
   def defaultValue: Seq[ENUM#Value] = Nil
-  def dbFieldClass = classOf[Seq[ENUM#Value]]
+  def dbFieldClass: Class[Seq[ENUM#Value]] = classOf[Seq[ENUM#Value]]
 
   /**
    * Get the JDBC SQL Type for this field
    */
-  def targetSQLType = Types.BIGINT
+  def targetSQLType: Int = Types.BIGINT
 
-  protected def i_is_! = data
-  protected def i_was_! = orgData
+  protected def i_is_! : Seq[ENUM#Value] = data
+  protected def i_was_! : Seq[ENUM#Value] = orgData
   /**
    * Called after the field is saved to the database
    */
-  override protected[mapper] def doneWithSave() {
-    orgData = data
-  }
+  override protected[mapper] def doneWithSave(): Unit = orgData = data
 
   /**
    * Get the source field metadata for the field
@@ -183,7 +183,7 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
 
   protected def i_obscure_!(in : Seq[ENUM#Value]) = Nil
 
-  private def st(in: Seq[ENUM#Value]) {
+  private def st(in: Seq[ENUM#Value]): Unit = {
     data = in
     orgData = in
   }
@@ -219,7 +219,7 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
  * Mix with MappedLong to give a default time of millis
  */
 trait DefaultMillis extends TypedField[Long] {
-  override def defaultValue = millis
+  override def defaultValue: Long = millis
 }
 
 
@@ -228,12 +228,12 @@ abstract class MappedNullableLong[T<:Mapper[T]](val fieldOwner: T) extends Mappe
   private var orgData: Box[Long] = defaultValue
 
   def defaultValue: Box[Long] = Empty
-  def dbFieldClass = classOf[Box[Long]]
+  def dbFieldClass: Class[Box[Long]] = classOf[Box[Long]]
 
   /**
    * Get the JDBC SQL Type for this field
    */
-  def targetSQLType = Types.BIGINT
+  def targetSQLType: Int = Types.BIGINT
 
   import scala.reflect.runtime.universe._
   def manifest: TypeTag[Box[Long]] = typeTag[Box[Long]]
@@ -280,12 +280,12 @@ abstract class MappedNullableLong[T<:Mapper[T]](val fieldOwner: T) extends Mappe
     })
 
 
-  protected def i_is_! = data
-  protected def i_was_! = orgData
+  protected def i_is_! : Box[Long] = data
+  protected def i_was_! : Box[Long] = orgData
   /**
    * Called after the field is saved to the database
    */
-  override protected[mapper] def doneWithSave() {
+  override protected[mapper] def doneWithSave(): Unit = {
     orgData = data
   }
 
@@ -336,7 +336,7 @@ abstract class MappedNullableLong[T<:Mapper[T]](val fieldOwner: T) extends Mappe
 
   protected def i_obscure_!(in: Box[Long]) = defaultValue
 
-  private def st(in: Box[Long]) {
+  private def st(in: Box[Long]): Unit = {
     data = in
     orgData = in
   }
@@ -410,19 +410,19 @@ abstract class MappedLong[T<:Mapper[T]](val fieldOwner: T) extends MappedField[L
     })
 
   def defaultValue: Long = 0L
-  def dbFieldClass = classOf[Long]
+  def dbFieldClass: Class[Long] = classOf[Long]
 
   /**
    * Get the JDBC SQL Type for this field
    */
-  def targetSQLType = Types.BIGINT
+  def targetSQLType: Int = Types.BIGINT
 
-  protected def i_is_! = data
-  protected def i_was_! = orgData
+  protected def i_is_! : Long = data
+  protected def i_was_! : Long = orgData
   /**
    * Called after the field is saved to the database
    */
-  override protected[mapper] def doneWithSave() {
+  override protected[mapper] def doneWithSave(): Unit = {
     orgData = data
   }
 
@@ -468,7 +468,7 @@ abstract class MappedLong[T<:Mapper[T]](val fieldOwner: T) extends MappedField[L
 
   protected def i_obscure_!(in : Long) = defaultValue
 
-  private def st(in: Long) {
+  private def st(in: Long): Unit = {
     data = in
     orgData = in
   }

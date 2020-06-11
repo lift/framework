@@ -95,7 +95,7 @@ with LifecycleCallbacks {
   private def checkTypes(km: KeyedMapper[KeyType, _]): Boolean =
     km.getSingleton eq foreignMeta
 
-  override def equals(other: Any) = other match {
+  override def equals(other: Any): Boolean = other match {
     case km: KeyedMapper[KeyType, Other] if checkTypes(km) => this.get == km.primaryKeyField.get
     case _ => super.equals(other)
   }
@@ -124,7 +124,7 @@ with LifecycleCallbacks {
    */
   def cached_? : Boolean = synchronized{ _calcedObj}
 
-  override protected def dirty_?(b: Boolean) = synchronized { // issue 165
+  override protected def dirty_?(b: Boolean): Unit = synchronized { // issue 165
     // invalidate if the primary key has changed Issue 370
     if (_obj.isEmpty || (_calcedObj && _obj.isDefined &&
        _obj.openOrThrowException("_obj was just checked as full.").primaryKeyField.get != this.i_is_!)) {
@@ -151,13 +151,13 @@ with LifecycleCallbacks {
     _obj
   }
 
-  private[mapper] def _primeObj(obj: Box[Any]) =
+  private[mapper] def _primeObj(obj: Box[Any]): Unit =
     primeObj(obj.asInstanceOf[Box[Other]])
 
   /**
    * Prime the reference of this FK reference
    */
-  def primeObj(obj: Box[Other]) = synchronized {
+  def primeObj(obj: Box[Other]): Unit = synchronized {
     _obj = obj
     _calcedObj = true
   }
@@ -194,7 +194,7 @@ with LifecycleCallbacks {
    * sets the field's value from obj if it's set to the default (!defined_?).
    * Overrides LifecycleCallbacks.beforeSave
    */
-  override def beforeSave {
+  override def beforeSave: Unit = {
     if(!defined_?)
       for(o <- obj)
         set(o.primaryKeyField.get)
@@ -212,7 +212,7 @@ with LifecycleCallbacks {
 
 abstract class MappedLongForeignKey[T<:Mapper[T],O<:KeyedMapper[Long, O]](theOwner: T, _foreignMeta: => KeyedMetaMapper[Long, O])
 extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeignKey {
-  def defined_? = i_is_! > 0L
+  def defined_? : Boolean = i_is_! > 0L
 
   def foreignMeta = _foreignMeta
 
@@ -255,7 +255,7 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
    */
   def dbAddedForeignKey: Box[() => Unit] = Empty
 
-  override def toString = if (defined_?) super.toString else "NULL"
+  override def toString: String = if (defined_?) super.toString else "NULL"
 
   def findFor(key: KeyType): List[OwnerType] = theOwner.getSingleton.findAll(By(this, key))
 
@@ -272,7 +272,7 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
 
 abstract class MappedStringForeignKey[T<:Mapper[T],O<:KeyedMapper[String, O]](override val fieldOwner: T, foreign: => KeyedMetaMapper[String, O],override val maxLen: Int)
 extends MappedString[T](fieldOwner, maxLen) with MappedForeignKey[String,T,O] with BaseForeignKey {
-  def defined_? = i_is_! ne null
+  def defined_? : Boolean = i_is_! ne null
 
   type KeyType = String
   type KeyedForeignType = O
@@ -297,7 +297,7 @@ extends MappedString[T](fieldOwner, maxLen) with MappedForeignKey[String,T,O] wi
    */
   def dbAddedForeignKey: Box[() => Unit] = Empty
 
-  override def toString = if (defined_?) super.toString else "NULL"
+  override def toString: String = if (defined_?) super.toString else "NULL"
 
   def set(v: Box[O]): T = {
     val toSet: String = v match {

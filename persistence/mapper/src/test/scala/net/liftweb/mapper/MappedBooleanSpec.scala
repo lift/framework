@@ -32,7 +32,7 @@ class MappedBooleanSpec extends Specification  {
   val provider = DbProviders.H2MemoryProvider
   
   private def ignoreLogger(f: => AnyRef): Unit = ()
-  def setupDB {
+  def setupDB: Unit = {
     provider.setupDB
     Schemifier.destroyTables_!!(ignoreLogger _,  Dog2, User)
     Schemifier.schemify(true, ignoreLogger _, Dog2, User)

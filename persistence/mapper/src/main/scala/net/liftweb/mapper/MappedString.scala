@@ -17,22 +17,18 @@
 package net.liftweb
 package mapper
 
-import java.sql.{ResultSet, Types}
+import java.sql.Types
 import java.lang.reflect.Method
-import util._
-import net.liftweb.common.{Box, Full, Empty, Failure}
 import java.util.Date
-import java.util.regex._
-import scala.xml.{NodeSeq, Text, Elem}
-import net.liftweb.http.{S}
-import net.liftweb.http.js._
-import net.liftweb.json._
+
+import util._
+import common.{Box, Full, Empty, Failure}
+import http.S
+import http.js._
+import json._
 import S._
-import common.Full
-import scala.Some
-import common.Full
-import scala.Some
-import util.SourceFieldMetadataRep
+
+import scala.xml.{NodeSeq, Text, Elem}
 
 /**
  * Just like MappedString, except it's defaultValue is "" and the length is auto-cropped to
@@ -62,7 +58,7 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
   private val data: FatLazy[String] =  FatLazy(defaultValue) // defaultValue
   private val orgData: FatLazy[String] =  FatLazy(defaultValue) // defaultValue
 
-  def dbFieldClass = classOf[String]
+  def dbFieldClass: Class[String] = classOf[String]
 
   import scala.reflect.runtime.universe._
   def manifest: TypeTag[String] = typeTag[String]
@@ -123,15 +119,15 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
   /**
    * Get the JDBC SQL Type for this field
    */
-  def targetSQLType = Types.VARCHAR
+  def targetSQLType: Int = Types.VARCHAR
 
   def defaultValue = ""
 
   override def writePermission_? = true
   override def readPermission_? = true
 
-  protected def i_is_! = data.get
-  protected def i_was_! = orgData.get
+  protected def i_is_! : String = data.get
+  protected def i_was_! : String = orgData.get
 
   def asJsonValue: Box[JsonAST.JValue] = Full(get match {
     case null => JsonAST.JNull
@@ -141,7 +137,7 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
   /**
    * Called after the field is saved to the database
    */
-  override protected[mapper] def doneWithSave() {
+  override protected[mapper] def doneWithSave(): Unit = {
     orgData.setFrom(data)
   }
 
@@ -167,7 +163,7 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
   override def setFromAny(in: Any): String = {
     in match {
       case JsonAST.JNull => this.set(null) 
-      case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny).apply(0)
+      case seq: Seq[_] if seq.nonEmpty => seq.map(setFromAny).head
       case (s: String) :: _ => this.set(s)
       case s :: _ => this.setFromAny(s)
       case JsonAST.JString(v) => this.set(v)
@@ -188,7 +184,7 @@ abstract class MappedString[T<:Mapper[T]](val fieldOwner: T,val maxLen: Int) ext
 
   def real_convertToJDBCFriendly(value: String): Object = value
 
-  private def wholeSet(in: String) {
+  private def wholeSet(in: String): Unit = {
     this.data() = in
     this.orgData() = in
   }

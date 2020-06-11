@@ -21,7 +21,7 @@ package net.liftweb.markdown
 
 import org.scalatest.{Matchers,FlatSpec}
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 
 /**
  * Tests the behavior of the complete parser, i.e. all parsing steps together.

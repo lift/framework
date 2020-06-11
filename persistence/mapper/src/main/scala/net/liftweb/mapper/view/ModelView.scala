@@ -18,11 +18,10 @@ package net.liftweb
 package mapper 
 package view 
 
-import net.liftweb.http.{StatefulSnippet, S}
+import http.{S, StatefulSnippet}
 import S.?
-import net.liftweb.util.Helpers._
-
-import net.liftweb.mapper.{Mapper, MetaMapper}
+import util.CssSel
+import util.Helpers._
 
 import scala.xml.{NodeSeq, Text}
 
@@ -37,7 +36,7 @@ import scala.xml.{NodeSeq, Text}
 trait ModelSnippet[T <: Mapper[T]] extends StatefulSnippet {
   import mapper.view.{ModelView => MV}
   class ModelView(e: T, snippet: ModelSnippet[T]) extends MV[T](e, snippet) {
-    def this(e: T) {
+    def this(e: T) = {
       this(e, this)
     }
   }
@@ -49,7 +48,7 @@ trait ModelSnippet[T <: Mapper[T]] extends StatefulSnippet {
   /**
    * Action when save is successful. Defaults to using the ModelView's redirectOnSave
    */
-  var onSave = (view: MV[T])=> {
+  var onSave: MV[T] => Unit = (view: MV[T]) => {
     view.redirectOnSave.foreach(redirectTo)
   }
 
@@ -62,7 +61,7 @@ trait ModelSnippet[T <: Mapper[T]] extends StatefulSnippet {
    */
   def edit(ns: NodeSeq): NodeSeq
   
-  def load(entity: T) = view.entity = entity
+  def load(entity: T): Unit = view.entity = entity
 
   def dispatch: DispatchIt = {
     case "list" =>       list _
@@ -73,11 +72,11 @@ trait ModelSnippet[T <: Mapper[T]] extends StatefulSnippet {
   /**
    * A ".edit" CssSel
   */
-  def editAction(e: T) = ".edit" #> link("edit", ()=>load(e), Text(?("Edit")))
+  def editAction(e: T): CssSel = ".edit" #> link("edit", ()=>load(e), Text(?("Edit")))
   /**
    * A ".remove" CssSel
   */
-  def removeAction(e: T) = ".remove" #> link("list", ()=>e.delete_!, Text(?("Remove")))
+  def removeAction(e: T): CssSel = ".remove" #> link("list", ()=>e.delete_!, Text(?("Remove")))
 }
 
 
@@ -97,12 +96,12 @@ class ModelView[T <: Mapper[T]](var entity: T, val snippet: ModelSnippet[T]) {
   /**
    * Loads this entity into the snippet so it can be edited 
    */
-  def load = snippet.load(entity)
+  def load(): Unit = snippet.load(entity)
   
   /**
    * Delete the entity
    */
-  def remove =
+  def remove: Boolean =
     entity.delete_!
   /**
    * This function is used as a snippet in the edit view
@@ -110,7 +109,7 @@ class ModelView[T <: Mapper[T]](var entity: T, val snippet: ModelSnippet[T]) {
    * existing entity is being edited or a new one is being
    * created.
    */
-  def newOrEdit = {
+  def newOrEdit: CssSel = {
     if (entity.saved_?)
       ".edit ^^" #> "ignored"
     else
@@ -126,7 +125,7 @@ class ModelView[T <: Mapper[T]](var entity: T, val snippet: ModelSnippet[T]) {
    * appropriate message(s) is/are displayed
    * and no redirect is performed.
    */
-  def save {
+  def save(): Unit = {
     entity.validate match {
       case Nil =>
         if(entity.save)
@@ -135,7 +134,7 @@ class ModelView[T <: Mapper[T]](var entity: T, val snippet: ModelSnippet[T]) {
           S.error("Save failed")
       case errors =>
         S.error(errors)
-      }
+    }
   }
 
   /**
@@ -146,11 +145,10 @@ class ModelView[T <: Mapper[T]](var entity: T, val snippet: ModelSnippet[T]) {
    * on the entity's primaryKeyField. Otherwise it
    * calls toString on a field named "id."
    */
-  def idString = if(entity.saved_?)
+  def idString: String = if(entity.saved_?)
     entity match {
-      case e: net.liftweb.mapper.KeyedMapper[_,T] => 
-        e.primaryKeyField.toString
-      case _ => entity.fieldByName("id").toString
+      case e: KeyedMapper[_,T] => e.primaryKeyField.toString
+      case _ => entity.fieldByName("id").dmap("")((f: MappedField[_,T]) => f.toString)
     }
   else
     "<new>"
@@ -159,18 +157,18 @@ class ModelView[T <: Mapper[T]](var entity: T, val snippet: ModelSnippet[T]) {
   /**
    * Returns a CssSel that binds a link to ".edit" to load and edit this entity
    */
-  lazy val editAction = ".edit" #> snippet.link("edit", ()=>load, Text(?("Edit")))
+  lazy val editAction: CssSel = ".edit" #> snippet.link("edit", load, Text(?("Edit")))
   /**
    * Returns a CssSel that binds a link to ".remove" that contains a link to delete this entity
    */
-  lazy val removeAction = ".remove" #> snippet.link("list", ()=>remove, Text(?("Remove")))
+  lazy val removeAction: CssSel = ".remove" #> snippet.link("list", ()=>remove, Text(?("Remove")))
   /**
    * Returns a CssSel that binds the contents of an element with class ".<name>"
    * to the field named `name`.
    * If the field has a Full toForm implementation then that is used;
    * otherwise its asHtml is called.
    */
-  def edit(name: String) = {
+  def edit(name: String): CssSel = {
     entity.fieldByName(name).map { (field: net.liftweb.mapper.MappedField[_,_]) =>
       s".$name *" #> field.toForm.openOr(field.asHtml)
     }.openOrThrowException("If nobody has complained about this giving a NPE, I'll assume it is safe")

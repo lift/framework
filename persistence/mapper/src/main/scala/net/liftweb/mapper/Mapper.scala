@@ -17,15 +17,15 @@
 package net.liftweb
 package mapper
 
+import java.util.Date
+
 import scala.xml.{Elem, NodeSeq}
-import net.liftweb.http.S
-import net.liftweb.http.js._
+import http.S
+import http.js._
 import util._
-import net.liftweb.common.{Box, Empty, Full, ParamFailure}
+import common.{Box, Empty, Full, ParamFailure}
+
 import collection.mutable.StringBuilder
-import net.liftweb.util
-import common.Full
-import common.Full
 
 trait BaseMapper extends FieldContainer {
   type MapperType <: Mapper[MapperType]
@@ -85,7 +85,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo 
     this
   }
 
-  def save(): Boolean = {
+  def save: Boolean = {
     runSafe {
       getSingleton.save(this)
     }
@@ -161,7 +161,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo 
   def formFields: List[MappedField[_, A]] =
   getSingleton.formFields(this)
 
-   def allFields: scala.collection.Seq[BaseField] = formFields
+  def allFields: Seq[BaseField] = formFields
 
   /**
    * map the fields titles and forms to generate a list
@@ -176,7 +176,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo 
    * @param func called with displayHtml, fieldId, form
    */
   def flatMapFieldTitleForm[T]
-  (func: (NodeSeq, Box[NodeSeq], NodeSeq) => scala.collection.Seq[T]): List[T] =
+  (func: (NodeSeq, Box[NodeSeq], NodeSeq) => Seq[T]): List[T] =
   getSingleton.flatMapFieldTitleForm(this, func)
 
     /**
@@ -184,7 +184,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo 
    * @param func called with displayHtml, fieldId, form
    */
   def flatMapFieldTitleForm2[T]
-  (func: (NodeSeq, MappedField[_, A], NodeSeq) => scala.collection.Seq[T]): List[T] =
+  (func: (NodeSeq, MappedField[_, A], NodeSeq) => Seq[T]): List[T] =
   getSingleton.flatMapFieldTitleForm2(this, func)
 
   /**
@@ -225,7 +225,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo 
 
   def toForm(button: Box[String], redoSnippet: NodeSeq => NodeSeq, onSuccess: A => Unit): NodeSeq = {
     val snipName = S.currentSnippet
-    def doSubmit() {
+    def doSubmit(): Unit = {
       this.validate match {
         case Nil => onSuccess(this)
         case xs => S.error(xs)
@@ -247,25 +247,18 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo 
 
   def dirty_? : Boolean = getSingleton.dirty_?(this)
 
-  override def toString = {
-    val ret = new StringBuilder
-
-    ret.append(this.getClass.getName)
-
-    ret.append("={")
-
-    ret.append(getSingleton.appendFieldToStrings(this))
-
-    ret.append("}")
-
-    ret.toString
-  }
+  override def toString: String =
+    new StringBuilder(this.getClass.getName)
+      .append("={")
+      .append(getSingleton.appendFieldToStrings(this))
+      .append("}")
+      .toString
 
   def toXml: Elem = {
     getSingleton.toXml(this)
   }
 
-  def checkNames {
+  def checkNames(): Unit = {
     runSafe {
       getSingleton match {
         case null =>
@@ -304,11 +297,11 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo 
    */
   def fieldTransforms = fieldTransforms_i
 
-  def appendFieldTransform(transform: CssSel) {
+  def appendFieldTransform(transform: CssSel): Unit = {
     fieldTransforms_i = fieldTransforms_i :+ transform
   }
 
-  def prependFieldTransform(transform: CssSel) {
+  def prependFieldTransform(transform: CssSel): Unit = {
     fieldTransforms_i = transform +: fieldTransforms_i
   }
 
@@ -405,9 +398,9 @@ trait UpdatedTrait {
   lazy val updatedAt: MyUpdatedAt = new MyUpdatedAt(this)
 
   protected class MyUpdatedAt(obj: self.type) extends MappedDateTime(obj.asInstanceOf[MapperType]) with LifecycleCallbacks {
-    override def beforeSave() {super.beforeSave; this.set(Helpers.now)}
-    override def defaultValue = Helpers.now
-       override def dbIndexed_? = updatedAtIndexed_?
+    override def beforeSave: Unit = {super.beforeSave; this.set(Helpers.now)}
+    override def defaultValue: Date = Helpers.now
+    override def dbIndexed_? : Boolean = updatedAtIndexed_?
   }
 
 }
@@ -429,7 +422,7 @@ trait KeyedMapper[KeyType, OwnerType<:KeyedMapper[KeyType, OwnerType]] extends M
   def primaryKeyField: MappedField[KeyType, OwnerType] with IndexedField[KeyType]
   def getSingleton: KeyedMetaMapper[KeyType, OwnerType];
 
-  override def comparePrimaryKeys(other: OwnerType) = primaryKeyField.get == other.primaryKeyField.get
+  override def comparePrimaryKeys(other: OwnerType): Boolean = primaryKeyField.get == other.primaryKeyField.get
 
   def reload: OwnerType = getSingleton.find(By(primaryKeyField, primaryKeyField.get)) openOr this
 

@@ -42,7 +42,7 @@ trait BaseMetaMapper {
 
   def dbTableName: String
   def _dbTableNameLC: String
-  def mappedFields: scala.collection.Seq[BaseMappedField];
+  def mappedFields: Seq[BaseMappedField];
   def dbAddTable: Box[() => Unit]
 
   def dbIndexes: List[BaseIndex[RealType]]
@@ -91,13 +91,13 @@ object MapperRules extends Factory {
   * What are the rules and mechanisms for putting quotes around table names?
   */
   val quoteTableName: FactoryMaker[String => String] =
-  new FactoryMaker[String => String]((s: String) => if (s.indexOf(' ') >= 0) '"'+s+'"' else s) {}
+  new FactoryMaker[String => String]((s: String) => if (s.indexOf(' ') >= 0) "\""+s+"\"" else s) {}
 
   /**
   * What are the rules and mechanisms for putting quotes around column names?
   */
   val quoteColumnName: FactoryMaker[String => String] =
-  new FactoryMaker[String => String]((s: String) => if (s.indexOf(' ') >= 0) '"'+s+'"' else s) {}
+  new FactoryMaker[String => String]((s: String) => if (s.indexOf(' ') >= 0) "\""+s+"\"" else s) {}
 
  /**
   * Function that determines if foreign key constraints are
@@ -173,7 +173,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
    */
   def validation: List[A => List[FieldError]] = Nil
 
-  private def clearPostCommit(in: A) {
+  private def clearPostCommit(in: A): Unit = {
     in.addedPostCommit = false
   }
 
@@ -271,7 +271,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
   //type OtherMapper = KeyedMapper[_, (T forSome {type T})]
   //type OtherMetaMapper = KeyedMetaMapper[_, OtherMapper]
 
-  def findAllFields(fields: scala.collection.Seq[SelectableField],
+  def findAllFields(fields: Seq[SelectableField],
                     by: QueryParam[A]*): List[A] =
   findMapFieldDb(dbDefaultConnectionIdentifier,
                  fields, by :_*)(v => Full(v))
@@ -759,7 +759,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                                         index: Int,
                                         field: MappedField[_, A],
                                         columnName : String,
-                                        setObj : (PreparedStatement, Int, AnyRef, Int) => Unit) {
+                                        setObj : (PreparedStatement, Int, AnyRef, Int) => Unit): Unit = {
     setPreparedStatementValue(conn, st, index, field,
                               field.targetSQLType(columnName),
                               field.jdbcFriendly(columnName),
@@ -784,7 +784,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
                                         field: BaseMappedField,
                                         columnType : Int,
                                         value : Object,
-                                        setObj : (PreparedStatement, Int, AnyRef, Int) => Unit) {
+                                        setObj : (PreparedStatement, Int, AnyRef, Int) => Unit): Unit = {
     // Remap the type if the driver wants
     val mappedColumnType = conn.driverType.columnTypeMap(columnType)
 
@@ -905,7 +905,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
               val query = "INSERT INTO "+MapperRules.quoteTableName.vend(_dbTableNameLC)+" ("+columnNamesForInsert+") VALUES ("+columnQueriesForInsert+")"
 
-              def prepStat(st : PreparedStatement) {
+              def prepStat(st : PreparedStatement): Unit = {
                 var colNum = 1
 
                 for (col <- mappedColumns) {
@@ -1394,7 +1394,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
   private[mapper] lazy val internal_dbTableName = fixTableName(internalTableName_$_$)
 
-  private def setupInstanceForPostCommit(inst: A) {
+  private def setupInstanceForPostCommit(inst: A): Unit = {
     afterCommit match {
       case Nil =>
         // If there's no post-commit functions, then don't
@@ -1408,7 +1408,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     }
   }
 
-  private def eachField(what: A, toRun: List[(A) => Any])(f: (LifecycleCallbacks) => Any) {
+  private def eachField(what: A, toRun: List[(A) => Any])(f: (LifecycleCallbacks) => Any): Unit = {
     mappedCallbacks.foreach (e =>
       e._2.invoke(what) match {
         case lccb: LifecycleCallbacks => f(lccb)
@@ -1416,26 +1416,26 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
       })
     toRun.foreach{tf => tf(what)}
   }
-  private def _beforeValidation(what: A) {setupInstanceForPostCommit(what); eachField(what, beforeValidation) {field => field.beforeValidation}  }
-  private def _beforeValidationOnCreate(what: A) {eachField(what, beforeValidationOnCreate) {field => field.beforeValidationOnCreate}  }
-  private def _beforeValidationOnUpdate(what: A) {eachField(what, beforeValidationOnUpdate) {field => field.beforeValidationOnUpdate}  }
-  private def _afterValidation(what: A) { eachField(what, afterValidation) {field => field.afterValidation}  }
-  private def _afterValidationOnCreate(what: A) {eachField(what, afterValidationOnCreate) {field => field.afterValidationOnCreate}  }
-  private def _afterValidationOnUpdate(what: A) {eachField(what, afterValidationOnUpdate) {field => field.afterValidationOnUpdate}  }
+  private def _beforeValidation(what: A): Unit = {setupInstanceForPostCommit(what); eachField(what, beforeValidation) { field => field.beforeValidation}  }
+  private def _beforeValidationOnCreate(what: A): Unit = {eachField(what, beforeValidationOnCreate) { field => field.beforeValidationOnCreate}  }
+  private def _beforeValidationOnUpdate(what: A): Unit = {eachField(what, beforeValidationOnUpdate) { field => field.beforeValidationOnUpdate}  }
+  private def _afterValidation(what: A): Unit = { eachField(what, afterValidation) { field => field.afterValidation}  }
+  private def _afterValidationOnCreate(what: A): Unit = {eachField(what, afterValidationOnCreate) { field => field.afterValidationOnCreate}  }
+  private def _afterValidationOnUpdate(what: A): Unit = {eachField(what, afterValidationOnUpdate) { field => field.afterValidationOnUpdate}  }
 
-  private def _beforeSave(what: A) {setupInstanceForPostCommit(what); eachField(what, beforeSave) {field => field.beforeSave}  }
-  private def _beforeCreate(what: A) { eachField(what, beforeCreate) {field => field.beforeCreate}  }
-  private def _beforeUpdate(what: A) { eachField(what, beforeUpdate) {field => field.beforeUpdate}  }
+  private def _beforeSave(what: A): Unit = {setupInstanceForPostCommit(what); eachField(what, beforeSave) { field => field.beforeSave}  }
+  private def _beforeCreate(what: A): Unit = { eachField(what, beforeCreate) { field => field.beforeCreate}  }
+  private def _beforeUpdate(what: A): Unit = { eachField(what, beforeUpdate) { field => field.beforeUpdate}  }
 
-  private def _afterSave(what: A) {eachField(what, afterSave) {field => field.afterSave}  }
-  private def _afterCreate(what: A) {eachField(what, afterCreate) {field => field.afterCreate}  }
-  private def _afterUpdate(what: A) {eachField(what, afterUpdate) {field => field.afterUpdate}  }
+  private def _afterSave(what: A): Unit = {eachField(what, afterSave) { field => field.afterSave}  }
+  private def _afterCreate(what: A): Unit = {eachField(what, afterCreate) { field => field.afterCreate}  }
+  private def _afterUpdate(what: A): Unit = {eachField(what, afterUpdate) { field => field.afterUpdate}  }
 
-  private def _beforeDelete(what: A) {setupInstanceForPostCommit(what); eachField(what, beforeDelete) {field => field.beforeDelete}  }
-  private def _afterDelete(what: A) {eachField(what, afterDelete) {field => field.afterDelete}  }
+  private def _beforeDelete(what: A): Unit = {setupInstanceForPostCommit(what); eachField(what, beforeDelete) { field => field.beforeDelete}  }
+  private def _afterDelete(what: A): Unit = {eachField(what, afterDelete) { field => field.afterDelete}  }
 
-  def beforeSchemifier {}
-  def afterSchemifier {}
+  def beforeSchemifier: Unit = {}
+  def afterSchemifier: Unit = {}
 
   def dbIndexes: List[BaseIndex[A]] = Nil
 
@@ -1605,12 +1605,10 @@ final case class InRaw[TheType <:
 extends QueryParam[TheType]
 
 object NotIn {
-  def fk[InnerMapper <: Mapper[InnerMapper], JoinTypeA,
-         Zoom <% QueryParam[InnerMapper],
-         OuterMapper <:KeyedMapper[JoinTypeA, OuterMapper]]
-  (fielda: MappedForeignKey[JoinTypeA, InnerMapper, OuterMapper],
-   qp: Zoom*): InThing[OuterMapper]
-  = {
+  def fk[InnerMapper <: Mapper[InnerMapper], JoinTypeA, Zoom, OuterMapper <: KeyedMapper[JoinTypeA, OuterMapper]](
+    fielda: MappedForeignKey[JoinTypeA, InnerMapper, OuterMapper],
+    qp: Zoom*
+  )(implicit ev: Zoom => QueryParam[InnerMapper]): InThing[OuterMapper] = {
     new InThing[OuterMapper] {
       type JoinType = JoinTypeA
       type InnerType = InnerMapper
@@ -1626,13 +1624,11 @@ object NotIn {
     }
   }
 
-  def apply[InnerMapper <: Mapper[InnerMapper], JoinTypeA,
-            Zoom <% QueryParam[InnerMapper],
-            OuterMapper <: Mapper[OuterMapper]]
-  (_outerField: MappedField[JoinTypeA, OuterMapper],
-   _innerField: MappedField[JoinTypeA, InnerMapper],
-   qp: Zoom*): InThing[OuterMapper]
-  = {
+  def apply[InnerMapper <: Mapper[InnerMapper], JoinTypeA, Zoom, OuterMapper <: Mapper[OuterMapper]](
+    _outerField: MappedField[JoinTypeA, OuterMapper],
+    _innerField: MappedField[JoinTypeA, InnerMapper],
+    qp: Zoom*
+  )(implicit ev: Zoom => QueryParam[InnerMapper]): InThing[OuterMapper] = {
     new InThing[OuterMapper] {
       type JoinType = JoinTypeA
       type InnerType = InnerMapper
@@ -1651,12 +1647,10 @@ object NotIn {
 }
 
 object In {
-  def fk[InnerMapper <: Mapper[InnerMapper], JoinTypeA,
-         Zoom <% QueryParam[InnerMapper],
-         OuterMapper <:KeyedMapper[JoinTypeA, OuterMapper]]
-  (fielda: MappedForeignKey[JoinTypeA, InnerMapper, OuterMapper],
-   qp: Zoom*): InThing[OuterMapper]
-  = {
+  def fk[InnerMapper <: Mapper[InnerMapper], JoinTypeA, Zoom, OuterMapper <: KeyedMapper[JoinTypeA, OuterMapper]](
+    fielda: MappedForeignKey[JoinTypeA, InnerMapper, OuterMapper],
+    qp: Zoom*
+  )(implicit ev: Zoom => QueryParam[InnerMapper]): InThing[OuterMapper] = {
     new InThing[OuterMapper] {
       type JoinType = JoinTypeA
       type InnerType = InnerMapper
@@ -1672,13 +1666,11 @@ object In {
     }
   }
 
-  def apply[InnerMapper <: Mapper[InnerMapper], JoinTypeA,
-            Zoom <% QueryParam[InnerMapper],
-            OuterMapper <: Mapper[OuterMapper]]
-  (_outerField: MappedField[JoinTypeA, OuterMapper],
-   _innerField: MappedField[JoinTypeA, InnerMapper],
-   qp: Zoom*): InThing[OuterMapper]
-  = {
+  def apply[InnerMapper <: Mapper[InnerMapper], JoinTypeA, Zoom, OuterMapper <: Mapper[OuterMapper]](
+    _outerField: MappedField[JoinTypeA, OuterMapper],
+    _innerField: MappedField[JoinTypeA, InnerMapper],
+    qp: Zoom*
+  )(implicit ev: Zoom => QueryParam[InnerMapper]): InThing[OuterMapper] = {
     new InThing[OuterMapper] {
       type JoinType = JoinTypeA
       type InnerType = InnerMapper
@@ -1709,7 +1701,7 @@ object NotLike {
 object By {
   import OprEnum._
 
-  def apply[O <: Mapper[O], T, U <% T](field: MappedField[T, O], value: U) = Cmp[O,T](field, Eql, Full(value), Empty, Empty)
+  def apply[O <: Mapper[O], T, U](field: MappedField[T, O], value: U)(implicit ev: U => T) = Cmp[O,T](field, Eql, Full(value), Empty, Empty)
   def apply[O <: Mapper[O], T](field: MappedNullableField[T, O], value: Box[T]) = value match {
     case Full(x) => Cmp[O,Box[T]](field, Eql, Full(value), Empty, Empty)
     case _ => NullRef(field)
@@ -1728,8 +1720,8 @@ object By_>= {
 
   import OprEnum._
 
-  def apply[O <: Mapper[O], T, U <% T](field: MappedField[T, O],
-                                       value: U) = Cmp[O, T](field, >=, Full(value), Empty, Empty)
+  def apply[O <: Mapper[O], T, U](field: MappedField[T, O],
+                                  value: U)(implicit ev: U => T) = Cmp[O, T](field, >=, Full(value), Empty, Empty)
 
   def apply[O <: Mapper[O], T](field: MappedField[T, O], otherField:
   MappedField[T, O]) = Cmp[O, T](field, >=, Empty, Full(otherField),
@@ -1740,8 +1732,8 @@ object By_<= {
 
   import OprEnum._
 
-  def apply[O <: Mapper[O], T, U <% T](field: MappedField[T, O],
-                                       value: U) = Cmp[O, T](field, <=, Full(value), Empty, Empty)
+  def apply[O <: Mapper[O], T, U](field: MappedField[T, O],
+                                  value: U)(implicit ev: U => T) = Cmp[O, T](field, <=, Full(value), Empty, Empty)
 
   def apply[O <: Mapper[O], T](field: MappedField[T, O], otherField:
   MappedField[T, O]) = Cmp[O, T](field, <=, Empty, Full(otherField),
@@ -1751,7 +1743,7 @@ object By_<= {
 object NotBy {
   import OprEnum._
 
-  def apply[O <: Mapper[O], T, U <% T](field: MappedField[T, O], value: U) = Cmp[O,T](field, <>, Full(value), Empty, Empty)
+  def apply[O <: Mapper[O], T, U](field: MappedField[T, O], value: U)(implicit ev: U => T) = Cmp[O,T](field, <>, Full(value), Empty, Empty)
 
   def apply[O <: Mapper[O], T](field: MappedNullableField[T, O], value: Box[T]) = value match {
     case Full(x) => Cmp[O,Box[T]](field, <>, Full(value), Empty, Empty)
@@ -1782,14 +1774,14 @@ object NotByRef {
 object By_> {
   import OprEnum._
 
-  def apply[O <: Mapper[O], T, U <% T](field: MappedField[T, O], value: U) = Cmp[O,T](field, >, Full(value), Empty, Empty)
+  def apply[O <: Mapper[O], T, U](field: MappedField[T, O], value: U)(implicit ev: U => T) = Cmp[O,T](field, >, Full(value), Empty, Empty)
   def apply[O <: Mapper[O], T](field: MappedField[T, O], otherField: MappedField[T,O]) = Cmp[O,T](field, >, Empty, Full(otherField), Empty)
 }
 
 object By_< {
   import OprEnum._
 
-  def apply[O <: Mapper[O], T, U <% T](field: MappedField[T, O], value: U) = Cmp[O,T](field, <, Full(value), Empty, Empty)
+  def apply[O <: Mapper[O], T, U](field: MappedField[T, O], value: U)(implicit ev: U => T) = Cmp[O,T](field, <, Full(value), Empty, Empty)
   def apply[O <: Mapper[O], T](field: MappedField[T, O], otherField: MappedField[T,O]) = Cmp[O,T](field, <, Empty, Full(otherField), Empty)
 }
 
@@ -1874,15 +1866,15 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
 
   def find(key: Any): Box[A] =
   key match {
-    case qp: QueryParam[A] => find(List(qp.asInstanceOf[QueryParam[A]]) :_*)
-    case prod: Product if (testProdArity(prod)) => find(convertToQPList(prod) :_*)
+    case qp: QueryParam[A] => find(qp)
+    case prod: Product if (testProdArity(prod)) => find(convertToQPList(prod).toIndexedSeq :_*)
     case key => anyToFindString(key) flatMap (find(_))
   }
 
   def findDb(dbId: ConnectionIdentifier, key: Any): Box[A] =
   key match {
     case qp: QueryParam[A] => findDb(dbId, List(qp.asInstanceOf[QueryParam[A]]) :_*)
-    case prod: Product if (testProdArity(prod)) => findDb(dbId, convertToQPList(prod) :_*)
+    case prod: Product if (testProdArity(prod)) => findDb(dbId, convertToQPList(prod).toIndexedSeq :_*)
     case key => anyToFindString(key) flatMap (find(dbId, _))
   }
 
@@ -1947,6 +1939,8 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
     }
   }
 
+  def find(by: QueryParam[A]): Box[A] = find(Seq(by): _*)
+
   def find(by: QueryParam[A]*): Box[A] =
   findDb(dbDefaultConnectionIdentifier, by :_*)
 
@@ -1973,7 +1967,7 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
     }
   }
 
-  override def afterSchemifier {
+  override def afterSchemifier: Unit = {
     if (crudSnippets_?) {
       LiftRules.snippets.append(crudSnippets)
     }
@@ -2014,7 +2008,7 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
   def formSnippet(html: NodeSeq, obj: A, cleanup: (A => Unit)): NodeSeq = {
     val name = internal_dbTableName
 
-    def callback() {
+    def callback(): Unit = {
       cleanup(obj)
     }
 
@@ -2115,14 +2109,14 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
    *
    * @param obj mapped object of this metamapper's type
    */
-  def editSnippetCallback(obj: A) { obj.save }
+  def editSnippetCallback(obj: A): Unit = { obj.save }
   /**
    * Default callback behavior of the add snippet. Called when the user
    * presses submit. Saves the passed in object.
    *
    * @param obj mapped object of this metamapper's type
    */
-  def addSnippetCallback(obj: A) { obj.save }
+  def addSnippetCallback(obj: A): Unit = { obj.save }
 }
 
 
@@ -2153,8 +2147,8 @@ class KeyObfuscator {
     obscure(what.getSingleton, what.primaryKeyField.get)
   }
 
-  def apply[KeyType, MetaType <: KeyedMapper[KeyType, MetaType], Q <% KeyType](theType:
-                                                                               KeyedMetaMapper[KeyType, MetaType], key: Q): String = {
+  def apply[KeyType, MetaType <: KeyedMapper[KeyType, MetaType], Q](theType:
+                                                                    KeyedMetaMapper[KeyType, MetaType], key: Q)(implicit ev: Q => KeyType): String = {
     val k: KeyType = key
     obscure(theType, k)
   }

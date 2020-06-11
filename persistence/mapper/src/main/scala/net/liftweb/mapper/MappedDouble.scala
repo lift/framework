@@ -17,11 +17,10 @@
 package net.liftweb
 package mapper
 
-import java.sql.{ResultSet, Types}
+import java.sql.Types
 import java.lang.reflect.Method
 import net.liftweb.common._
 import net.liftweb.util._
-import Helpers._
 import java.util.Date
 import net.liftweb.http._
 import scala.xml.{Text, NodeSeq}
@@ -32,18 +31,18 @@ abstract class MappedDouble[T<:Mapper[T]](val fieldOwner: T) extends MappedField
 	private var data: Double = defaultValue
 	private var orgData: Double = defaultValue
 
-	private def st(in: Double) {
+	private def st(in: Double): Unit = {
 		data = in
 		orgData = in
 	}
 
 	def defaultValue: Double = 0.0
-	def dbFieldClass = classOf[Double]
+	def dbFieldClass: Class[Double] = classOf[Double]
 
-	protected def i_is_! = data
-	protected def i_was_! = orgData
+	protected def i_is_! : Double = data
+	protected def i_was_! : Double = orgData
 
-	override def doneWithSave() {
+	override def doneWithSave(): Unit = {
 		orgData = data
 	}
 
@@ -95,15 +94,15 @@ abstract class MappedDouble[T<:Mapper[T]](val fieldOwner: T) extends MappedField
 		in match {
 			case null => 0.0
 			case i: Int => i
-			case n: Long => n
+			case n: Long => n.toDouble
 			case n : Number => n.doubleValue
 			case (n: Number) :: _ => n.doubleValue
             case Full(n) => toDouble(n) // fixes issue 185
-            case x: EmptyBox => 0.0
+            case _: EmptyBox => 0.0
 			case Some(n) => toDouble(n)
 			case None => 0.0
 			case s: String => s.toDouble
-			case x :: xs => toDouble(x)
+			case x :: _ => toDouble(x)
 			case o => toDouble(o.toString)
 		}
 	}
@@ -111,7 +110,7 @@ abstract class MappedDouble[T<:Mapper[T]](val fieldOwner: T) extends MappedField
 	override def readPermission_? = true
 	override def writePermission_? = true
 
-	protected def i_obscure_!(in : Double) = defaultValue
+	protected def i_obscure_!(in : Double): Double = defaultValue
 
 	protected def real_i_set_!(value : Double): Double = {
 		if (value != data) {
@@ -146,17 +145,17 @@ abstract class MappedDouble[T<:Mapper[T]](val fieldOwner: T) extends MappedField
 	/**
 	* Get the JDBC SQL Type for this field
 	*/
-	def targetSQLType = Types.DOUBLE
+	def targetSQLType: Int = Types.DOUBLE
 	def jdbcFriendly(field : String) = new java.lang.Double(i_is_!)
 	def buildSetBooleanValue(accessor : Method, columnName : String) : (T, Boolean, Boolean) => Unit = null
 	def buildSetDateValue(accessor : Method, columnName : String) : (T, Date) => Unit =
-		(inst, v) => doField(inst, accessor, {case f: MappedDouble[T] => f.st(if (v == null) defaultValue else v.getTime)})
+		(inst, v) => doField(inst, accessor, {case f: MappedDouble[T] => f.st(if (v == null) defaultValue else v.getTime.toDouble)})
 
 	def buildSetStringValue(accessor: Method, columnName: String): (T, String) =>
 		Unit = (inst, v) => doField(inst, accessor, {case f: MappedDouble[T] => f.st(toDouble(v))})
 
 	def buildSetLongValue(accessor: Method, columnName : String) : (T, Long, Boolean) =>
-		Unit = (inst, v, isNull) => doField(inst, accessor, {case f: MappedDouble[T] => f.st(if (isNull) defaultValue else v)})
+		Unit = (inst, v, isNull) => doField(inst, accessor, {case f: MappedDouble[T] => f.st(if (isNull) defaultValue else v.toDouble)})
 
 	def buildSetActualValue(accessor: Method, data: AnyRef, columnName: String) : (T, AnyRef) =>
 		Unit = (inst, v) => doField(inst, accessor, {case f: MappedDouble[T] => f.st(toDouble(v))})

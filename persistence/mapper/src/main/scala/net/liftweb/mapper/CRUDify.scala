@@ -17,12 +17,8 @@
 package net.liftweb
 package mapper
 
-import sitemap._
-import Loc._
-import http._
 import util._
 import common._
-import Helpers._
 
 import scala.xml._
 

@@ -17,9 +17,10 @@
 package net.liftweb
 package mapper
 
-import scala.collection.mutable.HashSet
 import util.FatLazy
 import common._
+
+import scala.collection.mutable
 
 class HasManyThrough[From <: KeyedMapper[ThroughType, From],
                      To <: Mapper[To],
@@ -59,29 +60,29 @@ class HasManyThrough[From <: KeyedMapper[ThroughType, From],
 
   def get: List[To] = this()
 
-  def reset = others.reset
+  def reset(): Unit = others.reset
 
   def set(what: Seq[ThroughType]): Seq[ThroughType] = {
     theSetList = what
     theSetList
   }
 
-  override def beforeDelete {
+  override def beforeDelete: Unit = {
     through.findAll(By(throughFromField, owner.primaryKeyField.get)).foreach {
       toDelete => toDelete.delete_!
     }
   }
 
-  override def afterUpdate {
+  override def afterUpdate: Unit = {
     val current = through.findAll(By(throughFromField, owner.primaryKeyField.get))
 
-    val newKeys = new HashSet[ThroughType];
+    val newKeys = new mutable.HashSet[ThroughType]
 
     theSetList.foreach(i => newKeys += i)
     val toDelete = current.filter(c => !newKeys.contains(throughToField.actualField(c).get))
     toDelete.foreach(_.delete_!)
 
-    val oldKeys = new HashSet[ThroughType];
+    val oldKeys = new mutable.HashSet[ThroughType]
     current.foreach(i => oldKeys += throughToField.actualField(i).get)
 
     theSetList.toList.distinct.filter(i => !oldKeys.contains(i)).foreach { i =>
@@ -96,7 +97,7 @@ class HasManyThrough[From <: KeyedMapper[ThroughType, From],
     super.afterUpdate
   }
 
-  override def afterCreate {
+  override def afterCreate: Unit = {
     theSetList.toList.distinct.foreach { i =>
       val toCreate = through.createInstance
       throughFromField.actualField(toCreate)(owner.primaryKeyField.get)

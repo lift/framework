@@ -18,17 +18,11 @@ package net.liftweb
 package mapper 
 package view 
 
-import net.liftweb.mapper.{Mapper,
-                           MappedField
-}
+import common.Full
+import util._
+import Helpers._
 
-import net.liftweb.common.{Full, Box}
-import net.liftweb.util._
-  import Helpers._
-
-
-import scala.xml.{NodeSeq, Elem}
-
+import scala.xml.NodeSeq
 
 /**
  * Provides a number of methods that make complex Mapper-based view snippets
@@ -90,7 +84,7 @@ object Util {
       val bind: Seq[CssSel] =
         if (fieldsAttribute.nonEmpty) {
           for {
-            fieldName <- fieldsAttribute.text.split("\\s+")
+            fieldName <- fieldsAttribute.text.split("\\s+").toIndexedSeq
             // the following hackery is brought to you by the Scala compiler not
             // properly typing MapperField[_, T] in the context of the for
             // comprehension
@@ -108,11 +102,11 @@ object Util {
       bind.map(_(ns))
     }
   }
+
   def eachField[T<:net.liftweb.mapper.Mapper[T]](
     mapper: T,
-    fn:MappedField[_,T]=>CssSel
-  ): NodeSeq=>NodeSeq = eachField(mapper, fn, (f:MappedField[_,T])=>true)
+    fn: MappedField[_,T] => CssSel
+  ): NodeSeq => NodeSeq = eachField(mapper, fn, (_: MappedField[_,T]) => true)
 
-  
 }
 

@@ -19,8 +19,6 @@ package mapper
 
 import org.specs2.mutable.Specification
 
-import common._
-
 object MyEnum extends Enumeration {
   val a = Value
   val b = Value

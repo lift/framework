@@ -42,7 +42,7 @@ trait Paginator[T] extends Loggable {
   /**
    * The record number this page starts at. Zero-based.
    */
-  def first = 0L
+  def first: Long = 0L
   /**
    * The items displayed on the current page
    */
@@ -84,21 +84,20 @@ trait SortedPaginator[T, C] extends Paginator[T] {
    * Pair of (column index, ascending)
    */
   type SortState = (Int, Boolean)
-    /**
-     * The sort headers: pairs of column labels, and column identifier objects of type C.
-     */
-    def headers: List[(String, C)]
+  /**
+   * The sort headers: pairs of column labels, and column identifier objects of type C.
+   */
+  def headers: List[(String, C)]
 
-  protected var _sort = (0, true)
-    /**
-     * Get the current sort state: Pair of (column index, ascending?)
-     */
-    def sort: SortState = _sort
+  protected var _sort: SortState = (0, true)
+  /**
+   * Get the current sort state: Pair of (column index, ascending?)
+   */
+  def sort: SortState = _sort
   /**
    * Set the current sort state: Pair of (column index, ascending?)
    */
-  def sort_=(s: SortState) = _sort = s
-
+  def sort_=(s: SortState): Unit = _sort = s
   /**
    * Returns a new SortState based on a column index.
    * If the paginator is already sorted by that column, it
@@ -111,8 +110,8 @@ trait SortedPaginator[T, C] extends Paginator[T] {
   def sortedBy(column: Int): SortState = sort match {
     case (`column`, true) =>  // descending is only if it was already sorted ascending
       (column, false)
-      case _ =>
-        (column, true)
+    case _ =>
+      (column, true)
   }
 }
 
@@ -174,11 +173,11 @@ trait PaginatorSnippet[T] extends Paginator[T] {
   /**
    * Overrides the super's implementation so the first record can be overridden by a URL query parameter.
    */
-  override def first = S.param(offsetParam).map(toLong) openOr _first max 0
+  override def first: Long = S.param(offsetParam).map(toLong) openOr _first max 0
   /**
    * Sets the default starting record of the page (URL query parameters take precedence over this)
    */
-  def first_=(f: Long) = _first = f max 0 min (count-1)
+  def first_=(f: Long): Unit = _first = f max 0 min (count-1)
   /**
    * Returns a URL used to link to a page starting at the given record offset.
    */
@@ -271,18 +270,18 @@ trait SortedPaginatorSnippet[T, C] extends SortedPaginator[T, C] with PaginatorS
   /**
    * Calculates the page url taking sorting into account.
    */
-  def sortedPageUrl(offset: Long, sort: (Int, Boolean)) = sort match {
-    case (col, ascending) =>
-      appendParams(super.pageUrl(offset), List(sortParam->col.toString, ascendingParam->ascending.toString))
+  def sortedPageUrl(offset: Long, sort: (Int, Boolean)): String = {
+    val (col, ascending) = sort
+    appendParams(super.pageUrl(offset), List(sortParam -> col.toString, ascendingParam -> ascending.toString))
   }
   /**
    * Overrides pageUrl and delegates to sortedPageUrl using the current sort
    */
-  override def pageUrl(offset: Long) = sortedPageUrl(offset, sort)
+  override def pageUrl(offset: Long): String = sortedPageUrl(offset, sort)
   /**
    * Overrides sort, giving the URL query parameters precedence
    */
-  override def sort = super.sort match {
+  override def sort: SortState = super.sort match {
     case (col, ascending) => (
       S.param("sort").map(toInt) openOr col,
       S.param("asc").map(toBoolean) openOr ascending

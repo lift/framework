@@ -19,14 +19,17 @@ package mapper
 
 import scala.collection.mutable._
 import java.lang.reflect.Method
+
 import scala.xml._
 import java.util.Date
+
 import net.liftweb.http.{S, SHtml}
-import net.liftweb.http.S._
 import net.liftweb.http.js._
 import net.liftweb.common._
 import net.liftweb.json._
 import net.liftweb.util._
+
+import scala.annotation.tailrec
 import scala.reflect.runtime.universe._
 
 /**
@@ -39,14 +42,12 @@ trait MixableMappedField extends BaseField {
    */
   type TheOwnerType <: Mapper[TheOwnerType]
 
-
   /**
    * Return the field name and field value, delimited by an '='
    */
   def asString: String
 
   def dbColumnCount: Int
-
 
   def dbIndexed_? : Boolean
 
@@ -70,13 +71,12 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
 
   def dbDisplay_? = true
 
-  def dbIncludeInForm_? = dbDisplay_?
+  def dbIncludeInForm_? : Boolean = dbDisplay_?
 
   def asJsonField: Box[JsonAST.JField] = 
     asJsonValue.map(v => JsonAST.JField(name, v))
 
   def asJsonValue: Box[JsonAST.JValue]
-
 
   /**
    *  Get a JDBC friendly representation of the named field (this is used for MappedFields that correspond to more than
@@ -106,7 +106,6 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
    */
   def targetSQLType: Int
 
-
   /**
    * Given the driver type, return the string required to create the column in the database
    */
@@ -116,7 +115,6 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
    * Given the driver type, return a list of statements to create the columns in the database
    */
   def fieldCreatorString(dbType: DriverType): List[String]
-
 
   /**
    * Convert the field to its name/value pair (e.g., name=David)
@@ -128,7 +126,6 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
    */
   def dbColumnCount: Int
 
-
   def dbColumnNames(in: String): List[String]
 
   def dbColumnName: String
@@ -136,7 +133,7 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
   /**
    * The forced lower case column names
    */
-  final def _dbColumnNameLC = {
+  final def _dbColumnNameLC: String = {
     val name = dbColumnName
 
     val conn = DB.currentConnection
@@ -182,13 +179,12 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
    */
   def dbAddedIndex: Box[() => Unit]
 
-
   def asHtml: NodeSeq
 
   /**
    * Called after the field is saved to the database
    */
-  protected[mapper] def doneWithSave()
+  protected[mapper] def doneWithSave(): Unit
 
   def asJsExp: JsExp
 
@@ -201,12 +197,12 @@ trait BaseMappedField extends SelectableField with Bindable with MixableMappedFi
 
   def renderJs_? = true
 
-      /**
-     * This is where the instance creates its "toForm" stuff.
-     * The actual toForm method wraps the information based on
-     * mode.
-     */
-    def _toForm: Box[NodeSeq]
+  /**
+   * This is where the instance creates its "toForm" stuff.
+   * The actual toForm method wraps the information based on
+   * mode.
+   */
+  def _toForm: Box[NodeSeq]
 }
 
 /**
@@ -226,7 +222,6 @@ trait TypedField[FieldType] {
    */
   def defaultValue: FieldType
 
-
   /**
    * What is the real class that corresponds to FieldType
    */
@@ -242,7 +237,7 @@ trait MappedNullableField[NullableFieldType <: Any,OwnerType <: Mapper[OwnerType
   */
   override final def dbNotNull_? : Boolean = false
 
-  override def toString = get.map(_.toString) openOr ""
+  override def toString: String = get.map(_.toString) openOr ""
 
   /**
    * Create an input field for the item
@@ -292,8 +287,6 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
 
   def sourceFieldInfo(): SourceFieldInfo{type T = FieldType} = SourceFieldInfoRep(get, sourceInfoMetadata())
 
-
-
   /**
    * Get the field that this prototypical field represents
    *
@@ -311,7 +304,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
    */
   def fieldCreatorString(dbType: DriverType): List[String] = dbColumnNames(name).map{c => fieldCreatorString(dbType, c)}
 
-  def notNullAppender() = if (dbNotNull_?) " NOT NULL " else ""
+  def notNullAppender(): String = if (dbNotNull_?) " NOT NULL " else ""
 
   /**
    * Is the field dirty
@@ -321,12 +314,12 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
   /**
    * Is the field dirty (has it been changed since the record was loaded from the database
    */
-  def dirty_? = !dbPrimaryKey_? && _dirty_?
+  def dirty_? : Boolean = !dbPrimaryKey_? && _dirty_?
 
   /**
    * Make the field dirty
    */
-  protected def dirty_?(b: Boolean) = _dirty_? = b
+  protected def dirty_?(b: Boolean): Unit = _dirty_? = b
 
   /**
    * Called when a column has been added to the database via Schemifier
@@ -363,8 +356,6 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
    */
   def readPermission_? = false
 
-
-
   /**
    * Assignment from the underlying type.  It's ugly, but:<br />
    * field() = new_value <br />
@@ -372,11 +363,11 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
    * field.set(new_value) <br />
    * are all the same
    */
-  def update[Q <% FieldType](v: Q) {
+  def update[Q](v: Q)(implicit implFn: Q => FieldType): Unit = {
     this.set(v)
   }
 
-  def apply[Q <% FieldType](v: Q): OwnerType = {
+  def apply[Q](v: Q)(implicit implFn: Q => FieldType): OwnerType = {
     this.set(v)
     fieldOwner
   }
@@ -385,7 +376,6 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
     this.set(v)
     fieldOwner
   }
-
 
   /**
   * The unique field id is the field name and the mapper name
@@ -401,28 +391,27 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
     else throw new Exception("Do not have permissions to set this field")
   }
 
-  def :=[Q <% FieldType](v: Q): FieldType = {
+  def :=[Q](v: Q)(implicit implFn: Q => FieldType): FieldType = {
     set(v)
   }
 
-    def :=(v: FieldType): FieldType = {
+  def :=(v: FieldType): FieldType = {
     set(v)
   }
 
-
-  private var _name : String = null
+  private var _name : String = _
 
   /**
    * The internal name of this field.  Use name
    */
-  private[mapper] final def i_name_! = _name
+  private[mapper] final def i_name_! : String = _name
 
   /**
    * The name of this field
    */
-  final def name = synchronized {
+  final def name: String = synchronized {
     if (_name eq null) {
-      fieldOwner.checkNames
+      fieldOwner.checkNames()
     }
     _name
   }
@@ -440,10 +429,9 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
    */
   override def displayName: String = MapperRules.displayNameCalculator.vend(fieldOwner, S.locale, name) 
 
-  def resetDirty {
+  def resetDirty(): Unit = {
     if (safe_?) dirty_?(false)
   }
-
 
   /**
    *  Attempt to figure out what the incoming value is and set the field to that value.  Return true if
@@ -490,13 +478,11 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
    * If the field has a defined fieldId, append it
    */
   protected def appendFieldId(in: Elem): Elem = fieldId match {
-    case Some(i) => {
+    case Some(i) =>
       import util.Helpers._
       in % ("id" -> i)
-    }
     case _ => in
   }
-
 
   /**
    * Set the field to the Box value if the Box is Full
@@ -534,7 +520,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
   def buildSetDateValue(accessor: Method, columnName: String): (OwnerType, Date) => Unit
   def buildSetBooleanValue(accessor: Method, columnName: String) : (OwnerType, Boolean, Boolean) => Unit
   protected def getField(inst: OwnerType, meth: Method) = meth.invoke(inst).asInstanceOf[MappedField[FieldType,OwnerType]];
-  protected def doField(inst: OwnerType, meth: Method, func: PartialFunction[MappedField[FieldType, OwnerType], Unit]) {
+  protected def doField(inst: OwnerType, meth: Method, func: PartialFunction[MappedField[FieldType, OwnerType], Unit]): Unit = {
     val f = getField(inst, meth)
     if (func.isDefinedAt(f)) func(f)
   }
@@ -577,13 +563,13 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
   /**
    * Return the field name and field value, delimited by an '='
    */
-  def asString = name + "=" + toString
+  def asString: String = name + "=" + toString
 
   def dbColumnCount = 1
 
-  def dbColumnNames(in : String) = if (dbColumnCount == 1) List(_dbColumnNameLC) else List(in.toLowerCase)
+  def dbColumnNames(in : String): List[String] = if (dbColumnCount == 1) List(_dbColumnNameLC) else List(in.toLowerCase)
 
-  def dbColumnName = {
+  def dbColumnName: String = {
     val columnName = MapperRules.columnName(fieldOwner.connectionIdentifier, name)
     if(DB.reservedWords.contains(columnName.toLowerCase))
        columnName+"_c"
@@ -591,7 +577,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
        columnName
   }
 
-  def dbSelectString = fieldOwner.getSingleton._dbTableNameLC + "." + _dbColumnNameLC
+  def dbSelectString: String = fieldOwner.getSingleton._dbTableNameLC + "." + _dbColumnNameLC
 
   def dbIndexed_? : Boolean = false
 
@@ -642,7 +628,8 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
      }
      */
 
-    def runValidations(validators: List[FieldType => List[FieldError]]) {
+    @tailrec
+    def runValidations(validators: List[FieldType => List[FieldError]]): Unit = {
       validators match {
         case Nil => ()
         case x :: rest =>
@@ -692,7 +679,7 @@ trait MappedField[FieldType <: Any,OwnerType <: Mapper[OwnerType]] extends Typed
     )
   }
 
-  def canEqual(that: Any) = that match {
+  def canEqual(that: Any): Boolean = that match {
     case ar: AnyRef => ar.getClass==this.getClass
     case _ => false
   }
@@ -715,22 +702,22 @@ trait BaseIndexedField extends BaseMappedField {
 
 
 trait LifecycleCallbacks {
-  def beforeValidation {}
-  def beforeValidationOnCreate {}
-  def beforeValidationOnUpdate {}
-  def afterValidation {}
-  def afterValidationOnCreate {}
-  def afterValidationOnUpdate {}
+  def beforeValidation: Unit = {}
+  def beforeValidationOnCreate: Unit = {}
+  def beforeValidationOnUpdate: Unit = {}
+  def afterValidation: Unit = {}
+  def afterValidationOnCreate: Unit = {}
+  def afterValidationOnUpdate: Unit = {}
 
-  def beforeSave {}
-  def beforeCreate {}
-  def beforeUpdate {}
+  def beforeSave: Unit = {}
+  def beforeCreate: Unit = {}
+  def beforeUpdate: Unit = {}
 
-  def afterSave {}
-  def afterCreate {}
-  def afterUpdate {}
+  def afterSave: Unit = {}
+  def afterCreate: Unit = {}
+  def afterUpdate: Unit = {}
 
-  def beforeDelete {}
-  def afterDelete {}
+  def beforeDelete: Unit = {}
+  def afterDelete: Unit = {}
 }
 

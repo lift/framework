@@ -17,16 +17,14 @@
 package net.liftweb
 package mapper
 
-import net.liftweb._
-import net.liftweb.http.provider._
+import http.provider._
 import common._
 import util._
 import http._
 import Helpers._
 
 
-trait ProtoExtendedSession[T <: ProtoExtendedSession[T]] extends
-KeyedMapper[Long, T] {
+trait ProtoExtendedSession[T <: ProtoExtendedSession[T]] extends KeyedMapper[Long, T] {
   self: T =>
 
   override def primaryKeyField: MappedLongIndex[T] = id
@@ -95,16 +93,16 @@ KeyedMetaMapper[Long, T] with ProtoSessionCookiePath {
 
   def recoverUserId: Box[String]
 
-  def userDidLogin(uid: UserType) {
+  def userDidLogin(uid: UserType): Unit = {
     userDidLogout(Full(uid))
-    val inst = create.userId(uid.userIdAsString).saveMe
+    val inst = create.userId(uid.userIdAsString).saveMe()
     val cookie = HTTPCookie(CookieName, inst.cookieId.get).
     setMaxAge(((inst.expiration.get - millis) / 1000L).toInt).
     setPath(sessionCookiePath)
     S.addCookie(cookie)
   }
 
-  def userDidLogout(uid: Box[UserType]) {
+  def userDidLogout(uid: Box[UserType]): Unit = {
     for (cook <- S.findCookie(CookieName)) {
       S.deleteCookie(cook)
       find(By(cookieId, cook.value openOr "")).foreach(_.delete_!)

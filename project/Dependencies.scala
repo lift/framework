@@ -55,40 +55,36 @@ object Dependencies {
 
   // Provided scope:
   // Scope provided by container, available only in compile and test classpath, non-transitive by default.
-  lazy val logback         = "ch.qos.logback"    % "logback-classic"       % "1.2.3"        % "provided"
-  lazy val log4j           = "log4j"             % "log4j"                 % "1.2.17"       % "provided"
-  lazy val slf4j_log4j12   = "org.slf4j"         % "slf4j-log4j12"         % slf4jVersion   % "provided"
-  lazy val persistence_api = "javax.persistence" % "persistence-api"       % "1.0.2"        % "provided"
-  lazy val servlet_api     = "javax.servlet"     % "javax.servlet-api"     % "3.1.0"        % "provided"
-  lazy val jquery          = "org.webjars.bower" % "jquery"                % "1.11.3"       % "provided"
-  lazy val jasmineCore     = "org.webjars.bower" % "jasmine-core"          % "2.4.1"        % "provided"
-  lazy val jasmineAjax     = "org.webjars.bower" % "jasmine-ajax"          % "3.2.0"        % "provided"
+  lazy val logback         = "ch.qos.logback"    % "logback-classic"       % "1.2.3"        % Provided
+  lazy val log4j           = "log4j"             % "log4j"                 % "1.2.17"       % Provided
+  lazy val slf4j_log4j12   = "org.slf4j"         % "slf4j-log4j12"         % slf4jVersion   % Provided
+  lazy val persistence_api = "javax.persistence" % "persistence-api"       % "1.0.2"        % Provided
+  lazy val servlet_api     = "javax.servlet"     % "javax.servlet-api"     % "3.1.0"        % Provided
+  lazy val jquery          = "org.webjars.bower" % "jquery"                % "1.11.3"       % Provided
+  lazy val jasmineCore     = "org.webjars.bower" % "jasmine-core"          % "2.4.1"        % Provided
+  lazy val jasmineAjax     = "org.webjars.bower" % "jasmine-ajax"          % "3.2.0"        % Provided
 
 
+  // Test scope:
+  // Scope available only in test classpath, non-transitive by default.
+  lazy val jetty6     = "org.mortbay.jetty"        % "jetty"                    % "6.1.26"   % Test
+  lazy val jwebunit   = "net.sourceforge.jwebunit" % "jwebunit-htmlunit-plugin" % "2.5"      % Test
+  lazy val derby      = "org.apache.derby"         % "derby"                    % "10.7.1.1" % Test
+  lazy val h2database = "com.h2database"           % "h2"                       % "1.2.147"  % Test
 
-  // Runtime scope:
-  // Scope provided in runtime, available only in runtime and test classpath, not compile classpath, non-transitive by default.
-  lazy val derby      = "org.apache.derby" % "derby" % "10.7.1.1" % "test" //% "optional"
-  lazy val h2database = "com.h2database"   % "h2"    % "1.2.147"  % "test" //% "optional"
+  lazy val specs2      = "org.specs2"        %% "specs2-core"          % "4.9.4"         % Test
+  lazy val scalacheck  = "org.specs2"        %% "specs2-scalacheck"    % specs2.revision % Test
+  lazy val specs2Prov  = "org.specs2"        %% "specs2-core"          % specs2.revision % Provided
+  lazy val specs2Matchers = "org.specs2"     %% "specs2-matcher-extra" % specs2.revision % Test
+  lazy val specs2MatchersProv = "org.specs2" %% "specs2-matcher-extra" % specs2.revision % Provided
+  lazy val specs2Mock  = "org.specs2"        %% "specs2-mock"          % specs2.revision % Test
+
+  lazy val scalactic       = "org.scalactic"     %% "scalactic"  % "3.1.2"   % Test
+  lazy val scalatest       = "org.scalatest"     %% "scalatest"  % "3.1.2"   % Test
+  lazy val scalatest_junit = "org.scalatestplus" %% "junit-4-12" % "3.1.2.0" % Test
+  lazy val mockito_scalatest = "org.mockito" %% "mockito-scala-scalatest" % "1.14.3" % Test
 
   // Aliases
   lazy val h2 = h2database
 
-  // Test scope:
-  // Scope available only in test classpath, non-transitive by default.
-  // TODO: See if something alternative with lesser footprint can be used instead of mega heavy apacheds
-  lazy val apacheds    = "org.apache.directory.server" % "apacheds-server-integ"    % "1.5.5"  % "test" // TODO: 1.5.7
-  lazy val jetty6      = "org.mortbay.jetty"           % "jetty"                    % "6.1.26" % "test"
-  lazy val jwebunit    = "net.sourceforge.jwebunit"    % "jwebunit-htmlunit-plugin" % "2.5"    % "test"
-  lazy val mockito_all = "org.mockito"                 % "mockito-all"              % "1.9.0"  % "test"
-
-  lazy val specs2      = "org.specs2"        %% "specs2-core"          % "4.7.0"         % "test"
-  lazy val scalacheck  = "org.specs2"        %% "specs2-scalacheck"    % specs2.revision % "test"
-  lazy val specs2Prov  = "org.specs2"        %% "specs2-core"          % specs2.revision % "provided"
-  lazy val specs2Matchers = "org.specs2"     %% "specs2-matcher-extra" % specs2.revision % "test"
-  lazy val specs2MatchersProv = "org.specs2" %% "specs2-matcher-extra" % specs2.revision % "provided"
-  lazy val specs2Mock  = "org.specs2"        %% "specs2-mock"          % specs2.revision % "test"
-
-  lazy val scalatest   = "org.scalatest" %% "scalatest" % "3.0.8" % "test"
-  lazy val junit       = "junit"         % "junit"      % "4.8.2" % "test"
 }

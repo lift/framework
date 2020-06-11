@@ -9,8 +9,8 @@ startYear in ThisBuild             := Some(2006)
 organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
 
 val scala211Version = "2.11.12"
-val scala212Version = "2.12.10"
-val scala213Version = "2.13.1"
+val scala212Version = "2.12.11"
+val scala213Version = "2.13.2"
 
 val crossUpTo212 = Seq(scala212Version, scala211Version)
 val crossUpTo213 = scala213Version +: crossUpTo212
@@ -18,7 +18,9 @@ val crossUpTo213 = scala213Version +: crossUpTo212
 scalaVersion in ThisBuild          := scala212Version
 crossScalaVersions in ThisBuild    := crossUpTo212 // default everyone to 2.12 for now
 
-libraryDependencies in ThisBuild ++= Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalatest)
+libraryDependencies in ThisBuild ++= Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalactic, scalatest)
+
+scalacOptions in ThisBuild ++= Seq("-deprecation")
 
 // Settings for Sonatype compliance
 pomIncludeRepository in ThisBuild := { _ => false }
@@ -77,7 +79,7 @@ lazy val markdown =
     .settings(
       description := "Markdown Parser",
       parallelExecution in Test := false,
-      libraryDependencies ++= Seq(scalatest, junit, scala_xml, scala_parser)
+      libraryDependencies ++= Seq(scalatest, scalatest_junit, scala_xml, scala_parser)
     )
     .settings(crossScalaVersions := crossUpTo213)
 
@@ -160,7 +162,7 @@ lazy val webkit =
         specs2MatchersProv,
         jetty6,
         jwebunit,
-        mockito_all,
+        mockito_scalatest,
         jquery,
         jasmineCore,
         jasmineAjax
@@ -216,7 +218,7 @@ lazy val persistence: Seq[ProjectReference] =
 lazy val db =
   persistenceProject("db")
     .dependsOn(util, webkit)
-    .settings(libraryDependencies += mockito_all)
+    .settings(libraryDependencies += mockito_scalatest)
     .settings(crossScalaVersions := crossUpTo213)
 
 lazy val proto =
@@ -238,6 +240,7 @@ lazy val mapper =
         )
       }
     )
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val record =
   persistenceProject("record")

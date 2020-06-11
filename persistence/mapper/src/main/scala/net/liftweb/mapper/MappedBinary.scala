@@ -40,7 +40,6 @@ abstract class MappedBinary[T<:Mapper[T]](val fieldOwner: T) extends MappedField
     value
   }
 
-
   def manifest: TypeTag[Array[Byte]] = typeTag[Array[Byte]]
 
   /**
@@ -84,23 +83,23 @@ abstract class MappedBinary[T<:Mapper[T]](val fieldOwner: T) extends MappedField
     def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
   })
 
-  def dbFieldClass = classOf[Array[Byte]]
+  def dbFieldClass: Class[Array[Byte]] = classOf[Array[Byte]]
 
   /**
   * Get the JDBC SQL Type for this field
   */
   //  def getTargetSQLType(field : String) = Types.BINARY
-  def targetSQLType = Types.BINARY
+  def targetSQLType: Int = Types.BINARY
 
   def defaultValue: Array[Byte] = null
   override def writePermission_? = true
   override def readPermission_? = true
 
-  protected def i_is_! = data.get
+  protected def i_is_! : Array[Byte] = data.get
 
-  protected def i_was_! = orgData.get
+  protected def i_was_! : Array[Byte] = orgData.get
 
-  protected[mapper] def doneWithSave() {orgData.setFrom(data)}
+  protected[mapper] def doneWithSave(): Unit = {orgData.setFrom(data)}
 
   protected def i_obscure_!(in : Array[Byte]) : Array[Byte] = {
     new Array[Byte](0)
@@ -202,23 +201,23 @@ abstract class MappedText[T<:Mapper[T]](val fieldOwner: T) extends MappedField[S
       def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
     })
 
-  def dbFieldClass = classOf[String]
+  def dbFieldClass: Class[String] = classOf[String]
 
   /**
   * Get the JDBC SQL Type for this field
   */
   //  def getTargetSQLType(field : String) = Types.BINARY
-  def targetSQLType = Types.VARCHAR
+  def targetSQLType: Int = Types.VARCHAR
 
   def defaultValue: String = null
   override def writePermission_? = true
   override def readPermission_? = true
 
-  protected def i_is_! = data.get
+  protected def i_is_! : String = data.get
 
-  protected def i_was_! = orgData.get
+  protected def i_was_! : String = orgData.get
 
-  protected[mapper] def doneWithSave() {orgData.setFrom(data)}
+  protected[mapper] def doneWithSave(): Unit = {orgData.setFrom(data)}
 
   def asJsExp: JsExp = JE.Str(get)
 
@@ -229,11 +228,11 @@ abstract class MappedText[T<:Mapper[T]](val fieldOwner: T) extends MappedField[S
 
   protected def i_obscure_!(in: String): String = ""
 
-    override def setFromAny(in: Any): String = {
+  override def setFromAny(in: Any): String = {
     in match {
       case JsonAST.JNull => this.set(null)
       case JsonAST.JString(str) => this.set(str)
-      case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny).apply(0)
+      case seq: Seq[_] if seq.nonEmpty => seq.map(setFromAny).head
       case (s: String) :: _ => this.set(s)
       case s :: _ => this.setFromAny(s)
       case null => this.set(null)
@@ -246,7 +245,6 @@ abstract class MappedText[T<:Mapper[T]](val fieldOwner: T) extends MappedField[S
   }
 
   def jdbcFriendly(field : String): Object = real_convertToJDBCFriendly(data.get)
-
 
   def real_convertToJDBCFriendly(value: String): Object = value match {
     case null => null
@@ -268,10 +266,7 @@ abstract class MappedText[T<:Mapper[T]](val fieldOwner: T) extends MappedField[S
 
   def buildSetLongValue(accessor : Method, columnName : String): (T, Long, Boolean) => Unit = null
   def buildSetStringValue(accessor : Method, columnName : String): (T, String) => Unit  = (inst, v) => doField(inst, accessor, {case f: MappedText[T] =>
-    val toSet = v match {
-      case null => null
-      case other => other
-    }
+    val toSet = v
     f.data() = toSet
     f.orgData() = toSet
   })
@@ -294,7 +289,7 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
     value
   }
 
-  def dbFieldClass = classOf[String]
+  def dbFieldClass: Class[String] = classOf[String]
 
   def manifest: TypeTag[String] = typeTag[String]
 
@@ -344,17 +339,17 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
   * Get the JDBC SQL Type for this field
   */
   //  def getTargetSQLType(field : String) = Types.BINARY
-  def targetSQLType = Types.BINARY
+  def targetSQLType: Int = Types.BINARY
 
   def defaultValue: String = null
   override def writePermission_? = true
   override def readPermission_? = true
 
-  protected def i_is_! = data.get
+  protected def i_is_! : String = data.get
 
-  protected def i_was_! = orgData.get
+  protected def i_was_! : String = orgData.get
 
-  protected[mapper] def doneWithSave() {orgData.setFrom(data)}
+  protected[mapper] def doneWithSave(): Unit = {orgData.setFrom(data)}
 
   protected def i_obscure_!(in: String): String = ""
 
@@ -365,12 +360,11 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
     case str => JsonAST.JString(str)
   })
 
-
-    override def setFromAny(in: Any): String = {
+  override def setFromAny(in: Any): String = {
     in match {
       case JsonAST.JNull => this.set(null)
       case JsonAST.JString(str) => this.set(str)
-      case seq: Seq[_] if !seq.isEmpty => seq.map(setFromAny).apply(0)
+      case seq: Seq[_] if seq.nonEmpty => seq.map(setFromAny).head
       case (s: String) :: _ => this.set(s)
       case s :: _ => this.setFromAny(s)
       case null => this.set(null)
@@ -383,7 +377,6 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
   }
 
   def jdbcFriendly(field : String): Object = real_convertToJDBCFriendly(data.get)
-
 
   def real_convertToJDBCFriendly(value: String): Object = value match {
     case null => null
@@ -403,11 +396,8 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
   })
 
   def buildSetLongValue(accessor : Method, columnName : String): (T, Long, Boolean) => Unit = null
-  def buildSetStringValue(accessor : Method, columnName : String): (T, String) => Unit  = (inst, v) => doField(inst, accessor, {case f: MappedFakeClob[T] =>
-    val toSet = v match {
-      case null => null
-      case other => other
-    }
+  def buildSetStringValue(accessor : Method, columnName : String): (T, String) => Unit = (inst, v) => doField(inst, accessor, {case f: MappedFakeClob[T] =>
+    val toSet = v
     f.data() = toSet
     f.orgData() = toSet
   })
@@ -419,4 +409,3 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
   */
   def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.binaryColumnType + notNullAppender()
 }
-

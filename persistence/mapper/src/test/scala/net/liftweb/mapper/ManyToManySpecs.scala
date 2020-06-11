@@ -29,13 +29,13 @@ class ManyToManySpec extends Specification  {
   val provider = DbProviders.H2MemoryProvider
 
   private def ignoreLogger(f: => AnyRef): Unit = ()
-  def setupDB {
+  def setupDB: Unit = {
     MapperRules.createForeignKeys_? = c => false
     provider.setupDB
     Schemifier.destroyTables_!!(ignoreLogger _,  PersonCompany, Company, Person)
     Schemifier.schemify(true, ignoreLogger _, Person, Company, PersonCompany)
   }
-  def createPerson = {
+  def createPerson: Person = {
     val person = new Person
     person.save
     val companies = (1 to 10).toList map { i =>

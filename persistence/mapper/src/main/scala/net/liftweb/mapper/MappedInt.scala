@@ -17,7 +17,7 @@
 package net.liftweb
 package mapper
 
-import java.sql.{ResultSet, Types}
+import java.sql.Types
 import java.lang.reflect.Method
 import net.liftweb.common._
 import net.liftweb.util._
@@ -30,7 +30,6 @@ import scala.xml.{Text, NodeSeq}
 import js._
 
 
-
 /**
  * Warning: Do not use unnamed Enumerations with 2.8.1 as this will cause too many items to be displayed in the dropdown.
  *
@@ -40,19 +39,19 @@ abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, 
   private var data: ENUM#Value = defaultValue
   private var orgData: ENUM#Value = defaultValue
   def defaultValue: ENUM#Value = enum.values.iterator.next
-  def dbFieldClass = classOf[ENUM#Value]
+  def dbFieldClass: Class[ENUM#Value] = classOf[ENUM#Value]
 
   /**
    * Get the JDBC SQL Type for this field
    */
-  def targetSQLType = Types.BIGINT
+  def targetSQLType: Int = Types.BIGINT
 
-  protected def i_is_! = data
-  protected def i_was_! = orgData
+  protected def i_is_! : ENUM#Value = data
+  protected def i_was_! : ENUM#Value = orgData
   /**
      * Called after the field is saved to the database
      */
-  override protected[mapper] def doneWithSave() {
+  override protected[mapper] def doneWithSave(): Unit = {
     orgData = data
   }
 
@@ -141,7 +140,7 @@ abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, 
 
   protected def i_obscure_!(in : ENUM#Value) = defaultValue
 
-  private def st(in: ENUM#Value) {
+  private def st(in: ENUM#Value): Unit = {
     data = in
     orgData = in
   }
@@ -251,12 +250,12 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
   private var orgData: Int = defaultValue
 
   def defaultValue = 0
-  def dbFieldClass = classOf[Int]
+  def dbFieldClass: Class[Int] = classOf[Int]
 
   /**
    * Get the JDBC SQL Type for this field
    */
-  def targetSQLType = Types.INTEGER
+  def targetSQLType: Int = Types.INTEGER
 
   import scala.reflect.runtime.universe._
   def manifest: TypeTag[Int] = typeTag[Int]
@@ -302,12 +301,12 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
       def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
     })
 
-  protected def i_is_! = data
-  protected def i_was_! = orgData
+  protected def i_is_! : Int = data
+  protected def i_was_! : Int = orgData
   /**
      * Called after the field is saved to the database
      */
-  override protected[mapper] def doneWithSave() {
+  override protected[mapper] def doneWithSave(): Unit = {
     orgData = data
   }
 
@@ -349,7 +348,7 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
 
   protected def i_obscure_!(in : Int) = 0
 
-  private def st(in: Int) {
+  private def st(in: Int): Unit = {
     data = in
     orgData = in
   }

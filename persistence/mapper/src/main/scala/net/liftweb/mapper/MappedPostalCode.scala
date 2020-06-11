@@ -68,17 +68,16 @@ object Countries extends Enumeration(1) {
   def I18NCountry = new I18NCountry
 
   class I18NCountry extends Val {
-    override def toString() =
-    S.?("country_" + id)
+    override def toString(): String = S.?("country_" + id)
   }
 }
 
 abstract class MappedLocale[T <: Mapper[T]](owner: T) extends MappedString[T](owner, 16) {
-  override def defaultValue = Locale.getDefault.toString
+  override def defaultValue: String = Locale.getDefault.toString
 
   def isAsLocale: Locale = Locale.getAvailableLocales.filter(_.toString == get).toList match {
     case Nil => Locale.getDefault
-    case x :: xs => x
+    case x :: _ => x
   }
 
   override def _toForm: Box[Elem] =
@@ -89,7 +88,7 @@ abstract class MappedLocale[T <: Mapper[T]](owner: T) extends MappedString[T](ow
 }
 
 abstract class MappedTimeZone[T <: Mapper[T]](owner: T) extends MappedString[T](owner, 32) {
-  override def defaultValue = TimeZone.getDefault.getID
+  override def defaultValue: String = TimeZone.getDefault.getID
 
   def isAsTimeZone: TimeZone = TimeZone.getTimeZone(get) match {
     case null => TimeZone.getDefault
