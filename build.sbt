@@ -96,6 +96,7 @@ lazy val documentationHelpers =
   coreProject("documentation-helpers")
     .settings(description := "Documentation Helpers")
     .dependsOn(util)
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val json_scalaz7 =
   coreProject("json-scalaz7")
