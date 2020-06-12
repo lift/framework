@@ -105,6 +105,7 @@ lazy val json_scalaz7 =
       description := "JSON Library based on Scalaz 7",
       libraryDependencies ++= Seq(scalaz7)
     )
+    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val json_ext =
   coreProject("json-ext")
