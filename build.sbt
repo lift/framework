@@ -266,7 +266,8 @@ lazy val mongodb =
           "java.util.logging.config.file",
           ((resourceDirectory in Test).value / "logging.properties").absolutePath
         )
-      }
+      },
+      crossScalaVersions := crossUpTo213
     )
 
 lazy val mongodb_record =
