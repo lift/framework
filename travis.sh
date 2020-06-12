@@ -12,7 +12,7 @@ if [ "${TRAVIS_PULL_REQUEST}" = "false" ] && [ -z "$DISABLE_PUBLISH" ]; then
 
   if [[ "$TRAVIS_SCALA_VERSION" =~ ^2.13 ]]; then
     # we only have certain modules available for publishing in 2.13
-    sbt ++$TRAVIS_SCALA_VERSION lift-webkit/publish lift-json/publish lift-actor/publish lift-json-ext/publish lift-record/publish lift-proto/publish lift-mapper/publish lift-common/publish lift-db/publish lift-markdown/publish lift-util/publish lift-testkit/publish lift-json-scalaz7/publish lift-mongodb/publish
+    sbt ++$TRAVIS_SCALA_VERSION lift-webkit/publish lift-json/publish lift-actor/publish lift-json-ext/publish lift-record/publish lift-proto/publish lift-mapper/publish lift-common/publish lift-db/publish lift-markdown/publish lift-util/publish lift-testkit/publish lift-json-scalaz7/publish lift-mongodb/publish lift-mongodb-record/publish
   else
     sbt ++$TRAVIS_SCALA_VERSION publish
   fi

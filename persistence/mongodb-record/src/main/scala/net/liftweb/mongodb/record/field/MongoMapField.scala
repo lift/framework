@@ -111,9 +111,9 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
 
   // set this field's value using a bson.Document returned from Mongo.
   def setFromDocument(doc: Document): Box[Map[String, MapValueType]] = {
-    val map: Map[String, MapValueType] = doc.asScala.map {
+    val map: Map[String, MapValueType] = doc.asScala.map({
       case (k, v) => k -> v.asInstanceOf[MapValueType]
-    } (scala.collection.breakOut)
+    }).toMap
 
     setBox {
       Full(map)
@@ -123,10 +123,10 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
   def asDocument: Document = {
     import scala.collection.JavaConverters._
     val map: Map[String, AnyRef] = {
-      value.keys.map {
+      value.keys.map({
         k => k -> value.getOrElse(k, "")
           .asInstanceOf[AnyRef]
-      } (scala.collection.breakOut)
+      }).toMap
     }
 
     new Document(map.asJava)
@@ -134,4 +134,3 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
 
 
 }
-

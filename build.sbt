@@ -274,3 +274,4 @@ lazy val mongodb_record =
   persistenceProject("mongodb-record")
     .dependsOn(record, mongodb)
     .settings(parallelExecution in Test := false)
+    .settings(crossScalaVersions := crossUpTo213)
