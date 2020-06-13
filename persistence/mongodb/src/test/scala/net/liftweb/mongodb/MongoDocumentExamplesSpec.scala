@@ -330,7 +330,7 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
 
   "Mongo tutorial example" in {
 
-    import scala.collection.JavaConversions._
+    import scala.collection.JavaConverters._
 
     checkMongoIsRunning
 
@@ -340,7 +340,7 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
     })
 
     // unique index on name
-    val ixName = ixs.find(dbo => dbo.get("name") == "name_1")
+    val ixName = ixs.asScala.find(dbo => dbo.get("name") == "name_1")
     ixName.isDefined must_== true
     ixName foreach { ix =>
       ix.containsField("unique") must beTrue
@@ -348,7 +348,7 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
     }
 
     // non-unique index on dbtype
-    val ixDbtype = ixs.find(dbo => dbo.get("name") == "dbtype_1")
+    val ixDbtype = ixs.asScala.find(dbo => dbo.get("name") == "dbtype_1")
     ixDbtype.isDefined must_== true
     ixDbtype foreach { ix =>
       ix.containsField("unique") must beFalse
