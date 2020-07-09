@@ -25,6 +25,9 @@ import org.bson.Transformer
 import org.bson.codecs.BsonTypeClassMap
 import org.bson.codecs.configuration.CodecRegistry
 
+/**
+ * MongoRecordRules holds Lift Mongo Record's configuration.
+ */
 object MongoRecordRules extends SimpleInjector {
   /**
    * The default CodecRegistry used.
