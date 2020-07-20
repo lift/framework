@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 WorldWide Conferencing, LLC
+ * Copyright 2010-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import org.specs2.mutable.Specification
 
 class BsonRecordSpec extends Specification with MongoTestKit {
   "BsonRecordSpec Specification".title
+
   import fixtures._
+  import testmodels._
 
   override def before = {
     super.before

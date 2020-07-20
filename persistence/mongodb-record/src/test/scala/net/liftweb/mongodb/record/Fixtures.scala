@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 WorldWide Conferencing, LLC
+ * Copyright 2010-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,18 +32,13 @@ import java.util.{Date, UUID}
 import java.util.regex.Pattern
 import scala.xml.Text
 
+import net.liftweb.mongodb.record.testmodels._
 import net.liftweb.record._
 import net.liftweb.record.field._
 import net.liftweb.record.field.joda._
 
 import org.bson.types.ObjectId
 import org.joda.time.DateTime
-
-object MyTestEnum extends Enumeration {
-  val ONE = Value("ONE")
-  val TWO = Value("TWO")
-  val THREE = Value("THREE")
-}
 
 trait HarnessedLifecycleCallbacks extends LifecycleCallbacks {
   this: BaseField =>
@@ -264,56 +259,6 @@ class PasswordTestRecord private () extends MongoRecord[PasswordTestRecord] with
 }
 object PasswordTestRecord extends PasswordTestRecord with MongoMetaRecord[PasswordTestRecord]
 
-case class CaseClassTestObject(intField: Int, stringField: String, enum: MyTestEnum.Value)
-
-class ListTestRecord private () extends MongoRecord[ListTestRecord] with UUIDPk[ListTestRecord] {
-  def meta = ListTestRecord
-
-  object mandatoryStringListField extends MongoListField[ListTestRecord, String](this)
-  object mandatoryMongoRefListField extends ObjectIdRefListField(this, FieldTypeTestRecord)
-  object mandatoryIntListField extends MongoListField[ListTestRecord, Int](this)
-  object mandatoryJsonObjectListField extends JsonObjectListField(this, TypeTestJsonObject)
-  object caseClassListField extends CaseClassListField[ListTestRecord, CaseClassTestObject](this) {
-    override def formats = owner.meta.formats
-  }
-}
-object ListTestRecord extends ListTestRecord with MongoMetaRecord[ListTestRecord] {
-  override def formats = allFormats + new EnumSerializer(MyTestEnum)
-}
-
-class MongoListTestRecord private () extends MongoRecord[MongoListTestRecord] with UUIDPk[MongoListTestRecord] {
-  def meta = MongoListTestRecord
-
-  object objectIdRefListField extends ObjectIdRefListField(this, FieldTypeTestRecord)
-  object patternListField extends MongoListField[MongoListTestRecord, Pattern](this)
-  object dateListField extends MongoListField[MongoListTestRecord, Date](this)
-  object uuidListField extends MongoListField[MongoListTestRecord, UUID](this)
-}
-object MongoListTestRecord extends MongoListTestRecord with MongoMetaRecord[MongoListTestRecord] {
-  override def formats = DefaultFormats.lossless + new ObjectIdSerializer + new PatternSerializer + new DateSerializer
-}
-
-class MongoJodaListTestRecord private () extends MongoRecord[MongoJodaListTestRecord] with UUIDPk[MongoJodaListTestRecord] {
-  def meta = MongoJodaListTestRecord
-
-  object dateTimeListField extends MongoListField[MongoJodaListTestRecord, DateTime](this)
-}
-object MongoJodaListTestRecord extends MongoJodaListTestRecord with MongoMetaRecord[MongoJodaListTestRecord] {
-  override def formats = DefaultFormats.lossless + new DateTimeSerializer
-}
-
-class MapTestRecord private () extends MongoRecord[MapTestRecord] with StringPk[MapTestRecord] {
-  def meta = MapTestRecord
-
-  object mandatoryStringMapField extends MongoMapField[MapTestRecord, String](this)
-  object mandatoryIntMapField extends MongoMapField[MapTestRecord, Int](this)
-
-  // TODO: More Map types, including JsonObject (will require a new Field type)
-}
-object MapTestRecord extends MapTestRecord with MongoMetaRecord[MapTestRecord] {
-  override def formats = allFormats
-}
-
 class LifecycleTestRecord private ()
   extends MongoRecord[LifecycleTestRecord]
   with ObjectIdPk[LifecycleTestRecord]
@@ -327,53 +272,6 @@ class LifecycleTestRecord private ()
 }
 
 object LifecycleTestRecord extends LifecycleTestRecord with MongoMetaRecord[LifecycleTestRecord]
-
-/*
- * SubRecord fields
- */
-class SubRecord private () extends BsonRecord[SubRecord] {
-  def meta = SubRecord
-
-  object name extends StringField(this, 12)
-  object subsub extends BsonRecordField(this, SubSubRecord)
-  object subsublist extends BsonRecordListField(this, SubSubRecord)
-  object when extends DateField(this)
-  object slist extends MongoListField[SubRecord, String](this)
-  object smap extends MongoMapField[SubRecord, String](this)
-  object oid extends ObjectIdField(this)
-  object pattern extends PatternField(this)
-  object uuid extends UUIDField(this)
-}
-object SubRecord extends SubRecord with BsonMetaRecord[SubRecord] {
-  override def formats = allFormats
-}
-
-class SubSubRecord private () extends BsonRecord[SubSubRecord] {
-  def meta = SubSubRecord
-
-  object name extends StringField(this, 12)
-}
-object SubSubRecord extends SubSubRecord with BsonMetaRecord[SubSubRecord] {
-  override def formats = allFormats
-}
-
-class SubRecordTestRecord private () extends MongoRecord[SubRecordTestRecord] with ObjectIdPk[SubRecordTestRecord] {
-  def meta = SubRecordTestRecord
-
-  object mandatoryBsonRecordField extends BsonRecordField(this, SubRecord)
-  object optioalBsonRecordField extends OptionalBsonRecordField(this, SubRecord)
-  object legacyOptionalBsonRecordField extends BsonRecordField(this, SubRecord) {
-    override def optional_? = true
-  }
-
-  object mandatoryBsonRecordListField extends BsonRecordListField(this, SubRecord)
-  object legacyOptionalBsonRecordListField extends BsonRecordListField(this, SubRecord) {
-    override def optional_? = true
-  }
-}
-object SubRecordTestRecord extends SubRecordTestRecord with MongoMetaRecord[SubRecordTestRecord] {
-  override def formats = allFormats
-}
 
 case class JsonObj(id: String, name: String) extends JsonObject[JsonObj] {
   def meta = JsonObj
@@ -435,17 +333,6 @@ class RefFieldTestRecord private () extends MongoRecord[RefFieldTestRecord] with
 }
 
 object RefFieldTestRecord extends RefFieldTestRecord with MongoMetaRecord[RefFieldTestRecord] {
-  override def formats = allFormats
-}
-
-
-class JObjectFieldTestRecord private () extends MongoRecord[JObjectFieldTestRecord]  with ObjectIdPk[JObjectFieldTestRecord] {
-  def meta = JObjectFieldTestRecord
-
-  object mandatoryJObjectField extends JObjectField(this)
-}
-
-object JObjectFieldTestRecord extends JObjectFieldTestRecord with MongoMetaRecord[JObjectFieldTestRecord] {
   override def formats = allFormats
 }
 

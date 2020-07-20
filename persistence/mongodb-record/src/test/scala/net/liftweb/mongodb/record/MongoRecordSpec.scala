@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 WorldWide Conferencing, LLC
+ * Copyright 2010-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ package record
 import java.util.{Date, Locale, UUID}
 import java.util.regex.Pattern
 
-import org.bson.types.ObjectId
 import org.joda.time.DateTime
 import org.specs2.mutable.Specification
 
@@ -35,6 +34,8 @@ import util.Helpers.snakify
 import net.liftweb.record.RecordRules
 import net.liftweb.record.field.Countries
 
+import org.bson.Document
+import org.bson.types.ObjectId
 import com.mongodb._
 
 
@@ -45,6 +46,7 @@ class MongoRecordSpec extends Specification with MongoTestKit {
   "MongoRecord Specification".title
 
   import fixtures._
+  import testmodels._
   val session = new LiftSession("hello", "", Empty)
 
   override def before = {
@@ -242,20 +244,21 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       .mandatoryIntListField(List(4, 5, 6))
       .mandatoryJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2"))))
       .caseClassListField(List(CaseClassTestObject(1,"str",MyTestEnum.TWO)))
-      .mandatoryMongoRefListField(Nil)
+      .mandatoryMongoRefListField(List(fttr.id.get))
 
     val ltrJson =
-      ("_id" -> ("$uuid" -> ltr.id.toString)) ~
-      ("mandatoryStringListField" -> List("abc", "def", "ghi")) ~
-      ("mandatoryIntListField" -> List(4, 5, 6)) ~
+      ("mandatoryMongoRefListField" -> JArray(List(("$oid" -> fttr.id.get.toString)))) ~
       ("mandatoryJsonObjectListField" -> List(
         (("intField" -> 1) ~ ("stringField" -> "jsonobj1") ~ ("mapField" -> ("x" -> "1"))),
         (("intField" -> 2) ~ ("stringField" -> "jsonobj2") ~ ("mapField" -> ("x" -> "2")))
       )) ~
+      ("mandatoryStringListField" -> List("abc", "def", "ghi")) ~
+      ("_id" -> ("$uuid" -> ltr.id.toString)) ~
+      ("mandatoryIntListField" -> List(4, 5, 6)) ~
       ("caseClassListField" -> List(
         ("intField" -> 1) ~ ("stringField" -> "str") ~ ("enum" -> 1)
-      )) ~
-      ("mandatoryMongoRefListField" -> JArray(Nil))
+      ))
+
 
     val mtr = MapTestRecord.createRecord
       .mandatoryStringMapField(Map("a" -> "abc", "b" -> "def", "c" -> "ghi"))
@@ -370,6 +373,10 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       mfttrFromDb foreach { tr =>
         tr mustEqual mfttr
       }
+
+      val recs = MongoFieldTypeTestRecord.findAll(List(mfttr.id.value))
+
+      recs.length mustEqual 1
 
       pftr.save()
 
@@ -641,11 +648,12 @@ class MongoRecordSpec extends Specification with MongoTestKit {
       S.initIfUninitted(session) {
         val missingFieldDocId = ObjectId.get
 
-        // create a dbobject with no fields manually
-        val builder = BasicDBObjectBuilder.start
-          .add("_id", missingFieldDocId)
+        // create a Document with no fields manually
+        val doc = new Document("_id", missingFieldDocId)
 
-        FieldTypeTestRecord.useColl { coll => coll.save(builder.get) }
+        FieldTypeTestRecord.useDatabase { db =>
+          db.getCollection(FieldTypeTestRecord.collectionName, classOf[Document]).insertOne(doc)
+        }
 
         val recFromDb = FieldTypeTestRecord.find(missingFieldDocId)
 
@@ -704,46 +712,46 @@ class MongoRecordSpec extends Specification with MongoTestKit {
 
     "update dirty fields for a FieldTypeTestRecord" in {
       S.initIfUninitted(session) {
-        val fttr = FieldTypeTestRecord.createRecord
+        val fttr1 = FieldTypeTestRecord.createRecord
           .legacyOptionalStringField("legacy optional string")
           .optionalStringField("optional string")
           .save()
 
-        fttr.mandatoryBooleanField(true)
-        fttr.mandatoryBooleanField.dirty_? must_== true
+        fttr1.mandatoryBooleanField(true)
+        fttr1.mandatoryBooleanField.dirty_? must_== true
 
-        fttr.mandatoryDecimalField(BigDecimal("3.14"))
-        fttr.mandatoryDecimalField.dirty_? must_== true
+        fttr1.mandatoryDecimalField(BigDecimal("3.14"))
+        fttr1.mandatoryDecimalField.dirty_? must_== true
 
-        fttr.mandatoryDoubleField(1999)
-        fttr.mandatoryDoubleField.dirty_? must_== true
+        fttr1.mandatoryDoubleField(1999)
+        fttr1.mandatoryDoubleField.dirty_? must_== true
 
-        fttr.mandatoryEnumField(MyTestEnum.TWO)
-        fttr.mandatoryEnumField.dirty_? must_== true
+        fttr1.mandatoryEnumField(MyTestEnum.TWO)
+        fttr1.mandatoryEnumField.dirty_? must_== true
 
-        fttr.mandatoryIntField(99)
-        fttr.mandatoryIntField.dirty_? must_== true
+        fttr1.mandatoryIntField(99)
+        fttr1.mandatoryIntField.dirty_? must_== true
 
-        fttr.mandatoryLongField(100L)
-        fttr.mandatoryLongField.dirty_? must_== true
+        fttr1.mandatoryLongField(100L)
+        fttr1.mandatoryLongField.dirty_? must_== true
 
-        fttr.mandatoryStringField("string")
-        fttr.mandatoryStringField.dirty_? must_== true
+        fttr1.mandatoryStringField("string")
+        fttr1.mandatoryStringField.dirty_? must_== true
 
-        fttr.optionalStringField(Empty)
-        fttr.optionalStringField.dirty_? must_== true
+        fttr1.optionalStringField(Empty)
+        fttr1.optionalStringField.dirty_? must_== true
 
-        fttr.legacyOptionalStringField(Empty)
-        fttr.legacyOptionalStringField.dirty_? must_== true
+        fttr1.legacyOptionalStringField(Empty)
+        fttr1.legacyOptionalStringField.dirty_? must_== true
 
-        fttr.dirty_? must_== true
-        fttr.update
-        fttr.dirty_? must_== false
+        fttr1.dirty_? must_== true
+        fttr1.update
+        fttr1.dirty_? must_== false
 
-        val fromDb = FieldTypeTestRecord.find(fttr.id.get)
+        val fromDb = FieldTypeTestRecord.find(fttr1.id.get)
         fromDb.isDefined must_== true
         fromDb foreach { rec =>
-          rec must_== fttr
+          rec must_== fttr1
           rec.dirty_? must_== false
         }
 
@@ -850,34 +858,34 @@ class MongoRecordSpec extends Specification with MongoTestKit {
     }
 
     "update dirty fields for a ListTestRecord" in {
-      val ltr = ListTestRecord.createRecord.save()
+      val ltr1 = ListTestRecord.createRecord.save()
 
-      ltr.mandatoryStringListField(List("abc", "def", "ghi"))
-      ltr.mandatoryStringListField.dirty_? must_== true
+      ltr1.mandatoryStringListField(List("xyz", "lmn", "opqr"))
+      ltr1.mandatoryStringListField.dirty_? must_== true
 
-      ltr.mandatoryIntListField(List(4, 5, 6))
-      ltr.mandatoryIntListField.dirty_? must_== true
+      ltr1.mandatoryIntListField(List(7, 8, 9))
+      ltr1.mandatoryIntListField.dirty_? must_== true
 
-      ltr.mandatoryJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2"))))
-      ltr.mandatoryJsonObjectListField.dirty_? must_== true
+      ltr1.mandatoryJsonObjectListField(List(TypeTestJsonObject(1, "jsonobj1", Map("x" -> "1")), TypeTestJsonObject(2, "jsonobj2", Map("x" -> "2"))))
+      ltr1.mandatoryJsonObjectListField.dirty_? must_== true
 
-      ltr.caseClassListField(List(CaseClassTestObject(1,"str",MyTestEnum.TWO)))
-      ltr.caseClassListField.dirty_? must_== true
+      ltr1.caseClassListField(List(CaseClassTestObject(2,"string",MyTestEnum.TWO)))
+      ltr1.caseClassListField.dirty_? must_== true
 
-      ltr.dirty_? must_== true
-      ltr.update
-      ltr.dirty_? must_== false
+      ltr1.dirty_? must_== true
+      ltr1.update
+      ltr1.dirty_? must_== false
 
-      val fromDb = ListTestRecord.find(ltr.id.get)
+      val fromDb = ListTestRecord.find(ltr1.id.get)
       fromDb must beLike {
         case Full(rec) =>
-          rec must_== ltr
+          rec must_== ltr1
           rec.dirty_? must_== false
       }
     }
 
     "update dirty fields for a MapTestRecord" in {
-      val mtr = MapTestRecord.save()
+      val mtr = MapTestRecord.createRecord.save()
 
       mtr.mandatoryStringMapField(Map("a" -> "abc", "b" -> "def", "c" -> "ghi"))
       mtr.mandatoryStringMapField.dirty_? must_== true

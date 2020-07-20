@@ -1,5 +1,5 @@
 /*
-* Copyright 2010-2017 WorldWide Conferencing, LLC
+* Copyright 2010-2020 WorldWide Conferencing, LLC
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import net.liftweb.util.Helpers._
 
 import scala.xml.NodeSeq
 
-trait UUIDTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[UUID] with Field[UUID, OwnerType] {
+trait UUIDTypedField[OwnerType <: Record[OwnerType]] extends TypedField[UUID] with Field[UUID, OwnerType] {
   def setFromAny(in: Any): Box[UUID] = in match {
     case uid: UUID => setBox(Full(uid))
     case Some(uid: UUID) => setBox(Full(uid))
@@ -74,7 +74,7 @@ trait UUIDTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[UUID
   def asJValue: JValue = valueBox.map(v => JsonUUID(v)) openOr (JNothing: JValue)
 }
 
-class UUIDField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+class UUIDField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
   extends UUIDTypedField[OwnerType] with MandatoryTypedField[UUID] {
 
   def this(owner: OwnerType, value: UUID) = {
@@ -86,7 +86,7 @@ class UUIDField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) val ow
 
 }
 
-class OptionalUUIDField[OwnerType <: BsonRecord[OwnerType]](val owner: OwnerType)
+class OptionalUUIDField[OwnerType <: Record[OwnerType]](val owner: OwnerType)
   extends UUIDTypedField[OwnerType] with OptionalTypedField[UUID] {
 
   def this(owner: OwnerType, value: Box[UUID]) = {

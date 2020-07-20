@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 WorldWide Conferencing, LLC
+ * Copyright 2010-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,22 @@ package net.liftweb
 package mongodb
 
 import BsonDSL._
+
+import net.liftweb.common.Failure
+import net.liftweb.json.{DefaultFormats, JObject}
 import net.liftweb.util.{Helpers, ConnectionIdentifier, DefaultConnectionIdentifier}
 
 import java.util.{Calendar, Date, UUID}
 import java.util.regex.Pattern
 
+import org.bson.Document
 import org.bson.types.ObjectId
 import com.mongodb._
+import com.mongodb.client.model.{IndexOptions, ReplaceOptions, UpdateOptions}
+import com.mongodb.client.model.Filters.{and, eq => eqs}
+import com.mongodb.client.model.Indexes._
 
 import org.specs2.mutable.Specification
-
-import json.DefaultFormats
-import net.liftweb.common.Failure
-
 
 package mongotestdocs {
   /*
@@ -53,8 +56,10 @@ package mongotestdocs {
     override val collectionName = "simplepersons"
     override def connectionIdentifier = DefaultConnectionIdentifier
     override def formats = super.formats + new ObjectIdSerializer
-    // index name
-    createIndex(("name" -> 1))
+
+    def createIndexes(): Unit =  {
+      SimplePerson.createIndex(ascending("name"))
+    }
   }
 
   case class Address(street: String, city: String)
@@ -87,10 +92,11 @@ package mongotestdocs {
 
   object TstCollection extends MongoDocumentMeta[TstCollection] {
     override def formats = super.formats + new UUIDSerializer
-    // create a unique index on name
-    createIndex(("name" -> 1), true)
-    // create a non-unique index on dbtype passing unique = false.
-    createIndex(("dbtype" -> 1), false)
+
+    def createIndexes(): Unit =  {
+      TstCollection.createIndex(ascending("name"), true)
+      TstCollection.createIndex(ascending("dbtype"))
+    }
   }
 
   case class IDoc(_id: ObjectId, i: Int) extends MongoDocument[IDoc] {
@@ -100,8 +106,10 @@ package mongotestdocs {
 
   object IDoc extends MongoDocumentMeta[IDoc] {
     override def formats = super.formats + new ObjectIdSerializer
-    // create an index on "i", descending with custom name
-    createIndex(("i" -> -1), ("name" -> "i_ix1"))
+
+    def createIndexes(): Unit =  {
+      IDoc.createIndex(descending("i"), (new IndexOptions).name("i_ix1"))
+    }
   }
 
   case class SessCollection(_id: ObjectId, name: String, dbtype: String, count: Int)
@@ -112,8 +120,10 @@ package mongotestdocs {
 
   object SessCollection extends MongoDocumentMeta[SessCollection] {
     override def formats = super.formats + new ObjectIdSerializer
-    // create a unique index on name
-    createIndex(("name" -> 1), true)
+
+    def createIndexes(): Unit =  {
+      SessCollection.createIndex(ascending("name"), true)
+    }
   }
 
   /*
@@ -189,6 +199,8 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
   "Simple Person example" in {
 
     checkMongoIsRunning
+
+    SimplePerson.createIndexes()
 
     // create a new SimplePerson
     val pid = ObjectId.get
@@ -330,28 +342,29 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
 
   "Mongo tutorial example" in {
 
-    import scala.collection.JavaConversions._
+    import scala.collection.JavaConverters._
 
     checkMongoIsRunning
 
+    IDoc.createIndexes()
+    TstCollection.createIndexes()
+
     // get the indexes
-    val ixs = MongoDB.useCollection(TstCollection.collectionName)( coll => {
-      coll.getIndexInfo
-    })
+    val ixs = MongoDB.useMongoCollection(TstCollection.collectionName)(_.listIndexes.asScala)
 
     // unique index on name
-    val ixName = ixs.find(dbo => dbo.get("name") == "name_1")
+    val ixName = ixs.find(_.get("name") == "name_1")
     ixName.isDefined must_== true
     ixName foreach { ix =>
-      ix.containsField("unique") must beTrue
+      ix.containsKey("unique") must beTrue
       ix.get("unique").asInstanceOf[Boolean] must beTrue
     }
 
     // non-unique index on dbtype
-    val ixDbtype = ixs.find(dbo => dbo.get("name") == "dbtype_1")
+    val ixDbtype = ixs.find(_.get("name") == "dbtype_1")
     ixDbtype.isDefined must_== true
     ixDbtype foreach { ix =>
-      ix.containsField("unique") must beFalse
+      ix.containsKey("unique") must beFalse
     }
 
     // build a TstCollection
@@ -374,27 +387,27 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
 
     // update
     val tc3 = TstCollection(tc._id, "MongoDB", "document", 2, info) // the new object to update with, replaces the entire document, except possibly _id
-    val q = ("name" -> "MongoDB") // the query to select the document(s) to update
-    TstCollection.update(q, tc3)
+    val q: JObject = ("name" -> "MongoDB") // the query to select the document(s) to update
+    TstCollection.replaceOne(q, tc3)
     tcFromDb.isDefined must_== true
     tcFromDb.get must_== tc3
 
     // Upsert - this should add a new row
     val tc4 = TstCollection(ObjectId.get.toString, "nothing", "document", 1, info)
-    TstCollection.update(("name" -> "nothing"), tc4, Upsert)
-    TstCollection.findAll.length must_== 3
+    TstCollection.replaceOne(("name" -> "nothing"), tc4, (new ReplaceOptions).upsert(true))
+    TstCollection.count must_== 3
 
     // modifier operations $inc, $set, $push...
     val o2 = (("$inc" -> ("count" -> 1)) ~ ("$set" -> ("dbtype" -> "docdb")))
-    TstCollection.update(q, o2)
+    TstCollection.updateOne(q, o2)
     tcFromDb.isDefined must_== true
     tcFromDb.get must_== TstCollection(tc._id, tc.name, "docdb", 3, info)
 
     // this one shouldn't update anything
     val o3 = (("$inc" -> ("count" -> 1)) ~ ("$set" -> ("dbtype" -> "docdb")))
     // when using $ modifiers, apply has to be false
-    TstCollection.update(("name" -> "nothing"), o3)
-    TstCollection.findAll.length must_== 3
+    TstCollection.updateOne(("name" -> "nothing"), o3)
+    TstCollection.count must_== 3
 
     if (!debug) {
       // delete them
@@ -470,7 +483,7 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
     list6.length must_== 100
 
     // remove some docs by a query
-    IDoc.delete(("i" -> ("$gt" -> 50)))
+    IDoc.deleteMany(("i" -> ("$gt" -> 50)))
     IDoc.findAll.length must_== 50
 
     IDoc.drop
@@ -482,56 +495,53 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
 
     checkMongoIsRunning
 
+    SessCollection.createIndexes()
+
     val tc = SessCollection(ObjectId.get, "MongoSession", "db", 1)
     val tc2 = SessCollection(ObjectId.get, "MongoSession", "db", 1)
     val tc3 = SessCollection(ObjectId.get, "MongoDB", "db", 1)
 
-    // use a Mongo instance directly
-    MongoDB.use( db => {
+    // save to db
+    Helpers.tryo(SessCollection.insertOne(tc)).toOption must beSome
+    SessCollection.save(tc2) must throwA[MongoException]
+    SessCollection.insertOne(tc2) must beLike {
+      case Failure(msg, _, _) =>
+        msg must contain("E11000")
+    }
 
-      // save to db
-      Helpers.tryo(SessCollection.save(tc, db)).toOption must beSome
-      SessCollection.save(tc2, db) must throwA[MongoException]
-      Helpers.tryo(SessCollection.save(tc2, db)) must beLike {
-        case Failure(msg, _, _) =>
-          msg must contain("E11000")
-      }
+    Helpers.tryo(SessCollection.insertOne(tc3)).toOption must beSome
 
-      Helpers.tryo(SessCollection.save(tc3, db)).toOption must beSome
+    // query for the docs by type
+    val qry: JObject = ("dbtype" -> "db")
+    SessCollection.count(qry) must_== 2
 
-      // query for the docs by type
-      val qry = ("dbtype" -> "db")
-      SessCollection.findAll(qry).size must_== 2
+    // modifier operations $inc, $set, $push...
+    val o2 = ("$inc" -> ("count" -> 1)) // increment count by 1
+    SessCollection.updateOne(qry, o2)
+    SessCollection.updateMany(qry, o2)
 
-      // modifier operations $inc, $set, $push...
-      val o2 = ("$inc" -> ("count" -> 1)) // increment count by 1
-      SessCollection.update(qry, o2, db)
-      SessCollection.update(qry, o2, db, Multi)
+    // regex query example
+    val lst = SessCollection.findAll(eqs("name", Pattern.compile("^Mongo")))
+    lst.size must_== 2
 
-      // regex query example
-      val lst = SessCollection.findAll(new BasicDBObject("name", Pattern.compile("^Mongo")))
-      lst.size must_== 2
+    // jobject query now also works
+    val lstjobj = SessCollection.findAll(("name" -> (("$regex" -> "^Mon") ~ ("$flags" -> 0))))
+    lstjobj.size must_== 2
 
-      // jobject query now also works
-      val lstjobj = SessCollection.findAll(("name" -> (("$regex" -> "^Mon") ~ ("$flags" -> 0))))
-      lstjobj.size must_== 2
+    // use regex and another clause
+    val lst2 = SessCollection.findAll(and(eqs("name", Pattern.compile("^Mon")), eqs("count", 2)))
+    lst2.size must_== 1
 
-      // use regex and another clause
-      val lst2 = SessCollection.findAll(new BasicDBObject("name", Pattern.compile("^Mon")).append("count", 2))
-      lst2.size must_== 1
+    val lstjobj2 = SessCollection.findAll(("name" -> (("$regex" -> "^Mongo") ~ ("$flags" -> 0))) ~ ("count" -> 3))
+    lstjobj2.size must_== 1
 
-      val lstjobj2 = SessCollection.findAll(("name" -> (("$regex" -> "^Mongo") ~ ("$flags" -> 0))) ~ ("count" -> 3))
-      lstjobj2.size must_== 1
+    if (!debug) {
+      // delete them
+      SessCollection.deleteMany(qry)
+      SessCollection.count must_== 0
 
-      if (!debug) {
-        // delete them
-        SessCollection.delete(qry)
-        SessCollection.findAll.size must_== 0
-
-        SessCollection.drop
-      }
-
-    })
+      SessCollection.drop
+    }
 
     success
   }
@@ -648,8 +658,8 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
     val newDt = date(dtStr)
 
     // create a document manually with a String for the Date field
-    MongoDB.useCollection("stringdatedocs") { coll =>
-      coll.save(new BasicDBObject("_id", newId).append("dt", dtStr))
+    MongoDB.useMongoCollection("stringdatedocs") { coll =>
+      coll.insertOne(new Document("_id", newId).append("dt", dtStr))
     }
 
     val fromDb = StringDateDoc.find(newId)
@@ -657,7 +667,7 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
       case Some(sdd) =>
         sdd._id must_== newId
         sdd.dt must_== newDt
-        sdd.save
+        StringDateDoc.replaceOne(sdd)
 
         StringDateDoc.find(newId) must beLike {
           case Some(sdd2) =>

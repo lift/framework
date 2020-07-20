@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 WorldWide Conferencing, LLC
+ * Copyright 2010-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,23 +30,24 @@ import scala.concurrent.Future
 trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   self: MyType =>
 
-  /*
-  * Every MongoRecord must have an _id field. Use a MongoPkField to
-  * satisfy this.
-
-  * This may change to type MandatoryTypedField in the
-  * future (once MongoId is removed.)
-  */
+  /**
+   * Every MongoRecord must have an _id field. Use a MongoPkField to
+   * satisfy this.
+   *
+   * This may change to type MandatoryTypedField in the
+   * future (once MongoId is removed.)
+   */
   def id: Any
 
   /**
-  * The meta record (the object that contains the meta result for this type)
-  */
+   * The meta record (the object that contains the meta result for this type)
+   */
   def meta: MongoMetaRecord[MyType]
 
   /**
-  * Save the instance and return the instance
-  */
+   * Save the instance and return the instance
+   */
+  @deprecated("Set WriteConcern in MongoClientOptions or on the MongoMetaRecord", "3.4.2")
   def save(concern: WriteConcern): MyType = {
     runSafe {
       meta.save(this, concern)
@@ -55,30 +56,39 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   }
 
   /**
-    * Inserts record and returns Future that completes when mongo driver finishes operation
-    */
+   * Inserts record and returns Future that completes when mongo driver finishes operation
+   */
+  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.2")
   def insertAsync():Future[Boolean] = {
     runSafe {
       meta.insertAsync(this)
     }
   }
 
- /**
-  * Save the instance and return the instance
-  */
+  /**
+   * Save the instance and return the instance
+   */
   override def saveTheRecord(): Box[MyType] = saveBox()
 
   /**
-  * Save the instance and return the instance
-  * @param safe - if true will use WriteConcern ACKNOWLEDGED else UNACKNOWLEDGED
-  */
+   * Save the instance and return the instance
+   * @param safe - if true will use WriteConcern ACKNOWLEDGED else UNACKNOWLEDGED
+   */
+  @deprecated("Set WriteConcern in MongoClientOptions or on the MongoMetaRecord", "3.4.2")
   def save(safe: Boolean = true): MyType = {
     save(if (safe) WriteConcern.ACKNOWLEDGED else WriteConcern.UNACKNOWLEDGED)
   }
 
+  def save(): MyType = {
+    runSafe {
+      meta.save(this)
+    }
+    this
+  }
+
   /**
-    * Try to save the instance and return the instance in a Box.
-    */
+   * Try to save the instance and return the instance in a Box.
+   */
   def saveBox(): Box[MyType] = tryo {
     runSafe {
       meta.save(this)
@@ -87,8 +97,9 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   }
 
   /**
-    * Update only the dirty fields
-    */
+   * Update only the dirty fields
+   */
+  @deprecated("Use updateOne, or replaceOne instead", "3.4.2")
   def update: MyType = {
     runSafe {
       meta.update(this)
@@ -97,8 +108,9 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   }
 
   /**
-    * Try to update only the dirty fields
-    */
+   * Try to update only the dirty fields
+   */
+  @deprecated("Use updateOne, or replaceOne instead", "3.4.2")
   def updateBox: Box[MyType] = tryo {
     runSafe {
       meta.update(this)
@@ -107,8 +119,8 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   }
 
   /**
-    * Delete the instance from backing store
-    */
+   * Delete the instance from backing store
+   */
   def delete_! : Boolean = {
     runSafe {
       meta.delete_!(this)
@@ -116,8 +128,8 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   }
 
   /**
-    * Try to delete the instance from backing store
-    */
+   * Try to delete the instance from backing store
+   */
   def deleteBox_! : Box[Boolean] = tryo {
     runSafe {
       meta.delete_!(this)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2014 WorldWide Conferencing, LLC
+ * Copyright 2010-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,7 +174,7 @@ class CustomSerializersSpec extends Specification  with MongoTestKit {
       val mother = Person.createRecord
       mother.children(List(jack, jill))
       mother.firstBorn(jack)
-      mother.save()
+      mother.save
 
       // retrieve it and compare
       val mother2 = Person.find(mother.id.get)

@@ -1,5 +1,5 @@
 /*
-* Copyright 2010-2019 WorldWide Conferencing, LLC
+* Copyright 2010-2020 WorldWide Conferencing, LLC
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ import java.util.regex.Pattern
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.js.JE.{JsNull, Str}
 import net.liftweb.json._
-import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, OptionalTypedField}
+import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField, OptionalTypedField, Record}
 import net.liftweb.util.Helpers.tryo
 
 import scala.xml.NodeSeq
 
-abstract class PatternTypedField[OwnerType <: BsonRecord[OwnerType]](val owner: OwnerType) extends Field[Pattern, OwnerType] {
+abstract class PatternTypedField[OwnerType <: Record[OwnerType]](val owner: OwnerType) extends Field[Pattern, OwnerType] {
   def setFromAny(in: Any): Box[Pattern] = in match {
     case p: Pattern => setBox(Full(p))
     case Some(p: Pattern) => setBox(Full(p))
@@ -37,7 +37,9 @@ abstract class PatternTypedField[OwnerType <: BsonRecord[OwnerType]](val owner: 
     case Full(s: String) => setFromString(s)
     case null|None|Empty => setBox(defaultValueBox)
     case f: Failure => setBox(f)
-    case o => setFromString(o.toString)
+    case o => {
+      setFromString(o.toString)
+    }
   }
 
   def setFromJValue(jvalue: JValue): Box[Pattern] = jvalue match {
@@ -77,7 +79,7 @@ abstract class PatternTypedField[OwnerType <: BsonRecord[OwnerType]](val owner: 
   }
 }
 
-class PatternField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) owner: OwnerType) extends PatternTypedField[OwnerType](owner) with MandatoryTypedField[Pattern] {
+class PatternField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType) extends PatternTypedField[OwnerType](owner) with MandatoryTypedField[Pattern] {
   def this(owner: OwnerType, value: Pattern) = {
     this(owner)
     setBox(Full(value))
@@ -86,7 +88,7 @@ class PatternField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) own
   def defaultValue = Pattern.compile("")
 }
 
-class OptionalPatternField[OwnerType <: BsonRecord[OwnerType]](owner: OwnerType) extends PatternTypedField[OwnerType](owner) with OptionalTypedField[Pattern] {
+class OptionalPatternField[OwnerType <: Record[OwnerType]](owner: OwnerType) extends PatternTypedField[OwnerType](owner) with OptionalTypedField[Pattern] {
   def this(owner: OwnerType, value: Box[Pattern]) = {
     this(owner)
     setBox(value)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 WorldWide Conferencing, LLC
+ * Copyright 2010-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import util.JodaHelpers
 import java.util.{Calendar, Date, GregorianCalendar, UUID}
 import java.util.regex.Pattern
 
+import org.bson._
 import org.bson.types.ObjectId
 import org.joda.time._
 
@@ -53,7 +54,7 @@ private[mongodb] object Meta {
     /*
     * This is used to convert DBObjects into JObjects
     */
-    def primitive2jvalue(a: Any) = a match {
+    def primitive2jvalue(a: Any): JValue = a match {
       case x: String => JString(x)
       case x: Int => JInt(x)
       case x: Long => JInt(x)
@@ -80,7 +81,7 @@ private[mongodb] object Meta {
 
     def datetype_?(clazz: Class[_]) = datetypes contains clazz
 
-    def datetype2jvalue(a: Any)(implicit formats: Formats) = a match {
+    def datetype2jvalue(a: Any)(implicit formats: Formats): JValue = a match {
       case x: Calendar => JsonDate(x.getTime)(formats)
       case x: Date => JsonDate(x)(formats)
       case x: DateTime => JsonDateTime(x)(formats)
@@ -103,12 +104,45 @@ private[mongodb] object Meta {
     /*
     * Definitive place for JValue conversion of mongo types
     */
-    def mongotype2jvalue(a: Any)(implicit formats: Formats) = a match {
+    def mongotype2jvalue(a: Any)(implicit formats: Formats): JValue = a match {
       case x: ObjectId => JsonObjectId.asJValue(x, formats)
       case x: Pattern => JsonRegex(x)
       case x: UUID => JsonUUID(x)
       case x: DBRef => sys.error("DBRefs are not supported.")
       case _ => sys.error("not a mongotype " + a.asInstanceOf[AnyRef].getClass)
+    }
+
+    /**
+     * Bson types
+     */
+
+    val bsontypes = Set[Class[_]](
+      classOf[BsonBinary], classOf[BsonBoolean], classOf[BsonDateTime],
+      classOf[BsonDouble], classOf[BsonInt32], classOf[BsonInt64], classOf[BsonNull],
+      classOf[BsonObjectId], classOf[BsonRegularExpression], classOf[BsonString])
+
+    def bsontype_?(clazz: Class[_]) = bsontypes contains clazz
+
+    def bsontype2jvalue(a: Any)(implicit formats: Formats): JValue = a match {
+      case x: BsonBinary => {
+        val binaryType = x.getType()
+
+        if (binaryType == BsonBinarySubType.UUID_LEGACY.getValue()) {
+          JsonUUID(x.asUuid(UuidRepresentation.JAVA_LEGACY))
+        } else {
+          sys.error("invalid binary type " + binaryType)
+        }
+      }
+      case x: BsonBoolean => JBool(x.getValue)
+      case x: BsonDateTime => JsonDate(x.getValue)(formats)
+      case x: BsonDouble => JDouble(x.getValue)
+      case x: BsonInt32 => JInt(x.getValue)
+      case x: BsonInt64 => JInt(x.getValue)
+      case x: BsonNull => JNull
+      case x: BsonObjectId => JsonObjectId.asJValue(x.getValue, formats)
+      case x: BsonRegularExpression => JsonRegex(Pattern.compile(x.getPattern, PatternHelper.optionsToFlags(x.getOptions)))
+      case x: BsonString => JString(x.getValue)
+      case _ => sys.error("not a bsontype " + a.asInstanceOf[AnyRef].getClass)
     }
   }
 
@@ -127,4 +161,3 @@ private[mongodb] object Meta {
 
 
 }
-

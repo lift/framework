@@ -33,8 +33,8 @@ object Dependencies {
   lazy val joda_time              = "joda-time"                  % "joda-time"          % "2.10"
   lazy val joda_convert           = "org.joda"                   % "joda-convert"       % "2.1"
   lazy val htmlparser             = "nu.validator"               % "htmlparser"         % "1.4.12"
-  lazy val mongo_java_driver      = "org.mongodb"                % "mongodb-driver"     % "3.7.1"
-  lazy val mongo_java_driver_async  = "org.mongodb"              % "mongodb-driver-async" % "3.7.1"
+  lazy val mongo_java_driver      = "org.mongodb"                % "mongodb-driver"     % "3.12.5"
+  lazy val mongo_java_driver_async  = "org.mongodb"              % "mongodb-driver-async" % "3.12.5"
   lazy val paranamer              = "com.thoughtworks.paranamer" % "paranamer"          % "2.8"
   lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.5"
   lazy val scalap: ModuleMap      = "org.scala-lang"             % "scalap"             % _

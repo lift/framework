@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 WorldWide Conferencing, LLC
+ * Copyright 2010-2020 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,30 @@
 package net.liftweb
 package mongodb
 
-import net.liftweb.json.JsonAST.JObject
+import net.liftweb.common.Box
+import net.liftweb.json._
 import net.liftweb.util.{ConnectionIdentifier, DefaultConnectionIdentifier}
+import net.liftweb.util.Helpers.tryo
 
-import scala.collection.JavaConverters.asScalaIteratorConverter
+import scala.collection.JavaConverters._
 
 import java.util.UUID
 
-import com.mongodb._
+import org.bson.{BsonDocument, Document, UuidRepresentation}
+import org.bson.codecs.{PatternCodec, UuidCodecProvider}
+import org.bson.codecs.configuration.{CodecRegistries, CodecRegistry}
+import org.bson.conversions.Bson
 import org.bson.types.ObjectId
 
-/*
-* extend case class with this trait
-*/
+import com.mongodb._
+import com.mongodb.client.{MongoCollection, MongoDatabase}
+import com.mongodb.client.model.{DeleteOptions, IndexOptions, InsertOneOptions, ReplaceOptions, UpdateOptions}
+import com.mongodb.client.model.Filters.{eq => eqs}
+import com.mongodb.client.result.{DeleteResult, UpdateResult}
+
+/**
+ * extend case class with this trait
+ */
 trait MongoDocument[BaseDocument] extends JsonObject[BaseDocument] {
   self: BaseDocument =>
 
@@ -37,11 +48,11 @@ trait MongoDocument[BaseDocument] extends JsonObject[BaseDocument] {
 
   def meta: MongoDocumentMeta[BaseDocument]
 
-  def delete {
-    meta.delete("_id", _id)
+  def delete: Box[DeleteResult] = {
+    meta.deleteOne("_id", _id)
   }
 
-  def save = meta.save(this)
+  def save: UpdateResult = meta.save(this)
 
   def getRef: Option[MongoRef] = _id match {
     case oid: ObjectId => Some(MongoRef(meta.collectionName, oid))
@@ -49,168 +60,228 @@ trait MongoDocument[BaseDocument] extends JsonObject[BaseDocument] {
   }
 }
 
-/*
-* extend case class companion objects with this trait
-*/
-trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with MongoMeta[BaseDocument] {
+/**
+ * extend case class companion objects with this trait
+ */
+trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with MongoMeta[BaseDocument, BsonDocument] {
+
+  private val bsonDocumentClass = classOf[BsonDocument]
+
+  def codecRegistry: CodecRegistry = CodecRegistries.fromRegistries(
+    MongoClientSettings.getDefaultCodecRegistry(),
+    CodecRegistries.fromProviders(new UuidCodecProvider(UuidRepresentation.JAVA_LEGACY)),
+    CodecRegistries.fromCodecs(new PatternCodec())
+  )
 
   /**
-    * Override this to specify a ConnectionIdentifier.
-    */
+   * Override this to specify a ConnectionIdentifier.
+   */
   def connectionIdentifier: ConnectionIdentifier = DefaultConnectionIdentifier
 
-  /*
+  /**
    * Use the collection associated with this Meta.
    */
+  def useCollection[T](f: MongoCollection[BsonDocument] => T): T =
+    MongoDB.useMongoCollection(connectionIdentifier, collectionName, bsonDocumentClass) { mc =>
+      f(mc.withCodecRegistry(codecRegistry).withWriteConcern(writeConcern))
+    }
+
+  def useCollection[T](db: MongoDatabase)(f: MongoCollection[BsonDocument] => T): T = {
+    val mc = db.getCollection(collectionName, bsonDocumentClass)
+
+    f(mc.withCodecRegistry(codecRegistry).withWriteConcern(writeConcern))
+  }
+
+  @deprecated("Use useCollection instead", "3.4.2")
   def useColl[T](f: DBCollection => T): T =
     MongoDB.useCollection(connectionIdentifier, collectionName)(f)
 
-  /*
+  /**
    * Use the db associated with this Meta.
    */
+  def useDatabase[T](f: MongoDatabase => T): T =
+    MongoDB.useDatabase(connectionIdentifier) { md =>
+      f(md.withCodecRegistry(codecRegistry).withWriteConcern(writeConcern))
+    }
+
+  @deprecated("Use useDatabase instead", "3.4.2")
   def useDb[T](f: DB => T): T = MongoDB.use(connectionIdentifier)(f)
 
-  def create(dbo: DBObject): BaseDocument = {
-    create(JObjectParser.serialize(dbo).asInstanceOf[JObject])
+  def create(dbo: Bson): BaseDocument = {
+    val jv = BsonParser.serialize(dbo)
+    create(jv.asInstanceOf[JObject])
   }
 
   /**
-  * Find a single row by a qry, using a DBObject.
-  */
-  def find(qry: DBObject): Option[BaseDocument] = {
-    MongoDB.useCollection(connectionIdentifier, collectionName) ( coll =>
-      coll.findOne(qry) match {
+   * Find a single row by a qry, using a Bson.
+   */
+  def find(qry: Bson): Option[BaseDocument] = {
+    useCollection { coll =>
+      coll.find(qry).limit(1).first match {
         case null => None
         case dbo => {
           Some(create(dbo))
         }
       }
-    )
+    }
   }
 
   /**
-  * Find a single document by _id using a String.
-  */
+   * Find a single document by _id using a String.
+   */
   def find(s: String): Option[BaseDocument] =
     if (ObjectId.isValid(s))
-      find(new BasicDBObject("_id", new ObjectId(s)))
+      find(eqs("_id", new ObjectId(s)))
     else
-      find(new BasicDBObject("_id", s))
+      find(eqs("_id", s))
 
   /**
-  * Find a single document by _id using an ObjectId.
-  */
-  def find(oid: ObjectId): Option[BaseDocument] = find(new BasicDBObject("_id", oid))
+   * Find a single document by _id using an ObjectId.
+   */
+  def find(oid: ObjectId): Option[BaseDocument] = find(eqs("_id", oid))
 
   /**
-  * Find a single document by _id using a UUID.
-  */
-  def find(uuid: UUID): Option[BaseDocument] = find(new BasicDBObject("_id", uuid))
+   * Find a single document by _id using a UUID.
+   */
+  def find(uuid: UUID): Option[BaseDocument] = find(eqs("_id", uuid))
 
   /**
-  * Find a single document by a qry using String, Any inputs
-  */
-  def find(k: String, v: Any): Option[BaseDocument] = find(new BasicDBObject(k, v))
+   * Find a single document by a qry using String, Any inputs
+   */
+  def find(k: String, v: Any): Option[BaseDocument] = find(eqs(k, v))
 
   /**
-  * Find a single document by a qry using a json query
-  */
-  def find(json: JObject): Option[BaseDocument] = find(JObjectParser.parse(json))
+   * Find a single document by a qry using a json query
+   */
+  def find(json: JObject): Option[BaseDocument] = find(BsonParser.parse(json))
 
   /**
-  * Find all documents in this collection
-  */
+   * Find all documents in this collection
+   */
   def findAll: List[BaseDocument] = {
-    MongoDB.useCollection(connectionIdentifier, collectionName)(coll => {
+    useCollection { coll =>
       /** Mongo Cursors are both Iterable and Iterator,
        * so we need to reduce ambiguity for implicits
        */
       coll.find.iterator.asScala.map(create).toList
-    })
+    }
   }
 
   /**
-  * Find all documents using a DBObject query.
-  */
-  def findAll(qry: DBObject, sort: Option[DBObject], opts: FindOption*): List[BaseDocument] = {
+   * Find all documents using a Bson query.
+   */
+  def findAll(qry: Bson, sort: Option[Bson], opts: FindOption*): List[BaseDocument] = {
     val findOpts = opts.toList
 
-    MongoDB.useCollection(connectionIdentifier, collectionName) ( coll => {
+    useCollection { coll =>
       val cur = coll.find(qry).limit(
         findOpts.find(_.isInstanceOf[Limit]).map(x => x.value).getOrElse(0)
       ).skip(
         findOpts.find(_.isInstanceOf[Skip]).map(x => x.value).getOrElse(0)
       )
-      sort.foreach( s => cur.sort(s))
+      sort.foreach(s => cur.sort(s))
       /** Mongo Cursors are both Iterable and Iterator,
        * so we need to reduce ambiguity for implicits
        */
       cur.iterator.asScala.map(create).toList
-    })
+    }
   }
 
   /**
-  * Find all documents using a DBObject query.
-  */
-  def findAll(qry: DBObject, opts: FindOption*): List[BaseDocument] =
+   * Find all documents using a Bson query.
+   */
+  def findAll(qry: Bson, opts: FindOption*): List[BaseDocument] =
     findAll(qry, None, opts :_*)
 
   /**
-  * Find all documents using a DBObject query with sort
-  */
-  def findAll(qry: DBObject, sort: DBObject, opts: FindOption*): List[BaseDocument] =
+   * Find all documents using a Bson query with sort
+   */
+  def findAll(qry: Bson, sort: Bson, opts: FindOption*): List[BaseDocument] =
     findAll(qry, Some(sort), opts :_*)
 
   /**
-  * Find all documents using a JObject query
-  */
+   * Find all documents using a JObject query
+   */
   def findAll(qry: JObject, opts: FindOption*): List[BaseDocument] =
-    findAll(JObjectParser.parse(qry), None, opts :_*)
+    findAll(BsonParser.parse(qry), None, opts :_*)
 
   /**
-  * Find all documents using a JObject query with sort
-  */
+   * Find all documents using a JObject query with sort
+   */
   def findAll(qry: JObject, sort: JObject, opts: FindOption*): List[BaseDocument] =
-    findAll(JObjectParser.parse(qry), Some(JObjectParser.parse(sort)), opts :_*)
+    findAll(BsonParser.parse(qry), Some(BsonParser.parse(sort)), opts :_*)
 
   /**
-  * Find all documents using a k, v query
-  */
+   * Find all documents using a k, v query
+   */
   def findAll(k: String, o: Any, opts: FindOption*): List[BaseDocument] =
-    findAll(new BasicDBObject(k, o), None, opts :_*)
+    findAll(eqs(k, o), None, opts :_*)
 
   /**
-  * Find all documents using a k, v query with JObject sort
-  */
+   * Find all documents using a k, v query with JObject sort
+   */
   def findAll(k: String, o: Any, sort: JObject, opts: FindOption*): List[BaseDocument] =
-    findAll(new BasicDBObject(k, o), Some(JObjectParser.parse(sort)), opts :_*)
+    findAll(eqs(k, o), Some(BsonParser.parse(sort)), opts :_*)
 
-  /*
-  * Save a document to the db
-  */
-  def save(in: BaseDocument) {
-    MongoDB.use(connectionIdentifier) ( db => {
-      save(in, db)
-    })
+  def insertOne(inst: BaseDocument, opts: InsertOneOptions = new InsertOneOptions): Box[BaseDocument] = tryo {
+    useCollection { coll =>
+      val bson = BsonParser.parse(toJObject(inst))
+      coll.insertOne(bson, opts)
+      inst
+    }
   }
 
-  /*
-  * Save a document to the db using the given Mongo instance
-  */
+  def replaceOne(inst: BaseDocument, opts: ReplaceOptions = new ReplaceOptions): Box[UpdateResult] = tryo {
+    useCollection { coll =>
+      val bson = BsonParser.parse(toJObject(inst))
+      val id = bson.get("_id")
+      coll.replaceOne(eqs("_id", id), bson, opts)
+    }
+  }
+
+  def replaceOne(qry: Bson, inst: BaseDocument, opts: ReplaceOptions): Box[UpdateResult] = tryo {
+    useCollection { coll =>
+      val bson = BsonParser.parse(toJObject(inst))
+      coll.replaceOne(qry, bson, opts)
+    }
+  }
+
+  def replaceOne(qry: Bson, inst: BaseDocument): Box[UpdateResult] =
+    replaceOne(qry, inst, new ReplaceOptions)
+
+  def replaceOne(qry: JObject, inst: BaseDocument, opts: ReplaceOptions): Box[UpdateResult] = tryo {
+    useCollection { coll =>
+      val bson = BsonParser.parse(toJObject(inst))
+      coll.replaceOne(BsonParser.parse(qry), bson, opts)
+    }
+  }
+
+  def replaceOne(qry: JObject, inst: BaseDocument): Box[UpdateResult] =
+    replaceOne(qry, inst, new ReplaceOptions)
+
+  /**
+   * Save a document to the db
+   */
+  def save(inst: BaseDocument): UpdateResult = {
+    val opts = new ReplaceOptions().upsert(true)
+    useCollection { coll =>
+      val bson = BsonParser.parse(toJObject(inst))
+      val id = bson.get("_id")
+      coll.replaceOne(eqs("_id", id), bson, opts)
+    }
+  }
+
+  @deprecated("Use save instead", "3.4.2")
   def save(in: BaseDocument, db: DB) {
     db.getCollection(collectionName).save(JObjectParser.parse(toJObject(in)))
   }
 
-  /*
-  * Update document with a JObject query using the given Mongo instance
-  */
+  @deprecated("Use updateOne, updateMany, or replaceOne instead", "3.4.2")
   def update(qry: JObject, newbd: BaseDocument, db: DB, opts: UpdateOption*) {
     update(qry, toJObject(newbd), db, opts :_*)
   }
 
-  /*
-  * Update document with a JObject query
-  */
+  @deprecated("Use updateOne, updateMany, or replaceOne instead", "3.4.2")
   def update(qry: JObject, newbd: BaseDocument, opts: UpdateOption*) {
     MongoDB.use(connectionIdentifier) ( db => {
       update(qry, newbd, db, opts :_*)
