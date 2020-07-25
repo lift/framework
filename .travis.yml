@@ -1,5 +1,5 @@
 language: scala
-dist: trusty
+dist: bionic
 sudo: false
 scala:
   - 2.11.12
