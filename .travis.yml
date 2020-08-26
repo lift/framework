@@ -3,7 +3,7 @@ dist: bionic
 sudo: false
 scala:
   - 2.11.12
-  - 2.12.11
+  - 2.12.12
   - 2.13.2
 cache:
   directories:
@@ -15,10 +15,10 @@ jdk:
   - openjdk8
 matrix:
   include:
-  - scala: 2.12.11
+  - scala: 2.12.12
     jdk: openjdk11
     env: DISABLE_PUBLISH=true
-  - scala: 2.12.11
+  - scala: 2.12.12
     jdk: openjdk12
     env: DISABLE_PUBLISH=true
   - scala: 2.13.2
