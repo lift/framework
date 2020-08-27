@@ -9,7 +9,7 @@ startYear in ThisBuild             := Some(2006)
 organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
 
 val scala211Version = "2.11.12"
-val scala212Version = "2.12.11"
+val scala212Version = "2.12.12"
 val scala213Version = "2.13.2"
 
 val crossUpTo212 = Seq(scala212Version, scala211Version)
