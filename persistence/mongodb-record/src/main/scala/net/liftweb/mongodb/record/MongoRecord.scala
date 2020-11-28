@@ -47,7 +47,7 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   /**
    * Save the instance and return the instance
    */
-  @deprecated("Set WriteConcern in MongoClientOptions or on the MongoMetaRecord", "3.4.2")
+  @deprecated("Set WriteConcern in MongoClientOptions or on the MongoMetaRecord", "3.4.3")
   def save(concern: WriteConcern): MyType = {
     runSafe {
       meta.save(this, concern)
@@ -58,7 +58,7 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   /**
    * Inserts record and returns Future that completes when mongo driver finishes operation
    */
-  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.2")
+  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.3")
   def insertAsync():Future[Boolean] = {
     runSafe {
       meta.insertAsync(this)
@@ -74,7 +74,7 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
    * Save the instance and return the instance
    * @param safe - if true will use WriteConcern ACKNOWLEDGED else UNACKNOWLEDGED
    */
-  @deprecated("Set WriteConcern in MongoClientOptions or on the MongoMetaRecord", "3.4.2")
+  @deprecated("Set WriteConcern in MongoClientOptions or on the MongoMetaRecord", "3.4.3")
   def save(safe: Boolean = true): MyType = {
     save(if (safe) WriteConcern.ACKNOWLEDGED else WriteConcern.UNACKNOWLEDGED)
   }
@@ -99,7 +99,7 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   /**
    * Update only the dirty fields
    */
-  @deprecated("Use updateOne, or replaceOne instead", "3.4.2")
+  @deprecated("Use updateOne, or replaceOne instead", "3.4.3")
   def update: MyType = {
     runSafe {
       meta.update(this)
@@ -110,7 +110,7 @@ trait MongoRecord[MyType <: MongoRecord[MyType]] extends BsonRecord[MyType] {
   /**
    * Try to update only the dirty fields
    */
-  @deprecated("Use updateOne, or replaceOne instead", "3.4.2")
+  @deprecated("Use updateOne, or replaceOne instead", "3.4.3")
   def updateBox: Box[MyType] = tryo {
     runSafe {
       meta.update(this)

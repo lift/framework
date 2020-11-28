@@ -45,16 +45,16 @@ trait BsonRecord[MyType <: BsonRecord[MyType]] extends Record[MyType] {
   /**
     * Encode a record instance into a DBObject
     */
-  @deprecated("RecordCodec is now used instead.", "3.4.2")
+  @deprecated("RecordCodec is now used instead.", "3.4.3")
   def asDBObject: DBObject = meta.asDBObject(this)
 
-  @deprecated("RecordCodec is now used instead.", "3.4.2")
+  @deprecated("RecordCodec is now used instead.", "3.4.3")
   def asDocument: Document = meta.asDocument(this)
 
   /**
     * Set the fields of this record from the given DBObject
     */
-  @deprecated("RecordCodec is now used instead.", "3.4.2")
+  @deprecated("RecordCodec is now used instead.", "3.4.3")
   def setFieldsFromDBObject(dbo: DBObject): Unit = meta.setFieldsFromDBObject(this, dbo)
 
  /**
@@ -123,7 +123,7 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
     * - MongoFieldFlavor types (List) are converted to DBObjects
     *   using asDBObject
     */
-  @deprecated("RecordCodec is now used instead.", "3.4.2")
+  @deprecated("RecordCodec is now used instead.", "3.4.3")
   def asDBObject(inst: BaseRecord): DBObject = {
     val dbo = BasicDBObjectBuilder.start // use this so regex patterns can be stored.
 
@@ -135,7 +135,7 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
     dbo.get
   }
 
-  @deprecated("RecordCodec is now used instead.", "3.4.2")
+  @deprecated("RecordCodec is now used instead.", "3.4.3")
   def asDocument(inst: BaseRecord): Document = {
     val dbo = new Document()
 
@@ -150,7 +150,7 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
   /**
     * Return the value of a field suitable to be put in a DBObject
     */
-  @deprecated("RecordCodec is now used instead.", "3.4.2")
+  @deprecated("RecordCodec is now used instead.", "3.4.3")
   def fieldDbValue(f: Field[_, BaseRecord]): Box[Any] = {
     import Meta.Reflection._
     import field.MongoFieldFlavor
@@ -185,7 +185,7 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
     * @param dbo - the DBObject
     * @return Box[BaseRecord]
     */
-  @deprecated("RecordCodec is now used instead.", "3.4.2")
+  @deprecated("RecordCodec is now used instead.", "3.4.3")
   def fromDBObject(dbo: DBObject): BaseRecord = {
     val inst: BaseRecord = createRecord
     setFieldsFromDBObject(inst, dbo)
@@ -200,7 +200,7 @@ trait BsonMetaRecord[BaseRecord <: BsonRecord[BaseRecord]] extends MetaRecord[Ba
     * @param dbo - The DBObject
     * @return Unit
     */
-  @deprecated("RecordCodec is now used instead.", "3.4.2")
+  @deprecated("RecordCodec is now used instead.", "3.4.3")
   def setFieldsFromDBObject(inst: BaseRecord, dbo: DBObject): Unit = {
     for (k <- dbo.keySet.asScala; field <- inst.fieldByName(k.toString)) {
       field.setFromAny(dbo.get(k.toString))

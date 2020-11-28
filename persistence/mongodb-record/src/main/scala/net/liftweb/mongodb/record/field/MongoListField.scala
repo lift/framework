@@ -153,7 +153,7 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
   /*
   * Convert this field's value into a DBObject so it can be stored in Mongo.
   */
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   def asDBObject: DBObject = {
     val dbl = new BasicDBList
 
@@ -169,11 +169,11 @@ class MongoListField[OwnerType <: BsonRecord[OwnerType], ListType: Manifest](rec
   }
 
   // set this field's value using a DBObject returned from Mongo.
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   def setFromDBObject(dbo: DBObject): Box[MyType] =
     setBox(Full(dbo.asInstanceOf[BasicDBList].asScala.toList.asInstanceOf[MyType]))
 
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   def setFromDocumentList(list: JavaList[Document]): Box[MyType] = {
     throw new RuntimeException("Warning, setting Document as field with no conversion, probably not something you want to do")
   }

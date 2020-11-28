@@ -92,7 +92,7 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
     f(mc.withCodecRegistry(codecRegistry).withWriteConcern(writeConcern))
   }
 
-  @deprecated("Use useCollection instead", "3.4.2")
+  @deprecated("Use useCollection instead", "3.4.3")
   def useColl[T](f: DBCollection => T): T =
     MongoDB.useCollection(connectionIdentifier, collectionName)(f)
 
@@ -104,7 +104,7 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
       f(md.withCodecRegistry(codecRegistry).withWriteConcern(writeConcern))
     }
 
-  @deprecated("Use useDatabase instead", "3.4.2")
+  @deprecated("Use useDatabase instead", "3.4.3")
   def useDb[T](f: DB => T): T = MongoDB.use(connectionIdentifier)(f)
 
   def create(dbo: Bson): BaseDocument = {
@@ -271,17 +271,17 @@ trait MongoDocumentMeta[BaseDocument] extends JsonObjectMeta[BaseDocument] with 
     }
   }
 
-  @deprecated("Use save instead", "3.4.2")
+  @deprecated("Use save instead", "3.4.3")
   def save(in: BaseDocument, db: DB) {
     db.getCollection(collectionName).save(JObjectParser.parse(toJObject(in)))
   }
 
-  @deprecated("Use updateOne, updateMany, or replaceOne instead", "3.4.2")
+  @deprecated("Use updateOne, updateMany, or replaceOne instead", "3.4.3")
   def update(qry: JObject, newbd: BaseDocument, db: DB, opts: UpdateOption*) {
     update(qry, toJObject(newbd), db, opts :_*)
   }
 
-  @deprecated("Use updateOne, updateMany, or replaceOne instead", "3.4.2")
+  @deprecated("Use updateOne, updateMany, or replaceOne instead", "3.4.3")
   def update(qry: JObject, newbd: BaseDocument, opts: UpdateOption*) {
     MongoDB.use(connectionIdentifier) ( db => {
       update(qry, newbd, db, opts :_*)

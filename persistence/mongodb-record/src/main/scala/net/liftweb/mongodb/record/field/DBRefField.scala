@@ -32,7 +32,7 @@ import org.bson.types.ObjectId
 /*
 * Field for storing a DBRef
 */
-@deprecated("DBref is being removed. See 'MongoRef' for an alternative", "3.4.2")
+@deprecated("DBref is being removed. See 'MongoRef' for an alternative", "3.4.3")
 class DBRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](rec: OwnerType, ref: RefType)
   extends Field[DBRef, OwnerType] with MandatoryTypedField[DBRef] {
 

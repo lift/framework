@@ -90,7 +90,7 @@ trait MongoMeta[BaseDocument, TDocument] extends JsonFormats with MongoCodecs {
    */
   def useCollection[T](f: MongoCollection[TDocument] => T): T
 
-  @deprecated("Use useCollection instead", "3.4.2")
+  @deprecated("Use useCollection instead", "3.4.3")
   def useColl[T](f: DBCollection => T): T
 
   /**
@@ -98,7 +98,7 @@ trait MongoMeta[BaseDocument, TDocument] extends JsonFormats with MongoCodecs {
    */
   def useDatabase[T](f: MongoDatabase => T): T
 
-  @deprecated("Use useDatabase instead", "3.4.2")
+  @deprecated("Use useDatabase instead", "3.4.3")
   def useDb[T](f: DB => T): T
 
   /**
@@ -217,12 +217,12 @@ trait MongoMeta[BaseDocument, TDocument] extends JsonFormats with MongoCodecs {
   /**
    * Delete documents by a DBObject query
    */
-  @deprecated("Use deleteOne or deleteMany instead", "3.4.2")
+  @deprecated("Use deleteOne or deleteMany instead", "3.4.3")
   def delete(qry: DBObject): Unit =
     useColl { coll => coll.remove(qry) }
 
   // delete a document
-  @deprecated("Use deleteOne or deleteMany instead", "3.4.2")
+  @deprecated("Use deleteOne or deleteMany instead", "3.4.3")
   def delete(k: String, v: Any) {
     delete(new BasicDBObject(k, v match {
       case s: String if (ObjectId.isValid(s)) => new ObjectId(s)
@@ -233,13 +233,13 @@ trait MongoMeta[BaseDocument, TDocument] extends JsonFormats with MongoCodecs {
   /**
    * Delete documents by a JObject query
    */
-  @deprecated("Use deleteOne or deleteMany instead", "3.4.2")
+  @deprecated("Use deleteOne or deleteMany instead", "3.4.3")
   def delete(qry: JObject): Unit = delete(JObjectParser.parse(qry))
 
   /* drop this document collection */
   def drop: Box[Unit] =  tryo { useCollection { coll => coll.drop() } }
 
-  @deprecated("Use createIndex that takes IndexOptions as argument instead", "3.4.2")
+  @deprecated("Use createIndex that takes IndexOptions as argument instead", "3.4.3")
   def createIndex(keys: JObject, opts: JObject): Unit =
     useColl { coll =>
       coll.createIndex(JObjectParser.parse(keys), JObjectParser.parse(opts))
@@ -298,7 +298,7 @@ trait MongoMeta[BaseDocument, TDocument] extends JsonFormats with MongoCodecs {
   def updateOne(qry: JObject, update: JObject, opts: UpdateOptions): Box[UpdateResult] =
     updateOne(BsonParser.parse(qry), BsonParser.parse(update))
 
-  @deprecated("Use updateOne or updateMany instead", "3.4.2")
+  @deprecated("Use updateOne or updateMany instead", "3.4.3")
   def update(qry: DBObject, newobj: DBObject, db: DB, opts: UpdateOption*) {
     val dboOpts = opts.toList
     db.getCollection(collectionName).update(
@@ -309,7 +309,7 @@ trait MongoMeta[BaseDocument, TDocument] extends JsonFormats with MongoCodecs {
     )
   }
 
-  @deprecated("Use updateOne or updateMany instead", "3.4.2")
+  @deprecated("Use updateOne or updateMany instead", "3.4.3")
   def update(qry: JObject, newobj: JObject, db: DB, opts: UpdateOption*) {
     update(
       JObjectParser.parse(qry),
@@ -319,7 +319,7 @@ trait MongoMeta[BaseDocument, TDocument] extends JsonFormats with MongoCodecs {
     )
   }
 
-  @deprecated("Use updateOne or updateMany instead", "3.4.2")
+  @deprecated("Use updateOne or updateMany instead", "3.4.3")
   def update(qry: JObject, newobj: JObject, opts: UpdateOption*) {
     useDb { db => update(qry, newobj, db, opts :_*) }
   }
@@ -337,10 +337,10 @@ case class Skip(value: Int) extends FindOption
 /*
 * For passing in options to the update function
 */
-@deprecated("Use com.mongodb.client.model.UpdateOptions instead", "3.4.2")
+@deprecated("Use com.mongodb.client.model.UpdateOptions instead", "3.4.3")
 abstract sealed class UpdateOption
-@deprecated("Use com.mongodb.client.model.UpdateOptions instead", "3.4.2")
+@deprecated("Use com.mongodb.client.model.UpdateOptions instead", "3.4.3")
 case object Upsert extends UpdateOption
-@deprecated("Use com.mongodb.client.model.UpdateOptions instead", "3.4.2")
+@deprecated("Use com.mongodb.client.model.UpdateOptions instead", "3.4.3")
 case object Multi extends UpdateOption
 

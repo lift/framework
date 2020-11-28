@@ -132,14 +132,14 @@ class BsonRecordListField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: B
 
   override def validations = ((elems: ValueType) => elems.flatMap(_.validate)) :: super.validations
 
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   override def asDBObject: DBObject = {
     val dbl = new BasicDBList
     value.foreach { v => dbl.add(v.asDBObject) }
     dbl
   }
 
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   override def setFromDBObject(dbo: DBObject): Box[List[SubRecordType]] = {
     setBox(Full(dbo.keySet.asScala.toList.map { k =>
       valueMeta.fromDBObject(dbo.get(k).asInstanceOf[DBObject])
@@ -156,7 +156,7 @@ class BsonRecordListField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: B
     case other => setBox(FieldHelpers.expectedA("JArray", other))
   }
 
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   override def setFromDocumentList(list: java.util.List[Document]): Box[List[SubRecordType]] = {
     setBox(Full(
       list.asScala.toList.map { valueMeta.fromDocument }

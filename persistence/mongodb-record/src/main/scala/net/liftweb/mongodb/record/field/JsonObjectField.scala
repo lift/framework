@@ -90,11 +90,11 @@ abstract class JsonObjectTypedField[OwnerType <: BsonRecord[OwnerType], JObjectT
   /*
   * Convert this field's value into a DBObject so it can be stored in Mongo.
   */
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   def asDBObject: DBObject = JObjectParser.parse(asJValue.asInstanceOf[JObject])
 
   // set this field's value using a DBObject returned from Mongo.
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   def setFromDBObject(dbo: DBObject): Box[JObjectType] =
     setFromJValue(JObjectParser.serialize(dbo).asInstanceOf[JObject])
 }
@@ -127,14 +127,14 @@ class JsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <: Jso
   extends MongoListField[OwnerType, JObjectType](owner: OwnerType)
 {
 
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   override def asDBObject: DBObject = {
     val dbl = new BasicDBList
     value.foreach { v => dbl.add(JObjectParser.parse(v.asJObject()(owner.meta.formats))(owner.meta.formats)) }
     dbl
   }
 
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   override def setFromDBObject(dbo: DBObject): Box[List[JObjectType]] =
     setBox(Full(dbo.keySet.asScala.toList.map { k =>
       val v = dbo.get(k)
@@ -159,7 +159,7 @@ class JsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <: Jso
     case other => setBox(FieldHelpers.expectedA("JArray", other))
   }
 
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   override def setFromDocumentList(list: java.util.List[Document]): Box[MyType] = {
     val objs = list.asScala.map { JObjectParser.serialize }
     setFromJValue(JArray(objs.toList))
