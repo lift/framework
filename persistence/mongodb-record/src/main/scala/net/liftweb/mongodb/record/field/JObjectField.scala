@@ -67,12 +67,12 @@ trait JObjectTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[J
 
   def toForm: Box[NodeSeq] = Empty
 
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   def asDBObject: DBObject = valueBox
     .map { v => JObjectParser.parse(v)(owner.meta.formats) }
     .openOr(new BasicDBObject)
 
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   def setFromDBObject(obj: DBObject): Box[JObject] =
     Full(JObjectParser.serialize(obj)(owner.meta.formats).asInstanceOf[JObject])
 

@@ -96,7 +96,7 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
   /*
   * Convert this field's value into a DBObject so it can be stored in Mongo.
   */
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   def asDBObject: DBObject = {
     val dbo = new BasicDBObject
     value.keys.foreach { key =>
@@ -108,7 +108,7 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
   }
 
   // set this field's value using a DBObject returned from Mongo.
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   def setFromDBObject(dbo: DBObject): Box[Map[String, MapValueType]] = {
     setBox(Full(
       Map() ++ dbo.keySet.asScala.map {
@@ -118,7 +118,7 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
   }
 
   // set this field's value using a bson.Document returned from Mongo.
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   def setFromDocument(doc: Document): Box[Map[String, MapValueType]] = {
     val map = scala.collection.mutable.Map[String, MapValueType]()
 
@@ -131,7 +131,7 @@ class MongoMapField[OwnerType <: BsonRecord[OwnerType], MapValueType](rec: Owner
     }
   }
 
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   def asDocument: Document = {
     val doc = new Document()
 

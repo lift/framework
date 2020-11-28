@@ -27,17 +27,17 @@ import com.mongodb.DBObject
 /**
 * Describes common aspects related to Mongo fields
 */
-@deprecated("Please use 'BsonableField' instead.", "3.4.2")
+@deprecated("Please use 'BsonableField' instead.", "3.4.3")
 trait MongoFieldFlavor[MyType] {
 
   /*
   * convert this field's value into a DBObject so it can be stored in Mongo.
   */
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   def asDBObject: DBObject
 
   // set this field's value using a DBObject returned from Mongo.
-  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.2")
+  @deprecated("This was replaced with the functions from 'BsonableField'.", "3.4.3")
   def setFromDBObject(obj: DBObject): Box[MyType]
 
   /**

@@ -68,7 +68,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     case x => x
   }
 
-  @deprecated("Use useCollection instead", "3.4.2")
+  @deprecated("Use useCollection instead", "3.4.3")
   def useColl[T](f: DBCollection => T): T =
     MongoDB.useCollection(connectionIdentifier, collectionName)(f)
 
@@ -98,10 +98,10 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     }
   }
 
-  @deprecated("Use useDatabase instead", "3.4.2")
+  @deprecated("Use useDatabase instead", "3.4.3")
   def useDb[T](f: DB => T): T = MongoDB.use(connectionIdentifier)(f)
 
-  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.2")
+  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.3")
   def useCollAsync[T](f: com.mongodb.async.client.MongoCollection[Document] => T): T = {
     MongoAsync.useCollection[T](connectionIdentifier, collectionName)(f)
   }
@@ -286,7 +286,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
 
   def findAll(ids: List[ObjectId]): List[BaseRecord] = findAllByList[ObjectId](ids)
 
-  @deprecated("Use saveOperation instead", "3.4.2")
+  @deprecated("Use saveOperation instead", "3.4.3")
   protected def saveOp[T](inst: BaseRecord)(f: => T): Boolean = {
     foreachCallback(inst, _.beforeSave)
     f
@@ -334,7 +334,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     insts.foreach(inst => foreachCallback(inst, _.afterSave))
   }
 
-  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.2")
+  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.3")
   def insertAsync(inst: BaseRecord): Future[Boolean] = {
     useCollAsync { coll =>
       val cb = new SingleBooleanVoidCallback( () => {
@@ -365,7 +365,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
    * in similar way as save() from sync api.
    *
    */
-  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.2")
+  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.3")
   def replaceOneAsync(inst: BaseRecord, upsert: Boolean = true, concern: WriteConcern = MongoRules.defaultWriteConcern.vend): Future[BaseRecord] = {
     useCollAsync { coll =>
       val p = Promise[BaseRecord]
@@ -395,7 +395,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   /**
    * Save the instance in the appropriate backing store
    */
-  @deprecated("Set WriteConcern in MongoClientOptions or on this MongoMetaRecord", "3.4.2")
+  @deprecated("Set WriteConcern in MongoClientOptions or on this MongoMetaRecord", "3.4.3")
   def save(inst: BaseRecord, concern: WriteConcern): Boolean = saveOp(inst) {
     useColl { coll =>
       coll.save(inst.asDBObject, concern)
@@ -405,7 +405,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   /**
    * Save a document to the db using the given Mongo instance
    */
-  @deprecated("Set WriteConcern in MongoClientOptions or on this MongoMetaRecord", "3.4.2")
+  @deprecated("Set WriteConcern in MongoClientOptions or on this MongoMetaRecord", "3.4.3")
   def save(inst: BaseRecord, db: DB, concern: WriteConcern): Boolean = saveOp(inst) {
     db.getCollection(collectionName).save(inst.asDBObject, concern)
   }
@@ -413,7 +413,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   /**
    * Update records with a JObject query using the given Mongo instance
    */
-  @deprecated("Use updateOne, updateMany, or replaceOne instead", "3.4.2")
+  @deprecated("Use updateOne, updateMany, or replaceOne instead", "3.4.3")
   def update(qry: JObject, newbr: BaseRecord, db: DB, opts: UpdateOption*): Unit = {
     update(JObjectParser.parse(qry), newbr.asDBObject, db, opts :_*)
   }
@@ -421,7 +421,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   /**
    * Update records with a JObject query
    */
-  @deprecated("Use updateOne, updateMany, or replaceOne instead", "3.4.2")
+  @deprecated("Use updateOne, updateMany, or replaceOne instead", "3.4.3")
   def update(qry: JObject, newbr: BaseRecord, opts: UpdateOption*): Unit =  {
     useDb ( db =>
       update(qry, newbr, db, opts :_*)
@@ -431,7 +431,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   /**
    * Upsert records with a DBObject query
    */
-  @deprecated("Use updateOne, updateMany, or replaceOne instead", "3.4.2")
+  @deprecated("Use updateOne, updateMany, or replaceOne instead", "3.4.3")
   def upsert(query: DBObject, update: DBObject): Unit = {
     useColl( coll =>
       coll.update(query, update, true, false)
@@ -441,7 +441,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   /**
    * Update one record with a DBObject query
    */
-  @deprecated("Use updateOne, updateMany, or replaceOne instead", "3.4.2")
+  @deprecated("Use updateOne, updateMany, or replaceOne instead", "3.4.3")
   def update(query: DBObject, update: DBObject): Unit = {
     useColl( coll =>
       coll.update(query, update)
@@ -451,7 +451,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   /**
    * Update multiple records with a DBObject query
    */
-  @deprecated("Use updateMany instead", "3.4.2")
+  @deprecated("Use updateMany instead", "3.4.3")
   def updateMulti(query: DBObject, update: DBObject): Unit = {
     useColl( coll =>
       coll.updateMulti(query, update)
@@ -461,7 +461,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
   /**
    * Update a record with a DBObject query
    */
-  @deprecated("Use updateOne, or replaceOne instead", "3.4.2")
+  @deprecated("Use updateOne, or replaceOne instead", "3.4.3")
   def update(obj: BaseRecord, update: DBObject): Unit = {
     val query = (BasicDBObjectBuilder.start
                       .add("_id", idValue(obj))
@@ -481,7 +481,7 @@ trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
     *
     * Note: PatternField will always set the dirty flag when set.
     */
-  @deprecated("Use updateOne, or replaceOne instead", "3.4.2")
+  @deprecated("Use updateOne, or replaceOne instead", "3.4.3")
   def update(inst: BaseRecord): Unit = updateOp(inst) {
     val dirtyFields = fields(inst).filter(_.dirty_?)
     if (dirtyFields.length > 0) {

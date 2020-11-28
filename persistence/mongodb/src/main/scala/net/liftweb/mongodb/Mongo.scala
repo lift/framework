@@ -58,7 +58,7 @@ object MongoDB {
   /**
     * Get a DB reference
     */
-  @deprecated("Use useDatabase instead", "3.4.2")
+  @deprecated("Use useDatabase instead", "3.4.3")
   def getDb(name: ConnectionIdentifier): Option[DB] = dbs.get(name) match {
     case null => None
     case (mngo, db) => Some(mngo.getDB(db))
@@ -72,7 +72,7 @@ object MongoDB {
   }
 
   // for legacy purposes
-  @deprecated("Use getCollection instead", "3.4.2")
+  @deprecated("Use getCollection instead", "3.4.3")
   private[this] def getColl(name: ConnectionIdentifier, collectionName: String): Option[DBCollection] =
     getDb(name) match {
       case Some(mongo) if mongo != null =>
@@ -109,7 +109,7 @@ object MongoDB {
   /**
     * Executes function {@code f} with the mongo db named {@code name}.
     */
-  @deprecated("Use useDatabase instead", "3.4.2")
+  @deprecated("Use useDatabase instead", "3.4.3")
   def use[T](name: ConnectionIdentifier)(f: (DB) => T): T = {
 
     val db = getDb(name) match {
@@ -139,7 +139,7 @@ object MongoDB {
     * Executes function {@code f} with the mongo named {@code name}.
     * Uses the default ConnectionIdentifier
     */
-  @deprecated("Use useDefaultDatabase instead", "3.4.2")
+  @deprecated("Use useDefaultDatabase instead", "3.4.3")
   def use[T](f: (DB) => T): T = {
 
     val db = getDb(DefaultConnectionIdentifier) match {
@@ -168,7 +168,7 @@ object MongoDB {
     * Executes function {@code f} with the mongo named {@code name} and
     * collection names {@code collectionName}. Gets a collection for you.
     */
-  @deprecated("Use useMongoCollection instead", "3.4.2")
+  @deprecated("Use useMongoCollection instead", "3.4.3")
   def useCollection[T](name: ConnectionIdentifier, collectionName: String)(f: (DBCollection) => T): T = {
     val coll = getColl(name, collectionName) match {
       case Some(collection) => collection
@@ -196,7 +196,7 @@ object MongoDB {
   /**
     * Same as above except uses DefaultConnectionIdentifier
     */
-  @deprecated("Use useMongoCollection instead", "3.4.2")
+  @deprecated("Use useMongoCollection instead", "3.4.3")
   def useCollection[T](collectionName: String)(f: (DBCollection) => T): T = {
     val coll = getColl(DefaultConnectionIdentifier, collectionName) match {
       case Some(collection) => collection

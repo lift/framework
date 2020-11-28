@@ -26,7 +26,7 @@ import org.bson.Document
 
 import scala.concurrent.Promise
 
-@deprecated("No longer supported. This will be removed in Lift 4.", "3.4.2")
+@deprecated("No longer supported. This will be removed in Lift 4.", "3.4.3")
 private[mongodb] class SingleBooleanVoidCallback(f: () => Unit) extends SingleResultCallback[Void] {
   private[this] val p = Promise[Boolean]()
 
@@ -76,7 +76,7 @@ private[mongodb] class SingleBooleanVoidCallback(f: () => Unit) extends SingleRe
   *
   * }}}
   */
-@deprecated("No longer supported. This will be removed in Lift 4.", "3.4.2")
+@deprecated("No longer supported. This will be removed in Lift 4.", "3.4.3")
 object MongoAsync {
 
   /**
@@ -87,7 +87,7 @@ object MongoAsync {
   /**
     * Define a Mongo db using a MongoDatabase instance.
     */
-  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.2")
+  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.3")
   def defineDb(id: ConnectionIdentifier, db: MongoDatabase): Unit = {
     dbs.put(id, db)
   }
@@ -102,7 +102,7 @@ object MongoAsync {
   /**
     * Executes function {@code f} with the mongo database identified by {@code name}.
     */
-  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.2")
+  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.3")
   def use[T](name: ConnectionIdentifier)(f: (MongoDatabase) => T): T = {
     val db = getDatabase(name) match {
       case Some(mongo) => mongo
@@ -115,7 +115,7 @@ object MongoAsync {
     * Executes function {@code f} with the collection named {@code collectionName} from
     * the mongo database identified by {@code name}.
     */
-  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.2")
+  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.3")
   def useCollection[T](name: ConnectionIdentifier, collectionName: String)(f: (MongoCollection[Document]) => T): T = {
     val coll = getCollection(name, collectionName) match {
       case Some(collection) => collection
@@ -132,7 +132,7 @@ object MongoAsync {
   /**
     * Clear the HashMap.
     */
-  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.2")
+  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.3")
   def clear(): Unit = {
     dbs.clear()
   }
@@ -140,7 +140,7 @@ object MongoAsync {
   /**
     * Remove a specific ConnectionIdentifier from the HashMap.
     */
-  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.2")
+  @deprecated("No longer supported. This will be removed in Lift 4.", "3.4.3")
   def remove(id: ConnectionIdentifier): Option[MongoDatabase] = {
     Option(dbs.remove(id))
   }
