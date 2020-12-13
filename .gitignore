@@ -66,3 +66,9 @@ core/documentation-helpers/src/test/**Test.scala
 
 # JavaScript testing
 node_modules
+
+# Metals
+.metals
+
+# VSCode
+.vscode
