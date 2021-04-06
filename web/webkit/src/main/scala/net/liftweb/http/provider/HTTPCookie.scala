@@ -20,6 +20,10 @@ package provider
 
 import net.liftweb.common.{Box, Empty, Full}
 
+object SameSite extends Enumeration {
+  val LAX, STRICT, NONE = Value
+}
+
 /**
  * Companion module for creating HTTPCookie objects
  */
@@ -37,7 +41,8 @@ case class HTTPCookie(name: String,
                       maxAge: Box[Int],
                       version: Box[Int],
                       secure_? : Box[Boolean],
-                       httpOnly: Box[Boolean] = Empty) extends java.lang.Cloneable {
+                       httpOnly: Box[Boolean] = Empty,
+                       sameSite : Box[SameSite.Value] = Empty) extends java.lang.Cloneable {
   override def clone(): HTTPCookie = {
     super.clone()
     copy()
