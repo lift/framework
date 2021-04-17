@@ -47,7 +47,6 @@ object Dependencies {
   lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.7.10"
   lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "1.1.2"
   lazy val xerces                 = "xerces" % "xercesImpl" % "2.11.0"
-  lazy val nettyHttpCodec         = "io.netty"                   % "netty-codec-http"   % "4.1.59.Final"
 
   // Aliases
   lazy val mongo_driver = mongo_java_driver
