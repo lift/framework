@@ -167,8 +167,7 @@ lazy val webkit =
         mockito_scalatest,
         jquery,
         jasmineCore,
-        jasmineAjax,
-        nettyHttpCodec
+        jasmineAjax
       ),
       libraryDependencies ++= {
         CrossVersion.partialVersion(scalaVersion.value) match {
