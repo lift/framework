@@ -22,34 +22,19 @@ package servlet
 import scala.collection.mutable.{ListBuffer}
 import java.io.{OutputStream}
 import javax.servlet.http.{HttpServletResponse, Cookie}
-import io.netty.handler.codec.http.cookie.{ DefaultCookie => NettyCookie }
-import io.netty.handler.codec.http.cookie.{ ServerCookieEncoder => NettyCookieEncoder }
-import io.netty.handler.codec.http.cookie.CookieHeaderNames.{ SameSite => NettySameSite }
+import net.liftweb.http.provider.encoder.CookieEncoder
 import net.liftweb.common._
 import net.liftweb.util._
 import Helpers._
 
 class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
   private var _status = 0;
+
+  private val SET_COOKIE_HEADER = "Set-Cookie"
  
   def addCookies(cookies: List[HTTPCookie]) = cookies.foreach {
-    case c =>
-      val cookie = new NettyCookie(c.name, c.value openOr null)
-      c.domain map cookie.setDomain
-      c.path map cookie.setPath
-      c.maxAge map (_.toLong) map cookie.setMaxAge
-      c.secure_? map cookie.setSecure
-      c.sameSite map {
-        case SameSite.LAX =>
-          cookie.setSameSite(NettySameSite.Lax)
-        case SameSite.STRICT =>
-          cookie.setSameSite(NettySameSite.Strict)
-        case SameSite.NONE =>
-          cookie.setSameSite(NettySameSite.None)
-      }
-      c.httpOnly map cookie.setHttpOnly
-      val encoder = if (c.version == Full(0)) NettyCookieEncoder.LAX else NettyCookieEncoder.STRICT
-      resp.addHeader("Set-Cookie", encoder.encode(cookie))
+    case cookie =>
+      resp.addHeader(SET_COOKIE_HEADER, CookieEncoder.encode(cookie))
   }
 
   private val shouldEncodeUrl = LiftRules.encodeJSessionIdInUrl_?
