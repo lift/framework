@@ -50,10 +50,17 @@ case class HTTPCookie(name: String,
 
   /**
    * Returns a new HTTPCookie that preserve existing member values but sets the httpOnly attribute
-   * @param flagHttpOnly - should the cookie be flagged as HTTP Only (only works in Servlet 3.0 containers)
+   * @param flagHttpOnly - should the cookie be flagged as HTTP Only
    * @return HTTPCookie
    */
   def setHttpOnly(flagHttpOnly: Boolean): HTTPCookie = copy(httpOnly = Full(flagHttpOnly))
+
+  /**
+   * Returns a new HTTPCookie that preserve existing member values but sets the sameSite attribute
+   * @param newSameSite - the new cookie SameSite value
+   * @return HTTPCookie
+   */
+  def setSameSite(newSameSite: SameSite.Value): HTTPCookie = copy(sameSite = Full(newSameSite))
 
   /**
    * Returns a new HTTPCookie that preserve existing member values but sets the cookie value to newValue
