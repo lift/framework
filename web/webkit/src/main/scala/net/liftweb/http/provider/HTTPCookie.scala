@@ -20,6 +20,10 @@ package provider
 
 import net.liftweb.common.{Box, Empty, Full}
 
+object SameSite extends Enumeration {
+  val LAX, STRICT, NONE = Value
+}
+
 /**
  * Companion module for creating HTTPCookie objects
  */
@@ -37,7 +41,8 @@ case class HTTPCookie(name: String,
                       maxAge: Box[Int],
                       version: Box[Int],
                       secure_? : Box[Boolean],
-                       httpOnly: Box[Boolean] = Empty) extends java.lang.Cloneable {
+                       httpOnly: Box[Boolean] = Empty,
+                       sameSite : Box[SameSite.Value] = Empty) extends java.lang.Cloneable {
   override def clone(): HTTPCookie = {
     super.clone()
     copy()
@@ -45,10 +50,17 @@ case class HTTPCookie(name: String,
 
   /**
    * Returns a new HTTPCookie that preserve existing member values but sets the httpOnly attribute
-   * @param flagHttpOnly - should the cookie be flagged as HTTP Only (only works in Servlet 3.0 containers)
+   * @param flagHttpOnly - should the cookie be flagged as HTTP Only
    * @return HTTPCookie
    */
   def setHttpOnly(flagHttpOnly: Boolean): HTTPCookie = copy(httpOnly = Full(flagHttpOnly))
+
+  /**
+   * Returns a new HTTPCookie that preserve existing member values but sets the sameSite attribute
+   * @param newSameSite - the new cookie SameSite value
+   * @return HTTPCookie
+   */
+  def setSameSite(newSameSite: SameSite.Value): HTTPCookie = copy(sameSite = Full(newSameSite))
 
   /**
    * Returns a new HTTPCookie that preserve existing member values but sets the cookie value to newValue

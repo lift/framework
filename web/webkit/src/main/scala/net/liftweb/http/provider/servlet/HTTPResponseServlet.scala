@@ -22,33 +22,19 @@ package servlet
 import scala.collection.mutable.{ListBuffer}
 import java.io.{OutputStream}
 import javax.servlet.http.{HttpServletResponse, Cookie}
+import net.liftweb.http.provider.encoder.CookieEncoder
 import net.liftweb.common._
 import net.liftweb.util._
 import Helpers._
 
 class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
   private var _status = 0;
+
+  private val SET_COOKIE_HEADER = "Set-Cookie"
  
   def addCookies(cookies: List[HTTPCookie]) = cookies.foreach {
-    case c =>
-      val cookie = new javax.servlet.http.Cookie(c.name, c.value openOr null)
-      c.domain map (cookie.setDomain(_))
-      c.path map (cookie.setPath(_))
-      c.maxAge map (cookie.setMaxAge(_))
-      c.version map (cookie.setVersion(_))
-      c.secure_? map (cookie.setSecure(_))
-      c.httpOnly.foreach { bv =>
-        import scala.language.reflectiveCalls
-
-        try {
-          val cook30 = cookie.asInstanceOf[{def setHttpOnly(b: Boolean): Unit}]
-          cook30.setHttpOnly(bv)
-        } catch {
-          case e: Exception => // swallow.. the exception will be thrown for Servlet 2.5 containers but work for servlet
-          // 3.0 containers
-        }
-      }
-      resp.addCookie(cookie)
+    case cookie =>
+      resp.addHeader(SET_COOKIE_HEADER, CookieEncoder.encode(cookie))
   }
 
   private val shouldEncodeUrl = LiftRules.encodeJSessionIdInUrl_?
