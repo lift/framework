@@ -79,7 +79,7 @@ object Extraction {
         case null => JNull
         case x: JValue => x
         case x if primitive_?(x.getClass) => primitive2jvalue(x)(formats)
-        case x: Map[_, _] => JObject((x map { case (k: String, v) => JField(k, decompose(v)) }).toList)
+        case x: Map[_, _] => JObject((x map { case (k, v) => JField(k.asInstanceOf[String], decompose(v)) }).toList)
         case x: Iterable[_] => JArray(x.toList map decompose)
         case x if (x.getClass.isArray) => JArray(x.asInstanceOf[Array[_]].toList map decompose)
         case x: Option[_] => x.flatMap[JValue] { y => Some(decompose(y)) }.getOrElse(JNothing)
@@ -446,24 +446,24 @@ object Extraction {
 
   private def convert(json: JValue, targetType: Class[_], formats: Formats): Any = json match {
     case JInt(x) if (targetType == classOf[Int]) => x.intValue
-    case JInt(x) if (targetType == classOf[JavaInteger]) => new JavaInteger(x.intValue)
+    case JInt(x) if (targetType == classOf[JavaInteger]) => JavaInteger.valueOf(x.intValue)
     case JInt(x) if (targetType == classOf[BigInt]) => x
     case JInt(x) if (targetType == classOf[Long]) => x.longValue
-    case JInt(x) if (targetType == classOf[JavaLong]) => new JavaLong(x.longValue)
+    case JInt(x) if (targetType == classOf[JavaLong]) => JavaLong.valueOf(x.longValue)
     case JInt(x) if (targetType == classOf[Double]) => x.doubleValue
-    case JInt(x) if (targetType == classOf[JavaDouble]) => new JavaDouble(x.doubleValue)
+    case JInt(x) if (targetType == classOf[JavaDouble]) => JavaDouble.valueOf(x.doubleValue)
     case JInt(x) if (targetType == classOf[Float]) => x.floatValue
-    case JInt(x) if (targetType == classOf[JavaFloat]) => new JavaFloat(x.floatValue)
+    case JInt(x) if (targetType == classOf[JavaFloat]) => JavaFloat.valueOf(x.floatValue)
     case JInt(x) if (targetType == classOf[Short]) => x.shortValue
-    case JInt(x) if (targetType == classOf[JavaShort]) => new JavaShort(x.shortValue)
+    case JInt(x) if (targetType == classOf[JavaShort]) => JavaShort.valueOf(x.shortValue)
     case JInt(x) if (targetType == classOf[Byte]) => x.byteValue
-    case JInt(x) if (targetType == classOf[JavaByte]) => new JavaByte(x.byteValue)
+    case JInt(x) if (targetType == classOf[JavaByte]) => JavaByte.valueOf(x.byteValue)
     case JInt(x) if (targetType == classOf[String]) => x.toString
     case JInt(x) if (targetType == classOf[Number]) => x.longValue
     case JDouble(x) if (targetType == classOf[Double]) => x
-    case JDouble(x) if (targetType == classOf[JavaDouble]) => new JavaDouble(x)
+    case JDouble(x) if (targetType == classOf[JavaDouble]) => JavaDouble.valueOf(x)
     case JDouble(x) if (targetType == classOf[Float]) => x.floatValue
-    case JDouble(x) if (targetType == classOf[JavaFloat]) => new JavaFloat(x.floatValue)
+    case JDouble(x) if (targetType == classOf[JavaFloat]) => JavaFloat.valueOf(x.floatValue)
     case JDouble(x) if (targetType == classOf[String]) => x.toString
     case JDouble(x) if (targetType == classOf[Int]) => x.intValue
     case JDouble(x) if (targetType == classOf[Long]) => x.longValue
@@ -473,7 +473,7 @@ object Extraction {
     case JString(s) if (targetType == classOf[Date]) => formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'"))
     case JString(s) if (targetType == classOf[Timestamp]) => new Timestamp(formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'")).getTime)
     case JBool(x) if (targetType == classOf[Boolean]) => x
-    case JBool(x) if (targetType == classOf[JavaBoolean]) => new JavaBoolean(x)
+    case JBool(x) if (targetType == classOf[JavaBoolean]) => JavaBoolean.valueOf(x)
     case j: JValue if (targetType == classOf[JValue]) => j
     case j: JObject if (targetType == classOf[JObject]) => j
     case j: JArray if (targetType == classOf[JArray]) => j
