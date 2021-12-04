@@ -21,7 +21,6 @@ import java.util.concurrent._
 
 import actor.ThreadPoolRules
 import common._
-import util.Helpers
 import util.Helpers.TimeSpan
 
 class ScheduleJBridge {

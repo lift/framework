@@ -47,7 +47,7 @@ object CSSHelpers extends ControlHelpers {
         reader close
       }
       val str = res toString;
-      (CSSParser(rootPrefix).fixCSS(str), str);
+      (CssUrlPrefixer(rootPrefix).fixCss(str), str);
   }
 }
 

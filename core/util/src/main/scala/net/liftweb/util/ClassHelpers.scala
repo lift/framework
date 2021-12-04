@@ -197,7 +197,7 @@ trait ClassHelpers { self: ControlHelpers =>
    */
   def invokeControllerMethod(clz: Class[_], meth: String) = {
     try {
-      clz.getMethod(meth).invoke(clz.newInstance)
+      clz.getMethod(meth).invoke(clz.getDeclaredConstructor().newInstance())
     } catch {
       case c : InvocationTargetException => {
           def findRoot(e : Throwable) { if (e.getCause == null || e.getCause == e) throw e else findRoot(e.getCause) }
@@ -332,7 +332,7 @@ trait ClassHelpers { self: ControlHelpers =>
    *
    * @return a Full can with the instance or a Failure if the instance can't be created
    */
-  def instantiate[C](clz: Class[C]): Box[C] = tryo { clz.newInstance }
+  def instantiate[C](clz: Class[C]): Box[C] = tryo { clz.getDeclaredConstructor().newInstance() }
 
   /**
    * Create a function (the 'invoker') which will trigger any public, parameterless method

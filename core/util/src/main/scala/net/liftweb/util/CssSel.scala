@@ -28,6 +28,8 @@ trait CssSel extends Function1[NodeSeq, NodeSeq] {
     case (t: CssBind, AggregatedCssBindFunc(a)) =>
       AggregatedCssBindFunc(t :: a)
     case (t: CssBind, o: CssBind) => AggregatedCssBindFunc(List(t, o))
+    case _ => throw new UnsupportedOperationException(
+      s"Trying to chain unknown objects this = $this, other = $other")
   }
 
   /**
@@ -394,10 +396,9 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
         }
 
         case x if x.isInstanceOf[EmptyBox] ||
-          x == Full(DontMergeClass) ||
-          x == Full(DontMergeAttributes) => {
+          x == Full(DontMergeClass) => {
           val calced = bind.calculate(realE).map(findElemIfThereIsOne _)
-          val skipClassMerge = x == Full(DontMergeClass) || x == Full(DontMergeAttributes)
+          val skipClassMerge = x == Full(DontMergeClass)
 
           calced.length match {
             case 0 => NodeSeq.Empty

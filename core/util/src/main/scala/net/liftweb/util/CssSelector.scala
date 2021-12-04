@@ -80,9 +80,6 @@ final case class PrependKidsSubNode() extends SubNode with WithKids {
   def transform(original: NodeSeq, newNs: NodeSeq): NodeSeq = newNs ++ original
 }
 
-@deprecated("Please use DontMergeClassValue instead.", "3.3.0")
-final case object DontMergeAttributes extends SubNode
-
 final case object DontMergeClass extends SubNode
 
 final case class SurroundKids() extends SubNode with WithKids {

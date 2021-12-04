@@ -72,7 +72,7 @@ trait CombParserHelpers {
   def white = wsc
 
   /** @return a unit parser for any repetition of whitespaces */
-  def whiteSpace: Parser[Unit] = rep(white) ^^^ ()
+  def whiteSpace: Parser[Unit] = rep(white) ^^^ ((): Unit)
 
   /** @return a parser accepting a 'line' space, either ' ' or '\t' */
   def aSpace = accept("whitespace", { case c if (c == ' ') || c == '\t' => true })
@@ -122,7 +122,7 @@ trait CombParserHelpers {
    * @return a parser discarding end of lines
    */
   def EOL: Parser[Unit] = (accept("\n\r") | accept("\r\n") | '\r' |
-                           '\n' | EOF ) ^^^ ()
+                           '\n' | EOF ) ^^^ ((): Unit)
 
   def notEOL: Parser[Elem] = (not(EOL) ~> anyChar)
 
