@@ -34,7 +34,7 @@ trait Transformer {
     def deco():Decorator = Decorator
 
     private object lineTokenizer extends LineTokenizer {
-        override def allowXmlBlocks() = Transformer.this.deco().allowVerbatimXml()
+        override def allowXmlBlocks = Transformer.this.deco().allowVerbatimXml()
     }
     private object blockParser extends BlockParsers {
         override def deco() = Transformer.this.deco()

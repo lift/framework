@@ -148,6 +148,8 @@ trait BaseParsers extends RegexParsers {
         if (in.atEnd) Failure("End of input.", in)
         else {
             val c = in.first
+            // Method to should be replaced by rangeTo.
+            @scala.annotation.nowarn("msg=method to in trait SortedOps is deprecated \\(since 2.13.0\\): Use rangeTo")
             val lower:SortedMap[Char,Char] = rs.to(c)
             val (begin:Char, end:Char) = if (lower.isEmpty) ('\u0001', '\u0000') //this invalid pair always causes failure
                                          else lower.last
@@ -237,14 +239,14 @@ trait BaseParsers extends RegexParsers {
     def xmlNameChar:Parser[Char] = ranges(xmlNameCharRanges)
     /** Parses an XML name (tag or attribute name)
      */
-    def xmlName:Parser[String] = xmlNameStartChar ~ (xmlNameChar*) ^^ {case c ~ cs => c + cs.mkString}
+    def xmlName:Parser[String] = xmlNameStartChar ~ (xmlNameChar*) ^^ {case c ~ cs => c.toString + cs.mkString}
     /** Parses a Simplified xml attribute: everything between quotes ("foo")
      * everything between the quotes is run through the escape handling
      * That way you can omit xml escaping when writing inline XML in markdown.
      */
     def xmlAttrVal:Parser[String] = 
-      ('"'  ~> ((not('"')  ~> aChar)*) <~ '"'  ^^ {'"' +  _.mkString + '"' }) |
-      ('\'' ~> ((not('\'') ~> aChar)*) <~ '\'' ^^ {'\'' + _.mkString + '\''})
+      ('"'  ~> ((not('"')  ~> aChar)*) <~ '"'  ^^ {"\"" +  _.mkString + '"' }) |
+      ('\'' ~> ((not('\'') ~> aChar)*) <~ '\'' ^^ {"\'" + _.mkString + '\''})
     /** Parses an XML Attribute with simplified value handling like xmlAttrVal.
      */
     def xmlAttr:Parser[String] = ws ~ xmlName ~ '=' ~ xmlAttrVal ^^ {
@@ -253,7 +255,7 @@ trait BaseParsers extends RegexParsers {
     /** Parses an xml start or empty tag, attribute values are escaped.
      */
     def xmlStartOrEmptyTag:Parser[String] = '<' ~> xmlName ~ (xmlAttr*) ~ ows ~ (">" | "/>") ^^ {
-        case name ~ attrs ~ w ~ e => '<' + name + attrs.mkString  + w + e
+        case name ~ attrs ~ w ~ e => "<" + name + attrs.mkString  + w + e
     }
 
     /** Parses closing xml tags.

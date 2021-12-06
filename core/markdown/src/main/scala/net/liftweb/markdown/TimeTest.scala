@@ -35,7 +35,7 @@ trait TimedTransformer {
     def deco():Decorator = Decorator
 
     private object lineTokenizer extends LineTokenizer {
-        override def allowXmlBlocks() = TimedTransformer.this.deco().allowVerbatimXml()
+        override def allowXmlBlocks = TimedTransformer.this.deco().allowVerbatimXml()
     }
     private object blockParser extends BlockParsers {
         override def deco() = TimedTransformer.this.deco()
@@ -82,12 +82,12 @@ object TimeTest {
         (end - start, t)
     }
 
-    private def runActuarius(markdown:String, iterations:Int) {
+    private def runActuarius(markdown:String, iterations:Int): Unit = {
         for (i <- 0 until iterations) actuariusProcessor(markdown)
     }
 
 
-    def testRun(markdown:String, iterations:Int) {
+    def testRun(markdown:String, iterations:Int): Unit = {
         println("Running Actuarius " + iterations + " times...")
         println("... took " + (executionTime(() => runActuarius(markdown, iterations)))._1 + "ms")
     }
@@ -96,7 +96,7 @@ object TimeTest {
         //def ws1:Parser[String] = """( |\t|\v)+""".r
         def ws2:Parser[String] = rep1(elem(' ') | elem('\t') | elem('\u000B')) ^^ {_.mkString}
 
-        def runParser(s:String, p:Parser[String], iterations:Int) {
+        def runParser(s:String, p:Parser[String], iterations:Int): Unit = {
             for (i <- 0 until iterations) {
                 apply(p, s)
             }
@@ -124,7 +124,7 @@ object TimeTest {
 
     }
 
-    def main(args:Array[String]) {
+    def main(args:Array[String]): Unit = {
         /*
         val markdown = readFile("/home/chris/sbt_projects/markdown_race/test.txt").mkString*100
         val iterations = 10

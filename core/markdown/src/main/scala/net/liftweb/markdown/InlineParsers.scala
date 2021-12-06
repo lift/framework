@@ -185,7 +185,7 @@ trait InlineParsers extends BaseParsers {
 
     /** Parses two spaces at the end of a line to a manual break (<br/>)
      */
-    val br:Parser[String] = ("  \n") ^^^ {deco.decorateBreak() + "\n"}
+    val br:Parser[String] = ("  \n") ^^^ {deco().decorateBreak() + "\n"}
 
 
     /** Parses an inline code element.
@@ -194,13 +194,13 @@ trait InlineParsers extends BaseParsers {
      */
     val code:Parser[String] = ((("``" ~> ((not("``")~> aChar)+) <~ "``")^^{_.mkString}) |
                                ('`' ~> markdownText(Set('`'), false) <~ '`') ) ^^ {
-        c => deco.decorateCode(c.mkString)
+        c => deco().decorateCode(c.mkString)
     }
 
 
     /** Parses any xml tag and escapes attribute values.
      */
-    val xmlTag:Parser[String] = if (deco.allowVerbatimXml) (xmlEndTag | xmlStartOrEmptyTag)
+    val xmlTag:Parser[String] = if (deco().allowVerbatimXml()) (xmlEndTag | xmlStartOrEmptyTag)
                                 else failure("Inline XML processing disabled.")
 
 
@@ -210,7 +210,7 @@ trait InlineParsers extends BaseParsers {
         if (ctx.tags.contains("a")){
             failure("Cannot nest a link in a link.")
         } else {
-            elem('<') ~> markdownText(Set('>',' ', '<', '\n'), true) <~ '>' ^^ { u => deco.decorateLink(u, u, None) }
+            elem('<') ~> markdownText(Set('>',' ', '<', '\n'), true) <~ '>' ^^ { u => deco().decorateLink(u, u, None) }
         }
 
     /** A link started by square brackets, either a reference or a a link with the full URL.
@@ -224,7 +224,7 @@ trait InlineParsers extends BaseParsers {
             failure("Cannot nest a link in a link.")
         } else {
             '[' ~> linkInline(ctx.addTag("a")) ~ ("](" ~ ows) ~ url ~ ows ~ title <~ (ows ~ ')') ^^ {
-                case txt ~ _ ~ u ~ _ ~ ttl => deco.decorateLink(txt, u, ttl)
+                case txt ~ _ ~ u ~ _ ~ ttl => deco().decorateLink(txt, u, ttl)
             }
         }
 
@@ -235,7 +235,7 @@ trait InlineParsers extends BaseParsers {
             failure("Cannot nest a link in a link.")
         } else {
             ref(ctx.addTag("a")) ^^ {
-                case (LinkDefinition(_, u, ttl), txt) => deco.decorateLink(txt, u, ttl)
+                case (LinkDefinition(_, u, ttl), txt) => deco().decorateLink(txt, u, ttl)
             }
         }
 
@@ -293,13 +293,13 @@ trait InlineParsers extends BaseParsers {
      */
     val directImg:Parser[String] =
         elem('[') ~> refText ~ ("](" ~ ows) ~ url ~ ows ~ title <~ (ows ~ ')') ^^ {
-            case altText ~ _ ~ path ~ _ ~ ttl => deco.decorateImg(altText, path, ttl)
+            case altText ~ _ ~ path ~ _ ~ ttl => deco().decorateImg(altText, path, ttl)
         }
     /**
      * Parses a referenced image.
      */
     def refImg(ctx:InlineContext):Parser[String] = ref(ctx) ^^ {
-        case (LinkDefinition(_, u, ttl), alt) => deco.decorateImg(alt, u, ttl)
+        case (LinkDefinition(_, u, ttl), alt) => deco().decorateImg(alt, u, ttl)
     }
 
     /** Parses inline in a span element like bold or emphasis or link up until the given end marker
@@ -330,7 +330,7 @@ trait InlineParsers extends BaseParsers {
         if (ctx.tags.contains("em")) {
             failure("Cannot nest emphasis.")
         } else {
-            span("*", ctx.addTag("em")) ^^ { deco.decorateEmphasis(_) }
+            span("*", ctx.addTag("em")) ^^ { deco().decorateEmphasis(_) }
         }
 
 
@@ -340,7 +340,7 @@ trait InlineParsers extends BaseParsers {
         if (ctx.tags.contains("em")) {
             failure("Cannot nest emphasis.")
         } else {
-            span("_", ctx.addTag("em")) ^^ { deco.decorateEmphasis(_) }
+            span("_", ctx.addTag("em")) ^^ { deco().decorateEmphasis(_) }
         }
 
     /**Parses strong text in asterisks: **foo**
@@ -349,7 +349,7 @@ trait InlineParsers extends BaseParsers {
         if (ctx.tags.contains("strong")) {
             failure("Cannot nest strong text.")
         } else {
-            span("**", ctx.addTag("strong")) ^^ { deco.decorateStrong(_) }
+            span("**", ctx.addTag("strong")) ^^ { deco().decorateStrong(_) }
         }
 
     /**Parses strong text in underscores: __foo__
@@ -358,7 +358,7 @@ trait InlineParsers extends BaseParsers {
         if (ctx.tags.contains("strong")) {
             failure("Cannot nest strong text.")
         } else {
-            span("__", ctx.addTag("strong")) ^^ { deco.decorateStrong(_) }
+            span("__", ctx.addTag("strong")) ^^ { deco().decorateStrong(_) }
         }
 
 
