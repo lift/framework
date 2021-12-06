@@ -279,6 +279,8 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
           }
         }
+
+        case _ => throw new IllegalArgumentException("Applying attributes impossible.")
       }
     }
 
@@ -439,24 +441,26 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
             }
           }
         }
+
+        case _ => throw new IllegalArgumentException("Should never happen")
       }
     }
 
 
-    final def forId(in: Elem, buff: ListBuffer[CssBind]) {
+    final def forId(in: Elem, buff: ListBuffer[CssBind]): Unit = {
       for {
         rid <- id
         bind <- idMap.get(rid)
       } buff ++= bind
     }
 
-    final def forElem(in: Elem, buff: ListBuffer[CssBind]) {
+    final def forElem(in: Elem, buff: ListBuffer[CssBind]): Unit = {
       for {
         bind <- elemMap.get(in.label)
       } buff ++= bind
     }
 
-    final def forStar(buff: ListBuffer[CssBind], depth: Int) {
+    final def forStar(buff: ListBuffer[CssBind], depth: Int): Unit = {
       for {
         binds <- starFunc
         bind <- binds if (bind match {
@@ -466,14 +470,14 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       } buff += bind
     }
 
-    final def forName(in: Elem, buff: ListBuffer[CssBind]) {
+    final def forName(in: Elem, buff: ListBuffer[CssBind]): Unit = {
       for {
         rid <- name
         bind <- nameMap.get(rid)
       } buff ++= bind
     }
 
-    def findClass(clz: List[String], buff: ListBuffer[CssBind]) {
+    def findClass(clz: List[String], buff: ListBuffer[CssBind]): Unit = {
       clz match {
         case Nil => ()
         case x :: xs => {
@@ -486,11 +490,11 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       }
     }
 
-    def forClass(in: Elem, buff: ListBuffer[CssBind]) {
+    def forClass(in: Elem, buff: ListBuffer[CssBind]): Unit = {
       findClass(classes, buff)
     }
 
-    def forAttr(in: Elem, buff: ListBuffer[CssBind]) {
+    def forAttr(in: Elem, buff: ListBuffer[CssBind]): Unit = {
       if (attrMap.isEmpty || attrs.isEmpty) ()
       else {
         for {
@@ -869,6 +873,9 @@ object CanBind extends CssBindImplicits {
         if (a eq null) Nil else List(Text(a.toString)))
     }
 
+  // Don't know how to get rid of the warning concerning "a equals null".  The
+  // test may be completetly useless: a Double value can never be null?
+  @scala.annotation.nowarn
   implicit def iterableDouble[T[Double]](implicit f: T[Double] => Iterable[Double]): CanBind[T[Double]] =
     new CanBind[T[Double]] {
       def apply(info: => T[Double])(ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.flatMap(a =>

@@ -85,7 +85,7 @@ trait CombParserHelpers {
    * @return a unit parser which will succeed if the input matches the list of characters regardless
    * of the case (uppercase or lowercase)
    */
-  def acceptCI[ES <% List[Elem]](es: ES): Parser[List[Elem]] =
+  def acceptCI[ES](es: ES)(implicit esToListElem: ES => List[Elem]): Parser[List[Elem]] =
   es.foldRight[Parser[List[Elem]]](
     success(Nil)){(x, pxs) => acceptCIChar(x) ~ pxs ^^ mkList}
 

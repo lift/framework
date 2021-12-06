@@ -142,7 +142,7 @@ abstract class CurrencyZone {
             val df = nf.asInstanceOf[DecimalFormat]
             val groupingSeparator = df.getDecimalFormatSymbols.getGroupingSeparator
 
-            format("", numberOfFractionDigits).replaceAll(groupingSeparator+"", "");
+            format("", numberOfFractionDigits).replaceAll(groupingSeparator.toString, "");
         }
 
     }

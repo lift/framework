@@ -274,8 +274,8 @@ trait TimeHelpers { self: ControlHelpers =>
         (total._1 / div._1, (total._1 % div._1, div._2) :: total._2)
       }._2
       def formatAmount(amountUnit: (Long, String)) = amountUnit match {
-        case (amount, unit) if (amount == 1) => amount + " " + unit
-        case (amount, unit) => amount + " " + unit + "s"
+        case (amount, unit) if (amount == 1) => amount.toString + " " + unit
+        case (amount, unit) => amount.toString + " " + unit + "s"
       }
       divideInUnits(millis).filter(_._1 > 0).map(formatAmount(_)).mkString(", ")
     }
@@ -305,7 +305,7 @@ trait TimeHelpers { self: ControlHelpers =>
      * Convert a TimeSpan to a Period
      */
     @deprecated("Implicit conversion from TimeSpan to Period will be removed due to its unclear behavior; use new TimeSpan(period.toDurationFrom(startDateTime)) instead.", "3.0.0")
-    implicit def tsToPeriod[TS <% TimeSpan](in: TS): Period = in.toPeriod
+    implicit def tsToPeriod[TS](in: TS)(implicit tsToTimeSpan: TS => TimeSpan): Period = in.toPeriod
 
     /**
      * Convert a DateTime to a TimeSpan
@@ -518,7 +518,7 @@ trait TimeHelpers { self: ControlHelpers =>
     }
   }
 
-  implicit class PeriodExtension[P <% Period](period: P) {
+  implicit class PeriodExtension[P](period: P)(implicit pToPeriod: P => Period) {
     def later: DateTime = new DateTime(millis).plus(period)
 
     def ago: DateTime = new DateTime(millis).minus(period)
