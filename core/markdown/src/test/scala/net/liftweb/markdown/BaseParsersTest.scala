@@ -51,8 +51,8 @@ class BaseParsersTest extends FlatSpec with Matchers with BaseParsers{
     }
 
     it should "be able to look behind" in {
-        apply (((elem('a') ~ lookbehind(Set('a')) ~ elem('b'))^^{case a~lb~b=>a+""+b}), "ab") should equal ("ab")
-        an [IllegalArgumentException] should be thrownBy { apply (((elem('a') ~ lookbehind(Set('b')) ~ elem('b'))^^{case a~b=>a+""+b}), "ab") }
+        apply (((elem('a') ~ lookbehind(Set('a')) ~ elem('b'))^^{case a~lb~b=>a.toString+b}), "ab") should equal ("ab")
+        an [IllegalArgumentException] should be thrownBy { apply (((elem('a') ~ lookbehind(Set('b')) ~ elem('b'))^^{case a~b=>a.toString+b}), "ab") }
 
         apply( (elem('a') ~ not(lookbehind(Set(' ', '\t', '\n'))) ~ '*' ), "a*"  )
 
