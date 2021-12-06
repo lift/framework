@@ -20,7 +20,7 @@ package mocks
 import common.Logger
 
 import scala.collection.mutable.HashMap
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import java.io.PrintWriter
 import java.io.StringReader
@@ -71,8 +71,8 @@ class MockServletContext(var target: String) extends ServletContext {
   def getInitParameterNames(): java.util.Enumeration[String] = new Vector[String]().elements
   def getAttribute(f: String): Object = null
   def getAttributeNames(): java.util.Enumeration[String]  = new Vector[String]().elements
-  def removeAttribute(name: String) {}
-  def setAttribute(name: String, o: Object) {}
+  def removeAttribute(name: String): Unit = {}
+  def setAttribute(name: String, o: Object): Unit = {}
   def getContext(path: String): ServletContext  = this
   def getMajorVersion() = 2
   def getMimeType(file: String): String = null
@@ -96,11 +96,11 @@ class MockServletContext(var target: String) extends ServletContext {
   def getServletContextName(): String = null
   def getServletNames(): java.util.Enumeration[String] = new Vector[String]().elements
   def getServlets(): java.util.Enumeration[Servlet] = new Vector[Servlet]().elements
-  def log(msg: String, t: Throwable) {
+  def log(msg: String, t: Throwable): Unit = {
     t.printStackTrace
     log(msg)
   }
-  def log(e: Exception, msg: String) {
+  def log(e: Exception, msg: String): Unit = {
     e.printStackTrace
     log(msg)
   }
@@ -160,7 +160,7 @@ class MockFilterConfig(servletContext: ServletContext) extends FilterConfig {
  * @author Steve Jenson (stevej@pobox.com)
  */
 class DoNothingFilterChain extends FilterChain with Logger {
-  def doFilter(req: ServletRequest, res: ServletResponse) { debug("Doing nothing on filter chain") }
+  def doFilter(req: ServletRequest, res: ServletResponse): Unit = { debug("Doing nothing on filter chain") }
 }
 
 /**
@@ -181,7 +181,7 @@ class MockServletInputStream(is: InputStream) extends ServletInputStream {
  * @author Steve Jenson (stevej@pobox.com)
  */
 class MockServletOutputStream(os: ByteArrayOutputStream) extends ServletOutputStream {
-  def write(b: Int) {
+  def write(b: Int): Unit = {
     os.write(b)
   }
 
@@ -201,7 +201,7 @@ class MockHttpSession extends HttpSession {
   protected var maxii: Int = 0
   protected var creationTime: Long = System.currentTimeMillis
   def isNew = false
-  def invalidate {}
+  def invalidate: Unit = {}
   def getValue(key: String): Object = values.get(key) match {
     case Some(v) => v
     case None => null
@@ -218,7 +218,7 @@ class MockHttpSession extends HttpSession {
   def getAttributeNames(): java.util.Enumeration[String] = new java.util.Enumeration[String] {
     private val keys = attr.keys.iterator
     def hasMoreElements() = keys.hasNext
-    def nextElement(): String = keys.next
+    def nextElement(): String = keys.next()
   }
   def getSessionContext(): HttpSessionContext = null
   def getMaxInactiveInterval(): Int = maxii
