@@ -342,7 +342,7 @@ class MongoDocumentExamplesSpec extends Specification with MongoTestKit {
 
   "Mongo tutorial example" in {
 
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
 
     checkMongoIsRunning
 
