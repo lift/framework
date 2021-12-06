@@ -153,6 +153,8 @@ trait PaginatorSnippet[T] extends Paginator[T] {
   /**
    * The status displayed when using &lt;nav:records/&gt; in the template.
    */
+  // Not sure how to remove the warning in Scala 2.11 and 2.12.
+  @scala.annotation.nowarn
   def currentXml: NodeSeq =
     if(count==0)
       Text(S.?("paginator.norecords"))

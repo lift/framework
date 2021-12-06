@@ -110,7 +110,7 @@ class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val 
   /**
    * Destroy the underlying servlet session
    */
-  def destroyServletSession() {
+  def destroyServletSession(): Unit = {
     for{
       httpSession <- Box !! req.getSession(false)
     } yield httpSession.invalidate()
@@ -131,7 +131,7 @@ class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val 
     mimeUpload.setProgressListener(new ProgressListener {
       lazy val progList: (Long, Long, Int) => Unit = S.session.flatMap(_.progressListener) openOr LiftRules.progressListener
 
-      def update(a: Long, b: Long, c: Int) {progList(a, b, c)}
+      def update(a: Long, b: Long, c: Int): Unit = {progList(a, b, c)}
     })
 
     mimeUpload.setSizeMax(LiftRules.maxMimeSize)
@@ -140,9 +140,9 @@ class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val 
 
     def hasNext = what.hasNext
 
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
 
-    def next = what.next match {
+    def next() = what.next() match {
       case f if (f.isFormField) => NormalParamHolder(f.getFieldName, new String(readWholeStream(f.openStream), "UTF-8"))
       case f => {
         val headers = f.getHeaders()

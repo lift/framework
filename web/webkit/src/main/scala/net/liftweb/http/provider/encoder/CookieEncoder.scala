@@ -37,6 +37,9 @@ import net.liftweb.common.{Full}
   */
 object CookieEncoder {
 
+  private val buf = new scala.collection.mutable.StringBuilder("this is here")
+  private val lg = buf.length()
+
   private val VALID_COOKIE_NAME_OCTETS = validCookieNameOctets();
 
   private val VALID_COOKIE_VALUE_OCTETS = validCookieValueOctets();

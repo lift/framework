@@ -261,6 +261,8 @@ trait Loc[T] {
   /**
    * The snippets provided by `LocParam`s
    */
+  // I am not proficient enough in scala to write this without warning.
+  @scala.annotation.nowarn
   lazy val calcSnippets: SnippetTest =
     allParams
       .collect { case v: Loc.ValueSnippets[T] => v.snippets }
@@ -387,7 +389,7 @@ trait Loc[T] {
 
   private var _menu: Menu = _
 
-  private[sitemap] def menu_=(m: Menu) {
+  private[sitemap] def menu_=(m: Menu): Unit = {
     _menu = m
     m.siteMap.addLoc(this)
   }
@@ -470,7 +472,7 @@ trait Loc[T] {
 
   def inGroup_?(group: String): Boolean = groupSet.contains(group)
 
-  def init() {
+  def init(): Unit = {
     params.foreach(_ onCreate(this))
   }
 
@@ -533,7 +535,7 @@ object Loc {
    * in a SiteMap
    */
   trait LocParam[-T] {
-    def onCreate(loc: Loc[_]){
+    def onCreate(loc: Loc[_]): Unit = {
     }
   }
 
@@ -549,7 +551,7 @@ object Loc {
    */
   case class HttpAuthProtected(role: (Req) => Box[Role]) extends AnyLocParam {
 
-    override def onCreate(loc: Loc[_]) {
+    override def onCreate(loc: Loc[_]): Unit = {
       LiftRules.httpAuthProtectedResource.append(
         new LiftRules.HttpAuthProtectedResourcePF() {
           def isDefinedAt(in: Req) = in.path.partPath == loc.link.uriList

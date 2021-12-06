@@ -119,7 +119,7 @@ trait SHtml extends Loggable {
    * but rather use "name" -> "value" and let the implicit conversion
    * take care of making a BasicElemAttr.
    */
-  final case class BasicElemAttr(name: String, value: String) extends ElemAttr {
+  case class BasicElemAttr(name: String, value: String) extends ElemAttr {
     /**
      * Apply the attribute to the element
      */
@@ -1740,7 +1740,7 @@ trait SHtml extends Loggable {
     (nonces, defaultNonce, SFuncHolder(process))
   }
 
-  final case class SelectableOption[+T](value: T, label: String, attrs: ElemAttr*)
+  case class SelectableOption[+T](value: T, label: String, attrs: ElemAttr*)
   object SelectableOption {
     implicit def tupleSeqToSelectableOptionSeq[T](seq: Seq[(T, String)]): Seq[SelectableOption[T]] =
       seq.collect {
@@ -1754,7 +1754,7 @@ trait SHtml extends Loggable {
     option.attrs.foldLeft(<option value={option.value}>{option.label}</option>)(_ % _)
 
 
-  private final case class SelectableOptionWithNonce[+T](value: T, nonce: String, label: String, attrs: ElemAttr*)
+  private case class SelectableOptionWithNonce[+T](value: T, nonce: String, label: String, attrs: ElemAttr*)
 
   /**
    * Create a select box based on the list with a default value and the function to be executed on
@@ -2195,10 +2195,10 @@ trait SHtml extends Loggable {
   }
 
   /** Holds a form control as HTML along with some user defined value */
-  final case class ChoiceItem[T](key: T, xhtml: NodeSeq)
+  case class ChoiceItem[T](key: T, xhtml: NodeSeq)
 
   /** Holds a series of choices: HTML for input controls alongside some user defined value */
-  final case class ChoiceHolder[T](items: Seq[ChoiceItem[T]]) {
+  case class ChoiceHolder[T](items: Seq[ChoiceItem[T]]) {
     /** Retrieve the ChoiceItem that has the given key, throwing NoSuchElementException if there is no matching ChoiceItem */
     def apply(in: T): NodeSeq = items.filter(_.key == in).head.xhtml
 

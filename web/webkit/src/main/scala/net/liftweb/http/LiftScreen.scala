@@ -28,6 +28,12 @@ import JsCmds._
 
 import java.util.concurrent.atomic.AtomicReference
 
+// Some warning are silenced:
+// @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
+// The best way to correct these warnings are to transfer these class
+// definitions into the companion object.  But that would make a breaking change.
+//import scala.collection.compat._
+import scala.annotation.nowarn
 
 /**
  * The trait that forms the basis for LiftScreen and the
@@ -60,7 +66,7 @@ trait AbstractScreen extends Factory with Loggable {
    * the Screen or Wizard that owns the Screen and not
    * from external code.
    */
-  def addFields(fields: () => FieldContainer) {
+  def addFields(fields: () => FieldContainer): Unit = {
     _fieldList = _fieldList ::: List(fields)
   }
 
@@ -74,7 +80,7 @@ trait AbstractScreen extends Factory with Loggable {
   /**
    * Override this method to do any setup of this screen
    */
-  protected def localSetup() {
+  protected def localSetup(): Unit = {
 
   }
 
@@ -126,6 +132,7 @@ trait AbstractScreen extends Factory with Loggable {
 
   protected case object NothingOtherValueInitializer extends OtherValueInitializer[Nothing]
 
+  @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
   protected final case class OtherValueInitializerImpl[T](f: () => T) extends OtherValueInitializer[T]
 
   /**
@@ -390,20 +397,28 @@ trait AbstractScreen extends Factory with Loggable {
    */
   protected case object NotOnConfirmScreen extends FilterOrValidate[Nothing]
 
+  @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
   protected final case class FormParam(fp: SHtml.ElemAttr) extends FilterOrValidate[Nothing]
 
+  @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
   protected final case class FormFieldId(id: String) extends FilterOrValidate[Nothing]
 
+  @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
   protected final case class AFilter[T](f: T => T) extends FilterOrValidate[T]
 
+  @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
   protected final case class AVal[T](v: T => List[FieldError]) extends FilterOrValidate[T]
 
+  @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
   protected final case class AFieldBinding(binding: FieldBinding) extends FilterOrValidate[Nothing]
 
+  @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
   protected final case class Help(ns: NodeSeq) extends FilterOrValidate[Nothing]
 
+  @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
   protected final case class FieldTransform(func: BaseField => NodeSeq => NodeSeq) extends FilterOrValidate[Nothing]
 
+  @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
   protected final case class DisplayIf(func: BaseField => Boolean) extends FilterOrValidate[Nothing]
 
   protected def field[T](underlying: => BaseField {type ValueType = T},
@@ -1200,7 +1215,7 @@ trait ScreenWizardRendered extends Loggable {
               if (!ajax_?) {
                 val localSnapshot = createSnapshot
                 S.seeOther(url, () => {
-                  localSnapshot.restore
+                  localSnapshot.restore()
                 })}
               res
             })) % liftScreenAttr("nextAction") }</form> %
@@ -1211,7 +1226,7 @@ trait ScreenWizardRendered extends Loggable {
                 val res = func();
                 if (!ajax_?) {
                   val localSnapshot = createSnapshot;
-                  S.seeOther(url, () => localSnapshot.restore)
+                  S.seeOther(url, () => localSnapshot.restore())
                 }
                 res
               }) % liftScreenAttr("restoreAction")}</form>
@@ -1490,7 +1505,7 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
 
   protected class ScreenSnapshot(private[http] val screenVars: Map[String, (NonCleanAnyVar[_], Any)],
                                  private[http] val snapshot: Box[ScreenSnapshot]) extends Snapshot {
-    def restore() {
+    def restore(): Unit = {
       registerThisSnippet();
       ScreenVars.set(screenVars)
       PrevSnapshot.set(snapshot)
@@ -1571,7 +1586,7 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
     f(name)
   }
 
-  protected def setLocalAction(s: String) {
+  protected def setLocalAction(s: String): Unit = {
     logger.trace("Setting LocalAction (%s) to %s".format(
       Integer.toString(System.identityHashCode(LocalAction), 16), s))
     LocalAction.set(s)
@@ -1597,7 +1612,7 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
       if (!ajaxForms_?) {
         S.seeOther(S.uri, () => {
           // S.appendNotices(notices)
-          localSnapshot.restore
+          localSnapshot.restore()
         })
       }
     }
@@ -1707,7 +1722,7 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
     }
   }
 
-  protected def renderWithErrors(errors: List[FieldError]) {
+  protected def renderWithErrors(errors: List[FieldError]): Unit = {
     S.error(errors)
     AjaxOnDone.set(replayForm)
   }

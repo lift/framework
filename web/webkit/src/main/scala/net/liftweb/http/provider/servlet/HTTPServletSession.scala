@@ -61,13 +61,13 @@ case class SessionToServletBridge(uniqueId: String) extends HttpSessionBindingLi
             LiftSession.onSessionPassivate.foreach(_(ls)))
   }
 
-  def valueBound(event: HttpSessionBindingEvent) {
+  def valueBound(event: HttpSessionBindingEvent): Unit = {
   }
 
   /**
    * When the session is unbound the the HTTP session, stop us
    */
-  def valueUnbound(event: HttpSessionBindingEvent) {
+  def valueUnbound(event: HttpSessionBindingEvent): Unit = {
     SessionMaster.sendMsg(RemoveSession(uniqueId))
   }
 

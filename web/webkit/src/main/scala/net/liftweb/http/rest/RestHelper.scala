@@ -472,7 +472,7 @@ trait RestHelper extends LiftRules.DispatchPF {
   /**
    * The class that wraps anything for auto conversion to JSON or XML
    */
-  protected final case class AutoJsonXmlAble(obj: Any)
+  protected case class AutoJsonXmlAble(obj: Any)
 
   /**
    * wrap anything for autoconversion to JSON or XML

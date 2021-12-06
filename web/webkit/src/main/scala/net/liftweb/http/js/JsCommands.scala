@@ -824,7 +824,7 @@ object JsCmds {
     }
 
     @scala.annotation.tailrec
-    private def appendDo(acc: ListBuffer[JsCmd], cmds: List[JsCmd]) {
+    private def appendDo(acc: ListBuffer[JsCmd], cmds: List[JsCmd]): Unit = {
       cmds match {
         case Nil =>
         case CmdPair(l, r) :: rest => appendDo(acc, l :: r :: rest)

@@ -45,9 +45,9 @@ case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocPa
 
   kids.foreach(_._parent = Full(this))
   kids.foreach(_.init(this))
-  kids.foreach(_.validate)
+  kids.foreach(_.validate())
 
-  private[sitemap] def addLoc(in: Loc[_]) {
+  private[sitemap] def addLoc(in: Loc[_]): Unit = {
     val name = in.name
     if (locs.isDefinedAt(name))
     throw new SiteMapException("Location "+name+" defined twice "+
@@ -242,8 +242,10 @@ sealed class SiteMapSingleton {
   /**
    * A Java-callable method that builds a SiteMap
    */
+  // Not sure how to remove the warning in Scala 2.11 and 2.12.
+  @scala.annotation.nowarn
   def build(kids: Array[ConvertableToMenu]): SiteMap = 
-    this.apply(kids :_*)
+    this.apply(kids:_*)
 
   def apply(kids: ConvertableToMenu *) = new SiteMap(Nil, kids :_*)
 

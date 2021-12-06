@@ -127,7 +127,7 @@ object S extends S {
    *  Impersonates a function that will be called when uploading files
    */
   private final class BinFuncHolder(val func: FileParamHolder => Any, val owner: Box[String]) extends AFuncHolder with Serializable{
-    def apply(in: List[String]) {logger.info("You attempted to call a 'File Upload' function with a normal parameter.  Did you forget to 'enctype' to 'multipart/form-data'?")}
+    def apply(in: List[String]): Unit = {logger.info("You attempted to call a 'File Upload' function with a normal parameter.  Did you forget to 'enctype' to 'multipart/form-data'?")}
 
     override def apply(in: FileParamHolder) = func(in)
 
@@ -416,7 +416,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * An exception was thrown during the processing of this request.
    * This is tested to see if the transaction should be rolled back
    */
-  def assertExceptionThrown() {_exceptionThrown.set(true)}
+  def assertExceptionThrown(): Unit = {_exceptionThrown.set(true)}
 
   /**
    * Was an exception thrown during the processing of the current request?
@@ -513,7 +513,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see # deleteCookie ( String )
    * @see # responseCookies
    */
-  def addCookie(cookie: HTTPCookie) {
+  def addCookie(cookie: HTTPCookie): Unit = {
     Box.legacyNullTest(_responseCookies.value).foreach(rc =>
             _responseCookies.set(rc.add(cookie))
       )
@@ -528,7 +528,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see # addCookie ( Cookie )
    * @see # deleteCookie ( String )
    */
-  def deleteCookie(cookie: HTTPCookie) {
+  def deleteCookie(cookie: HTTPCookie): Unit = {
     Box.legacyNullTest(_responseCookies.value).foreach(rc =>
             _responseCookies.set(rc.delete(cookie))
       )
@@ -543,7 +543,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see # addCookie ( Cookie )
    * @see # deleteCookie ( Cookie )
    */
-  def deleteCookie(name: String) {
+  def deleteCookie(name: String): Unit = {
     Box.legacyNullTest(_responseCookies.value).foreach(rc =>
             _responseCookies.set(rc.delete(name))
       )
@@ -697,7 +697,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see # addHighLevelSessionDispatcher
    * @see # clearHighLevelSessionDispatcher
    */
-  def clearHighLevelSessionDispatcher = session map (_.highLevelSessionDispatcher.clear)
+  def clearHighLevelSessionDispatcher = session map (_.highLevelSessionDispatcher.clear())
 
 
   /**
@@ -979,7 +979,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see # addSessionRewriter
    * @see # removeSessionRewriter
    */
-  def clearSessionRewriter = session map (_.sessionRewriter.clear)
+  def clearSessionRewriter = session map (_.sessionRewriter.clear())
 
   /**
    * Test the current request to see if it's a POST. This is a thin wrapper
@@ -1593,7 +1593,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    *
    * @see # getHeaders
    */
-  def setHeader(name: String, value: String) {
+  def setHeader(name: String, value: String): Unit = {
     Box.legacyNullTest(_responseHeaders.value).foreach(
       rh =>
               rh.headers = rh.headers + (name -> value)
@@ -1603,7 +1603,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * Synonym for S.setHeader. Exists to provide the converse to
    * S.getResponseHeader.
    */
-  def setResponseHeader(name: String, value: String) {
+  def setResponseHeader(name: String, value: String): Unit = {
     setHeader(name, value)
   }
 
@@ -1668,7 +1668,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see ResponseInfo.docType
    * @see DocType
    */
-  def setDocType(what: Box[String]) {
+  def setDocType(what: Box[String]): Unit = {
     Box.legacyNullTest(_responseHeaders.value).foreach(
       rh =>
               rh.docType = what
@@ -1707,7 +1707,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    *
    * @see # skipDocType
    */
-  def skipDocType_=(skip: Boolean) {_skipDocType.set(skip)}
+  def skipDocType_=(skip: Boolean): Unit = {_skipDocType.set(skip)}
 
   /**
    * Adds a cleanup function that will be executed at the end of the request pocessing.
@@ -2418,7 +2418,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   /**
    * Clears the function map.  potentially very destuctive... use at your own risk!
    */
-  def clearFunctionMap {
+  def clearFunctionMap(): Unit = {
     if (__functionMap.box.map(_.size).openOr(0) > 0) {
       // Issue #1037
       testFunctionMap {
@@ -2547,7 +2547,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @param name The name of the snippet that you want to map (the part after "&lt;lift:").
    * @param func The snippet function to map to.
    */
-  def mapSnippet(name: String, func: NodeSeq => NodeSeq) {_snippetMap.set(_snippetMap.is.updated(name, func))}
+  def mapSnippet(name: String, func: NodeSeq => NodeSeq): Unit = {_snippetMap.set(_snippetMap.is.updated(name, func))}
 
   /**
    * The are times when it's helpful to define snippets for a certain
@@ -2559,7 +2559,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     _snippetMap.doWith(newMap)(f)
   }
 
-  private def updateFunctionMap(name: String, value: AFuncHolder) {
+  private def updateFunctionMap(name: String, value: AFuncHolder): Unit = {
     __functionMap.box match {
       case Full(old) => __functionMap.set(old + ((name, value)))
       case _ =>
@@ -2918,77 +2918,77 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   /**
    * Sets an ERROR notice as a plain text
    */
-  def error(n: String) {error(Text(n))}
+  def error(n: String): Unit = {error(Text(n))}
 
   /**
    * Sets an ERROR notice as an XML sequence
    */
-  def error(n: NodeSeq) {p_notice.is += ((NoticeType.Error, n, Empty))}
+  def error(n: NodeSeq): Unit = {p_notice.is += ((NoticeType.Error, n, Empty))}
 
   /**
    * Sets an ERROR notice as an XML sequence and associates it with an id
    */
-  def error(id: String, n: NodeSeq) {p_notice.is += ((NoticeType.Error, n, Full(id)))}
+  def error(id: String, n: NodeSeq): Unit = {p_notice.is += ((NoticeType.Error, n, Full(id)))}
 
   /**
    * Sets an ERROR notice as plain text and associates it with an id
    */
-  def error(id: String, n: String) {error(id, Text(n))}
+  def error(id: String, n: String): Unit = {error(id, Text(n))}
 
   /**
    * Sets a NOTICE notice as plain text
    */
-  def notice(n: String) {notice(Text(n))}
+  def notice(n: String): Unit = {notice(Text(n))}
 
   /**
    * Sets a NOTICE notice as an XML sequence
    */
-  def notice(n: NodeSeq) {p_notice.is += ((NoticeType.Notice, n, Empty))}
+  def notice(n: NodeSeq): Unit = {p_notice.is += ((NoticeType.Notice, n, Empty))}
 
   /**
    * Sets a NOTICE notice as and XML sequence and associates it with an id
    */
-  def notice(id: String, n: NodeSeq) {p_notice.is += ((NoticeType.Notice, n, Full(id)))}
+  def notice(id: String, n: NodeSeq): Unit = {p_notice.is += ((NoticeType.Notice, n, Full(id)))}
 
   /**
    * Sets a NOTICE notice as plai text and associates it with an id
    */
-  def notice(id: String, n: String) {notice(id, Text(n))}
+  def notice(id: String, n: String): Unit = {notice(id, Text(n))}
 
   /**
    * Sets a WARNING notice as plain text
    */
-  def warning(n: String) {warning(Text(n))}
+  def warning(n: String): Unit = {warning(Text(n))}
 
   /**
    * Sets a WARNING notice as an XML sequence
    */
-  def warning(n: NodeSeq) {p_notice += ((NoticeType.Warning, n, Empty))}
+  def warning(n: NodeSeq): Unit = {p_notice += ((NoticeType.Warning, n, Empty))}
 
   /**
    * Sets a WARNING notice as an XML sequence and associates it with an id
    */
-  def warning(id: String, n: NodeSeq) {p_notice += ((NoticeType.Warning, n, Full(id)))}
+  def warning(id: String, n: NodeSeq): Unit = {p_notice += ((NoticeType.Warning, n, Full(id)))}
 
   /**
    * Sets a WARNING notice as plain text and associates it with an id
    */
-  def warning(id: String, n: String) {warning(id, Text(n))}
+  def warning(id: String, n: String): Unit = {warning(id, Text(n))}
 
   /**
    * Sets an ERROR notices from a List[FieldError]
    */
-  def error(vi: List[FieldError]) {p_notice ++= vi.map {i => (NoticeType.Error, i.msg, i.field.uniqueFieldId)}}
+  def error(vi: List[FieldError]): Unit = {p_notice ++= vi.map {i => (NoticeType.Error, i.msg, i.field.uniqueFieldId)}}
 
 
-  private[http] def message(msg: String, notice: NoticeType.Value) {message(Text(msg), notice)}
+  private[http] def message(msg: String, notice: NoticeType.Value): Unit = {message(Text(msg), notice)}
 
-  private[http] def message(msg: NodeSeq, notice: NoticeType.Value) {p_notice += ((notice, msg, Empty))}
+  private[http] def message(msg: NodeSeq, notice: NoticeType.Value): Unit = {p_notice += ((notice, msg, Empty))}
 
   /**
    * Add a whole list of notices
    */
-  def appendNotices(list: Seq[(NoticeType.Value, NodeSeq, Box[String])]) {p_notice.is ++= list}
+  def appendNotices(list: Seq[(NoticeType.Value, NodeSeq, Box[String])]): Unit = {p_notice.is ++= list}
 
   /**
    * Returns the current notices
@@ -3019,7 +3019,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   /**
    * Clears up the notices
    */
-  def clearCurrentNotices {p_notice.is.clear}
+  def clearCurrentNotices(): Unit = {p_notice.is.clear()}
 
   /**
    * Returns the messages provided by list function that are associated with id
