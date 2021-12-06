@@ -235,7 +235,7 @@ object MongoDB {
     * Calls close on each MongoClient instance and clears the HashMap.
     */
   def closeAll(): Unit = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     dbs.values.asScala.foreach { case (mngo, _) =>
       mngo.close()
     }
