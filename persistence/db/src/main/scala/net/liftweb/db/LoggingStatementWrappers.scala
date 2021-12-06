@@ -484,7 +484,7 @@ object DBLog {
         }
 
         case "setDate" => {
-            paramMap += args(0).asInstanceOf[Int] -> (args(1) + ":" + args(2))
+            paramMap += args(0).asInstanceOf[Int] -> (args(1).toString + ":" + args(2))
             chain(method,  args)
         }
 
@@ -534,7 +534,7 @@ object DBLog {
         }
 
         case "setTime" => {
-            paramMap += args(0).asInstanceOf[Int] -> (args(1) + ":" + args(2))
+            paramMap += args(0).asInstanceOf[Int] -> (args(1).toString + ":" + args(2))
             chain(method,  args)
         }
 
@@ -544,7 +544,7 @@ object DBLog {
         }
 
         case "setTimestamp" => {
-            paramMap += args(0).asInstanceOf[Int] -> (args(1) + ":" + args(2))
+            paramMap += args(0).asInstanceOf[Int] -> (args(1).toString + ":" + args(2))
             chain(method,  args)
         }
 
