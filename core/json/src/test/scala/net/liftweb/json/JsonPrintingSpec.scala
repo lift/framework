@@ -107,7 +107,8 @@ class JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
     }
   }
 
-  private def parse(json: String) = scala.util.parsing.json.JSON.parseRaw(json)
+  private def parse(json: String) =
+      play.api.libs.json.Json.parse(json)
 
   implicit def arbDoc: Arbitrary[JValue] = Arbitrary(genJValue)
 }
