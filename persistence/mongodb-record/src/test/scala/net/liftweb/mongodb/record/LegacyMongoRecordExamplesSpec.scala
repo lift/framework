@@ -98,7 +98,7 @@ package legacymongotestrecords {
   class ListDoc private () extends MongoRecord[ListDoc] with ObjectIdPk[ListDoc] {
     def meta = ListDoc
 
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
 
     // standard list types
     object name extends StringField(this, 10)
