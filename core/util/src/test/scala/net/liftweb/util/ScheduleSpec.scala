@@ -31,7 +31,7 @@ import Helpers._
 class ScheduleSpec extends Specification with PendingUntilFixed with PingedService with BeforeEach {
   "Schedule Specification".title
 
-  def before = Schedule.restart
+  def before = Schedule.restart()
 
   "The Schedule object" should {
     "provide a schedule method to ping an actor regularly" in {
@@ -39,21 +39,21 @@ class ScheduleSpec extends Specification with PendingUntilFixed with PingedServi
       service.pinged must eventually(beTrue)
     }
     "honor multiple restarts" in {
-      Schedule.restart
-      Schedule.restart
-      Schedule.restart
+      Schedule.restart()
+      Schedule.restart()
+      Schedule.restart()
       Schedule.schedule(service, Alive, TimeSpan(10))
       service.pinged must eventually(beTrue)
     }
     "honor shutdown followed by restart" in {
-      Schedule.shutdown
-      Schedule.restart
+      Schedule.shutdown()
+      Schedule.restart()
       Schedule.schedule(service, Alive, TimeSpan(10))
       service.pinged must eventually(beTrue)
     }
     "not honor multiple shutdowns" in {
-      Schedule.shutdown
-      Schedule.shutdown
+      Schedule.shutdown()
+      Schedule.shutdown()
 //      service.pinged must eventually(beFalse)
       service.pinged must throwA[ActorPingException]
     }.pendingUntilFixed
