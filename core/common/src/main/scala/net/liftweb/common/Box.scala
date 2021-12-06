@@ -1117,11 +1117,11 @@ object BoxOrRaw {
   implicit def rawToBoxOrRaw[T, Q <: T](r: Q): BoxOrRaw[T] =
     RawBoxOrRaw(r: T)
 
-  implicit def boxToBoxOrRaw[T, Q <% T](r: Box[Q]): BoxOrRaw[T] = {
+  implicit def boxToBoxOrRaw[T, Q](r: Box[Q])(implicit qToT: Q => T): BoxOrRaw[T] = {
     BoxedBoxOrRaw(r.map(v => v: T))
   }
 
-  implicit def optionToBoxOrRaw[T, Q <% T](r: Option[Q]): BoxOrRaw[T] = {
+  implicit def optionToBoxOrRaw[T, Q](r: Option[Q])(implicit qToT: Q => T): BoxOrRaw[T] = {
     BoxedBoxOrRaw(r.map(v => v: T))
   }
 
