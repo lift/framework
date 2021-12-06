@@ -31,7 +31,7 @@ import java.sql.Timestamp
 case class TypeInfo(clazz: Class[_], parameterizedType: Option[ParameterizedType])
 
 trait ParameterNameReader {
-  def lookupParameterNames(constructor: JConstructor[_]): Traversable[String]
+  def lookupParameterNames(constructor: JConstructor[_]): Iterable[String]
 }
 
 private[json] object Meta {
@@ -93,7 +93,7 @@ private[json] object Meta {
   private val paranamer = new CachingParanamer(new BytecodeReadingParanamer)
 
   object ParanamerReader extends ParameterNameReader {
-    def lookupParameterNames(constructor: JConstructor[_]): Traversable[String] =
+    def lookupParameterNames(constructor: JConstructor[_]): Iterable[String] =
       paranamer.lookupParameterNames(constructor)
   }
 
@@ -218,7 +218,7 @@ private[json] object Meta {
       def getActualTypeArguments = typeArgs.toArray
       def getOwnerType = owner
       def getRawType = owner
-      override def toString = getOwnerType + "[" + getActualTypeArguments.mkString(",") + "]"
+      override def toString = getOwnerType.toString + "[" + getActualTypeArguments.mkString(",") + "]"
     }
 
   private[json] def unmangleName(name: String) =
@@ -231,12 +231,12 @@ private[json] object Meta {
 
     def memoize(x: A, f: A => R): R = {
       val c = cache.get
-      def addToCache() = {
+      def addToCache(): R = {
         val ret = f(x)
         cache.set(c + (x -> ret))
         ret
       }
-      c.getOrElse(x, addToCache)
+      c.getOrElse(x, addToCache())
     }
   }
 

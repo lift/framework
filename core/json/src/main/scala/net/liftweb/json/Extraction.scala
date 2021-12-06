@@ -157,11 +157,9 @@ object Extraction {
     }
 
     def submap(prefix: String): Map[String, String] =
-      Map(
-        map.filter(t => t._1 == prefix || t._1.startsWith(prefix + ".") || t._1.startsWith(prefix + "[")).map(
-          t => (t._1.substring(prefix.length), t._2)
-        ).toList.toArray: _*
-      )
+      map.filter(t => t._1 == prefix || t._1.startsWith(prefix + ".") || t._1.startsWith(prefix + "[")).map(
+        t => (t._1.substring(prefix.length), t._2)
+      ).toMap
 
     val ArrayProp = new Regex("""^(\.([^\.\[]+))\[(\d+)\].*$""")
     val ArrayElem = new Regex("""^(\[(\d+)\]).*$""")
@@ -397,16 +395,17 @@ object Extraction {
         val c = targetType.clazz
 
         if (custom.isDefinedAt(targetType, root)) custom(targetType, root)
-        else if (c == classOf[List[_]]) newCollection(root, m, a => List(a: _*))
-        else if (c == classOf[Set[_]]) newCollection(root, m, a => Set(a: _*))
+        else if (c == classOf[List[_]]) newCollection(root, m, a => a.toList)
+        else if (c == classOf[Set[_]]) newCollection(root, m, a => a.toSet)
         else if (c.isArray) newCollection(root, m, mkTypedArray(c))
-        else if (classOf[Seq[_]].isAssignableFrom(c)) newCollection(root, m, a => List(a: _*))
+        else if (classOf[Seq[_]].isAssignableFrom(c)) newCollection(root, m, a => a.toList)
         else if (c == classOf[Option[_]]) newOption(root, m)
         else fail("Expected collection but got " + m + " for class " + c)
       case Dict(m) => root match {
         case JObject(xs) => Map(xs.map(x => (x.name, build(x.value, m))): _*)
         case x => fail("Expected object but got " + x)
       }
+      case HCol(_, _) => throw new IllegalArgumentException("Case HCol(_, _) not permitted.")
     }
 
     def mkTypedArray(c: Class[_])(a: Array[_]) = {

@@ -817,7 +817,7 @@ object JsonAST {
     buf.toString
   }
 
-  private def appendEscapedString(buf: Appendable, s: String, settings: RenderSettings) {
+  private def appendEscapedString(buf: Appendable, s: String, settings: RenderSettings): Unit = {
     s.foreach { c =>
       val strReplacement = c match {
         case '"'  => "\\\""
@@ -1135,25 +1135,25 @@ trait Implicits {
   */
 object JsonDSL extends JsonDSL
 trait JsonDSL extends Implicits {
-  implicit def seq2jvalue[A <% JValue](s: Traversable[A]) =
+  implicit def seq2jvalue[A](s: Iterable[A])(implicit aToJValue: A => JValue) =
     JArray(s.toList.map { a => val v: JValue = a; v })
 
-  implicit def map2jvalue[A <% JValue](m: Map[String, A]) =
+  implicit def map2jvalue[A](m: Map[String, A])(implicit aToJValue: A => JValue) =
     JObject(m.toList.map { case (k, v) => JField(k, v) })
 
-  implicit def option2jvalue[A <% JValue](opt: Option[A]): JValue = opt match {
+  implicit def option2jvalue[A](opt: Option[A])(implicit aToJValue: A => JValue): JValue = opt match {
     case Some(x) => x
     case None => JNothing
   }
 
   implicit def symbol2jvalue(x: Symbol) = JString(x.name)
-  implicit def pair2jvalue[A <% JValue](t: (String, A)) = JObject(List(JField(t._1, t._2)))
+  implicit def pair2jvalue[A](t: (String, A))(implicit aToJValue: A => JValue) = JObject(List(JField(t._1, t._2)))
   implicit def list2jvalue(l: List[JField]) = JObject(l)
   implicit def jobject2assoc(o: JObject) = new JsonListAssoc(o.obj)
-  implicit def pair2Assoc[A <% JValue](t: (String, A)) = new JsonAssoc(t)
+  implicit def pair2Assoc[A](t: (String, A))(implicit aToJValue: A => JValue) = new JsonAssoc(t)
 
-  class JsonAssoc[A <% JValue](left: (String, A)) {
-    def ~[B <% JValue](right: (String, B)) = {
+  class JsonAssoc[A](left: (String, A))(implicit aToJValue: A => JValue) {
+    def ~[B](right: (String, B))(implicit bToJValue: B => JValue) = {
       val l: JValue = left._2
       val r: JValue = right._2
       JObject(JField(left._1, l) :: JField(right._1, r) :: Nil)

@@ -21,7 +21,7 @@ import scala.tools.scalap.scalax.rules.scalasig._
 
 import java.util.concurrent.ConcurrentHashMap
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.concurrent.{Map=>ConcurrentScalaMap}
 
 private[json] object ScalaSigReader {
