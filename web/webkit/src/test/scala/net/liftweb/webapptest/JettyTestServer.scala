@@ -47,13 +47,13 @@ final class JettyTestServer(baseUrlBox: Box[URL]) {
     (server, context)
   }
 
-  def urlFor(path: String) = baseUrl + path
+  def urlFor(path: String) = baseUrl.toString + path
 
-  def start() {
+  def start(): Unit = {
     server_.start()
   }
 
-  def stop() {
+  def stop(): Unit = {
     context_.setShutdown(true)
     server_.stop()
     server_.join()

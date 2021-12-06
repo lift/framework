@@ -10,7 +10,7 @@ import net.liftweb.json._
 import net.liftweb.http._
 
 object RestHelperSpecBoot {
-  def boot() {
+  def boot(): Unit = {
     LiftRules.dispatch.append(RestHelperSpecRest)
   }
 }
