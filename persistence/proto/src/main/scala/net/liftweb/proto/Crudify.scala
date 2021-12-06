@@ -242,7 +242,7 @@ trait Crudify {
               (RewriteResponse(viewPath), findForParam(pp.wholePath.last))
           })
 
-        override def calcTemplate = Full(viewTemplate)
+        override def calcTemplate = Full(viewTemplate())
 
         val link =
         new Loc.Link[TheCrudType](viewPath, false) {
@@ -288,7 +288,7 @@ trait Crudify {
                 (RewriteResponse(editPath), findForParam(pp.wholePath.last))
             })
 
-          override def calcTemplate = Full(editTemplate)
+          override def calcTemplate = Full(editTemplate())
 
           val link =
           new Loc.Link[TheCrudType](editPath, false) {
@@ -411,7 +411,7 @@ trait Crudify {
                 (RewriteResponse(deletePath), findForParam(pp.wholePath.last))
             })
 
-          override def calcTemplate = Full(deleteTemplate)
+          override def calcTemplate = Full(deleteTemplate())
 
           val link =
           new Loc.Link[TheCrudType](deletePath, false) {

@@ -326,19 +326,19 @@ trait ProtoUser {
   /**
    * A Menu.LocParam to test if the user is logged in
    */
-  lazy val testLogginIn = If(loggedIn_? _, S.?("must.be.logged.in")) ;
+  lazy val testLogginIn = If(() => loggedIn_?, S.?("must.be.logged.in")) ;
 
   /**
    * A Menu.LocParam to test if the user is a super user
    */
-  lazy val testSuperUser = If(superUser_? _, S.?("must.be.super.user"))
+  lazy val testSuperUser = If(() => superUser_?, S.?("must.be.super.user"))
 
   /**
    * A Menu.LocParam for testing if the user is logged in and if they're not,
    * redirect them to the login page
    */
   def loginFirst = If(
-    loggedIn_? _,
+    () => loggedIn_?,
     () => {
       import net.liftweb.http.{RedirectWithState, RedirectState}
       val uri = S.uriAndQueryString
@@ -372,7 +372,7 @@ trait ProtoUser {
    * Overwrite in order to add custom LocParams. Attention: Not calling super will change the default behavior!
    */
   protected def loginMenuLocParams: List[LocParam[Unit]] =
-    If(notLoggedIn_? _, S.?("already.logged.in")) ::
+    If(() => notLoggedIn_?, S.?("already.logged.in")) ::
     Template(() => wrapIt(login)) ::
     Nil
 
@@ -409,7 +409,7 @@ trait ProtoUser {
    */
   protected def createUserMenuLocParams: List[LocParam[Unit]] =
     Template(() => wrapIt(signupFunc.map(_()) openOr signup)) ::
-    If(notLoggedIn_? _, S.?("logout.first")) ::
+    If(() =>notLoggedIn_?, S.?("logout.first")) ::
     Nil
 
   /**
@@ -424,7 +424,7 @@ trait ProtoUser {
    */
   protected def lostPasswordMenuLocParams: List[LocParam[Unit]] =
     Template(() => wrapIt(lostPassword)) ::
-    If(notLoggedIn_? _, S.?("logout.first")) ::
+    If(() => notLoggedIn_?, S.?("logout.first")) ::
     Nil
 
   /**
@@ -440,7 +440,7 @@ trait ProtoUser {
   protected def resetPasswordMenuLocParams: List[LocParam[Unit]] =
     Hidden ::
     Template(() => wrapIt(passwordReset(snarfLastItem))) ::
-    If(notLoggedIn_? _, S.?("logout.first")) ::
+    If(() => notLoggedIn_?, S.?("logout.first")) ::
     Nil
 
   /**
@@ -486,7 +486,7 @@ trait ProtoUser {
   protected def validateUserMenuLocParams: List[LocParam[Unit]] =
     Hidden ::
     Template(() => wrapIt(validateUser(snarfLastItem))) ::
-    If(notLoggedIn_? _, S.?("logout.first")) ::
+    If(() => notLoggedIn_?, S.?("logout.first")) ::
     Nil
 
   /**
@@ -571,7 +571,7 @@ trait ProtoUser {
     currentUserId.isDefined
   }
 
-  def logUserIdIn(id: String) {
+  def logUserIdIn(id: String): Unit = {
     curUser.remove()
     curUserId(Full(id))
   }
@@ -588,7 +588,7 @@ trait ProtoUser {
     }
   }
 
-  def logUserIn(who: TheUserType) {
+  def logUserIn(who: TheUserType): Unit = {
     curUserId.remove()
     curUser.remove()
     curUserId(Full(who.userIdAsString))
@@ -598,7 +598,7 @@ trait ProtoUser {
 
   def logoutCurrentUser = logUserOut()
 
-  def logUserOut() {
+  def logUserOut(): Unit = {
     onLogOut.foreach(_(curUser))
     curUserId.remove()
     curUser.remove()
@@ -672,7 +672,7 @@ trait ProtoUser {
    * mail sent to users by override generateValidationEmailBodies to
    * send non-HTML mail or alternative mail bodies.
    */
-  def sendValidationEmail(user: TheUserType) {
+  def sendValidationEmail(user: TheUserType): Unit = {
     val resetLink = S.hostAndPath+"/"+validateUserPath.mkString("/")+
     "/"+urlEncode(user.getUniqueId())
 
@@ -743,12 +743,12 @@ trait ProtoUser {
     val theUser: TheUserType = mutateUserOnSignup(createNewUserInstance())
     val theName = signUpPath.mkString("")
 
-    def testSignup() {
+    def testSignup(): Unit = {
       validateSignup(theUser) match {
         case Nil =>
           actionsAfterSignup(theUser, () => S.redirectTo(homePage))
 
-        case xs => S.error(xs) ; signupFunc(Full(innerSignup _))
+        case xs => S.error(xs) ; signupFunc(Full(() => innerSignup))
       }
     }
 
@@ -932,7 +932,7 @@ trait ProtoUser {
    * mail sent to users by overriding generateResetEmailBodies to
    * send non-HTML mail or alternative mail bodies.
    */
-  def sendPasswordReset(email: String) {
+  def sendPasswordReset(email: String): Unit = {
     findUserByUserName(email) match {
       case Full(user) if user.validated_? =>
         user.resetUniqueId().save
@@ -983,7 +983,7 @@ trait ProtoUser {
   def passwordReset(id: String) =
   findUserByUniqueId(id) match {
     case Full(user) =>
-      def finishSet() {
+      def finishSet(): Unit = {
         user.validate match {
           case Nil => S.notice(S.?("password.changed"))
             user.resetUniqueId().save
@@ -1026,7 +1026,7 @@ trait ProtoUser {
     var oldPassword = ""
     var newPassword: List[String] = Nil
 
-    def testAndSet() {
+    def testAndSet(): Unit = {
       if (!user.testPassword(Full(oldPassword))) S.error(S.?("wrong.old.password"))
       else {
         user.setPasswordFromListString(newPassword)
@@ -1084,14 +1084,14 @@ trait ProtoUser {
 
     val theName = editPath.mkString("")
 
-    def testEdit() {
+    def testEdit(): Unit = {
       theUser.validate match {
         case Nil =>
           theUser.save
           S.notice(S.?("profile.updated"))
           S.redirectTo(homePage)
 
-        case xs => S.error(xs) ; editFunc(Full(innerEdit _))
+        case xs => S.error(xs) ; editFunc(Full(() => innerEdit))
       }
     }
 
