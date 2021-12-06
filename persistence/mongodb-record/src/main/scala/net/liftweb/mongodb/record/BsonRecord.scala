@@ -22,7 +22,7 @@ import net.liftweb.common._
 
 import java.util.prefs.BackingStoreException
 import java.util.regex.Pattern
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import net.liftweb.mongodb.record.codecs.{RecordCodec, RecordTypedCodec}
 import net.liftweb.mongodb.record.field._

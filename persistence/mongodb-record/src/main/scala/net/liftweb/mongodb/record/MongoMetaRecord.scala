@@ -42,7 +42,7 @@ import com.mongodb.client.model.Updates._
 import com.mongodb.client.model.{DeleteOptions, InsertOneOptions, ReplaceOptions, UpdateOptions}
 import com.mongodb.client.result.{DeleteResult, UpdateResult}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{Future, Promise}
 
 trait MongoMetaRecord[BaseRecord <: MongoRecord[BaseRecord]]
