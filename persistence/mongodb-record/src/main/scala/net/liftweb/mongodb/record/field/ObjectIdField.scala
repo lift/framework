@@ -82,7 +82,7 @@ trait ObjectIdTypedField[OwnerType <: BsonRecord[OwnerType]] extends TypedField[
 
 }
 
-class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+class ObjectIdField[OwnerType <: BsonRecord[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends MandatoryTypedField[ObjectId] with ObjectIdTypedField[OwnerType] {
 
   def this(owner: OwnerType, value: ObjectId) = {

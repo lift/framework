@@ -100,7 +100,7 @@ abstract class JsonObjectTypedField[OwnerType <: BsonRecord[OwnerType], JObjectT
 }
 
 abstract class JsonObjectField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
-(@deprecatedName('rec) owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
+(@deprecatedName(Symbol("rec")) owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])
   extends JsonObjectTypedField(owner, valueMeta) with MandatoryTypedField[JObjectType] {
 
   def this(owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType], value: JObjectType) = {
@@ -196,4 +196,4 @@ class JsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <: Jso
 
 @deprecated("Use the more consistently named 'JsonObjectListField' instead. This class will be removed in Lift 4.", "3.2")
 class MongoJsonObjectListField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
-(@deprecatedName('rec) owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])(implicit mf: Manifest[JObjectType]) extends JsonObjectListField(owner, valueMeta)
+(@deprecatedName(Symbol("rec")) owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])(implicit mf: Manifest[JObjectType]) extends JsonObjectListField(owner, valueMeta)

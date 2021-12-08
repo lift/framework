@@ -105,10 +105,10 @@ abstract class BsonRecordTypedField[OwnerType <: BsonRecord[OwnerType], SubRecor
 }
 
 class BsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonRecord[SubRecordType]]
-(@deprecatedName('rec) owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit subRecordType: Manifest[SubRecordType])
+(@deprecatedName(Symbol("rec")) owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType])(implicit subRecordType: Manifest[SubRecordType])
   extends BsonRecordTypedField(owner, valueMeta) with MandatoryTypedField[SubRecordType] {
 
-  def this(@deprecatedName('rec) owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType], value: SubRecordType)(implicit subRecordType: Manifest[SubRecordType]) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, valueMeta: BsonMetaRecord[SubRecordType], value: SubRecordType)(implicit subRecordType: Manifest[SubRecordType]) = {
     this(owner, value.meta)
     set(value)
   }
@@ -125,7 +125,7 @@ class OptionalBsonRecordField[OwnerType <: BsonRecord[OwnerType], SubRecordType 
  * List of BsonRecords
  */
 class BsonRecordListField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: BsonRecord[SubRecordType]]
-  (@deprecatedName('rec) owner: OwnerType, val valueMeta: BsonMetaRecord[SubRecordType])(implicit mf: Manifest[SubRecordType])
+  (@deprecatedName(Symbol("rec")) owner: OwnerType, val valueMeta: BsonMetaRecord[SubRecordType])(implicit mf: Manifest[SubRecordType])
   extends MongoListField[OwnerType, SubRecordType](owner: OwnerType) {
 
   import scala.jdk.CollectionConverters._

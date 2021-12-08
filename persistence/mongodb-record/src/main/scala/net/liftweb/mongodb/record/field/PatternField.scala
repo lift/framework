@@ -79,7 +79,7 @@ abstract class PatternTypedField[OwnerType <: Record[OwnerType]](val owner: Owne
   }
 }
 
-class PatternField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType) extends PatternTypedField[OwnerType](owner) with MandatoryTypedField[Pattern] {
+class PatternField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) owner: OwnerType) extends PatternTypedField[OwnerType](owner) with MandatoryTypedField[Pattern] {
   def this(owner: OwnerType, value: Pattern) = {
     this(owner)
     setBox(Full(value))

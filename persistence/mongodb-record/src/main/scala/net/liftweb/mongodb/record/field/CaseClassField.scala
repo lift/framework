@@ -133,7 +133,7 @@ class CaseClassField[OwnerType <: Record[OwnerType], CaseType](owner: OwnerType)
 }
 
 @deprecated("Use the more consistently named 'CaseClassField' instead. This class will be removed in Lift 4.", "3.2")
-class MongoCaseClassField[OwnerType <: Record[OwnerType], CaseType](@deprecatedName('rec) owner: OwnerType)(implicit mf: Manifest[CaseType])
+class MongoCaseClassField[OwnerType <: Record[OwnerType], CaseType](@deprecatedName(Symbol("rec")) owner: OwnerType)(implicit mf: Manifest[CaseType])
   extends CaseClassField[OwnerType, CaseType](owner)
 
 class OptionalCaseClassField[OwnerType <: Record[OwnerType], CaseType](owner: OwnerType)(implicit mf: Manifest[CaseType])
@@ -255,5 +255,5 @@ class CaseClassListField[OwnerType <: Record[OwnerType], CaseType](val owner: Ow
 }
 
 @deprecated("Please use the more consistently named 'CaseClassListField' instead. This class will be removed in Lift 4.", "3.2")
-class MongoCaseClassListField[OwnerType <: Record[OwnerType], CaseType](@deprecatedName('rec) owner: OwnerType)(implicit mf: Manifest[CaseType])
+class MongoCaseClassListField[OwnerType <: Record[OwnerType], CaseType](@deprecatedName(Symbol("rec")) owner: OwnerType)(implicit mf: Manifest[CaseType])
   extends CaseClassListField[OwnerType, CaseType](owner)

@@ -74,7 +74,7 @@ trait UUIDTypedField[OwnerType <: Record[OwnerType]] extends TypedField[UUID] wi
   def asJValue: JValue = valueBox.map(v => JsonUUID(v)) openOr (JNothing: JValue)
 }
 
-class UUIDField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+class UUIDField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends UUIDTypedField[OwnerType] with MandatoryTypedField[UUID] {
 
   def this(owner: OwnerType, value: UUID) = {

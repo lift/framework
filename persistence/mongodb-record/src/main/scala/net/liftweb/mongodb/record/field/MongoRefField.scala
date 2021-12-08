@@ -101,7 +101,7 @@ trait MongoRefField[RefType <: MongoRecord[RefType], MyType] extends TypedField[
 }
 
 class ObjectIdRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  @deprecatedName('rec) owner: OwnerType, val refMeta: MongoMetaRecord[RefType]
+  @deprecatedName(Symbol("rec")) owner: OwnerType, val refMeta: MongoMetaRecord[RefType]
 ) extends ObjectIdField[OwnerType](owner) with MongoRefField[RefType, ObjectId] {
   override def find: Box[RefType] = valueBox.flatMap(v => refMeta.find(v))
 }
@@ -114,7 +114,7 @@ class OptionalObjectIdRefField[OwnerType <: BsonRecord[OwnerType], RefType <: Mo
 
 
 class UUIDRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  @deprecatedName('rec) owner: OwnerType, val refMeta: MongoMetaRecord[RefType]
+  @deprecatedName(Symbol("rec")) owner: OwnerType, val refMeta: MongoMetaRecord[RefType]
 ) extends UUIDField[OwnerType](owner) with MongoRefField[RefType, UUID] {
   override def find: Box[RefType] = valueBox.flatMap(v => refMeta.find(v))
 }
@@ -126,7 +126,7 @@ class OptionalUUIDRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoR
 }
 
 class StringRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  @deprecatedName('rec) owner: OwnerType, val refMeta: MongoMetaRecord[RefType], maxLen: Int
+  @deprecatedName(Symbol("rec")) owner: OwnerType, val refMeta: MongoMetaRecord[RefType], maxLen: Int
 ) extends StringField[OwnerType](owner, maxLen) with MongoRefField[RefType, String] {
   override def find: Box[RefType] = valueBox.flatMap(v => refMeta.find(v))
 }
@@ -138,7 +138,7 @@ class OptionalStringRefField[OwnerType <: BsonRecord[OwnerType], RefType <: Mong
 }
 
 class IntRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  @deprecatedName('rec) owner: OwnerType, val refMeta: MongoMetaRecord[RefType]
+  @deprecatedName(Symbol("rec")) owner: OwnerType, val refMeta: MongoMetaRecord[RefType]
 ) extends IntField[OwnerType](owner) with MongoRefField[RefType, Int] {
   override def find: Box[RefType] = valueBox.flatMap(v => refMeta.find(v))
 }
@@ -150,7 +150,7 @@ class OptionalIntRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRe
 }
 
 class LongRefField[OwnerType <: BsonRecord[OwnerType], RefType <: MongoRecord[RefType]](
-  @deprecatedName('rec) owner: OwnerType, val refMeta: MongoMetaRecord[RefType]
+  @deprecatedName(Symbol("rec")) owner: OwnerType, val refMeta: MongoMetaRecord[RefType]
 ) extends LongField[OwnerType](owner) with MongoRefField[RefType, Long] {
   override def find: Box[RefType] = valueBox.flatMap(v => refMeta.find(v))
 }
