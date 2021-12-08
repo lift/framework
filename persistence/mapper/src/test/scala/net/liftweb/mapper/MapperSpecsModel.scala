@@ -88,7 +88,7 @@ object SampleTag extends SampleTag with LongKeyedMetaMapper[SampleTag] {
     val tags = List("Hello", "Moose", "Frog", "WooHoo", "Sloth",
                     "Meow", "Moof")
     for (t <- tags;
-         m <- samp) SampleTag.create.tag(t).model(m).save
+         m <- samp) SampleTag.create.tag(t).model(m).save()
   }
 }
 
@@ -118,10 +118,10 @@ object SampleModel extends SampleModel with KeyedMetaMapper[Long, SampleModel] {
   def buildFromJson(json: JsonAST.JObject): SampleModel = decodeFromJSON_!(json, false)
 
   private def populate(): Unit = {
-    create.firstName("Elwood").save
-    create.firstName("Madeline").save
-    create.firstName("Archer").status(SampleStatus.Disabled).save
-    create.firstName("NotNull").moose(Full(99L)).save
+    create.firstName("Elwood").save()
+    create.firstName("Madeline").save()
+    create.firstName("Archer").status(SampleStatus.Disabled).save()
+    create.firstName("NotNull").moose(Full(99L)).save()
   }
 }
 
@@ -155,7 +155,7 @@ object SampleTagSnake extends SampleTagSnake with LongKeyedMetaMapper[SampleTagS
     val tags = List("Hello", "Moose", "Frog", "WooHoo", "Sloth",
                     "Meow", "Moof")
     for (t <- tags;
-         m <- samp) SampleTagSnake.create.tag(t).model(m).save
+         m <- samp) SampleTagSnake.create.tag(t).model(m).save()
   }
 
   override def dbDefaultConnectionIdentifier = DbProviders.SnakeConnectionIdentifier
@@ -186,10 +186,10 @@ object SampleModelSnake extends SampleModelSnake with KeyedMetaMapper[Long, Samp
   def buildFromJson(json: JsonAST.JObject): SampleModelSnake = decodeFromJSON_!(json, false)
 
   private def populate(): Unit = {
-    create.firstName("Elwood").save
-    create.firstName("Madeline").save
-    create.firstName("Archer").save
-    create.firstName("NotNull").moose(Full(99L)).save
+    create.firstName("Elwood").save()
+    create.firstName("Madeline").save()
+    create.firstName("Archer").save()
+    create.firstName("NotNull").moose(Full(99L)).save()
   }
 
   override def dbDefaultConnectionIdentifier = DbProviders.SnakeConnectionIdentifier
@@ -223,9 +223,9 @@ object User extends User with MetaMegaProtoUser[User] {
   override def dbAddTable = Full(populate)
 
   private def populate(): Unit = {
-    create.firstName("Elwood").save
-    create.firstName("Madeline").save
-    create.firstName("Archer").save
+    create.firstName("Elwood").save()
+    create.firstName("Madeline").save()
+    create.firstName("Archer").save()
   }
 
   override def dbTableName = "users"
@@ -280,10 +280,10 @@ object Dog extends Dog with LongKeyedMetaMapper[Dog] {
   override def dbAddTable = Full(populate)
 
   private def populate(): Unit = {
-    create.name("Elwood").save
-    create.name("Madeline").save
-    create.name("Archer").save
-    create.name("fido").owner(User.find(By(User.firstName, "Elwood"))).save
+    create.name("Elwood").save()
+    create.name("Madeline").save()
+    create.name("Archer").save()
+    create.name("fido").owner(User.find(By(User.firstName, "Elwood"))).save()
   }
 
   def who(in: Dog): Box[User] = in.owner
@@ -310,9 +310,9 @@ object Mixer extends Mixer with LongKeyedMetaMapper[Mixer] {
   override def dbTableName = "MIXME_UP"
 
   private def populate(): Unit = {
-    create.name("Elwood").weight(33).save
-    create.name("Madeline").weight(44).save
-    create.name("Archer").weight(105).save
+    create.name("Elwood").weight(33).save()
+    create.name("Madeline").weight(44).save()
+    create.name("Archer").weight(105).save()
   }
 }
 
@@ -404,12 +404,12 @@ object Dog2 extends Dog2 with LongKeyedMetaMapper[Dog2] {
   override def dbAddTable = Full(populate)
 
   private def populate(): Unit = {
-    create.name("Elwood").actualAge(66).save
-    create.name("Madeline").save
-    create.name("Archer").save
-    create.name("fido").owner(User.find(By(User.firstName, "Elwood"))).isDog(true).save
+    create.name("Elwood").actualAge(66).save()
+    create.name("Madeline").save()
+    create.name("Archer").save()
+    create.name("fido").owner(User.find(By(User.firstName, "Elwood"))).isDog(true).save()
     create.name("toto").owner(User.find(By(User.firstName, "Archer"))).actualAge(3).isDog(true)
-      .createdTime(Dog2.getRefDate).save
+      .createdTime(Dog2.getRefDate).save()
   }
 
   // Get new instance of fixed point-in-time reference date

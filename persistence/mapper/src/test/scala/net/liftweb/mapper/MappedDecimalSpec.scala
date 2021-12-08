@@ -42,7 +42,7 @@ class MappedDecimalSpec extends Specification  {
     "not be marked dirty on read" in {
       setupDB
       val charlie = Dog.create
-      charlie.price(42.42).save
+      charlie.price(42.42).save()
 
       val read = Dog.find(charlie.id)
       read.map(_.dirty_?) must_== Full(false)
@@ -51,7 +51,7 @@ class MappedDecimalSpec extends Specification  {
     "be marked dirty on update" in {
       setupDB
       val charlie = Dog.create
-      charlie.price(42.42).save
+      charlie.price(42.42).save()
 
       val read = Dog.find(charlie.id).openOrThrowException("This is a test")
       read.dirty_? must_== false

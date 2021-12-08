@@ -44,17 +44,17 @@ class MappedLongForeignKeySpec extends Specification with org.specs2.specificati
       }) must not(throwA[Exception]).orSkip
 
     "Not allow comparison to another FK" in {
-      val dog = Dog.create.name("Froo").saveMe
+      val dog = Dog.create.name("Froo").saveMe()
       val user = {
         def ret: User = {
-          val r = User.create.saveMe
+          val r = User.create.saveMe()
           if (r.id.get >= dog.id.get) r
           else ret
         }
 
         ret
       }
-      dog.owner(user).save
+      dog.owner(user).save()
       val d2 = Dog.find(dog.id).openOrThrowException("Test")
       d2.id.get must_== user.id.get
       (d2.owner == user) must_== true

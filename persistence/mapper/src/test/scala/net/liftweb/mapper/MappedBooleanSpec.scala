@@ -42,7 +42,7 @@ class MappedBooleanSpec extends Specification  {
     "not be marked dirty on read" in {
       setupDB
       val charlie = Dog2.create
-      charlie.isDog(true).save
+      charlie.isDog(true).save()
 
       val read = Dog2.find(charlie.dog2id)
       read.map(_.dirty_?) must_== Full(false)
@@ -51,7 +51,7 @@ class MappedBooleanSpec extends Specification  {
     "be marked dirty on update if value has changed" in {
       setupDB
       val charlie = Dog2.create
-      charlie.save
+      charlie.save()
 
       val read = Dog2.find(charlie.dog2id).openOrThrowException("This is a test")
       read.dirty_? must_== false

@@ -44,7 +44,7 @@ class OneToManySpecs extends Specification  {
     "cascade delete" in {
       val contact = Contact.create
       contact.phones += Phone.create
-      contact.save
+      contact.save()
 
       Contact.count must_== 1
       Phone.count must_== 1

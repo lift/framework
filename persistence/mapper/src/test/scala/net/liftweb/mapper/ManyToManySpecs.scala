@@ -37,15 +37,15 @@ class ManyToManySpec extends Specification  {
   }
   def createPerson: Person = {
     val person = new Person
-    person.save
+    person.save()
     val companies = (1 to 10).toList map { i =>
       val c = new Company
       c.name ()= i.toString
-      c.save
+      c.save()
       c
     }
     person.companies ++= companies
-    person.save
+    person.save()
     // Break some joins
     companies(3).delete_! // delete "4"
     companies(6).delete_! // delete "7"
@@ -65,7 +65,7 @@ class ManyToManySpec extends Specification  {
       val person = createPerson
       val c = new Company
       c.name ()= "new"
-      c.save
+      c.save()
       person.companies.insertAll(7, Seq(c))
       person.companies(7).name.get must_== "new"
     }
@@ -84,7 +84,7 @@ class ManyToManySpec extends Specification  {
       setupDB
       val person = new Person
       val company = new Company
-      company.save
+      company.save()
       person.companies += company
       person.companies.length must_== 1
     }
@@ -93,26 +93,26 @@ class ManyToManySpec extends Specification  {
 //       val person = new Person
 //       val company = new Company
 //       person.companies += company
-//       person.save
+//       person.save()
 //       person.companies.length must_== 1
 //     }
     "count saved children of a saved entity" in {
       setupDB
       val person = new Person
       val company = new Company
-      company.save
+      company.save()
       person.companies += company
-      person.save
+      person.save()
       person.companies.length must_== 1
     }
     "count saved children of a saved entity after refresh" in {
       setupDB
       val person = new Person
-      person.save
+      person.save()
       val company = new Company
-      company.save
+      company.save()
       person.companies += company
-      person.save
+      person.save()
       person.companies.refresh
       person.companies.length must_== 1
     }
