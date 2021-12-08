@@ -4,6 +4,7 @@ package mapper
 import common.{Empty, Full}
 
 import scala.annotation.tailrec
+import scala.language.existentials
 
 /**
  * Add this trait to a Mapper to add support for many-to-many relationships
@@ -85,7 +86,8 @@ trait ManyToMany extends BaseKeyedMapper {
           .fold{
             val newJoin = joinMeta.create
             thisField.actualField(newJoin) match {
-              case mfk: MappedForeignKey[K, O, T] => mfk.set(primaryKeyField.get.asInstanceOf[K])
+              case mfk: MappedForeignKey[K, O, T] @unchecked =>
+                mfk.set(primaryKeyField.get.asInstanceOf[K])
             }
             otherFK(newJoin)(_.apply(e))
             newJoin

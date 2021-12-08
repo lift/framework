@@ -125,9 +125,9 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
     protected def own(e: O): O = {
       val f0 = foreign(e).asInstanceOf[Any]
       f0 match {
-        case f: MappedLongForeignKey[O,T] with MappedForeignKey[K,_,T] =>
+        case f: MappedLongForeignKey[O,T] @unchecked with MappedForeignKey[K,_,T] @unchecked =>
           f.apply(OneToMany.this)
-        case f: MappedForeignKey[K,_,T] =>
+        case f: MappedForeignKey[K,_,T] @unchecked =>
           f.set(OneToMany.this.primaryKeyField.get)
       }
       if(!OneToMany.this.saved_?)
@@ -174,7 +174,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       this
     }
 
-    override def indexOf[B >: O](e: B): Int = delegate.indexWhere(e.asInstanceOf[AnyRef].eq)
+    override def indexOf[B >: O](e: B, from: Int = 0): Int = delegate.indexWhere(e.asInstanceOf[AnyRef].eq)
 
     override def insert(idx: Int, elem: O): Unit = insertAll(idx, List(elem))
 

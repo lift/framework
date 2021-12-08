@@ -246,12 +246,12 @@ extends MappedField[String, T] {
     if (columnName.endsWith("_slt")) {
       inst match {
         case null => {(inst : T, v : AnyRef) => {}}
-        case _ => {(inst : T, v : AnyRef) => {val tv = getField(inst, accessor).asInstanceOf[MappedPassword[T]]; tv.salt_i() = (if (v == null) null else v.toString); tv.resetDirty}}
+        case _ => {(inst : T, v : AnyRef) => {val tv = getField(inst, accessor).asInstanceOf[MappedPassword[T]]; tv.salt_i() = (if (v == null) null else v.toString); tv.resetDirty()}}
       }
     } else if (columnName.endsWith("_pw")) {
       inst match {
         case null => {(inst : T, v : AnyRef) => {}}
-        case _ => {(inst : T, v : AnyRef) => {val tv = getField(inst, accessor).asInstanceOf[MappedPassword[T]]; tv.password() = (if (v == null) null else v.toString); tv.resetDirty}}
+        case _ => {(inst : T, v : AnyRef) => {val tv = getField(inst, accessor).asInstanceOf[MappedPassword[T]]; tv.password() = (if (v == null) null else v.toString); tv.resetDirty()}}
       }
 
     } else {

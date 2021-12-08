@@ -74,7 +74,7 @@ trait ManyToMany extends BaseKeyedMapper {
     val qp: QueryParam[O]*) extends scala.collection.mutable.Buffer[T2] {
 
     def otherFK[A](join: O)(f: MappedForeignKey[K2,O,T2] => A): A =
-      otherField.actualField(join) match { case mfk: MappedForeignKey[K2,O,T2] => f(mfk) }
+      otherField.actualField(join) match { case mfk: MappedForeignKey[K2,O,T2] @unchecked => f(mfk) }
 
     protected def children: List[T2] = joins.flatMap(otherFK(_)(_.obj))
 
@@ -101,7 +101,7 @@ trait ManyToMany extends BaseKeyedMapper {
           .fold{
             val newJoin = joinMeta.create
             thisField.actualField(newJoin) match {
-              case mfk: MappedForeignKey[K, O, T] => mfk.set(primaryKeyField.get.asInstanceOf[K])
+              case mfk: MappedForeignKey[K, O, T] @unchecked => mfk.set(primaryKeyField.get.asInstanceOf[K])
             }
             otherFK(newJoin)(_.apply(e))
             newJoin

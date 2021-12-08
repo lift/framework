@@ -44,7 +44,7 @@ abstract class MappedLongIndex[T<:Mapper[T]](theOwner: T) extends MappedLong[T](
 
   override def dbIndexFieldIndicatesSaved_? = {i_is_! != defaultValue}
 
-  def makeKeyJDBCFriendly(in: Long) = new java.lang.Long(in)
+  def makeKeyJDBCFriendly(in: Long) = java.lang.Long.valueOf(in)
 
   def convertKey(in: String): Box[Long] = {
     if (in eq null) Empty
@@ -74,7 +74,7 @@ abstract class MappedLongIndex[T<:Mapper[T]](theOwner: T) extends MappedLong[T](
 
 import scala.reflect.runtime.universe._
 
-abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, val enum: ENUM)(implicit val manifest: TypeTag[Seq[ENUM#Value]]) extends MappedField[Seq[ENUM#Value], T] {
+abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, val e: ENUM)(implicit val manifest: TypeTag[Seq[ENUM#Value]]) extends MappedField[Seq[ENUM#Value], T] {
   type MyElem = ENUM#Value
   type MyType = Seq[MyElem]
 
@@ -151,17 +151,17 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
 
   def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(toLong))
 
-  def real_convertToJDBCFriendly(value: Seq[ENUM#Value]): Object = new java.lang.Long(Helpers.toLong(value))
+  def real_convertToJDBCFriendly(value: Seq[ENUM#Value]): Object = java.lang.Long.valueOf(Helpers.toLong(value))
 
   private def rot(in: Int): Long = 1L << in
 
   private def toLong: Long = get.foldLeft(0L)((a,b) => a + rot(b.id))
 
   def fromLong(in: Long): Seq[ENUM#Value] =
-    enum.values.iterator.toList.filter(v => (in & rot(v.id)) != 0)
+    e.values.iterator.toList.filter(v => (in & rot(v.id)) != 0)
 
-  def jdbcFriendly(field: String) = new java.lang.Long(toLong)
-  override def jdbcFriendly = new java.lang.Long(toLong)
+  def jdbcFriendly(field: String) = java.lang.Long.valueOf(toLong)
+  override def jdbcFriendly = java.lang.Long.valueOf(toLong)
 
 
 
@@ -212,7 +212,7 @@ abstract class MappedEnumList[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner:
    * Create an input field for the item
    */
   override def _toForm: Box[NodeSeq] =
-  Full(SHtml.checkbox[ENUM#Value](enum.values.iterator.toList, get,this(_)).toForm)
+  Full(SHtml.checkbox[ENUM#Value](e.values.iterator.toList, get,this(_)).toForm)
 }
 
 /**
@@ -306,7 +306,7 @@ abstract class MappedNullableLong[T<:Mapper[T]](val fieldOwner: T) extends Mappe
   override def writePermission_? = true
 
   def real_convertToJDBCFriendly(value: Box[Long]): Object = value match {
-    case Full(value) => new java.lang.Long(value)
+    case Full(value) => java.lang.Long.valueOf(value)
     case _ => null
   }
 
@@ -441,12 +441,12 @@ abstract class MappedLong[T<:Mapper[T]](val fieldOwner: T) extends MappedField[L
   override def readPermission_? = true
   override def writePermission_? = true
 
-  def real_convertToJDBCFriendly(value: Long): Object = new java.lang.Long(value)
+  def real_convertToJDBCFriendly(value: Long): Object = java.lang.Long.valueOf(value)
 
   // def asJsExp: JsExp = JE.Num(is)
 
-  def jdbcFriendly(field : String) = new java.lang.Long(i_is_!)
-  override def jdbcFriendly = new java.lang.Long(i_is_!)
+  def jdbcFriendly(field : String) = java.lang.Long.valueOf(i_is_!)
+  override def jdbcFriendly = java.lang.Long.valueOf(i_is_!)
 
   override def setFromAny(in: Any): Long = {
     in match {

@@ -687,7 +687,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
       } {
         val f = ??(meth, ret)
         f.setFromAny(field.value)
-        if (!markFieldsAsDirty) f.resetDirty
+        if (!markFieldsAsDirty) f.resetDirty()
       }
     }
 
@@ -937,8 +937,8 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
           for (col <- mappedColumns) {
             val colVal = ??(col._2, toSave)
             if (!columnPrimaryKey_?(col._1) && colVal.dirty_?) {
-              colVal.resetDirty
-              colVal.doneWithSave
+              colVal.resetDirty()
+              colVal.doneWithSave()
             }
           }
 
@@ -1110,7 +1110,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     case (actual, fieldName) if _mappedFields.contains(fieldName) => fieldByName[Any](fieldName, actual).openOrThrowException("we know this is defined")
   }
 
-  def createInstance: A = rootClass.newInstance.asInstanceOf[A]
+  def createInstance: A = rootClass.getDeclaredConstructor().newInstance().asInstanceOf[A]
 
   def fieldOrder: List[BaseOwnedMappedField[A]] = Nil
 
@@ -1804,7 +1804,7 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
   private def testProdArity(prod: Product): Boolean = {
     var pos = 0
     while (pos < prod.productArity) {
-      if (!prod.productElement(pos).isInstanceOf[QueryParam[A]]) return false
+      if (!prod.productElement(pos).isInstanceOf[QueryParam[A] @unchecked]) return false
       pos = pos + 1
     }
     true
@@ -1866,14 +1866,14 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
 
   def find(key: Any): Box[A] =
   key match {
-    case qp: QueryParam[A] => find(qp)
+    case qp: QueryParam[A] @unchecked => find(qp)
     case prod: Product if (testProdArity(prod)) => find(convertToQPList(prod).toIndexedSeq :_*)
     case key => anyToFindString(key) flatMap (find(_))
   }
 
   def findDb(dbId: ConnectionIdentifier, key: Any): Box[A] =
   key match {
-    case qp: QueryParam[A] => findDb(dbId, List(qp.asInstanceOf[QueryParam[A]]) :_*)
+    case qp: QueryParam[A] @unchecked => findDb(dbId, List(qp.asInstanceOf[QueryParam[A]]) :_*)
     case prod: Product if (testProdArity(prod)) => findDb(dbId, convertToQPList(prod).toIndexedSeq :_*)
     case key => anyToFindString(key) flatMap (find(dbId, _))
   }
