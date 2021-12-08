@@ -20,8 +20,8 @@ package net.liftweb.markdown
  */
 
 import org.scalatestplus.junit.JUnitRunner
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import collection.SortedMap
 import org.junit.runner.RunWith
 
@@ -30,7 +30,7 @@ import org.junit.runner.RunWith
  */
 
 @RunWith(classOf[JUnitRunner])
-class BaseParsersTest extends FlatSpec with Matchers with BaseParsers{
+class BaseParsersTest extends AnyFlatSpec with Matchers with BaseParsers{
 
     "The BaseParsers" should "parse a newline" in {
         val p = nl
