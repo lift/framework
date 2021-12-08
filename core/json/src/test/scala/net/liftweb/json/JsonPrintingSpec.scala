@@ -38,7 +38,7 @@ class JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
 
   "rendering special double values by default" should {
     "render a standard double as is" in {
-      val double = Random.nextDouble
+      val double = Random.nextDouble()
       JsonAST.compactRender(JDouble(double)) must_== double.toString
     }
 
@@ -64,7 +64,7 @@ class JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
     }
 
     "render a standard double as is" in {
-      val double = Random.nextDouble
+      val double = Random.nextDouble()
       render(JDouble(double)) must_== double.toString
     }
 
@@ -90,7 +90,7 @@ class JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
     }
 
     "render a standard double as is" in {
-      val double = Random.nextDouble
+      val double = Random.nextDouble()
       render(JDouble(double)) must_== double.toString
     }
 
@@ -108,7 +108,7 @@ class JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
   }
 
   private def parse(json: String) =
-      play.api.libs.json.Json.parse(json)
+    spray.json.JsonParser(json)
 
   implicit def arbDoc: Arbitrary[JValue] = Arbitrary(genJValue)
 }

@@ -78,7 +78,7 @@ class ExtractionExamples extends Specification {
 
   "Primitive extraction example" in {
     val json = parse(primitives)
-    json.extract[Primitives] mustEqual Primitives(124, 123L, 126.5, 127.5.floatValue, "128", 'symb, 125, 129.byteValue, true)
+    json.extract[Primitives] mustEqual Primitives(124, 123L, 126.5, 127.5.floatValue, "128", Symbol("symb"), 125, 129.byteValue, true)
   }
 
   "Null extraction example" in {
