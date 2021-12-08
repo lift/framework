@@ -17,10 +17,10 @@ object ValidationExample extends Specification {
 
   "Validation" should {
     def min(x: Int): Int => Result[Int] = (y: Int) => 
-      if (y < x) Fail("min", y + " < " + x) else y.success
+      if (y < x) Fail("min", y.toString + " < " + x) else y.success
 
     def max(x: Int): Int => Result[Int] = (y: Int) => 
-      if (y > x) Fail("max", y + " > " + x) else y.success
+      if (y > x) Fail("max", y.toString + " > " + x) else y.success
 
     val json = JsonParser.parse(""" {"name":"joe","age":17} """)
 
@@ -57,7 +57,7 @@ object ValidationExample extends Specification {
     val json = JsonParser.parse(""" [{"s":10,"e":17},{"s":12,"e":13},{"s":11,"e":8}] """)
 
     def ascending: (Int, Int) => Result[(Int, Int)] = (x1: Int, x2: Int) => 
-      if (x1 > x2) Fail("asc", x1 + " > " + x2) else (x1, x2).success
+      if (x1 > x2) Fail("asc", x1.toString + " > " + x2) else (x1, x2).success
 
     // Valid range is a range having start <= end
     implicit def rangeJSON: JSONR[Range] = new JSONR[Range] {
