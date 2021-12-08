@@ -37,9 +37,6 @@ import net.liftweb.common.{Full}
   */
 object CookieEncoder {
 
-  private val buf = new scala.collection.mutable.StringBuilder("this is here")
-  private val lg = buf.length()
-
   private val VALID_COOKIE_NAME_OCTETS = validCookieNameOctets();
 
   private val VALID_COOKIE_VALUE_OCTETS = validCookieValueOctets();
@@ -182,8 +179,9 @@ object CookieEncoder {
   }
 
   private def stripTrailingSeparator(buf: StringBuilder) = {
-    if (buf.length() > 0) {
-      buf.setLength(buf.length() - 2);
+    val lg = buf.length
+    if (lg > 0) {
+      buf.setLength(lg - 2);
     }
     buf.toString()
   }
