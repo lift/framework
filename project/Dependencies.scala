@@ -64,6 +64,10 @@ object Dependencies {
   lazy val jasmineCore     = "org.webjars.bower" % "jasmine-core"          % "2.4.1"        % Provided
   lazy val jasmineAjax     = "org.webjars.bower" % "jasmine-ajax"          % "3.2.0"        % Provided
 
+  // @nowarn was removed from version 2.5.0.
+  // From 2.4.0, @nowarn has problems with string argument when silencer is used.
+  lazy val scala_compat    = "org.scala-lang.modules" % "scala-collection-compat" % "2.3.2" % Provided cross CrossVersion.binary
+
 
   // Test scope:
   // Scope available only in test classpath, non-transitive by default.

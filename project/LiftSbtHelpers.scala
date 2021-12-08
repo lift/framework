@@ -37,7 +37,17 @@ object LiftSbtHelpers {
 
   def liftProject(id: String, base: File): Project = {
     Project(id, base)
-      .settings(scalacOptions ++= List("-feature", "-language:implicitConversions", "-deprecation"))
+      .settings(
+        scalacOptions ++= List(
+            "-feature",
+            "-language:implicitConversions",
+            "-deprecation",
+            "-Xfatal-warnings",
+            "-unchecked",
+//            "-Wunused:nowarn", // -W options where introduced in 2.13.
+            "-target:jvm-1.8"
+          )
+      )
       .settings(
         autoAPIMappings := true,
         apiMappings ++= {

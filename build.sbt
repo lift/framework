@@ -9,18 +9,52 @@ startYear in ThisBuild             := Some(2006)
 organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
 
 val scala211Version = "2.11.12"
+// Bug in compiler for versions 2.12.13, 14 and 15. StringBuiledr.length()
+// cannot be written with ().
 val scala212Version = "2.12.12"
-val scala213Version = "2.13.2"
+val scala213Version = "2.13.7"
 
 val crossUpTo212 = Seq(scala212Version, scala211Version)
 val crossUpTo213 = scala213Version +: crossUpTo212
 
-scalaVersion in ThisBuild          := scala212Version
+scalaVersion       in ThisBuild    := scala212Version
 crossScalaVersions in ThisBuild    := crossUpTo212 // default everyone to 2.12 for now
 
 libraryDependencies in ThisBuild ++= Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalactic, scalatest)
+libraryDependencies in ThisBuild ++= {
+  scalaVersion.value.split("\\.") match {
+    case Array("2", m, p) =>
+      val minor = m.toInt
+      val patch = p.toInt
 
-scalacOptions in ThisBuild ++= Seq("-deprecation")
+      // See published versions at: https://repo1.maven.org/maven2/com/github/ghik/
+      val silencerVersion = minor match {
+          case 11 => Some("1.7.7")
+          case 12 => if (patch <= 10) Some("1.6.0")
+                     else if (patch <= 12) Some("1.7.1")
+                     else None // Some("1.7.7"), nowarn is backported since 2.12.13
+          case 13 => if (patch == 1) Some("1.6.0")
+                     else None // Some("1.7.7"), nowarn is backported since 2.13.2
+        }
+
+      (
+        // Allows @scala.annotation.nowarn
+        silencerVersion match {
+          case Some(version) =>
+            List(
+              compilerPlugin("com.github.ghik" % "silencer-plugin" % version cross CrossVersion.full),
+              "com.github.ghik" % "silencer-lib" % version % Provided cross CrossVersion.full,
+              )
+          case None => Nil
+        }
+      ) ++ (
+        // Allows import scala.jdk.CollectionConverters._
+        if (minor < 13) List(scala_compat)
+        else Nil
+      )
+    case _ => Nil
+  }
+}
 
 // Settings for Sonatype compliance
 pomIncludeRepository in ThisBuild := { _ => false }
@@ -123,7 +157,6 @@ lazy val util =
       description := "Utilities Library",
       parallelExecution in Test := false,
       libraryDependencies ++= Seq(
-        scala_compiler(scalaVersion.value),
         joda_time,
         joda_convert,
         commons_codec,
@@ -269,6 +302,12 @@ lazy val mongodb =
         )
       }
     )
+    .settings(
+      // Because of one warning: While parsing annotations in
+      // mongodb-driver-core-3.12.7.jar(com/mongodb/lang/Nullable.class): could
+      // not find MAYBE in enum <none>.
+      scalacOptions ~= ((opts) => opts.filterNot(Set("-Xfatal-warnings")))
+    )
 
 lazy val mongodb_record =
   persistenceProject("mongodb-record")
@@ -276,4 +315,9 @@ lazy val mongodb_record =
     .settings(
       crossScalaVersions := crossUpTo213,
       parallelExecution in Test := false
+    )
+    .settings(
+      // Because of multiple warnings about using deprecated method instead of
+      // BsonableField.
+      scalacOptions ~= ((opts) => opts.filterNot(Set("-Xfatal-warnings")))
     )
