@@ -49,7 +49,7 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
       case Some(mr) => fieldFrom(mr)
       case None =>
         try {
-          val rec = clasz.newInstance.asInstanceOf[Record[Rec]]
+          val rec = clasz.getDeclaredConstructor().newInstance().asInstanceOf[Record[Rec]]
           val mr = rec.meta
           metaRecordsByClass = metaRecordsByClass updated (clasz, mr)
           fieldFrom(mr)
