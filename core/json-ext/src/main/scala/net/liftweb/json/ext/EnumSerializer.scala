@@ -20,7 +20,7 @@ package ext
 
 import scala.reflect.ClassTag
 
-class EnumSerializer[E <: Enumeration: ClassTag](enum: E)
+class EnumSerializer[E <: Enumeration: ClassTag](e: E)
   extends json.Serializer[E#Value] {
   import JsonDSL._
 
@@ -29,7 +29,7 @@ class EnumSerializer[E <: Enumeration: ClassTag](enum: E)
   def deserialize(implicit format: Formats):
     PartialFunction[(TypeInfo, JValue), E#Value] = {
       case (TypeInfo(EnumerationClass, _), json) => json match {
-        case JInt(value) if (value <= enum.maxId) => enum(value.toInt)
+        case JInt(value) if (value <= e.maxId) => e(value.toInt)
         case value => throw new MappingException("Can't convert " +
           value + " to "+ EnumerationClass)
       }
@@ -40,7 +40,7 @@ class EnumSerializer[E <: Enumeration: ClassTag](enum: E)
   }
 }
 
-class EnumNameSerializer[E <: Enumeration: ClassTag](enum: E)
+class EnumNameSerializer[E <: Enumeration: ClassTag](e: E)
   extends json.Serializer[E#Value] {
   import JsonDSL._
 
@@ -49,8 +49,8 @@ class EnumNameSerializer[E <: Enumeration: ClassTag](enum: E)
   def deserialize(implicit format: Formats):
     PartialFunction[(TypeInfo, JValue), E#Value] = {
       case (TypeInfo(EnumerationClass, _), json) => json match {
-        case JString(value) if (enum.values.exists(_.toString == value)) =>
-          enum.withName(value)
+        case JString(value) if (e.values.exists(_.toString == value)) =>
+          e.withName(value)
         case value => throw new MappingException("Can't convert " +
           value + " to "+ EnumerationClass)
       }

@@ -72,6 +72,8 @@ case object DateTimeSerializer extends CustomSerializer[DateTime](format => (
   }
 ))
 
+
+@scala.annotation.nowarn("msg=class DateMidnight in package time is deprecated")
 case object DateMidnightSerializer extends CustomSerializer[DateMidnight](format => (
   {
     case JString(s) => new DateMidnight(DateParser.parse(s, format))
