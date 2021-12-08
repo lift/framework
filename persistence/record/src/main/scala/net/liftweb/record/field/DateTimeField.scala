@@ -74,10 +74,11 @@ trait DateTimeTypedField extends TypedField[Calendar] {
   }
 }
 
-class DateTimeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class DateTimeField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends Field[Calendar, OwnerType] with MandatoryTypedField[Calendar] with DateTimeTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: Calendar) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: Calendar) = {
     this(owner)
     setBox(Full(value))
   }
@@ -85,10 +86,11 @@ class DateTimeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val ow
   def defaultValue = Calendar.getInstance
 }
 
-class OptionalDateTimeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalDateTimeField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends Field[Calendar, OwnerType] with OptionalTypedField[Calendar] with DateTimeTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: Box[Calendar]) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: Box[Calendar]) = {
     this(owner)
     setBox(value)
   }

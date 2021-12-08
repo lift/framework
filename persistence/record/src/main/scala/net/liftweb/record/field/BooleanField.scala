@@ -68,10 +68,11 @@ trait BooleanTypedField extends TypedField[Boolean] {
   }
 }
 
-class BooleanField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class BooleanField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends Field[Boolean, OwnerType] with MandatoryTypedField[Boolean] with BooleanTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: Boolean) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: Boolean) = {
     this(owner)
     set(value)
   }
@@ -79,10 +80,11 @@ class BooleanField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val own
   def defaultValue = false
 }
 
-class OptionalBooleanField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalBooleanField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends Field[Boolean, OwnerType] with OptionalTypedField[Boolean] with BooleanTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: Box[Boolean]) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: Box[Boolean]) = {
     this(owner)
     setBox(value)
   }

@@ -49,7 +49,8 @@ trait LocaleTypedField extends TypedField[String] {
     }
 }
 
-class LocaleField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class LocaleField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) owner: OwnerType)
   extends StringField(owner, 16) with LocaleTypedField {
 
   override def defaultValue = Locale.getDefault.toString
@@ -63,7 +64,8 @@ class LocaleField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: O
 
 }
 
-class OptionalLocaleField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalLocaleField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) owner: OwnerType)
   extends OptionalStringField(owner, 16) with LocaleTypedField {
 
   /** Label for the selection item representing Empty, show when this field is optional. Defaults to the empty string. */

@@ -74,10 +74,11 @@ trait JodaTimeTypedField extends TypedField[DateTime] with JodaHelpers {
   }
 }
 
-class JodaTimeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class JodaTimeField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends Field[DateTime, OwnerType] with MandatoryTypedField[DateTime] with JodaTimeTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: DateTime) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: DateTime) = {
     this(owner)
     setBox(Full(value))
   }
@@ -85,10 +86,11 @@ class JodaTimeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val ow
   def defaultValue = DateTime.now
 }
 
-class OptionalJodaTimeField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalJodaTimeField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends Field[DateTime, OwnerType] with OptionalTypedField[DateTime] with JodaTimeTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: Box[DateTime]) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: Box[DateTime]) = {
     this(owner)
     setBox(value)
   }

@@ -48,19 +48,21 @@ trait IntTypedField extends NumericTypedField[Int] {
   }
 }
 
-class IntField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class IntField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends Field[Int, OwnerType] with MandatoryTypedField[Int] with IntTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: Int) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: Int) = {
     this(owner)
     set(value)
   }
 }
 
-class OptionalIntField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalIntField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends Field[Int, OwnerType] with OptionalTypedField[Int] with IntTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: Box[Int]) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: Box[Int]) = {
     this(owner)
     setBox(value)
   }

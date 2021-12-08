@@ -47,10 +47,11 @@ trait BinaryTypedField extends TypedField[Array[Byte]] {
   def setFromJValue(jvalue: JValue) = setFromJString(jvalue)(s => tryo(base64Decode(s)))
 }
 
-class BinaryField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class BinaryField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends Field[Array[Byte], OwnerType] with MandatoryTypedField[Array[Byte]] with BinaryTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: Array[Byte]) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: Array[Byte]) = {
     this(owner)
     set(value)
   }
@@ -58,10 +59,11 @@ class BinaryField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owne
   def defaultValue = Array(0)
 }
 
-class OptionalBinaryField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalBinaryField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends Field[Array[Byte], OwnerType] with OptionalTypedField[Array[Byte]] with BinaryTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: Box[Array[Byte]]) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: Box[Array[Byte]]) = {
     this(owner)
     setBox(value)
   }

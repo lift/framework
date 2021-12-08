@@ -33,12 +33,12 @@ import JE._
 
 
 trait EnumTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Value] {
-  protected val enum: EnumType
+  protected val e: EnumType
   protected val valueManifest: Manifest[EnumType#Value]
 
   def toInt: Box[Int] = valueBox.map(_.id)
 
-  def fromInt(in: Int): Box[EnumType#Value] = tryo(enum(in))
+  def fromInt(in: Int): Box[EnumType#Value] = tryo(e(in))
 
   def setFromAny(in: Any): Box[EnumType#Value] = in match {
     case     (value: Int)    => setFromInt(value)
@@ -72,7 +72,7 @@ trait EnumTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Value]
    * is the value of the field and the second string is the Text name of the Value.
    */
   def buildDisplayList: List[(Box[EnumType#Value], String)] = {
-    val options = enum.values.toList.map(a => (Full(a), a.toString))
+    val options = e.values.toList.map(a => (Full(a), a.toString))
     if (optional_?) (Empty, emptyOptionLabel)::options else options
   }
 
@@ -85,7 +85,7 @@ trait EnumTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Value]
       case _ => Full(elem)
     }
 
-  def defaultValue: EnumType#Value = enum.values.iterator.next
+  def defaultValue: EnumType#Value = e.values.iterator.next()
 
   def asJs = valueBox.map(_ => Str(toString)) openOr JsNull
 
@@ -99,7 +99,7 @@ trait EnumTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Value]
   def asJStringName: JValue = valueBox.map(v => JString(v.toString)) openOr (JNothing: JValue)
   def setFromJStringName(jvalue: JValue): Box[EnumType#Value] = jvalue match {
     case JNothing|JNull if optional_? => setBox(Empty)
-    case JString(s)                   => setBox(Option(enum.withName(s)) ?~ ("Unknown value \"" + s + "\""))
+    case JString(s)                   => setBox(Option(e.withName(s)) ?~ ("Unknown value \"" + s + "\""))
     case other                        => setBox(FieldHelpers.expectedA("JString", other))
   }
 
@@ -107,24 +107,26 @@ trait EnumTypedField[EnumType <: Enumeration] extends TypedField[EnumType#Value]
   def setFromJValue(jvalue: JValue): Box[EnumType#Value] = setFromJIntOrdinal(jvalue)
 }
 
-class EnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](@deprecatedName('rec) val owner: OwnerType,
-  protected val enum: EnumType)(implicit m: Manifest[EnumType#Value]
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class EnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](@deprecatedName(Symbol("rec")) val owner: OwnerType,
+  protected val e: EnumType)(implicit m: Manifest[EnumType#Value]
 ) extends Field[EnumType#Value, OwnerType] with MandatoryTypedField[EnumType#Value] with EnumTypedField[EnumType] {
 
-  def this(@deprecatedName('rec) owner: OwnerType, enum: EnumType, value: EnumType#Value)(implicit m: Manifest[EnumType#Value]) = {
-    this(owner, enum)
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, e: EnumType, value: EnumType#Value)(implicit m: Manifest[EnumType#Value]) = {
+    this(owner, e)
     set(value)
   }
 
   protected val valueManifest = m
 }
 
-class OptionalEnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](@deprecatedName('rec) val owner: OwnerType,
-  protected val enum: EnumType)(implicit m: Manifest[EnumType#Value]
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalEnumField[OwnerType <: Record[OwnerType], EnumType <: Enumeration](@deprecatedName(Symbol("rec")) val owner: OwnerType,
+  protected val e: EnumType)(implicit m: Manifest[EnumType#Value]
 ) extends Field[EnumType#Value, OwnerType] with OptionalTypedField[EnumType#Value] with EnumTypedField[EnumType] {
 
-  def this(@deprecatedName('rec) owner: OwnerType, enum: EnumType, value: Box[EnumType#Value])(implicit m: Manifest[EnumType#Value]) = {
-    this(owner, enum)
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, e: EnumType, value: Box[EnumType#Value])(implicit m: Manifest[EnumType#Value]) = {
+    this(owner, e)
     setBox(value)
   }
 

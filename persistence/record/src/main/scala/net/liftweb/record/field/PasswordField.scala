@@ -133,10 +133,11 @@ trait PasswordTypedField extends TypedField[String] {
   
 }
 
-class PasswordField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class PasswordField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends Field[String, OwnerType] with MandatoryTypedField[String] with PasswordTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: String) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: String) = {
     this(owner)
     setPlain(value)
   }
@@ -151,10 +152,11 @@ class PasswordField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val ow
 
 }
 
-class OptionalPasswordField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalPasswordField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends Field[String, OwnerType] with OptionalTypedField[String] with PasswordTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: Box[String]) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: Box[String]) = {
     this(owner)
     setBoxPlain(value)
   }

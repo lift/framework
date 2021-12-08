@@ -50,9 +50,11 @@ trait TextareaTypedField extends StringTypedField {
   def textareaCols = 20
 }
 
-class TextareaField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType, maxLength: Int)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class TextareaField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) owner: OwnerType, maxLength: Int)
   extends StringField(owner, maxLength) with TextareaTypedField
 
-class OptionalTextareaField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType, maxLength: Int)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalTextareaField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) owner: OwnerType, maxLength: Int)
   extends OptionalStringField(owner, maxLength) with TextareaTypedField
 

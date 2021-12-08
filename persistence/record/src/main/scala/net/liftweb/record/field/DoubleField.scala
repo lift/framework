@@ -50,19 +50,21 @@ trait DoubleTypedField extends NumericTypedField[Double] {
   }
 }
 
-class DoubleField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class DoubleField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends Field[Double, OwnerType] with MandatoryTypedField[Double] with DoubleTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: Double) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: Double) = {
     this(owner)
     set(value)
   }
 }
 
-class OptionalDoubleField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalDoubleField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType)
   extends Field[Double, OwnerType] with OptionalTypedField[Double] with DoubleTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: Box[Double]) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: Box[Double]) = {
     this(owner)
     setBox(value)
   }

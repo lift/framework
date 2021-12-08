@@ -67,9 +67,11 @@ object Countries extends Enumeration(1) {
 }
 
 
-class CountryField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class CountryField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) owner: OwnerType)
   extends EnumField(owner, Countries)
 
-class OptionalCountryField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) owner: OwnerType)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalCountryField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) owner: OwnerType)
   extends OptionalEnumField(owner, Countries)
 

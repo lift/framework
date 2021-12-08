@@ -107,7 +107,7 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
   /**
    * Sets the fields of this Record from the given Req.
    */
-  def setFieldsFromReq(req: Req){ meta.setFieldsFromReq(this, req) }
+  def setFieldsFromReq(req: Req): Unit = { meta.setFieldsFromReq(this, req) }
 
   /**
    * Present the model as a form and execute the function on submission of the form
@@ -142,8 +142,8 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
 
   override def equals(other: Any): Boolean = {
     other match {
-      case that: Record[MyType] =>
-        that.fields.corresponds(this.fields) { (a,b) =>
+      case that: Record[MyType] @unchecked =>
+        that.fields().corresponds(this.fields()) { (a,b) =>
           a == b
         }
       case _ =>
@@ -152,7 +152,7 @@ trait Record[MyType <: Record[MyType]] extends FieldContainer {
   }
 
   override def toString = {
-    val fieldList = this.fields.map(f => "%s=%s" format (f.name,
+    val fieldList = this.fields().map(f => "%s=%s" format (f.name,
         f.valueBox match {
           case Full(c: java.util.Calendar) => c.getTime().toString()
           case Full(null) => "null"

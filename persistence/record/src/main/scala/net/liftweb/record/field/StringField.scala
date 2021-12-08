@@ -73,15 +73,16 @@ trait StringTypedField extends TypedField[String] with StringValidators {
   }
 }
 
-class StringField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType, val maxLength: Int)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class StringField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType, val maxLength: Int)
   extends Field[String, OwnerType] with MandatoryTypedField[String] with StringTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, maxLength: Int, value: String) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, maxLength: Int, value: String) = {
     this(owner, maxLength)
     set(value)
   }
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: String) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: String) = {
     this(owner, 100)
     set(value)
   }
@@ -97,15 +98,16 @@ abstract class UniqueIdField[OwnerType <: Record[OwnerType]](rec: OwnerType, ove
 }
 
 
-class OptionalStringField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType, val maxLength: Int)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalStringField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType, val maxLength: Int)
   extends Field[String, OwnerType] with OptionalTypedField[String] with StringTypedField {
 
-  def this(@deprecatedName('rec) owner: OwnerType, maxLength: Int, value: Box[String]) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, maxLength: Int, value: Box[String]) = {
     this(owner, maxLength)
     setBox(value)
   }
 
-  def this(@deprecatedName('rec) owner: OwnerType, value: Box[String]) = {
+  def this(@deprecatedName(Symbol("rec")) owner: OwnerType, value: Box[String]) = {
     this(owner, 100)
     setBox(value)
   }

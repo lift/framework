@@ -33,7 +33,7 @@ trait BaseField extends FieldIdentifier with util.BaseField {
 
   protected def dirty_?(b: Boolean) = dirty = b
 
-  def resetDirty {
+  def resetDirty: Unit = {
     if (safe_?) dirty_?(false)
   }
 
@@ -345,7 +345,7 @@ trait TypedField[ThisType] extends BaseField {
 
   override def equals(other: Any): Boolean = {
     other match {
-      case that: TypedField[ThisType] =>
+      case that: TypedField[ThisType] @unchecked =>
         that.name == this.name && that.valueBox == this.valueBox
       case _ =>
         false
@@ -493,17 +493,17 @@ object FieldHelpers {
 trait LifecycleCallbacks {
   this: BaseField =>
 
-  def beforeValidation {}
-  def afterValidation {}
+  def beforeValidation: Unit = {}
+  def afterValidation: Unit = {}
 
-  def beforeSave {}
-  def beforeCreate {}
-  def beforeUpdate {}
+  def beforeSave: Unit = {}
+  def beforeCreate: Unit = {}
+  def beforeUpdate: Unit = {}
 
-  def afterSave {}
-  def afterCreate {}
-  def afterUpdate {}
+  def afterSave: Unit = {}
+  def afterCreate: Unit = {}
+  def afterUpdate: Unit = {}
 
-  def beforeDelete {}
-  def afterDelete {}
+  def beforeDelete: Unit = {}
+  def afterDelete: Unit = {}
 }

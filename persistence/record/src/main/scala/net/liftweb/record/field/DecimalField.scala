@@ -74,7 +74,8 @@ trait DecimalTypedField extends NumericTypedField[BigDecimal] {
  * @param context The MathContext that controls precision and rounding
  * @param scale Controls the scale of the underlying BigDecimal
  */
-class DecimalField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType, val context : MathContext, val scale : Int)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class DecimalField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType, val context : MathContext, val scale : Int)
   extends Field[BigDecimal, OwnerType] with MandatoryTypedField[BigDecimal] with DecimalTypedField {
 
   /**
@@ -85,7 +86,7 @@ class DecimalField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val own
    * @param owner The Record that owns this field
    * @param value The initial value
    */
-  def this(@deprecatedName('rec) owner : OwnerType, value : BigDecimal) = {
+  def this(@deprecatedName(Symbol("rec")) owner : OwnerType, value : BigDecimal) = {
     this(owner, MathContext.UNLIMITED, value.scale)
     set(value)
   }
@@ -98,7 +99,7 @@ class DecimalField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val own
    * @param value The initial value
    * @param context The MathContext that controls precision and rounding
    */
-  def this(@deprecatedName('rec) owner : OwnerType, value : BigDecimal, context : MathContext) = {
+  def this(@deprecatedName(Symbol("rec")) owner : OwnerType, value : BigDecimal, context : MathContext) = {
     this(owner, context, value.scale)
     set(value)
   }
@@ -125,7 +126,8 @@ class DecimalField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val own
  * @param context The MathContext that controls precision and rounding
  * @param scale Controls the scale of the underlying BigDecimal
  */
-class OptionalDecimalField[OwnerType <: Record[OwnerType]](@deprecatedName('rec) val owner: OwnerType, val context : MathContext, val scale : Int)
+@scala.annotation.nowarn("msg=The parameter name should be a String, not a symbol.")
+class OptionalDecimalField[OwnerType <: Record[OwnerType]](@deprecatedName(Symbol("rec")) val owner: OwnerType, val context : MathContext, val scale : Int)
   extends Field[BigDecimal, OwnerType] with OptionalTypedField[BigDecimal] with DecimalTypedField {
 
   /**
@@ -137,7 +139,7 @@ class OptionalDecimalField[OwnerType <: Record[OwnerType]](@deprecatedName('rec)
    * @param value The initial value
    * @param scale the scale of the decimal field, since there might be no value
    */
-  def this(@deprecatedName('rec) owner : OwnerType, value : Box[BigDecimal], scale : Int) = {
+  def this(@deprecatedName(Symbol("rec")) owner : OwnerType, value : Box[BigDecimal], scale : Int) = {
     this(owner, MathContext.UNLIMITED, scale)
     setBox(value)
   }
@@ -151,7 +153,7 @@ class OptionalDecimalField[OwnerType <: Record[OwnerType]](@deprecatedName('rec)
    * @param scale the scale of the decimal field, since there might be no value
    * @param context The MathContext that controls precision and rounding
    */
-  def this(@deprecatedName('rec) owner : OwnerType, value : Box[BigDecimal], scale : Int, context : MathContext) = {
+  def this(@deprecatedName(Symbol("rec")) owner : OwnerType, value : Box[BigDecimal], scale : Int, context : MathContext) = {
     this(owner, context, scale)
     setBox(value)
   }
