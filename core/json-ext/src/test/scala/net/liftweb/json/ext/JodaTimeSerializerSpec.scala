@@ -29,6 +29,7 @@ import json.Serialization.{read, write => swrite}
 /**
  * System under specification for JodaTimeSerializer.
  */
+@scala.annotation.nowarn("msg=class DateMidnight in package time is deprecated")
 class JodaTimeSerializerSpec extends Specification  {
   "JodaTimeSerializer Specification".title
 
@@ -59,8 +60,10 @@ class JodaTimeSerializerSpec extends Specification  {
   }
 }
 
+@scala.annotation.nowarn("msg=class DateMidnight in package time is deprecated")
 case class JodaTypes(duration: Duration, instant: Instant, dateTime: DateTime, 
                      dateMidnight: DateMidnight, interval: Interval, localDate: LocalDate,
                      localTime: LocalTime, period: Period)
 
+@scala.annotation.nowarn("msg=class DateMidnight in package time is deprecated")
 case class Dates(dt: DateTime, dm: DateMidnight)
