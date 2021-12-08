@@ -284,7 +284,7 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends KeyedMeta
     /**
      * Save the user to backing store
      */
-    def save(): Boolean = in.save
+    def save(): Boolean = in.save()
   }
 
   /**

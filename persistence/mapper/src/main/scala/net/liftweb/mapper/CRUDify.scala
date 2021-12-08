@@ -92,7 +92,7 @@ trait CRUDify[KeyType, CrudType <: KeyedMapper[KeyType, CrudType]] extends
     /**
      * Save an instance of TheCrudType in backing store
      */
-    def save : Boolean = in.save
+    def save : Boolean = in.save()
 
     /**
      * Validate the fields in TheCrudType and return a List[FieldError]

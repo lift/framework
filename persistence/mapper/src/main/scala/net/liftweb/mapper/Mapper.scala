@@ -31,7 +31,7 @@ trait BaseMapper extends FieldContainer {
   type MapperType <: Mapper[MapperType]
 
   def dbName: String
-  def save: Boolean
+  def save(): Boolean
 }
 
 trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo {
@@ -81,11 +81,11 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo 
    * Save the instance and return the instance
    */
   def saveMe(): A = {
-    this.save
+    this.save()
     this
   }
 
-  def save: Boolean = {
+  def save(): Boolean = {
     runSafe {
       getSingleton.save(this)
     }
@@ -197,7 +197,7 @@ trait Mapper[A<:Mapper[A]] extends BaseMapper with Serializable with SourceInfo 
    */
   def toForm(button: Box[String], onSuccess: String): NodeSeq =
   toForm(button, (what: A) => {what.validate match {
-        case Nil => what.save ; S.redirectTo(onSuccess)
+        case Nil => what.save() ; S.redirectTo(onSuccess)
         case xs => S.error(xs)
       }})
 

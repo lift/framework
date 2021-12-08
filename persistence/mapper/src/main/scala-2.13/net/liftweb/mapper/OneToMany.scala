@@ -44,9 +44,9 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
    * Returns false as soon as the parent or a one-to-many field returns false.
    * If they are all successful returns true.
    */
-  override def save: Boolean = {
-    val ret = super.save &&
-      oneToManyFields.forall(_.save)
+  override def save(): Boolean = {
+    val ret = super.save() &&
+      oneToManyFields.forall(_.save())
     ret
   }
 
@@ -233,7 +233,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
      * Returns false as soon as save on a child returns false.
      * Returns true if all children were saved successfully.
      */
-    def save: Boolean = {
+    def save(): Boolean = {
       unlinked foreach {u =>
         val f = foreign(u)
         if(f.obj.map(_ eq OneToMany.this) openOr true) // obj is Empty or this
@@ -244,7 +244,7 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
           foreign(e).get == OneToMany.this.primaryKeyField.get ||
             foreign(e).obj.map(_ eq OneToMany.this).openOr(false) // obj is this but not Empty
       }
-      delegate.forall(_.save)
+      delegate.forall(_.save())
     }
 
     override def toString: String = {
@@ -267,13 +267,13 @@ trait OneToMany[K,T<:KeyedMapper[K, T]] extends KeyedMapper[K,T] { this: T =>
       removed = removed filter {e.ne}
       super.own(e)
     }
-    override def save: Boolean = {
+    override def save(): Boolean = {
       val unowned = removed.filter{ e =>
         val f = foreign(e)
         f.get == f.defaultValue
       }
       unowned foreach {_.delete_!}
-      super.save
+      super.save()
     }
   }
 

@@ -136,14 +136,14 @@ trait ItemsList[T <: Mapper[T]] {
    *  (current - removed) is saved
    */
   def save(): Unit = {
-    val (successAdd, failAdd) = added.partition(_.save)
+    val (successAdd, failAdd) = added.partition(_.save())
     added = failAdd
 
     val (successRemove, failRemove) = removed.partition(_.delete_!)
     current = current.filterNot(successRemove.contains)
     removed = failRemove
 
-    for(c <- current if c.validate.isEmpty) c.save
+    for(c <- current if c.validate.isEmpty) c.save()
 
     current ++= successAdd
   }

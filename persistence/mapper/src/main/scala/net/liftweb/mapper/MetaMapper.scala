@@ -2109,14 +2109,14 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
    *
    * @param obj mapped object of this metamapper's type
    */
-  def editSnippetCallback(obj: A): Unit = { obj.save }
+  def editSnippetCallback(obj: A): Unit = { obj.save() }
   /**
    * Default callback behavior of the add snippet. Called when the user
    * presses submit. Saves the passed in object.
    *
    * @param obj mapped object of this metamapper's type
    */
-  def addSnippetCallback(obj: A): Unit = { obj.save }
+  def addSnippetCallback(obj: A): Unit = { obj.save() }
 }
 
 

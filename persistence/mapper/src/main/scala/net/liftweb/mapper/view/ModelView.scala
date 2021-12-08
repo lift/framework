@@ -128,7 +128,7 @@ class ModelView[T <: Mapper[T]](var entity: T, val snippet: ModelSnippet[T]) {
   def save(): Unit = {
     entity.validate match {
       case Nil =>
-        if(entity.save)
+        if(entity.save())
           snippet.onSave(this)
         else
           S.error("Save failed")

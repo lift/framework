@@ -89,7 +89,7 @@ class HasManyThrough[From <: KeyedMapper[ThroughType, From],
       val toCreate = through.createInstance
       throughFromField.actualField(toCreate).set(owner.primaryKeyField.get)
       throughToField.actualField(toCreate).set(i)
-      toCreate.save
+      toCreate.save()
     }
 
     theSetList = Nil
@@ -102,7 +102,7 @@ class HasManyThrough[From <: KeyedMapper[ThroughType, From],
       val toCreate = through.createInstance
       throughFromField.actualField(toCreate)(owner.primaryKeyField.get)
       throughToField.actualField(toCreate)(i)
-      toCreate.save
+      toCreate.save()
     }
     theSetList = Nil
     others.reset
