@@ -135,11 +135,11 @@ class MongoDocumentSpec extends Specification with MongoTestKit {
         (129).toShort,
         java.lang.Integer.valueOf(130),
         java.lang.Long.valueOf(131L),
-        new java.lang.Double(132.5),
-        new java.lang.Float(133.5),
-        new java.lang.Byte("12"),
+        java.lang.Double.valueOf(132.5D),
+        java.lang.Float.valueOf(133.5F),
+        java.lang.Byte.valueOf("12"),
         java.lang.Boolean.TRUE,
-        new java.lang.Short("135")
+        java.lang.Short.valueOf("135")
       )
       passSaveAndRetrieveTests(primitives, Primitives)
     }
