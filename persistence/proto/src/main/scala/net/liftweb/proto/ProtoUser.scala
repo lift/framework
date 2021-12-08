@@ -106,7 +106,7 @@ trait ProtoUser {
     /**
      * Save the user to backing store
      */
-    def save: Boolean
+    def save(): Boolean
 
     /**
      * Get a nice name for the user
@@ -705,7 +705,7 @@ trait ProtoUser {
    */
   protected def actionsAfterSignup(theUser: TheUserType, func: () => Nothing): Nothing = {
     theUser.setValidated(skipEmailValidation).resetUniqueId()
-    theUser.save
+    theUser.save()
     if (!skipEmailValidation) {
       sendValidationEmail(theUser)
       S.notice(S.?("sign.up.message"))
@@ -776,7 +776,7 @@ trait ProtoUser {
 
   def validateUser(id: String): NodeSeq = findUserByUniqueId(id) match {
     case Full(user) if !user.validated_? =>
-      user.setValidated(true).resetUniqueId().save
+      user.setValidated(true).resetUniqueId().save()
       logUserIn(user, () => {
         S.notice(S.?("account.validated"))
         S.redirectTo(homePage)
@@ -935,7 +935,7 @@ trait ProtoUser {
   def sendPasswordReset(email: String): Unit = {
     findUserByUserName(email) match {
       case Full(user) if user.validated_? =>
-        user.resetUniqueId().save
+        user.resetUniqueId().save()
         val resetLink = S.hostAndPath+
         passwordResetPath.mkString("/", "/", "/")+urlEncode(user.getUniqueId())
 
@@ -986,7 +986,7 @@ trait ProtoUser {
       def finishSet(): Unit = {
         user.validate match {
           case Nil => S.notice(S.?("password.changed"))
-            user.resetUniqueId().save
+            user.resetUniqueId().save()
             logUserIn(user, () => S.redirectTo(homePage))
 
           case xs => S.error(xs)
@@ -1031,7 +1031,7 @@ trait ProtoUser {
       else {
         user.setPasswordFromListString(newPassword)
         user.validate match {
-          case Nil => user.save; S.notice(S.?("password.changed")); S.redirectTo(homePage)
+          case Nil => user.save(); S.notice(S.?("password.changed")); S.redirectTo(homePage)
           case xs => S.error(xs)
         }
       }
@@ -1087,7 +1087,7 @@ trait ProtoUser {
     def testEdit(): Unit = {
       theUser.validate match {
         case Nil =>
-          theUser.save
+          theUser.save()
           S.notice(S.?("profile.updated"))
           S.redirectTo(homePage)
 
