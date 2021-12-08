@@ -242,8 +242,8 @@ sealed class SiteMapSingleton {
   /**
    * A Java-callable method that builds a SiteMap
    */
-  // Not sure how to remove the warning in Scala 2.11 and 2.12.
-  @scala.annotation.nowarn
+  // ArraySeq can be used when compatibility with 2.12 is dropped.
+  @scala.annotation.nowarn("msg=Passing an explicit array value to a Scala varargs method is deprecated \\(since 2.13.0\\) and will result in a defensive copy; Use the more efficient non-copying ArraySeq.unsafeWrapArray or an explicit toIndexedSeq call")
   def build(kids: Array[ConvertableToMenu]): SiteMap = 
     this.apply(kids:_*)
 

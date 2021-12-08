@@ -515,7 +515,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
      */
     // Field should not shadow super.Field.  Rename it to WizardConfirmField,
     // but this is a breaking change.
-    @scala.annotation.nowarn
+    @scala.annotation.nowarn("msg=shadowing a nested class of a parent is deprecated but trait Field shadows trait Field defined in trait AbstractScreen; rename the class to something else")
     trait Field extends super.Field with ConfirmField {
       /**
        * Is this field on the confirm screen

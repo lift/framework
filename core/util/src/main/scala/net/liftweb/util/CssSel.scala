@@ -873,9 +873,10 @@ object CanBind extends CssBindImplicits {
         if (a eq null) Nil else List(Text(a.toString)))
     }
 
-  // Don't know how to get rid of the warning concerning "a equals null".  The
-  // test may be completetly useless: a Double value can never be null?
-  @scala.annotation.nowarn
+  // Don't know how to get rid of this warning in scala 2.13 the check
+  // concerning "a equals null". The test may be completetly useless: a Double
+  // value can never be null?
+  @scala.annotation.nowarn("msg=comparing values of types Double and Null using `equals` unsafely bypasses cooperative equality; use `==` instead")
   implicit def iterableDouble[T[Double]](implicit f: T[Double] => Iterable[Double]): CanBind[T[Double]] =
     new CanBind[T[Double]] {
       def apply(info: => T[Double])(ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.flatMap(a =>

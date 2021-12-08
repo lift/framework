@@ -261,11 +261,9 @@ trait Loc[T] {
   /**
    * The snippets provided by `LocParam`s
    */
-  // I am not proficient enough in scala to write this without warning.
-  @scala.annotation.nowarn
   lazy val calcSnippets: SnippetTest =
     allParams
-      .collect { case v: Loc.ValueSnippets[T] => v.snippets }
+      .collect { case v: Loc.ValueSnippets[T] @unchecked => v.snippets }
       .reduceLeftOption(_ orElse _)
       .getOrElse(Map.empty)
 

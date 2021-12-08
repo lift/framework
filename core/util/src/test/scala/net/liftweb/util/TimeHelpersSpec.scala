@@ -56,13 +56,13 @@ class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen 
     }
     "be created from a number of months" in forAllTimeZones {
       // Testing a deprecated method.
-      @scala.annotation.nowarn
+      @scala.annotation.nowarn("msg=method month in class TimeSpanBuilder is deprecated \\(since 3.0.0\\): This builder will be removed due to its unclear behavior; use Joda-Time `Period.months` and convert to `TimeSpan` manually instead.")
       val ts = 3.month
       ts must_== Period.months(3)
     }
     "be created from a number of years" in forAllTimeZones {
       // Testing a deprecated method.
-      @scala.annotation.nowarn
+      @scala.annotation.nowarn("msg=method years in class TimeSpanBuilder is deprecated \\(since 3.0.0\\): This builder will be removed due to its unclear behavior; use Joda-Time `Period.years` and convert to `TimeSpan` manually instead.")
       val ts = 3.years
       ts must_== Period.years(3)
     }

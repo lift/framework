@@ -199,8 +199,9 @@ object LiftSession {
   private[http] class DataAttrNode(liftSession: LiftSession) {
     val dataAttributeProcessors = LiftRules.dataAttributeProcessor.toList
 
-    // Not sure how to remove the warning in scala 2.11 or 2.12.
-    @scala.annotation.nowarn
+    // to(LazyList) instead of toStream once compatibility with 2.12 is
+    // dropped.
+    @scala.annotation.nowarn("msg=method toStream in trait IterableOnceOps is deprecated \\(since 2.13.0\\): Use .to\\(LazyList\\) instead of .toStream")
     def unapply(in: Node): Option[DataAttributeProcessorAnswer] = {
       in match {
         case element: Elem if dataAttributeProcessors.nonEmpty =>
@@ -2773,8 +2774,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
         }
       }
 
-      // Not sure how to remove the warning in Scala 2.11 and 2.12.
-      @scala.annotation.nowarn
+      @scala.annotation.nowarn("msg=type Stream in package scala is deprecated \\(since 2.13.0\\): Use LazyList instead of Stream")
       def localFunc(in: JValue): JsCmd = {
         LAScheduler.execute(() => {
           executeInScope(currentReq, renderVersion)(
@@ -3044,8 +3044,7 @@ sealed trait RoundTripInfo {
  * The companion objects. Has tasty implicits
  */
 object RoundTripInfo {
-  // Not sure how to remove the warning in Scala 2.11 and 2.12.
-  @scala.annotation.nowarn
+  @scala.annotation.nowarn("msg=type Stream in package scala is deprecated \\(since 2.13.0\\): Use LazyList instead of Stream")
   implicit def streamBuilder[T](in: (String, T => Stream[Any]))(implicit m: Manifest[T]): RoundTripInfo =
   StreamRoundTrip(in._1, in._2)(m)
 
@@ -3092,8 +3091,7 @@ trait RoundTripHandlerFunc {
   def failure(msg: String): Unit
 }
 
-// Not sure how to remove the warning in Scala 2.11 and 2.12.
-@scala.annotation.nowarn
+@scala.annotation.nowarn("msg=type Stream in package scala is deprecated \\(since 2.13.0\\): Use LazyList instead of Stream")
 final case class StreamRoundTrip[T](name: String, func: T => Stream[Any])(implicit val manifest: Manifest[T]) extends RoundTripInfo
 final case class SimpleRoundTrip[T](name: String, func: T => Any)(implicit val manifest: Manifest[T]) extends RoundTripInfo
 final case class HandledRoundTrip[T](name: String, func: (T, RoundTripHandlerFunc) => Unit)(implicit val manifest: Manifest[T]) extends RoundTripInfo

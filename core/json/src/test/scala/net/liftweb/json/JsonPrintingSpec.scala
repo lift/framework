@@ -111,7 +111,7 @@ class JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
   // external library to make the comparison. For example: spray.json.JsonParser(json).
   // How to include spray:
   // libraryDependencies in ThisBuild += "io.spray" %%  "spray-json" % "1.3.6"
-  @scala.annotation.nowarn
+  @scala.annotation.nowarn("msg=object JSON in package json is deprecated \\(since 1.0.6\\): Use The Scala Library Index to find alternatives: https://index.scala-lang.org/")
   private def parse(json: String) = scala.util.parsing.json.JSON.parseRaw(json)
 
   implicit def arbDoc: Arbitrary[JValue] = Arbitrary(genJValue)
