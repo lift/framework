@@ -120,7 +120,7 @@ object BsonParser extends SimpleInjector {
     private def renderValue(jv: JValue)(implicit formats: Formats): BsonValue = jv match {
       case JBool(b) => new BsonBoolean(java.lang.Boolean.valueOf(b))
       case JInt(n) => renderInteger(n)
-      case JDouble(n) => new BsonDouble(new java.lang.Double(n))
+      case JDouble(n) => new BsonDouble(java.lang.Double.valueOf(n))
       case JNull => new BsonNull()
       case JNothing => sys.error("can't render 'nothing'")
       case JString(null) => new BsonString("null")
@@ -130,9 +130,9 @@ object BsonParser extends SimpleInjector {
 
     private def renderInteger(i: BigInt): BsonValue = {
       if (i.isValidInt) {
-        new BsonInt32(new java.lang.Integer(i.intValue))
+        new BsonInt32(java.lang.Integer.valueOf(i.intValue))
       } else if (i.isValidLong) {
-        new BsonInt64(new java.lang.Long(i.longValue))
+        new BsonInt64(java.lang.Long.valueOf(i.longValue))
       }
       else {
         new BsonString(i.toString)
