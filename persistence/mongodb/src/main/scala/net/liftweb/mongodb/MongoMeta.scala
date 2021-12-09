@@ -22,12 +22,12 @@ import net.liftweb.util.Helpers.tryo
 
 import scala.jdk.CollectionConverters._
 
-import com.mongodb.{BasicDBObject, DB, DBCollection, DBObject, MongoClientSettings, WriteConcern}
-import com.mongodb.client.{FindIterable, MongoCollection, MongoDatabase}
+import com.mongodb.{ BasicDBObject, DB, DBCollection, DBObject, WriteConcern }
+import com.mongodb.client.{ MongoCollection, MongoDatabase }
 import com.mongodb.client.model.{DeleteOptions, IndexOptions, UpdateOptions}
 import com.mongodb.client.result.{DeleteResult, UpdateResult}
 
-import org.bson.{BsonDocument, Document, UuidRepresentation}
+import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 
 import org.bson.conversions.Bson

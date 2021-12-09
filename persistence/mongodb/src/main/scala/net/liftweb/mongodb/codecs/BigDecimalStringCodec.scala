@@ -21,7 +21,6 @@ import scala.math.BigDecimal
 
 import org.bson.{BsonReader, BsonWriter}
 import org.bson.codecs._
-import org.bson.types.Decimal128
 
 /**
  * A Codec for BigDecimal instances that saves the value as a String.

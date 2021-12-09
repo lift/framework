@@ -18,7 +18,7 @@ package net.liftweb
 package mongodb
 package codecs
 
-import java.util.{Calendar, GregorianCalendar}
+import java.util.GregorianCalendar
 
 import org.bson.codecs._
 import org.bson.{BsonReader, BsonWriter}

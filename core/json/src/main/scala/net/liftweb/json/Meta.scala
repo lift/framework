@@ -17,7 +17,7 @@
 package net.liftweb
 package json
 
-import java.lang.reflect.{Constructor => JConstructor, Field, Type, ParameterizedType, GenericArrayType}
+import java.lang.reflect.{Constructor => JConstructor, Type, ParameterizedType, GenericArrayType}
 import java.util.Date
 import java.sql.Timestamp
 

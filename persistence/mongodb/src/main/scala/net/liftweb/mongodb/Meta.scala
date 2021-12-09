@@ -18,7 +18,6 @@ package net.liftweb
 package mongodb
 
 import json._
-import util.JodaHelpers
 
 import java.util.{Calendar, Date, GregorianCalendar, UUID}
 import java.util.regex.Pattern
@@ -37,8 +36,6 @@ private[mongodb] object Meta {
   * For converting scala objects into DBObject values
   */
   object Reflection {
-    import java.lang.reflect._
-
     /*
     * These don't require a conversion and can be put directly into a DBObject
     */

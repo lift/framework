@@ -19,14 +19,10 @@ package mongodb
 
 import scala.jdk.CollectionConverters._
 
-import java.util.{Date, UUID}
-import java.util.regex.Pattern
-
 import net.liftweb.json._
-import net.liftweb.common.Box
 import net.liftweb.util.SimpleInjector
 
-import com.mongodb.{BasicDBObject, BasicDBList, DBObject}
+import com.mongodb.{ BasicDBObject, BasicDBList }
 import org.bson.types.ObjectId
 import org.bson._
 

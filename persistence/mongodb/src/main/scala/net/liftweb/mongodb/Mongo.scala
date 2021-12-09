@@ -17,18 +17,13 @@
 package net.liftweb
 package mongodb
 
-import net.liftweb.json.{Formats, JObject}
 import net.liftweb.util.{ConnectionIdentifier, DefaultConnectionIdentifier}
 
 import java.util.concurrent.ConcurrentHashMap
 
-import scala.collection.immutable.HashSet
-
 import org.bson.Document
-import org.bson.conversions.Bson
-import com.mongodb.{DB, DBCollection, Mongo, MongoClient, MongoException, MongoOptions, ServerAddress}
+import com.mongodb.{ DB, DBCollection, MongoClient, MongoException }
 import com.mongodb.client.{MongoCollection, MongoDatabase}
-import com.mongodb.client.model.{IndexModel, IndexOptions}
 
 
 /**
