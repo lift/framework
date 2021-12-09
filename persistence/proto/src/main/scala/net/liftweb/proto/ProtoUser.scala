@@ -20,7 +20,7 @@ package proto
 import net.liftweb.http._
 import js._
 import JsCmds._
-import scala.xml.{NodeSeq, Node, Text, Elem}
+import scala.xml.{NodeSeq, Node, Elem}
 import scala.xml.transform._
 import net.liftweb.sitemap._
 import net.liftweb.sitemap.Loc._
@@ -676,10 +676,6 @@ trait ProtoUser {
     val resetLink = S.hostAndPath+"/"+validateUserPath.mkString("/")+
     "/"+urlEncode(user.getUniqueId())
 
-    val email: String = user.getEmail
-
-    val msgXml = signupMailBody(user, resetLink)
-
     Mailer.sendMail(From(emailFrom),Subject(signupMailSubject),
                     (To(user.getEmail) :: 
                      generateValidationEmailBodies(user, resetLink) :::
@@ -741,7 +737,6 @@ trait ProtoUser {
   
   def signup = {
     val theUser: TheUserType = mutateUserOnSignup(createNewUserInstance())
-    val theName = signUpPath.mkString("")
 
     def testSignup(): Unit = {
       validateSignup(theUser) match {
@@ -939,8 +934,6 @@ trait ProtoUser {
         val resetLink = S.hostAndPath+
         passwordResetPath.mkString("/", "/", "/")+urlEncode(user.getUniqueId())
 
-        val email: String = user.getEmail
-
         Mailer.sendMail(From(emailFrom),Subject(passwordResetEmailSubject),
                         (To(user.getEmail) ::
                          generateResetEmailBodies(user, resetLink) :::
@@ -1081,8 +1074,6 @@ trait ProtoUser {
   def edit = {
     val theUser: TheUserType = 
       mutateUserOnEdit(currentUser.openOrThrowException("we know we're logged in"))
-
-    val theName = editPath.mkString("")
 
     def testEdit(): Unit = {
       theUser.validate match {

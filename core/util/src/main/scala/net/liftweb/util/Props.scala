@@ -20,7 +20,6 @@ package util
 import java.net.InetAddress
 import java.util.Properties
 import java.io.InputStream
-import scala.jdk.CollectionConverters._
 import Helpers._
 import common._
 

@@ -19,7 +19,7 @@ package mapper
 
 
 
-import java.sql.{ResultSet, Types}
+import java.sql.Types
 import java.util.Date
 import java.lang.reflect.Method
 
@@ -29,7 +29,6 @@ import common._
 import Helpers._
 import http._
 import json._
-import S._
 import js._
 
 import scala.xml.{Text, NodeSeq}

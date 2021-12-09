@@ -22,7 +22,7 @@ import net.liftweb.proto.Crudify
 import org.squeryl._
 import net.liftweb.squerylrecord.RecordTypeMode._
 import net.liftweb.record.Field
-import net.liftweb.common.{Box, Empty, Full}
+import net.liftweb.common.Box
 import scala.xml.NodeSeq
 
 trait CRUDify[K, T <: Record[T] with KeyedEntity[K]] extends Crudify {

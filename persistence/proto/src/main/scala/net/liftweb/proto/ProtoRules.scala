@@ -18,9 +18,7 @@ package net.liftweb
 package proto
 
 import net.liftweb.common._
-import net.liftweb.util._
 import net.liftweb.http._
-import scala.reflect.Manifest
 
 import java.util.regex.Pattern
 

@@ -17,7 +17,6 @@
 package net.liftweb
 package util
 
-import net.liftweb.common._
 import java.lang.ref.WeakReference
 import Helpers.TimeSpan
 

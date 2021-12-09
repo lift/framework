@@ -18,7 +18,7 @@ package net.liftweb
 package record
 
 import common._
-import http.js.{JsExp, JsObj}
+import http.js.JsExp
 import http.{Req, SHtml}
 import json.JsonAST._
 import util._

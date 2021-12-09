@@ -17,9 +17,6 @@
 package net.liftweb
 package util
 
-import Helpers._
-import common._
-
 trait ConnectionIdentifier {
   def jndiName: String
 

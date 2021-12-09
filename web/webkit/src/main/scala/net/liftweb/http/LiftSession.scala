@@ -375,6 +375,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
     * Private no-arg constructor needed for deserialization.
     */
+  @scala.annotation.nowarn("msg=private constructor in class LiftSession is never used")
   private[this] def this() = this("", "", Empty)
 
   def sessionHtmlProperties = LiftRules.htmlProperties.session.is.make openOr LiftRules.htmlProperties.default.is.vend
@@ -442,7 +443,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * See LiftServlet.handleAjax for how we determine we no longer need
    * to hold a reference to an AJAX request.
    */
-  private var ajaxRequests = scala.collection.mutable.Map[String,List[AjaxRequestInfo]]()
+  private val ajaxRequests = scala.collection.mutable.Map[String,List[AjaxRequestInfo]]()
 
   private[http] def withAjaxRequests[T](fn: (scala.collection.mutable.Map[String, List[AjaxRequestInfo]]) => T) = {
     ajaxRequests.synchronized { fn(ajaxRequests) }
@@ -1202,23 +1203,6 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
 
-  private def allElems(in: NodeSeq, f: Elem => Boolean): List[Elem] = {
-    val lb = new ListBuffer[Elem]
-
-    def appendAll(in: NodeSeq, lb: ListBuffer[Elem]): Unit = {
-      in.foreach {
-        case Group(ns) => appendAll(ns, lb)
-        case e: Elem if f(e) => lb += e; appendAll(e.child, lb)
-        case e: Elem => appendAll(e.child, lb)
-        case _ =>
-      }
-    }
-    appendAll(in, lb)
-
-    lb.toList
-  }
-
-
   object currentSourceContext extends TransientRequestVar[Any](Empty)
 
   def runSourceContext(value: Any, xform: NodeSeq => NodeSeq, ns: NodeSeq): NodeSeq = {
@@ -1975,9 +1959,6 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   liftTagProcessing = LiftRules.liftTagProcessing.toList ::: List(_defaultLiftTagProcessing)
 
-  private def asNodeSeq(in: Seq[Node]): NodeSeq = in
-
-
   private class DeferredProcessor extends SpecializedLiftActor[ProcessSnippet] {
     protected def messageHandler = {
       case ProcessSnippet(f) => f()
@@ -2465,7 +2446,6 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
         }
       }
 
-      import scala.jdk.CollectionConverters._
       val id = Full(act.uniqueId)
 
       removeFunctionsIf(_.owner == id)

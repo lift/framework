@@ -22,7 +22,6 @@ import http._
 import scala.xml._
 import net.liftweb.util.Helpers._
 import net.liftweb.http.js._
-import JsCmds._
 import net.liftweb.common.{Box, Empty}
 import common.Full
 import scala.xml.Text

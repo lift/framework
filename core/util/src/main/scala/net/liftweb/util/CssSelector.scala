@@ -17,7 +17,7 @@
 package net.liftweb
 package util
 
-import scala.util.parsing.combinator.{PackratParsers, Parsers, ImplicitConversions}
+import scala.util.parsing.combinator.{PackratParsers, ImplicitConversions}
 import scala.xml.{Elem, NodeSeq}
 
 import net.liftweb.common._
@@ -153,10 +153,6 @@ object CssSelectorParser extends PackratParsers with ImplicitConversions {
       case x: NoSuccess => ParamFailure(x.msg, Empty, Empty, x)
     }
   }
-
-  import scala.language.implicitConversions
-
-  private implicit def str2chars(s: String): List[Char] = new scala.collection.immutable.WrappedString(s).toList
 
   private def fixAll(all: List[CssSelector], sn: Option[SubNode]): CssSelector = {
     (all, sn) match {

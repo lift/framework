@@ -17,7 +17,7 @@
 package net.liftweb
 package mapper
 
-import java.sql.{ResultSet, Types}
+import java.sql.Types
 import java.util.Date
 import java.lang.reflect.Method
 
@@ -26,7 +26,6 @@ import util._
 import common._
 import Helpers._
 import http._
-import S._
 import js._
 import json._
 import scala.xml.{Text, NodeSeq}

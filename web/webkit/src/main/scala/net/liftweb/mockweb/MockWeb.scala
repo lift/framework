@@ -29,8 +29,6 @@ import net.liftweb.mocks.MockHttpServletRequest
 
 import scala.xml.{MetaData,Null}
 
-import org.specs2.mutable._
-
 /**
  * The MockWeb object contains various methods to simplify
  * unit testing in Lift outside of the full-blown testkit

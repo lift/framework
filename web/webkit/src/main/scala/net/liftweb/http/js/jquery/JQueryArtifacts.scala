@@ -19,16 +19,11 @@ package http
 package js
 package jquery
 
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.NodeSeq
 
-import net.liftweb.http.S
-import net.liftweb.http.js.JE
-import net.liftweb.http.js.JsCmds
-import JE._
 import JqJE._
 import JqJsCmds._
 import util.Helpers._
-import util.Props
 
 trait JQueryArtifacts extends JSArtifacts {
   /**
@@ -103,16 +98,6 @@ trait JQueryArtifacts extends JSArtifacts {
   def formToJSON(formId: String): JsExp = new JsExp() {
     def toJsCmd = "lift$.formToJSON('" + formId + "')";
   }
-
-  private def toJson(info: AjaxInfo, server: String, path: String => JsExp): String =
-    (("url : " + path(server).toJsCmd) ::
-            "data : " + info.data.toJsCmd ::
-            ("type : " + info.action.encJs) ::
-            ("dataType : " + info.dataType.encJs) ::
-            "timeout : " + info.timeout ::
-            "cache : " + info.cache :: Nil) ++
-            info.successFunc.map("success : " + _).toList ++
-            info.failFunc.map("error : " + _).toList mkString ("{ ", ", ", " }")
 }
 
 case object JQueryArtifacts extends JQueryArtifacts

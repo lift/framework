@@ -19,8 +19,6 @@ package net.liftweb.markdown
  * Christoph Henkelmann http://henkelmann.eu/
  */
 
-import java.io.{InputStreamReader, StringWriter}
-
 /**
  * This is the Transformer that uses the other parsers to transform markdown into xhtml.
  * Mix this trait in if you want more control over the output (like switching verbatim xml on/off or using

@@ -21,7 +21,6 @@ package servlet
 
 import javax.servlet.http._
 import net.liftweb.common._
-import net.liftweb.util._
 
 class HTTPServletSession(session: HttpSession) extends HTTPSession {
   private[this] val servletSessionIdentifier = LiftRules.servletSessionIdentifier

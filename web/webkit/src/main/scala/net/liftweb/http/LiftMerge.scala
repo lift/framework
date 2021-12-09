@@ -18,14 +18,13 @@ package net.liftweb
 package http
 
 import scala.collection.Map
-import scala.collection.mutable.{HashMap, ArrayBuffer, ListBuffer}
+import scala.collection.mutable.{ HashMap, ListBuffer }
 import scala.xml._
 
 import net.liftweb.util._
 import net.liftweb.common._
 import net.liftweb.http.js._
-  import JsCmds.Noop
-  import JE.{AnonFunc,Call,JsRaw}
+import JsCmds.Noop
 import Helpers._
 
 /**
@@ -117,7 +116,6 @@ private[http] trait LiftMerge {
     addlHead ++= S.forHead()
     val addlTail = new ListBuffer[Node]
     addlTail ++= S.atEndOfBody()
-    val rewrite = URLRewriter.rewriteFunc
 
     val contextPath: String = S.contextPath
 

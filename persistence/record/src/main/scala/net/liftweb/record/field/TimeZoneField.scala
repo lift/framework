@@ -24,9 +24,7 @@ import scala.xml._
 import common._
 import util._
 import Helpers._
-import http.{S, SHtml}
-import S._
-
+import http.SHtml
 
 object TimeZoneField {
   lazy val timeZoneList: List[(String, String)] = TimeZone.getAvailableIDs.toList.

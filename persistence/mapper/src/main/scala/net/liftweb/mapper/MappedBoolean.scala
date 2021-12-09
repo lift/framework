@@ -20,7 +20,7 @@ package mapper
 import java.sql.Types
 import java.lang.reflect.Method
 import net.liftweb.util.Helpers._
-import net.liftweb.http.{S, SHtml}
+import net.liftweb.http.SHtml
 import java.util.Date
 import net.liftweb.util._
 import net.liftweb.common._

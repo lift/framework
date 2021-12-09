@@ -18,7 +18,6 @@ package net.liftweb
 package json
 
 import scala.language.implicitConversions
-import java.io.Writer
 import java.lang.StringBuilder
 
 /**

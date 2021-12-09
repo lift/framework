@@ -19,8 +19,7 @@ package mongodb
 package record
 package field
 
-import java.util.{List => JavaList, UUID}
-import java.util.regex.Pattern
+import java.util.{ List => JavaList }
 
 import com.mongodb._
 import net.liftweb.common.{Box, Empty, Failure, Full}
@@ -30,10 +29,9 @@ import net.liftweb.record.{Field, FieldHelpers, MandatoryTypedField}
 import net.liftweb.util.Helpers._
 
 import org.bson._
-import org.bson.codecs.{BsonDocumentCodec, BsonTypeCodecMap, Codec, DecoderContext, Encoder, EncoderContext}
+import org.bson.codecs.{ BsonTypeCodecMap, DecoderContext, EncoderContext }
 import org.bson.codecs.configuration.CodecRegistry
 
-import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import scala.xml.NodeSeq
 

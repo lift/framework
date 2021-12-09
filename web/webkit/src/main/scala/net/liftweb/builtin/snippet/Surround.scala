@@ -20,10 +20,7 @@ package snippet
 
 import scala.xml._
 import net.liftweb.http._
-import net.liftweb.util._
 import net.liftweb.common._
-
-import Helpers._
 
 object Surround extends DispatchSnippet {
 

@@ -18,14 +18,11 @@ package net.liftweb
 package record
 package field
 
-import java.math.{BigDecimal => JBigDecimal,MathContext,RoundingMode}
-import scala.xml._
+import java.math.MathContext
 import net.liftweb.common._
-import net.liftweb.http.{S}
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.util._
 import Helpers._
-import S._
 
 
 trait DecimalTypedField extends NumericTypedField[BigDecimal] {

@@ -22,8 +22,6 @@ package sitemap
 // unapply of a case class with a wildcard parameterized type.
 // Ostensibly should be fixed in 2.12, which means we're a ways away
 // from being able to remove this, though.
-import scala.language.existentials
-
 import scala.annotation._
 import net.liftweb.http._
 import net.liftweb.common._
@@ -315,8 +313,6 @@ object Menu extends MenuSingleton {
       def parser = ParamsMenuable.this.parser
 
       def listToFrom(in: List[String]): Box[List[String]] = Full(in)
-      
-      val pathLen = ParamsMenuable.this.path.length
     }
   }
 

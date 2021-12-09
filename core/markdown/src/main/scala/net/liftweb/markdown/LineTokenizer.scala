@@ -23,7 +23,6 @@ import scala.collection.mutable.{HashMap, ArrayBuffer}
 import scala.language.postfixOps
 import scala.util.parsing.combinator.Parsers
 import scala.util.parsing.input.{Position, Reader}
-import scala.xml
 
 /**
  * A Reader for reading whole Strings as tokens.

@@ -22,10 +22,7 @@ import scala.xml._
 import net.liftweb.util._
 import net.liftweb.common._
 import net.liftweb.proto._
-import net.liftweb.http.{S}
-import java.util.regex._
-import Helpers._
-import S._
+import net.liftweb.http.S
 
 object EmailField {
   def emailPattern = ProtoRules.emailRegexPattern.vend

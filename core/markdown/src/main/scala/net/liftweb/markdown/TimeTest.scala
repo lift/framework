@@ -97,7 +97,7 @@ object TimeTest {
         def ws2:Parser[String] = rep1(elem(' ') | elem('\t') | elem('\u000B')) ^^ {_.mkString}
 
         def runParser(s:String, p:Parser[String], iterations:Int): Unit = {
-            for (i <- 0 until iterations) {
+            for (_ <- 0 until iterations) {
                 apply(p, s)
             }
         }

@@ -18,7 +18,6 @@ package net.liftweb
 package http
 
 import util.Schedule
-import util.Helpers._
 import actor.{LAFuture, LiftActor}
 import common.{Empty, Full, Box, Loggable}
 

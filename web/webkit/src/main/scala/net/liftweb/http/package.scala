@@ -16,10 +16,8 @@
 
 package net.liftweb
 
-import scala.concurrent.{ExecutionContext,Future}
 import scala.xml.{Comment,NodeSeq}
 
-import actor.LAFuture
 import builtin.comet.AsyncRenderComet
 import http.js.JsCmds.Replace
 import util._

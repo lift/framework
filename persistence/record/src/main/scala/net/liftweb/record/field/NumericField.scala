@@ -24,7 +24,6 @@ import net.liftweb.util._
 import net.liftweb.common._
 import scala.reflect.Manifest
 import scala.xml._
-import S._
 import Helpers._
 import JE._
 

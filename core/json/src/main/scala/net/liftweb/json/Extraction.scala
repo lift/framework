@@ -17,7 +17,7 @@
 package net.liftweb
 package json
 
-import java.lang.reflect.{Constructor => JConstructor, Type, InvocationTargetException}
+import java.lang.reflect.{Constructor => JConstructor, InvocationTargetException}
 import java.lang.{Integer => JavaInteger, Long => JavaLong, Short => JavaShort, Byte => JavaByte, Boolean => JavaBoolean, Double => JavaDouble, Float => JavaFloat}
 import java.util.Date
 import java.sql.Timestamp
@@ -319,8 +319,6 @@ object Extraction {
         }
     }
 
-    def newPrimitive(elementType: Class[_], elem: JValue) = convert(elem, elementType, formats)
-
     def newCollection(root: JValue, m: Mapping, constructor: Array[_] => Any) = {
       val array: Array[_] = root match {
         case JArray(arr)      => arr.map(build(_, m)).toArray
@@ -414,12 +412,6 @@ object Extraction {
       a.foldLeft((newArray(c.getComponentType, a.length), 0)) { (tuple, e) => {
         java.lang.reflect.Array.set(tuple._1, tuple._2, e); (tuple._1, tuple._2 + 1)
       }}._1
-    }
-
-    def mkList(root: JValue, m: Mapping) = root match {
-      case JArray(arr) => arr.map(build(_, m))
-      case JNothing | JNull => Nil
-      case x => fail("Expected array but got " + x)
     }
 
     def mkValue(root: JValue, mapping: Mapping, path: String, optional: Boolean) = {

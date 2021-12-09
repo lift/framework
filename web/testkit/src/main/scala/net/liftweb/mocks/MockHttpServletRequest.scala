@@ -22,10 +22,8 @@ import java.net.URL
 import java.security.Principal
 import java.text.ParseException
 import java.util.Collection
-import java.util.Date
 import java.util.Locale
 import java.util.{Enumeration => JEnum}
-import java.util.{HashMap => JHash}
 import javax.servlet._
 import javax.servlet.http._
 
@@ -127,7 +125,6 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * Sets the body to the given json value and content type.
    */
   def body_= (jval : JValue, contentType : String) : Unit = {
-    import json.JsonDSL._
     import json.JsonAST
 
     body = JsonAST.prettyRender(jval).getBytes(charEncoding)

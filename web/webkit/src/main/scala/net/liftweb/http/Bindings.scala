@@ -17,7 +17,7 @@
 package net.liftweb
 package http 
 
-import common.{Box,Full,Empty,Failure}
+import common.{ Full, Empty, Failure }
 import util.Props
 import scala.xml.{NodeSeq, Text}
 

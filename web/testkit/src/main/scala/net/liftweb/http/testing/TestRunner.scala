@@ -21,8 +21,7 @@ package testing
 import scala.language.implicitConversions
 
 import net.liftweb.util.Helpers._
-import net.liftweb.common.{ Box, Full, Empty, Failure}
-import net.liftweb.util.{Helpers}
+import net.liftweb.common.{ Box, Full, Empty }
 import scala.collection.mutable.ListBuffer
 
 class TestRunner(clearDB: Box[() => Any], setupDB: Box[() => Any],beforeAssertListeners: List[String => Any],  afterAssertListeners: List[(String, Boolean) => Any],
@@ -165,7 +164,6 @@ class TestRunner(clearDB: Box[() => Any], setupDB: Box[() => Any],beforeAssertLi
 
 case class TestResults(res: List[Tracker]) {
   def stats = {
-    val rev = res.reverse
     val start = res.map(_.at).reduceLeft((a: Long, b: Long) => if (a < b) a else b)
     val end = res.map(_.at).reduceLeft((a: Long, b: Long) => if (a > b) a else b)
     val assertCnt = res.filter(a => a.isAssert && !a.isBegin).length

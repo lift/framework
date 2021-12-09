@@ -19,15 +19,12 @@ package http
 package js 
 package yui 
 
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.NodeSeq
 
-import net.liftweb.http.S
-import net.liftweb.http.js.JE
 import net.liftweb.http.js.JsCmds
 import net.liftweb.util.Helpers
 import Helpers._
 import JsCmds._
-import JE._
 
 /**
  * Prerequisite YUI scripts:
@@ -134,14 +131,4 @@ object YUIArtifacts extends JSArtifacts {
   def formToJSON(formId: String): JsExp = new JsExp() {
     def toJsCmd = "YAHOO.lift.formToJSON('" + formId + "')";
   }
-
-  private def toJson(info: AjaxInfo): String =
-    ("timeout : " + info.timeout ::
-            "cache : " + info.cache ::
-            "success : function(resp) { res = YAHOO.lift.eval(resp);" + info.successFunc.map(_ + "(res);").openOr("") + "}" ::
-            "failure : " + info.failFunc.openOr("function (arg) {YAHOO.log('Ajax request failed');}") ::
-            Nil) mkString ("{ ", ", ", " }")
-
-
 }
-

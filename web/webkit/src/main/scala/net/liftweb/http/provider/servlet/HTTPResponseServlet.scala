@@ -19,13 +19,9 @@ package http
 package provider
 package servlet
 
-import scala.collection.mutable.{ListBuffer}
 import java.io.{OutputStream}
-import javax.servlet.http.{HttpServletResponse, Cookie}
+import javax.servlet.http.HttpServletResponse
 import net.liftweb.http.provider.encoder.CookieEncoder
-import net.liftweb.common._
-import net.liftweb.util._
-import Helpers._
 
 class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
   private var _status = 0;

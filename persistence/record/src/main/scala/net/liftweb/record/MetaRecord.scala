@@ -19,21 +19,17 @@ package record
 
 import scala.language.existentials
 
-import java.lang.reflect.Modifier
 import net.liftweb._
 import util._
 import common._
 import scala.collection.mutable.{ListBuffer}
 import scala.xml._
 import net.liftweb.http.js.{JsExp, JE, JsObj}
-import net.liftweb.http.{SHtml, Req, LiftResponse, LiftRules}
+import net.liftweb.http.{ Req, LiftResponse, LiftRules }
 import net.liftweb.json._
 import net.liftweb.record.FieldHelpers.expectedA
 import java.lang.reflect.Method
-import field._
-import Box._
 import JE._
-import Helpers._
 
 /**
  * Holds meta information and operations on a record

@@ -19,7 +19,6 @@ package record
 package field
 
 import net.liftweb.common._
-import net.liftweb.http.{S}
 import json._
 import net.liftweb.util._
 import Helpers._

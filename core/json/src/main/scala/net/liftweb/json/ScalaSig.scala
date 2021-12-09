@@ -19,11 +19,6 @@ package json
 
 import scala.tools.scalap.scalax.rules.scalasig._
 
-import java.util.concurrent.ConcurrentHashMap
-
-import scala.jdk.CollectionConverters._
-import scala.collection.concurrent.{Map=>ConcurrentScalaMap}
-
 private[json] object ScalaSigReader {
   // Originally, we used `method.children` and expected all children of a
   // MethodSymbol to be parameters. In Scala 2.13, a change was made that never

@@ -1643,8 +1643,6 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
           "document.getElementById(" + cancelId.encJs + ").submit()"
         }))
 
-    val url = S.uri
-
     def fieldBinding(field: BaseField): Box[FieldBinding] =
       field match {
         case f: Field => f.binding
@@ -1773,8 +1771,6 @@ trait StringField extends FieldIdentifier with StringValidators {
 }
 
 object LiftScreenRules extends Factory with FormVendor {
-  private def m[T](implicit man: Manifest[T]): Manifest[T] = man
-
   val allTemplatePath: FactoryMaker[List[String]] = new FactoryMaker[List[String]](() => List("templates-hidden", "wizard-all")) {}
   val messageStyles: FactoryMaker[NoticeType.Value => MetaData] =
     new FactoryMaker[NoticeType.Value => MetaData](() => {
@@ -1782,8 +1778,6 @@ object LiftScreenRules extends Factory with FormVendor {
       case NoticeType.Warning => new UnprefixedAttribute("class", "lift_warning", Null)
       case NoticeType.Error => new UnprefixedAttribute("class", "lift_error", Null)
     }: PartialFunction[NoticeType.Value, MetaData]) {}
-
-
 }
 
 case class FieldBinding(val fieldName: String, val bindingStyle: FieldBinding.BindingStyle) {

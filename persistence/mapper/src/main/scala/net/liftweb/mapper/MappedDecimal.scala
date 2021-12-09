@@ -17,11 +17,9 @@
 package net.liftweb
 package mapper
 
-import java.math.{MathContext,RoundingMode}
-import java.sql.{ResultSet, Types}
+import java.math.MathContext
+import java.sql.Types
 import java.lang.reflect.Method
-import net.liftweb.util.Helpers._
-import net.liftweb.http.{S, SHtml}
 import java.util.Date
 import net.liftweb.util._
 import net.liftweb.common._

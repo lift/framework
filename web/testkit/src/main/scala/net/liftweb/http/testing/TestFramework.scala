@@ -23,11 +23,10 @@ import scala.language.implicitConversions
 import net.liftweb.util.Helpers._
 import net.liftweb.util._
 import net.liftweb.json._
-import JsonDSL._
 import net.liftweb.common._
 import scala.xml._
 import scala.xml.Utility.trim
-import java.util.{Map => JavaMap, Set => JavaSet, Iterator => JavaIterator, List => JavaList}
+import java.util.{Iterator => JavaIterator, List => JavaList}
 import java.util.regex.Pattern
 import java.io.IOException
 import org.apache.commons.httpclient._
@@ -616,17 +615,6 @@ object TestHelpers {
 
     def hasNext = in.hasNext
   }
-
-  private def snurpHeaders(in: JavaMap[String, CRK]): Map[String, List[String]] = {
-    def morePulling(e: JavaMap.Entry[String, CRK]): (String, List[String]) = {
-      e.getValue match {
-        case null => (e.getKey, Nil)
-        case a => (e.getKey, a.iterator.toList)
-      }
-    }
-
-    Map(in.entrySet.iterator.toList.filter(e => (e ne null) && (e.getKey != null)).map(e => morePulling(e)): _*)
-  }
 }
 
 /**
@@ -828,21 +816,6 @@ abstract class BaseResponse(override val baseUrl: String,
                    val theHttpClient: HttpClient) extends
   Response with BaseGetPoster with GetPosterHelper
 {
-  private object FindElem {
-    def unapply(in: NodeSeq): Option[Elem] = in match {
-      case e: Elem => Some(e)
-      case d: Document => unapply(d.docElem)
-      case g: Group => unapply(g.nodes)
-      case n: Text => None
-      case sn: SpecialNode => None
-      case n: NodeSeq => 
-       val ns: Seq[Node] = n
-       val x: Seq[Elem] = ns.flatMap(v => unapply(v))
-       x.headOption
-      case _ => None
-    }
-  }
-
   /**
    * Get the body of the response as XML
    */

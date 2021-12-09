@@ -17,10 +17,8 @@
 package net.liftweb
 package http
 
-import net.liftweb.common._
 import net.liftweb._
 import util._
-import Helpers._
 import scala.xml.{NodeSeq, Elem}
 
 /**

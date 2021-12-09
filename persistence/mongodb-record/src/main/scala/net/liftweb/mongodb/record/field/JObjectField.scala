@@ -26,8 +26,6 @@ import net.liftweb.record._
 import net.liftweb.util.Helpers.tryo
 
 import org.bson._
-import org.bson.codecs.{BsonDocumentCodec, BsonTypeCodecMap, Codec, DecoderContext, EncoderContext}
-import org.bson.codecs.configuration.CodecRegistry
 
 import scala.xml.NodeSeq
 

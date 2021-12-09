@@ -15,14 +15,14 @@ package net.liftweb
 package squerylrecord
 
 import record.{ MandatoryTypedField, OptionalTypedField, TypedField, Record}
-import record.field.{EnumNameField, OptionalEnumNameField, EnumField, OptionalEnumField}
+import record.field.EnumNameField
 
-import org.squeryl.{ PrimitiveTypeMode, Schema, Query }
+import org.squeryl.{ PrimitiveTypeMode, Schema }
 import org.squeryl.dsl.{ BooleanExpression, DateExpression, EnumExpression, NumericalExpression, StringExpression, NonNumericalExpression }
 import org.squeryl.dsl.ast.{ SelectElementReference, SelectElement, ConstantExpressionNode, RightHandSideOfIn }
 import org.squeryl.internals.{ AttributeValidOnNonNumericalColumn, AttributeValidOnNumericalColumn, FieldReferenceLinker, OutMapper }
 
-import java.util.{ Calendar, Date }
+import java.util.Calendar
 import java.sql.Timestamp
 
 /**

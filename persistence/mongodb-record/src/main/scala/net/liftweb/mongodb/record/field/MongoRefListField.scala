@@ -20,11 +20,7 @@ package record
 package field
 
 import common._
-import http.{S, SHtml}
-import net.liftweb.record.{Field, MandatoryTypedField, TypedField}
-
 import java.util.UUID
-
 import org.bson.types.ObjectId
 
 /*

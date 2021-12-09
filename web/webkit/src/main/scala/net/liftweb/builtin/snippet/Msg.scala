@@ -24,8 +24,6 @@ import scala.xml._
 import net.liftweb.util.Helpers._
 import net.liftweb.common.{Full, Empty}
 import scala.collection.mutable.HashMap
-import net.liftweb.http.js._
-import JsCmds._
 
 /**
  * This class is a built in snippet that allows rendering only notices (Errors, Warnings, Notices)

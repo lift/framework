@@ -18,7 +18,6 @@ package net.liftweb
 package util
 
 import scala.collection.mutable.ListBuffer
-import common._
 
 /**
   * Calculate the edit distance between words

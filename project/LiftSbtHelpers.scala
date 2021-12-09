@@ -45,6 +45,7 @@ object LiftSbtHelpers {
             "-Xfatal-warnings",
             "-unchecked",
 //            "-Wunused:nowarn", // -W options where introduced in 2.13.
+            "-Ywarn-unused:imports,privates,locals",
             "-target:jvm-1.8"
           )
       )

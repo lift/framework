@@ -17,7 +17,6 @@
 package net.liftweb
 package util
 
-import scala.collection.mutable._
 import scala.language.postfixOps
 import scala.util.parsing.combinator._
 

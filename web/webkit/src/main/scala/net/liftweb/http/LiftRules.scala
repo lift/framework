@@ -719,7 +719,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * @see net.liftweb.builtin.snippet.Msgs
    */
   @volatile var noticesToJsCmd: () => JsCmd = () => {
-    import builtin.snippet.{Msg,Msgs,MsgErrorMeta,MsgNoticeMeta,MsgWarningMeta}
+    import builtin.snippet.{ Msg, Msgs }
 
     // A "wrapper" that simply returns the javascript
     val passJs = (in : JsCmd) => in
@@ -1732,8 +1732,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   def fixCSS(path: List[String], prefix: Box[String]): Unit = {
 
     val liftReq: LiftRules.LiftRequestPF = new LiftRules.LiftRequestPF {
-      def functionName = "Default CSS Fixer"
-
       def isDefinedAt(r: Req): Boolean = {
         r.path.partPath == path
       }
@@ -1744,8 +1742,6 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
     }
 
     val cssFixer: LiftRules.DispatchPF = new LiftRules.DispatchPF {
-      def functionName = "default css fixer"
-
       def isDefinedAt(r: Req): Boolean = {
         r.path.partPath == path
       }
@@ -2280,7 +2276,6 @@ abstract class GenericValidator extends XHtmlValidator with Loggable {
   import javax.xml._
   import XMLConstants._
   import java.net.URL
-  import javax.xml.transform.dom._
   import javax.xml.transform.stream._
   import java.io.ByteArrayInputStream
 

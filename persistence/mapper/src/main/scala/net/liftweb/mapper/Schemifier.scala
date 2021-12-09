@@ -20,7 +20,7 @@ package mapper
 import java.sql.{Connection, DatabaseMetaData, ResultSet}
 
 import scala.collection.mutable.{HashMap, ListBuffer}
-import common.{Box, Full, Loggable}
+import common.Loggable
 import util.Helpers
 import Helpers._
 
@@ -98,7 +98,6 @@ object Schemifier extends Loggable {
       logger.debug("Starting schemify. write=%s, structureOnly=%s, dbId=%s, schema=%s, tables=%s".format(performWrite, structureOnly, dbId, getDefaultSchemaName(con), tables.map(_.dbTableName)))
 
       val connection = con // SuperConnection(con)
-      val driver = DriverType.calcDriver(connection)
       val actualTableNames = new HashMap[String, String]
       if (performWrite) {
         tables.foreach{t =>
@@ -354,7 +353,6 @@ object Schemifier extends Loggable {
         field =>
 
         val other = field.dbKeyToTable
-        val otherTable = actualTableNames(other._dbTableNameLC)
         val myTable = actualTableNames(table._dbTableNameLC)
 
         val md = connection.getMetaData

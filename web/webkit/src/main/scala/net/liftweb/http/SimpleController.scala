@@ -17,9 +17,7 @@
 package net.liftweb
 package http
 
-import scala.collection.immutable.TreeMap
 import net.liftweb.common._
-import net.liftweb.util._
 import provider._
 
 /**

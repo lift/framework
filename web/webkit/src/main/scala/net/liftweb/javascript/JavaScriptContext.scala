@@ -1,6 +1,6 @@
 package net.liftweb.javascript
 
-import net.liftweb.http.{TransientRequestVar, RequestVar, LiftRules}
+import net.liftweb.http.{TransientRequestVar, LiftRules}
 import net.liftweb.util._
 import Helpers._
 import org.mozilla.javascript.{NativeJavaObject, ScriptableObject, Context}
@@ -85,7 +85,7 @@ object JavaScriptContext {
   def exec(str: String): AnyRef = currentScript.get.exec(str)
 
   private class JSScope {
-    private var initted = false
+    private val initted = false
     private var context: Context = null
     private var scope: ScriptableObject = null
 

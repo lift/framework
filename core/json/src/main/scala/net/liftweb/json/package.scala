@@ -17,8 +17,6 @@
 package net.liftweb
 
 package object json {
-  import java.io.Reader
-
   type JValue   = JsonAST.JValue
   val  JNothing = JsonAST.JNothing
   val  JNull    = JsonAST.JNull

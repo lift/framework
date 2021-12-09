@@ -24,9 +24,7 @@ import scala.xml._
 import common._
 import util._
 import Helpers._
-import http.{S, SHtml}
-import S._
-
+import http.SHtml
 
 object LocaleField {
   lazy val localeList = Locale

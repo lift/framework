@@ -19,7 +19,6 @@ package json
 package ext
 
 import org.joda.time._
-import JsonDSL._
 
 object JodaTimeSerializers {
   def all = List(DurationSerializer, InstantSerializer, DateTimeSerializer,

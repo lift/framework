@@ -22,11 +22,7 @@ import scala.xml._
 import net.liftweb.util._
 import net.liftweb.common._
 import net.liftweb.http.{S}
-import java.util.regex._
 import java.util.regex.{Pattern => RegexPattern}
-import Helpers._
-import S._
-
 
 trait PostalCodeTypedField extends StringTypedField {
 

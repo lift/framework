@@ -26,8 +26,7 @@ import Box.option2Box
 import json._
 import util._
 import http.js._
-import http.{S, SHtml}
-import S._
+import http.SHtml
 import Helpers._
 import JE._
 

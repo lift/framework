@@ -22,10 +22,8 @@ import org.squeryl.annotations.Column
 import java.lang.reflect.{ Method, Field }
 import java.lang.annotation.Annotation
 import java.sql.{ ResultSet, Timestamp }
-import java.util.{ Calendar, Date }
+import java.util.Calendar
 import scala.collection.immutable.Map
-import net.liftweb.util.Settable
-import net.liftweb.record.OptionalTypedField
 
 /** FieldMetaDataFactory that allows Squeryl to use Records as model objects. */
 class RecordMetaDataFactory extends FieldMetaDataFactory {
@@ -112,7 +110,6 @@ class RecordMetaDataFactory extends FieldMetaDataFactory {
       metaField) {
 
       override def length = {
-        import java.math.MathContext
         val fieldLength =
           metaField match {
             case (stringTypedField: StringTypedField) => Some(stringTypedField.maxLength)

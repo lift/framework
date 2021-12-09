@@ -184,7 +184,6 @@ trait FlexMenuBuilder {
     val toRender: Seq[MenuItem] = this.toRender
 
     def ifExpandCurrent(f: => NodeSeq): NodeSeq = if (expandAny || expandAll) f else NodeSeq.Empty
-    def ifExpandAll(f: => NodeSeq): NodeSeq = if (expandAll) f else NodeSeq.Empty
     toRender.toList match {
       case Nil if S.attr("group").isDefined => emptyGroup
       case Nil => emptyMenu

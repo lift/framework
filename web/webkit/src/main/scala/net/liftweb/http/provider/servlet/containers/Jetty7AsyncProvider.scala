@@ -20,14 +20,11 @@ package provider
 package servlet
 package containers
 
-import javax.servlet.http.HttpServletRequest
-
 import net.liftweb.common._
 import net.liftweb.http._
 import net.liftweb.http.provider._
 import net.liftweb.http.provider.servlet._
 import net.liftweb.util._
-import Helpers._
 
 
 object Jetty7AsyncProvider extends AsyncProviderMeta {

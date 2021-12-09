@@ -65,7 +65,6 @@ trait ListHelpers {
     import scala.collection.mutable.ListBuffer
     import scala.annotation._
 
-    val newSet = Set(newList :_*)
     val ret: ListBuffer[Res] = new ListBuffer()
     var insertAfter: Box[T] = Empty
 

@@ -23,11 +23,7 @@ import Map._
 import concurrent.locks._
 
 import common._
-import util._
 import Helpers._
-import Schedule._
-import java.lang.Thread._
-
 
 /**
  * Companion module that has the role of monitoring garbage collected references and remove the orphaned

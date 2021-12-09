@@ -30,9 +30,8 @@ import net.liftweb.record.{Field, MetaRecord, Record}
 import net.liftweb.record.field._
 
 import org.bson._
-import org.bson.codecs.{BsonTypeClassMap, Codec, DecoderContext, EncoderContext}
+import org.bson.codecs.{ BsonTypeClassMap, Codec }
 import org.bson.codecs.configuration.{CodecRegistries, CodecRegistry}
-import org.bson.conversions.Bson
 import com.mongodb._
 
 /** Specialized Record that can be encoded and decoded from BSON (DBObject) */

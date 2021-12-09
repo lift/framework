@@ -19,20 +19,11 @@ package mocks
 
 import common.Logger
 
-import scala.collection.mutable.HashMap
 import scala.jdk.CollectionConverters._
 
-import java.io.PrintWriter
-import java.io.StringReader
-import java.io.BufferedReader
 import java.io.ByteArrayOutputStream
-import java.io.ByteArrayInputStream
 import java.io.InputStream
-import java.io.StringBufferInputStream
 import java.nio.file.{Files, Paths}
-import java.util.Arrays
-import java.util.Date
-import java.util.Locale
 import java.util.Vector
 import javax.servlet._
 import javax.servlet.http._

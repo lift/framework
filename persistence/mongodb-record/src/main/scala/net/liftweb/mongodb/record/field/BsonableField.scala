@@ -24,8 +24,6 @@ import scala.collection.mutable
 import java.util.UUID
 
 import net.liftweb.common._
-import net.liftweb.http.js.JsExp
-import net.liftweb.http.js.JE.{JsNull, JsRaw}
 import net.liftweb.json._
 import net.liftweb.record.Field
 

@@ -28,8 +28,6 @@ class SiteMapException(msg: String) extends Exception(msg)
 
 case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocParam]],
                    private val convertablekids: ConvertableToMenu*) extends HasKids  {
-  import SiteMap._
-
   lazy val kids: Seq[Menu] = convertablekids.map(_.toMenu)
 
   private var locs: Map[String, Loc[_]] = Map.empty

@@ -635,8 +635,6 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
    * to expose the functionality.
    */
   protected def updateFromJSON_!(toUpdate: A, json: JsonAST.JObject): A = {
-    import JsonAST._
-
     toUpdate.runSafe {
 
       for {
@@ -835,7 +833,6 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
         def runAppliers(rs: ResultSet) : Boolean = {
           try {
             if (rs.next) {
-              val meta = rs.getMetaData
               toSave.runSafe {
                 for {
                   indexMap <- thePrimaryKeyField
@@ -857,15 +854,6 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
         /**
          * Checks whether the result set has exactly one row.
          */
-        def hasOneRow(rs: ResultSet) : Boolean = {
-          try {
-            val firstRow = rs.next
-            (firstRow && !rs.next)
-          } finally {
-            rs.close
-          }
-        }
-
         if (saved_?(toSave) && clean_?(toSave)) true else {
           val ret = DB.use(toSave.connectionIdentifier) {
             conn =>
@@ -957,7 +945,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
 
 
   def createInstances[T](dbId: ConnectionIdentifier, rs: ResultSet, start: Box[Long], omax: Box[Long], f: A => Box[T]) : List[T] = {
-    var ret = new ListBuffer[T]
+    val ret = new ListBuffer[T]
     val bm = buildMapper(rs)
     var pos = (start openOr 0L) * -1L
     val max = omax openOr java.lang.Long.MAX_VALUE
@@ -2006,8 +1994,6 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
    * is run.
    */
   def formSnippet(html: NodeSeq, obj: A, cleanup: (A => Unit)): NodeSeq = {
-    val name = internal_dbTableName
-
     def callback(): Unit = {
       cleanup(obj)
     }
@@ -2045,7 +2031,6 @@ trait KeyedMetaMapper[Type, A<:KeyedMapper[Type, A]] extends MetaMapper[A] with 
    * the object from <code>viewSnippetSetup</code>.
    */
   def viewTransform(html: NodeSeq): NodeSeq = {
-    val name = internal_dbTableName
     val obj: A = viewSnippetSetup
 
     val otherTransforms =

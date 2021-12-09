@@ -18,7 +18,7 @@ package net.liftweb
 package db
 
 import java.lang.reflect.{InvocationHandler,Method,Proxy}
-import java.sql.{Array => SqlArray, _}
+import java.sql.{Array => _, _}
 
 import net.liftweb.util._
 import net.liftweb.common.{Box,Loggable}

@@ -17,12 +17,9 @@ package record
 package field
 
 import net.liftweb.common.{Failure, Empty, Full, Box}
-import net.liftweb.http.js.JsExp
-import net.liftweb.http.js.JE.{JsObj, JsRaw, Num, Str, JsNull}
+import net.liftweb.http.js.JE.{ JsRaw, JsNull }
 import net.liftweb.json._
 import net.liftweb.record._
-import net.liftweb.record.RecordHelpers.jvalueToJsExp
-import net.liftweb.record.field._
 import net.liftweb.util.Helpers
 
 import scala.jdk.CollectionConverters._

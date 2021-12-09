@@ -18,13 +18,10 @@ package net.liftweb
 package record 
 package field 
 
-import scala.xml._
 import net.liftweb.common._
-import net.liftweb.http.{S}
 import json._
 import net.liftweb.util._
 import Helpers._
-import S._
 
 trait LongTypedField extends NumericTypedField[Long] {
   

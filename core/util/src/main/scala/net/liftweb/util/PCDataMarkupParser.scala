@@ -23,7 +23,7 @@ import scala.xml.parsing.{ MarkupParser, MarkupHandler, FatalError, Constructing
 import scala.xml.dtd._
 import scala.xml._
 import java.io.InputStream
-import scala.io.{ Codec, Source }
+import scala.io.Source
 
 /**
  * Utilities for simplifying use of named HTML symbols.
@@ -79,7 +79,6 @@ trait PCDataMarkupParser[PCM <: MarkupParser with MarkupHandler] extends MarkupP
    */
   override def xCharData: NodeSeq = {
     xToken("[CDATA[")
-    val pos1 = pos
     val sb: StringBuilder = new StringBuilder()
     while (true) {
       if (ch==']'  &&
@@ -106,8 +105,6 @@ class PCDataXmlParser(val input: Source) extends ConstructingHandler with PCData
     var scope: NamespaceBinding = pscope
     var aMap: MetaData = Null
     while (isNameStart(ch)) {
-      val pos = this.pos
-
       val qname = xName
       val _     = xEQ()
       val value = xAttributeValue()

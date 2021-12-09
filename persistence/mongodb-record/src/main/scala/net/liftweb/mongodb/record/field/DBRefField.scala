@@ -21,11 +21,11 @@ package field
 
 import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.http.js.JE.Str
-import net.liftweb.json.JsonAST.{JNothing, JObject, JValue}
-import net.liftweb.record.{Field, MandatoryTypedField, Record}
+import net.liftweb.json.JsonAST.{ JNothing, JValue }
+import net.liftweb.record.{ Field, MandatoryTypedField }
 import scala.xml.NodeSeq
 
-import com.mongodb.{BasicDBObject, BasicDBObjectBuilder, DBObject, DBRef}
+import com.mongodb.{ BasicDBObject, DBRef }
 import com.mongodb.util.JSON
 import org.bson.types.ObjectId
 

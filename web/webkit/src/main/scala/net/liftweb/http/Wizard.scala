@@ -18,7 +18,6 @@ package net.liftweb
 package http
 
 import net.liftweb._
-import http._
 import js._
 import JsCmds._
 
@@ -31,8 +30,6 @@ import scala.reflect.Manifest
 object WizardRules extends Factory with FormVendor {
   val dbConnectionsForTransaction: FactoryMaker[List[LoanWrapper]] =
     new FactoryMaker[List[LoanWrapper]](() => Nil) {}
-
-  private def m[T](implicit man: Manifest[T]): Manifest[T] = man
 
   val allTemplatePath: FactoryMaker[List[String]] = new FactoryMaker[List[String]](() => List("templates-hidden", "wizard-all")) {}
 
@@ -222,8 +219,6 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
     val cancelButton: Elem = theScreen.cancelButton %
       ("onclick" -> submitOrAjax(cancelId))
 
-
-    val url = S.uri
 
     val extraFields: List[ScreenFieldInfo] =
       if (theScreen.confirmScreen_?) {

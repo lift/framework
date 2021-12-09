@@ -21,11 +21,10 @@ package field
 import scala.xml._
 import net.liftweb.common._
 import net.liftweb.http.js._
-import net.liftweb.http.{S, SHtml}
+import net.liftweb.http.SHtml
 import net.liftweb.json.JsonAST.{JBool, JNothing, JNull, JValue}
 import net.liftweb.util._
 import Helpers._
-import S._
 import JE._
 
 trait BooleanTypedField extends TypedField[Boolean] {

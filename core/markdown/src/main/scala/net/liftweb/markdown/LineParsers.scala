@@ -20,9 +20,6 @@ package net.liftweb.markdown
  */
 
 import scala.util.parsing.input.{Position, Reader}
-import java.util.StringTokenizer
-import scala.collection.mutable.{HashMap, ArrayBuffer, ListBuffer}
-
 
 /**
  * Represents a line of markdown.

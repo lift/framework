@@ -21,9 +21,7 @@ package snippet
 
 import net.liftweb.http._
 import net.liftweb.common._
-import net.liftweb.util._
 import scala.xml._
-import Helpers._
 
 /**
  * Adds a resource id entity for each URI in order to control browser caching.
@@ -40,9 +38,6 @@ object WithResourceId extends DispatchSnippet {
   def dispatch: DispatchIt = {
     case _ =>  render
   }
-
-
-  import Helpers._
 
   def render(xhtml: NodeSeq): NodeSeq = {
     xhtml flatMap (_ match {

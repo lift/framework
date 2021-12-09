@@ -2,7 +2,6 @@ package net.liftweb.http
 
 import scala.xml.NodeSeq
 import net.liftweb.util.TimeHelpers._
-import net.liftweb.util.Props
 
 /**
  * A snippet timer is a general interface for timing snippets. A few default implementations are

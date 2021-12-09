@@ -21,7 +21,6 @@ package provider
 import java.io.{InputStream}
 import java.net.{URL}
 import net.liftweb.common._
-import net.liftweb.util._
 
 /**
  * Represents the service context information. Similar with servlet context.

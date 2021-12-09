@@ -19,7 +19,7 @@ package mongodb
 package record
 package field
 
-import net.liftweb.common.{Box, Empty, Failure, Full}
+import net.liftweb.common.Box
 import net.liftweb.http.js.JE.{JsNull, JsRaw}
 import net.liftweb.json._
 import com.mongodb.DBObject

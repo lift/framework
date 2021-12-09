@@ -19,8 +19,6 @@ package http
 package js
 
 import common._
-import util.Props
-import http.js._
 import http.js.jquery.JQueryArtifacts
 
 import JsCmds._

@@ -18,17 +18,9 @@ package net.liftweb
 package record
 
 import net.liftweb.http.S
-import net.liftweb.http.S._
-import net.liftweb.http.js._
-import JsCmds._
-import scala.xml.{NodeSeq, Node, Text, Elem}
-import scala.xml.transform._
-import net.liftweb.sitemap._
-import net.liftweb.sitemap.Loc._
-import net.liftweb.util.Helpers._
+import scala.xml.{ NodeSeq, Text }
 import net.liftweb.util._
 import net.liftweb.common._
-import net.liftweb.util.Mailer._
 import net.liftweb.record.field._
 import net.liftweb.proto.{ProtoUser => GenProtoUser}
 

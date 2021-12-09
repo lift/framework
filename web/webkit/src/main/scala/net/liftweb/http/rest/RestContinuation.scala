@@ -18,9 +18,8 @@ package net.liftweb
 package http 
 package rest 
 
-import scala.collection.mutable.{HashMap, ListBuffer}
+import scala.collection.mutable.HashMap
 import net.liftweb.common._
-import net.liftweb.actor._
 import net.liftweb.util._
 
 final private[http] case class ContinuationException(req: Req, session: Box[LiftSession], f: ((=> LiftResponse) => Unit) => Unit) extends LiftFlowOfControlException("Continuation")

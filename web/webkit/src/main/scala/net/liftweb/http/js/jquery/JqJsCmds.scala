@@ -21,7 +21,6 @@ package jquery
 import scala.xml.NodeSeq
 import net.liftweb.util.Helpers._
 import net.liftweb.util.Helpers
-import net.liftweb.util.TimeHelpers
 import net.liftweb.common._
 import net.liftweb.util._
 

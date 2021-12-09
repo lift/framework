@@ -18,18 +18,15 @@ package net.liftweb
 package mongodb
 package record
 
-import scala.reflect.ClassTag
 import java.util.UUID
 
 import net.liftweb.common._
 import net.liftweb.json._
 import net.liftweb.mongodb.record.codecs.CollectibleRecordCodec
-import net.liftweb.mongodb.record.field._
 import net.liftweb.record.MandatoryTypedField
 import net.liftweb.util.Helpers.tryo
 
 import org.bson.Document
-import org.bson.codecs.Codec
 import org.bson.codecs.configuration.CodecRegistries
 import org.bson.conversions.Bson
 import org.bson.types.ObjectId
@@ -38,7 +35,6 @@ import com.mongodb._
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.client.{FindIterable, MongoCollection, MongoDatabase}
 import com.mongodb.client.model.Filters.{eq => eqs, in}
-import com.mongodb.client.model.Updates._
 import com.mongodb.client.model.{DeleteOptions, InsertOneOptions, ReplaceOptions, UpdateOptions}
 import com.mongodb.client.result.{DeleteResult, UpdateResult}
 

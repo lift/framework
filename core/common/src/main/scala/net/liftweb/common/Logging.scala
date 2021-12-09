@@ -362,7 +362,6 @@ object Log4j {
  */
 object Logback  {
   import ch.qos.logback.classic.LoggerContext;
-  import ch.qos.logback.core.util.StatusPrinter;
   import ch.qos.logback.classic.joran.JoranConfigurator;
 
   /**

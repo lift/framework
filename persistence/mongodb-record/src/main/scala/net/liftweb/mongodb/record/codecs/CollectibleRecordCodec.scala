@@ -18,22 +18,12 @@ package net.liftweb.mongodb
 package record
 package codecs
 
-import scala.collection.mutable
-import java.util.{Calendar, ArrayList, List => JavaList, Map => JavaMap, UUID}
-import java.util.regex.Pattern
-import java.util.Arrays.asList
-
-import net.liftweb.common._
 import net.liftweb.mongodb.codecs._
-import net.liftweb.mongodb.record.field._
 import net.liftweb.record.{Field, MandatoryTypedField, MetaRecord, Record}
-import net.liftweb.util.Helpers.tryo
 
 import org.bson._
 import org.bson.codecs._
-import org.bson.codecs.configuration.{CodecRegistry, CodecRegistries}
-import com.mongodb._
-import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider
+import org.bson.codecs.configuration.CodecRegistry
 
 /**
  * A Collectible (requires an _id field) codec for Record instances.

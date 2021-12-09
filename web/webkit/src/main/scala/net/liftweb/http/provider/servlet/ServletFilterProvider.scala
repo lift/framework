@@ -25,7 +25,6 @@ import javax.servlet.http._
 import net.liftweb.common._
 import net.liftweb.util._
 import net.liftweb.http._
-import Helpers._
 
 
 trait ServletFilterProvider extends Filter with HTTPProvider {

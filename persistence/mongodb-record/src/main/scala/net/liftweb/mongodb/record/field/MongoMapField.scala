@@ -19,20 +19,17 @@ package mongodb
 package record
 package field
 
-import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import scala.xml.NodeSeq
 
 import net.liftweb.common.{Box, Empty, Failure, Full}
-import net.liftweb.http.js.JsExp
-import net.liftweb.http.js.JE.{JsNull, JsRaw}
 import net.liftweb.json._
 import net.liftweb.record._
 import net.liftweb.util.Helpers.tryo
 
 import com.mongodb._
 import org.bson._
-import org.bson.codecs.{BsonDocumentCodec, BsonTypeCodecMap, Codec, DecoderContext, Encoder, EncoderContext}
+import org.bson.codecs.{ BsonTypeCodecMap, DecoderContext, EncoderContext }
 import org.bson.codecs.configuration.CodecRegistry
 
 /**

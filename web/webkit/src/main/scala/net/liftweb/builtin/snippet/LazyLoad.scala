@@ -21,12 +21,9 @@ package snippet
 import scala.xml._
 import http._
 import common._
-import actor._
 import util._
 import http.js._
 import JsCmds._
-import JE._
-import S._
 import Helpers._
 
 import comet.AsyncRenderComet

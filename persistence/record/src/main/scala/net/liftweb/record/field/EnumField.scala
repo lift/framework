@@ -27,8 +27,7 @@ import json._
 import util._
 import Helpers._
 import http.js._
-import http.{S, SHtml}
-import S._
+import http.SHtml
 import JE._
 
 

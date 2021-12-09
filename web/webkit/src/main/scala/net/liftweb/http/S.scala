@@ -219,9 +219,9 @@ object S extends S {
     /**
       * Private no-arg constructor needed for deserialization.
       */
+    @scala.annotation.nowarn("msg=private constructor in class PageStateHolder is never used")
     private[this] def this() = this(Empty, null)
     
-    private val loc = S.location
     private val snapshot:  Function1[Function0[Any], Any] = RequestVarHandler.generateSnapshotRestorer()
     override def sessionLife: Boolean = false
 

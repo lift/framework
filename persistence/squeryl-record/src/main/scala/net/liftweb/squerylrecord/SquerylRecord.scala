@@ -14,11 +14,9 @@
 package net.liftweb
 package squerylrecord
 
-import common.{Box, Full, Loggable}
-import db.DB
-import util.DynoVar
+import common.Loggable
 import org.squeryl.{Session, SessionFactory}
-import org.squeryl.internals.{DatabaseAdapter, FieldMetaData}
+import org.squeryl.internals.FieldMetaData
 import net.liftweb.util.LoanWrapper
 import RecordTypeMode._
 
@@ -55,11 +53,4 @@ object SquerylRecord extends Loggable {
       f
     }
   }
-  
-  /** 
-   * 
-   * NOTE: Remove this along with the deprecated method below
-   * Keep track of the current Squeryl Session we've created using DB 
-   * */
-  private object currentSession extends DynoVar[Session]
 }

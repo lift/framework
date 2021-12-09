@@ -20,12 +20,10 @@ package field
 
 import scala.xml._
 import net.liftweb.common._
-import net.liftweb.http.{S}
 import net.liftweb.http.js._
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.util._
 import Helpers._
-import S._
 import JE._
 
 

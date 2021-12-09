@@ -19,9 +19,9 @@ package mongodb
 package record 
 package field 
 
-import scala.xml.{Node, NodeSeq, Text}
+import scala.xml.{ NodeSeq, Text }
 
-import net.liftweb.common.{Box, Empty, Failure, Full}
+import net.liftweb.common.{ Box, Full }
 import net.liftweb.http.S
 import net.liftweb.http.js.JE._
 import net.liftweb.util.{FatLazy, FieldError, Helpers, Safe}

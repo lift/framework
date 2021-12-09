@@ -19,7 +19,6 @@ package mongodb
 package record
 package field
 
-import common.{Box, Empty, Full}
 import util.StringHelpers
 
 import scala.util.Random

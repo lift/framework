@@ -22,7 +22,6 @@ import common._
 import util._
 import util.Helpers._
 import http.js._
-import http.js.AjaxInfo
 import JE._
 import JsCmds._
 import scala.xml._
@@ -1456,8 +1455,6 @@ trait SHtml extends Loggable {
                        min: Double, max: Double, step: Double,
                        func: AFuncHolder, attrs: ElemAttr*): Elem = {
     import Helpers._
-    import common.Full
-
 
     makeFormElement("number",
                     func,
@@ -1965,8 +1962,6 @@ trait SHtml extends Loggable {
     {
       val raw = (funcName: String, value: String) => JsRaw("'" + funcName + "=' + this.options[" + value + ".selectedIndex].value")
       val key = formFuncName
-
-      val vals = opts.map(_.value)
 
       val testFunc = LFuncHolder(in => in match { case Nil => false case xs => func(xs) }, func.owner)
       fmapFunc(contextFuncBuilder(testFunc)) {

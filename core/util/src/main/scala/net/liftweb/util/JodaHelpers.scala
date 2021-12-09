@@ -18,7 +18,7 @@ package net.liftweb
 package util
 
 import common._
-import Helpers.{asInt, tryo}
+import Helpers.tryo
 
 import java.util.Date
 

@@ -16,9 +16,7 @@
 
 package net.liftweb
 
-import common.{Empty, Full}
 import scala.xml.NodeSeq
-
 
 /**
  * The util package object

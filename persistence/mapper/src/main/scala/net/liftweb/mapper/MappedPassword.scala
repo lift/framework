@@ -19,12 +19,11 @@ package mapper
 
 import net.liftweb.util.Helpers._
 import net.liftweb.util.FatLazy
-import java.sql.{ResultSet, Types}
+import java.sql.Types
 import java.lang.reflect.Method
-import scala.xml.{Node, Text, NodeSeq}
+import scala.xml.{ Text, NodeSeq }
 import java.util.Date
 import net.liftweb.http.{S}
-import net.liftweb.http.S._
 import net.liftweb.util._
 import net.liftweb.json._
 import net.liftweb.common._
@@ -103,7 +102,7 @@ extends MappedField[String, T] {
     })
 
 
-  private var password = FatLazy(defaultValue)
+  private val password = FatLazy(defaultValue)
   private val salt_i = FatLazy(util.Safe.randomString(16))
   private var invalidPw = false
   private var invalidMsg = ""

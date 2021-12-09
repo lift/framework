@@ -29,7 +29,7 @@ import net.liftweb.util.Helpers.tryo
 import com.mongodb._
 
 import org.bson._
-import org.bson.codecs.{BsonDocumentCodec, BsonTypeCodecMap, Codec, DecoderContext, Encoder, EncoderContext, StringCodec}
+import org.bson.codecs.{ BsonTypeCodecMap, DecoderContext, Encoder, EncoderContext, StringCodec }
 import org.bson.codecs.configuration.CodecRegistry
 
 import scala.collection.mutable

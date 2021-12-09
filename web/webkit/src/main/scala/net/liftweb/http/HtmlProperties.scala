@@ -20,7 +20,6 @@ package http
 import net.liftweb.common._
 import scala.xml.{Node, NodeSeq, Elem}
 import net.liftweb.util._
-import net.liftweb.util.Helpers._
 import java.io.{Writer, InputStream}
 
 /**

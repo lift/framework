@@ -18,10 +18,6 @@ package net.liftweb
 package util
 
 import scala.xml._
-import scala.xml.transform._
-import scala.collection.mutable.ListBuffer
-import common._
-
 import Helpers._
 
 /**

@@ -141,8 +141,6 @@ trait DB extends Loggable {
       case v => v
     }
 
-  private def postCommit_=(lst: List[() => Unit]): Unit = _postCommitFuncs.set(lst)
-
   // remove thread-local association
   private def clearThread(success: Boolean): Unit = {
     val ks = info.keySet
@@ -275,14 +273,12 @@ trait DB extends Loggable {
       }
     }
 
-  private def releaseConnection(conn: SuperConnection): Unit = conn.close
-
   private def calcBaseCount(conn: ConnectionIdentifier): Int =
   CurrentConnectionSet.is.map(_.use(conn)) openOr 0
 
   private def getConnection(name: ConnectionIdentifier): SuperConnection = {
     logger.trace("Acquiring " + name + " On thread " + Thread.currentThread)
-    var ret = info.get(name) match {
+    val ret = info.get(name) match {
       case None => ConnectionHolder(newConnection(name), calcBaseCount(name) + 1, Nil, false)
       case Some(ConnectionHolder(conn, cnt, post, rb)) => ConnectionHolder(conn, cnt + 1, post, rb)
     }
