@@ -21,7 +21,6 @@ package util
  * Holds the implicit conversions from/to MonadicCondition
  */
 object MonadicConversions {
-  import scala.language.implicitConversions
 
   implicit def bool2Monadic(cond: Boolean) = cond match {
     case true => True

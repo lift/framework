@@ -22,7 +22,6 @@ import java.util.regex._
 import java.lang.Character._
 import java.lang.{StringBuilder => GoodSB}
 
-import scala.language.implicitConversions
 import scala.xml.NodeSeq
 
 import common._

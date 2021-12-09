@@ -17,7 +17,6 @@
 package net.liftweb 
 package common
 
-import scala.language.implicitConversions
 
 /**
  * Via an `[[HLists.HList HList]]` containing a collection of `[[Box]]`, either generates an

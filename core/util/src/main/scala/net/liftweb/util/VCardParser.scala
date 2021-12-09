@@ -36,7 +36,6 @@ import scala.util.parsing.combinator._
  *
  */
 object VCardParser extends Parsers {
-  import scala.language.implicitConversions
 
   type Elem = Char
 

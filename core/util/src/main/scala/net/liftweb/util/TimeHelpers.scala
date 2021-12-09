@@ -20,7 +20,6 @@ package util
 import java.text.SimpleDateFormat
 import java.util.{TimeZone, Calendar, Date, Locale}
 
-import scala.language.implicitConversions
 
 import org.joda.time._
 

@@ -17,7 +17,6 @@
 package net.liftweb 
 package common 
 
-import scala.language.implicitConversions
 import scala.xml._
 
 /*

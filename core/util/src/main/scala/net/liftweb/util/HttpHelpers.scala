@@ -21,7 +21,6 @@ package util
 import java.net.{URLDecoder, URLEncoder}
 import java.util.concurrent.atomic.AtomicLong
 
-import scala.language.implicitConversions
 import scala.collection.Map
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.HashMap
