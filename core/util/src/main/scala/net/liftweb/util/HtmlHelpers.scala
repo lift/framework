@@ -17,8 +17,6 @@
 package net.liftweb
 package util
 
-import scala.language.higherKinds
-
 import StringHelpers._
 
 import scala.xml._

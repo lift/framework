@@ -768,8 +768,6 @@ trait CanBind[-T] {
 }
 
 object CanBind extends CssBindImplicits {
-  import scala.language.higherKinds
-
   implicit def stringTransform: CanBind[String] = new CanBind[String] {
     def apply(str: => String)(ns: NodeSeq): Seq[NodeSeq] = {
       val s = str

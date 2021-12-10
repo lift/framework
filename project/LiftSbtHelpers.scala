@@ -41,6 +41,7 @@ object LiftSbtHelpers {
         scalacOptions ++= List(
             "-feature",
             "-language:implicitConversions",
+            "-language:higherKinds",
             "-deprecation",
             "-Xfatal-warnings",
             "-unchecked",
