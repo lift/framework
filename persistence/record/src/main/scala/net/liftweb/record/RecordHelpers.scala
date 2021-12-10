@@ -17,7 +17,7 @@
 package net.liftweb
 package record
 
-import net.liftweb.http.js.{JsExp, JsObj}
+import net.liftweb.http.js.JsExp
 import net.liftweb.http.js.JE.{JsArray, JsFalse, JsNull, JsObj, JsTrue, Num, Str}
 import net.liftweb.json.JsonAST.{JArray, JBool, JInt, JDouble, JNothing, JNull, JObject, JString, JValue}
 

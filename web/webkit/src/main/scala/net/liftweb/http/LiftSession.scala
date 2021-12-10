@@ -21,7 +21,6 @@ import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 
 import scala.collection.mutable.{HashMap, ListBuffer}
-import collection.mutable.{HashMap, ListBuffer}
 import js.JE.{AnonFunc, JsObj, JsRaw}
 import js.JsCmds._Noop
 import scala.xml._
