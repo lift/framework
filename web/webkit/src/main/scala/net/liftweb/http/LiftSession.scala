@@ -2321,11 +2321,11 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   /**
-   * This method will send a message to a CometActor, whether or not
-   * the CometActor is instantiated.  If the CometActor already exists
-   * in the session, the message will be sent immediately.  If the CometActor
-   * is not yet instantiated, the message will be sent to the CometActor
-   * as part of setup `[[queueCometMessage]]` if it is created as part
+   * This method will send a message to a CometActor, whether or not the
+   * CometActor is instantiated. If the CometActor already exists in the
+   * session, the message will be sent immediately. If the CometActor is not
+   * yet instantiated, the message will be sent to the CometActor as part of
+   * setup `[[queueCometMessage(cometType:String,msg:Any):Unit*]]` if it is created as part
    * of the current HTTP request/response cycle.
    *
    * @param theType the type of the CometActor
@@ -2339,7 +2339,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   /**
-   * Similar behavior to [[LiftSession#sendCometMessage(theType:String,msg:Any):Unit the main sendCometMessage]],
+   * Similar behavior to [[LiftSession#sendCometMessage(theType:String,msg:Any):Unit* the main sendCometMessage]],
    * except that the type argument is taken as a type parameter instead of a string.
    *
    * @param msg the message to send to the CometActor
@@ -2351,7 +2351,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   /**
-   * Similar behavior to [[LiftSession#sendCometMessage(theType:String,msg:Any):Unit the main sendCometMessage]],
+   * Similar behavior to [[LiftSession#sendCometMessage(theType:String,msg:Any):Unit* the main sendCometMessage]],
    * except that this version will limit based on the name of the comet. Providing `name` as `Empty`,
    * will specifically select comets with no name.
    *
@@ -2369,7 +2369,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   /**
-   * Similar behavior to [[LiftSession#sendCometMessage(theType:String,msg:Any):Unit the main sendCometMessage]],
+   * Similar behavior to [[LiftSession#sendCometMessage(theType:String,msg:Any):Unit* the main sendCometMessage]],
    * except that this version will limit based on the name of the comet and it takes its type selector
    * as a type parameter.
    *

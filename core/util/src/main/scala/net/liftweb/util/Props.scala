@@ -428,7 +428,7 @@ private[util] trait Props extends Logger {
  * name format is:
  *
  * {{{
- *   $modeName.$userName.$hostName.$props
+ *   modeName.userName.hostName.props
  *
  *   examples:
  *   dpp.yak.props

@@ -173,9 +173,9 @@ trait MetaRecord[BaseRecord <: Record[BaseRecord]] {
    * Creates a new record, setting the value of the fields from the original object but
    * applying the new value for the specific field
    *
-   * @param - original the initial record
-   * @param - field the new mutated field
-   * @param - the new value of the field
+   * @param original - the initial record
+   * @param field - the new mutated field
+   * @param newValue - the new value of the field
    */
   def createWithMutableField[FieldType](original: BaseRecord,
                                         field: Field[FieldType, BaseRecord],

@@ -64,7 +64,7 @@ trait PasswordTypedField extends TypedField[String] {
 
   /**
    * If passed value is an Array[String] or a List[String] containing 2 items with equal value, it it hashes this value and sets it as new password.
-   * If passed value is a String or a Full[String] that starts with "$2a$", it assumes that it's a hashed version, thus sets it as it is, without hashing.
+   * If passed value is a String or a Full[String] that starts with "\\$2a\\$", it assumes that it's a hashed version, thus sets it as it is, without hashing.
    * In any other case, it fails the validation with "Passwords do not match" error
    */
   def setFromAny(in: Any): Box[String] = {

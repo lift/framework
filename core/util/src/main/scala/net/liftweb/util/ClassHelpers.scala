@@ -42,10 +42,10 @@ trait ClassHelpers { self: ControlHelpers =>
    * a list of functions modifying the given name create a target name to look for
    * (e.g: 'name' is hello_world and the target name may be 'HelloWorld').
    *
-   * @parameter name name of the class to find
-   * @parameter where list of package names which may contain the class
-   * @parameter modifiers list of functions that modify the 'name' of the class (e.g., leave it alone, make it camel case, etc.)
-   * @parameter targetType optional expected type which the retrieved class should conform to
+   * @param name name of the class to find
+   * @param where list of package names which may contain the class
+   * @param modifiers list of functions that modify the 'name' of the class (e.g., leave it alone, make it camel case, etc.)
+   * @param targetType optional expected type which the retrieved class should conform to
    *
    * @return a Box, either containing the found class or an Empty can.
    */
@@ -63,10 +63,10 @@ trait ClassHelpers { self: ControlHelpers =>
    * packages and a list of functions modifying the given name create a target name to look for
    * (e.g: 'name' is hello_world and the target name may be 'HelloWorld').
    *
-   * @parameter C type of the class to find
-   * @parameter name name of the class to find
-   * @parameter where list of package names which may contain the class
-   * @parameter modifiers list of functions that modify the 'name' of the class (e.g., leave it alone, make it camel case, etc.)
+   * @param C type of the class to find
+   * @param name name of the class to find
+   * @param where list of package names which may contain the class
+   * @param modifiers list of functions that modify the 'name' of the class (e.g., leave it alone, make it camel case, etc.)
    *
    * @return a Box, either containing the found class or an Empty can.
    */
@@ -78,9 +78,9 @@ trait ClassHelpers { self: ControlHelpers =>
    * list of functions modifying the given name create a target name to look for (e.g: 'name' is
    * hello_world and the target name may be 'HelloWorld').
    *
-   * @parameter name name of the class to find
-   * @parameter where list of package names which may contain the class
-   * @parameter modifiers list of functions that modify the 'name' of the class (e.g., leave it alone, make it camel case, etc.)
+   * @param name name of the class to find
+   * @param where list of package names which may contain the class
+   * @param modifiers list of functions that modify the 'name' of the class (e.g., leave it alone, make it camel case, etc.)
    *
    * @return a Box, either containing the found class or an Empty can.
    */
@@ -91,9 +91,9 @@ trait ClassHelpers { self: ControlHelpers =>
    * Find a class given its name and a list of packages, turning underscored names to
    * CamelCase if necessary.
    *
-   * @parameter name name of the class to find
-   * @parameter where list of package names which may contain the class
-   * @parameter targetType optional expected type which the retrieved class should conform to
+   * @param name name of the class to find
+   * @param where list of package names which may contain the class
+   * @param targetType optional expected type which the retrieved class should conform to
    *
    * @return a Box, either containing the found class or an Empty can.
    */
@@ -104,9 +104,9 @@ trait ClassHelpers { self: ControlHelpers =>
    * Find a class given its type, its name and a list of packages, turning underscored names to
    * CamelCase if necessary.
    *
-   * @parameter C type of the class to find
-   * @parameter name name of the class to find
-   * @parameter where list of package names which may contain the class
+   * @param C type of the class to find
+   * @param name name of the class to find
+   * @param where list of package names which may contain the class
    *
    * @return a Box, either containing the found class or an Empty can.
    */
@@ -117,8 +117,8 @@ trait ClassHelpers { self: ControlHelpers =>
    * Find a class given its name and a list of packages, turning underscored names to CamelCase if
    * necessary.
    *
-   * @parameter name name of the class to find
-   * @parameter where list of package names which may contain the class
+   * @param name name of the class to find
+   * @param where list of package names which may contain the class
    *
    * @return a Box, either containing the found class or an Empty can.
    */
@@ -129,8 +129,8 @@ trait ClassHelpers { self: ControlHelpers =>
    * Find a class given its type, a list of possible names and corresponding packages, turning
    * underscored names to CamelCase if necessary
    *
-   * @parameter C type of the class to find
-   * @parameter where list of pairs (name, package names) which may contain the class
+   * @param C type of the class to find
+   * @param where list of pairs (name, package names) which may contain the class
    *
    * @return a Box, either containing the found class or an Empty can.
    */
@@ -144,7 +144,7 @@ trait ClassHelpers { self: ControlHelpers =>
    * Find a class given a list of possible names and corresponding packages, turning underscored
    * names to CamelCase if necessary
    *
-   * @parameter where list of pairs (name, package names) which may contain the class
+   * @param where list of pairs (name, package names) which may contain the class
    *
    * @return a Box, either containing the found class or an Empty can.
    */

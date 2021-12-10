@@ -283,7 +283,7 @@ abstract class BasePostgreSQLDriver extends DriverType("PostgreSQL") {
   override def maxSelectLimit = "ALL"
 
   /**
-   * "$user" schema is searched before "public", but it does not exist by default,
+   * "user" schema is searched before "public", but it does not exist by default,
    * so "public" is our default choice.
    */
   override def defaultSchemaName : Box[String] = Full("public")

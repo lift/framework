@@ -828,7 +828,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
       case _ =>
         logger.debug("Saving dbName=%s, entity=%s".format(dbName, toSave))
         /**
-         * @return true if there was exactly one row in the result set, false if not.
+         * Return true if there was exactly one row in the result set, false if not.
          */
         def runAppliers(rs: ResultSet) : Boolean = {
           try {
