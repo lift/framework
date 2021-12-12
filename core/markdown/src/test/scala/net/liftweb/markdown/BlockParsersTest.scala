@@ -23,7 +23,6 @@ import org.junit.runner.RunWith
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import scala.xml.{Group, NodeSeq}
 
 /**
  * Tests the parsing on block level.
