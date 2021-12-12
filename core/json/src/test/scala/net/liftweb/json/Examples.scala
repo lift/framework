@@ -26,7 +26,6 @@ class Examples extends AbstractExamples {
 
 trait AbstractExamples extends Specification {
   import Examples._
-  import JsonAST.concat
   import JsonDSL._
 
   def print(value: JValue): String

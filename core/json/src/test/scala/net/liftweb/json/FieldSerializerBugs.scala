@@ -20,7 +20,7 @@ package json
 import org.specs2.mutable.Specification
 
 object FieldSerializerBugs extends Specification {
-  import Serialization.{read, write => swrite}
+  import Serialization.read
 
   implicit val formats = DefaultFormats + FieldSerializer[AnyRef]()
 

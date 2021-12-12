@@ -22,7 +22,6 @@ import org.specs2.mutable.Specification
 
 object XmlBugs extends Specification {
   import Xml._
-  import scala.xml.{Group, Text}
 
   "HarryH's XML parses correctly" in {
     val xml1 = <venue><id>123</id></venue>

@@ -17,8 +17,6 @@
 package net.liftweb
 package json
 
-import util.control.Exception._
-
 import org.specs2.mutable.Specification
 
 object ParserBugs extends Specification {
