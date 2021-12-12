@@ -141,22 +141,22 @@ class BasicTypesHelpersSpec extends Specification  with DataTables {
     }
 
     "have a toByteArrayInputStream reading an InputStream to a ByteArrayInputStream" in {
-      var array: Array[Byte] = Array(12, 14)
+      val array: Array[Byte] = Array(12, 14)
       val input = new ByteArrayInputStream(array)
       val result = toByteArrayInputStream(input)
       result.read must_== 12
       result.read must_== 14
     }
     "have a isEq method comparing 2 Byte arrays and returning true if they contain the same elements" in {
-      var a: Array[Byte] = Array(12, 14)
-      var b: Array[Byte] = Array(12, 14)
-      var c: Array[Byte] = Array(12, 13)
+      val a: Array[Byte] = Array(12, 14)
+      val b: Array[Byte] = Array(12, 14)
+      val c: Array[Byte] = Array(12, 13)
       isEq(a, b) must beTrue
       isEq(a, c) must beFalse
     }
     "have a notEq method comparing 2 Byte arrays and returning true if they don't contain the same elements" in {
-      var a: Array[Byte] = Array(12, 14)
-      var b: Array[Byte] = Array(12, 13)
+      val a: Array[Byte] = Array(12, 14)
+      val b: Array[Byte] = Array(12, 13)
       BasicTypesHelpers.notEq(a, b) must beTrue
     }
   }
@@ -174,7 +174,7 @@ class BasicTypesHelpersSpec extends Specification  with DataTables {
       }
 
       val pf3 = pf1.guard(pf2)
-      val pf4: PartialFunction[String, Boolean] = pf1.guard(pf3)
+      pf1.guard(pf3)
 
       pf3.isDefinedAt("bipe") must_== false
       pf3.isDefinedAt("snipe") must_== true

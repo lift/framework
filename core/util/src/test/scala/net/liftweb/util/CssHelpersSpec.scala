@@ -17,15 +17,11 @@
 package net.liftweb
 package util
 
-import scala.xml._
-
 import org.specs2.mutable.Specification
 
 import common._
 
 class CssHelpersSpec extends Specification {
-  import CSSHelpers._
-
   "CSSParser" should {
     "leave most CSS alone" in {
       val baseCss = 

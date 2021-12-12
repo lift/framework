@@ -245,8 +245,7 @@ class CssBindHelpersSpec extends Specification with XmlMatchers {
       def anchor(quesType: String, value: String) = {
         <a href="foo" class="selected">(value)</a>
       }
-      var page = 1
-      var elements = List("1","2","3","4")
+      val elements = List("1","2","3","4")
 
       val xml = <div class="lift:Bug.attack bug">
         <div id="question" class="question">
@@ -285,6 +284,8 @@ class CssBindHelpersSpec extends Specification with XmlMatchers {
       val xf = "* [id]" #> "xx" &
         "* [style]" #> "border:thin solid black" &
         "* *" #> <a/>
+
+      xf(<div/>)
       success
     }
 

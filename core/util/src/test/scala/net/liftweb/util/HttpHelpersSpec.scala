@@ -20,9 +20,6 @@ package util
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
-import HttpHelpers._
-
-
 /**
  * Systems under specification for HttpHelpers.
  */

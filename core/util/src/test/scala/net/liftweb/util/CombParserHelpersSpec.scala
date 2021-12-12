@@ -63,7 +63,6 @@ class CombParserHelpersSpec extends Specification with ScalaCheck {
       forAll(whiteSpaceParse)
     }
     "provide an acceptCI parser to parse whatever string matching another string ignoring case" in {
-      import AbcdStringGen._
       val ignoreCaseStringParse: Function2[String, String, Boolean] =
         (s: String, s2: String) => acceptCI(s).apply(s2) match {
           case Success(x, y) => s2.toUpperCase must startWith(s.toUpperCase)

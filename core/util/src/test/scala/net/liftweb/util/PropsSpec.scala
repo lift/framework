@@ -20,7 +20,6 @@ package util
 import java.io.ByteArrayInputStream
 
 import org.specs2.mutable.Specification
-import org.specs2.mutable.After
 
 import common._
 import Props.RunModes._
@@ -37,7 +36,6 @@ class PropsSpec extends Specification {
 
     "Allow modification of whereToLook before run-mode is set" in {
       val testProps = TestProps()
-      val originalWtl = testProps.whereToLook
 
       var wasCalled = false
       testProps.whereToLook = () => {
