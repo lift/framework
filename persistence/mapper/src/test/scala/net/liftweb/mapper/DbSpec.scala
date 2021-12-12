@@ -20,7 +20,6 @@ package mapper
 import org.specs2.mutable.Specification
 
 import common._
-import util._
 import http.{S, LiftSession}
 
 

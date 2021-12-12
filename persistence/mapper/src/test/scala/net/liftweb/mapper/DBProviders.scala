@@ -17,7 +17,6 @@
 package net.liftweb
 package mapper
 
-import java.io.File
 import java.sql.{Connection, DriverManager}
 
 import common._
@@ -46,7 +45,6 @@ object DbProviders {
     def vendor : Vendor
 
     def setupDB: Unit = {
-      val f = new File(filePath)
       DB.defineConnectionManager(DefaultConnectionIdentifier, vendor)
       DB.defineConnectionManager(SnakeConnectionIdentifier, vendor)
     }

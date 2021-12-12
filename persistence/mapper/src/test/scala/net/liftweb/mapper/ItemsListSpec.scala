@@ -19,7 +19,6 @@ package mapper
 
 import org.specs2.mutable.Specification
 
-import util._
 import view._
 
 

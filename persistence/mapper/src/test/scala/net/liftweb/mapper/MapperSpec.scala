@@ -23,9 +23,7 @@ import org.specs2.mutable.Specification
 import org.specs2.specification.BeforeEach
 
 import common._
-import json._
 import util._
-import Helpers._
 import http.LiftRules
 import http.provider.HTTPRequest
 
@@ -80,6 +78,7 @@ class MapperSpec extends Specification with BeforeEach {
         notNull.moose.get must_== Full(99L)
 
         val disabled = SampleModel.find(By(SampleModel.status, SampleStatus.Disabled))
+        disabled.isEmpty must beFalse
 
         val meow = SampleTag.find(By(SampleTag.tag, "Meow")).openOrThrowException("Test")
 
@@ -221,6 +220,8 @@ class MapperSpec extends Specification with BeforeEach {
           // nor does it work in MySQL, but it's a MySQL limitation
           //  try { provider.setupDB } catch { case e => skip(e.getMessage) }
           val dogs = Dog.findAll(By(Dog.name, "fido"), OrderBy(Dog.name, Ascending), PreCache(Dog.owner))
+          dogs.length must be_>(0)
+
           val oo = SampleTag.findAll(OrderBy(SampleTag.tag, Ascending), MaxRows(2), PreCache(SampleTag.model))
 
           (oo.length > 0) must beTrue
@@ -231,6 +232,8 @@ class MapperSpec extends Specification with BeforeEach {
 
       "Non-deterministic Precache works" in {
         val dogs = Dog.findAll(By(Dog.name, "fido"), PreCache(Dog.owner, false))
+        dogs.length must be_>(0)
+
         val oo = SampleTag.findAll(By(SampleTag.tag, "Meow"), PreCache(SampleTag.model, false))
 
         for (t <- oo) yield t.model.cached_? must beTrue
@@ -240,6 +243,8 @@ class MapperSpec extends Specification with BeforeEach {
 
       "Non-deterministic Precache works with OrderBy" in {
         val dogs = Dog.findAll(By(Dog.name, "fido"), OrderBy(Dog.name, Ascending), PreCache(Dog.owner, false))
+        dogs.length must be_>(0)
+
         val oo = SampleTag.findAll(OrderBy(SampleTag.tag, Ascending), MaxRows(2), PreCache(SampleTag.model, false))
 
         for (t <- oo) yield t.model.cached_? must beTrue
@@ -315,6 +320,8 @@ class MapperSpec extends Specification with BeforeEach {
           // nor does it work in MySQL, but it's a MySQL limitation
           //  try { provider.setupDB } catch { case e => skip(e.getMessage) }
           val dogs = Dog2.findAll(By(Dog2.name, "fido"), OrderBy(Dog2.name, Ascending), PreCache(Dog2.owner))
+          dogs.length must be_>(0)
+
           val oo = SampleTag.findAll(OrderBy(SampleTag.tag, Ascending), MaxRows(2), PreCache(SampleTag.model))
 
           (oo.length > 0) must beTrue
@@ -325,6 +332,8 @@ class MapperSpec extends Specification with BeforeEach {
 
       "Non-deterministic Precache works with Mixed Case" in {
         val dogs = Dog2.findAll(By(Dog2.name, "fido"), PreCache(Dog2.owner, false))
+        dogs.length must be_>(0)
+
         val oo = SampleTag.findAll(By(SampleTag.tag, "Meow"), PreCache(SampleTag.model, false))
 
         for (t <- oo) yield t.model.cached_? must beTrue
@@ -355,6 +364,7 @@ class MapperSpec extends Specification with BeforeEach {
 
       "Non-deterministic Precache works with OrderBy with Mixed Case" in {
         val dogs = Dog2.findAll(By(Dog2.name, "fido"), OrderBy(Dog2.name, Ascending), PreCache(Dog2.owner, false))
+        dogs.length must be_>(0)
 
         val oo = SampleTag.findAll(OrderBy(SampleTag.tag, Ascending), MaxRows(2), PreCache(SampleTag.model, false))
 
