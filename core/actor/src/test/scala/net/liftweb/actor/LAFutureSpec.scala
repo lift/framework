@@ -2,7 +2,6 @@ package net.liftweb.actor
 
 import net.liftweb.common.{Box, Failure, Full}
 import org.specs2.mutable.Specification
-import java.util.concurrent.atomic.AtomicBoolean
 
 class LAFutureSpec extends Specification {
   sequential
