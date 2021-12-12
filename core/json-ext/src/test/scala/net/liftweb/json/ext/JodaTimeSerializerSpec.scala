@@ -22,7 +22,6 @@ import org.joda.time._
 
 import org.specs2.mutable.Specification
 
-import common._
 import json.Serialization.{read, write => swrite}
 
 
