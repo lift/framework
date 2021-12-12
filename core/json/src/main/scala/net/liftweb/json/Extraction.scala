@@ -367,7 +367,7 @@ object Extraction {
       }
     }
 
-    def build(root: JValue, mapping: Mapping): Any = mapping match {
+    def build(root: JValue, mapping: Mapping): Any = (mapping: @unchecked) match {
       case Value(targetType) =>
         convert(root, targetType, formats)
 
@@ -403,7 +403,6 @@ object Extraction {
         case JObject(xs) => Map(xs.map(x => (x.name, build(x.value, m))): _*)
         case x => fail("Expected object but got " + x)
       }
-      case HCol(_, _) => throw new IllegalArgumentException("Case HCol(_, _) not permitted.")
     }
 
     def mkTypedArray(c: Class[_])(a: Array[_]) = {

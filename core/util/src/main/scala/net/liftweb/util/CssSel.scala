@@ -187,7 +187,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     final def applyAttributeRules(bindList: List[CssBind], elem: Elem): Elem = {
       bindList.map(b => (b, b.css.openOrThrowException("Guarded with test before calling this method").
         subNodes.openOrThrowException("Guarded with test before calling this method"))).
-        foldLeft(elem) {
+        foldLeft(elem) { (elt, binding) => ((elt, binding): @unchecked) match {
         case (elem, (bind, AttrSubNode(attr))) => {
           val calced = bind.calculate(elem).map(findElemIfThereIsOne _)
           val filtered = elem.attributes.filter {
@@ -274,10 +274,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
               elem.scope, elem.minimizeEmpty, elem.child: _*)
 
           }
-        }
-
-        case _ => throw new IllegalArgumentException("Applying attributes impossible.")
-      }
+        }}}
     }
 
 
@@ -360,7 +357,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
       // we can do an open_! here because all the CssBind elems
       // have been vetted
-      bind.css.openOrThrowException("Guarded with test before calling this method").subNodes match {
+      (bind.css.openOrThrowException("Guarded with test before calling this method").subNodes: @unchecked) match {
         case Full(SelectThisNode(kids)) => {
           throw new RetryWithException(if (kids) realE.child else realE)
         }
@@ -437,8 +434,6 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
             }
           }
         }
-
-        case _ => throw new IllegalArgumentException("Should never happen")
       }
     }
 
