@@ -32,9 +32,6 @@ class HListSpec extends Specification {
 
       val x = 1 :+: "Foo" :+: HNil
 
-      val head: Int = x.head
-      val head2: String = x.tail.head
-
       x.head must_== 1
       x.tail.head must_== "Foo"
     }
@@ -78,6 +75,10 @@ class HListSpec extends Specification {
           val as: String = a
           val onei: Int = one
           val lstl: List[Int] = lst
+
+          as must_== "a"
+          onei must_== 1
+          lstl must_== List(1, 2, 3)
 
           success
         }

@@ -1,8 +1,6 @@
 package net.liftweb
 package common
 
-import org.slf4j.{Logger=>SLF4JLogger}
-
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 
@@ -420,11 +418,10 @@ class BoxLoggingSpec extends Specification with Mockito {
       }
 
       "log to the Lift logger" in {
-        val result =
-          new MyLoggable {
-            Failure("Failed").logFailure("Second")
+        new MyLoggable {
+          Failure("Failed").logFailure("Second")
             Failure("Excepted", Full(new Exception("uh-oh")), Empty).logFailure("Third")
-          }
+        }
 
         (there was one(mockLogger).error(any[String])) and
         (there was one(mockLogger).error(any[String], any[Exception]))
