@@ -18,9 +18,7 @@ package net.liftweb
 package http
 package testing
 
-import net.liftweb.util.Helpers._
-import net.liftweb.common.{ Box, Full, Empty, Failure}
-import net.liftweb.util.{Helpers}
+import net.liftweb.common.Box
 
 /*
  * The purpose of these classes is not to run actual tests,
@@ -36,7 +34,7 @@ object MyCode extends TestKit {
   l2.foreach {
     x: HttpResponse =>
       val l3: TestResponse = x.get("ddd")
-    println("Hello")
+    println(l3.toString)
   }
 
   
@@ -52,8 +50,8 @@ object MyBoxCode extends RequestKit {
   val l2: Box[TheResponse] = post("/foo")
   l2.foreach {
     x: TheResponse =>
-      val l3: Box[TheResponse] = x.get("ddd")
-    println("Hello")
+    val l3: Box[TheResponse] = x.get("ddd")
+      println(l3.toString)
   }
 
   
@@ -61,6 +59,4 @@ object MyBoxCode extends RequestKit {
     login: TheResponse <- post("/whatever")
     next <- login.get("/bla")
   } {} 
-  
 }
-
