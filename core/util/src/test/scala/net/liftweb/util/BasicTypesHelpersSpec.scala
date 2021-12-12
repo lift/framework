@@ -174,10 +174,11 @@ class BasicTypesHelpersSpec extends Specification  with DataTables {
       }
 
       val pf3 = pf1.guard(pf2)
-      pf1.guard(pf3)
+      val pf4 = pf1.guard(pf3)
 
       pf3.isDefinedAt("bipe") must_== false
       pf3.isDefinedAt("snipe") must_== true
+      pf4 must beAnInstanceOf[PartialFunction[String, Boolean]]
     }
   }
 
