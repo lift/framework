@@ -17,7 +17,6 @@
 package net.liftweb
 package http
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.xml.NodeSeq
 import net.liftweb.common.{Full, Empty, Failure}
 import net.liftweb.util.Helpers.tryo

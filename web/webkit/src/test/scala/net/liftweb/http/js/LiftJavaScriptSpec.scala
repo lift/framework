@@ -29,7 +29,6 @@ import common._
 import http.js._
 import http.js.JsCmds._
 import http.js.JE._
-import util.Props
 import util.Helpers._
 
 /**

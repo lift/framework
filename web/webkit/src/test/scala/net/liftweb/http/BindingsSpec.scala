@@ -17,7 +17,7 @@
 package net.liftweb
 package http
 
-import scala.xml.{NodeSeq, Text}
+import scala.xml.Text
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 

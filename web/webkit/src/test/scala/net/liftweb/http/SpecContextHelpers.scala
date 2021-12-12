@@ -2,8 +2,8 @@ package net.liftweb
 package http
 
 import org.specs2._
-  import execute.{Result, AsResult}
-  import mutable.{Around, Specification}
+import execute.{Result, AsResult}
+import mutable.Around
 
 import common.{Box, Empty}
 

@@ -18,8 +18,6 @@ package bootstrap.liftweb
 
 import net.liftweb.util._
 import net.liftweb.http._
-import net.liftweb.sitemap._
-import net.liftweb.sitemap.Loc._
 import Helpers._
 
 /**

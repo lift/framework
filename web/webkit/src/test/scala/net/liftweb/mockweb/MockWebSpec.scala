@@ -21,7 +21,6 @@ import scala.xml.{Null,Text,UnprefixedAttribute}
 import org.specs2.mutable.Specification
 
 import common._
-import util._
 import http._
 import provider.servlet.HTTPRequestServlet
 import mocks.MockHttpServletRequest

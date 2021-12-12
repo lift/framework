@@ -18,11 +18,6 @@ package http
 
 import mockweb._
 
-
-import scala.xml.NodeSeq
-
-import common.{ Box, Empty, Full }
-
 /**
 * This only exists to keep the WebSpecSpec clean. Normally,
 * you could just use "() => bootstrap.Boot.boot".

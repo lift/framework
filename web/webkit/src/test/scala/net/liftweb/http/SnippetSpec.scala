@@ -22,7 +22,6 @@ import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 import common._
-import util.Helpers._
 
 
 /**

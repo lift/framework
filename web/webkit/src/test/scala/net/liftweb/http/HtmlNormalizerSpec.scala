@@ -1,19 +1,10 @@
 package net.liftweb
 package http
 
-import scala.xml._
-
 import org.specs2._
-  import execute.{Result, AsResult}
-  import mutable.{Around, Specification}
-  import matcher.XmlMatchers
-  import mock.Mockito
-
-import org.mockito.Mockito._
-
-import common._
-
-import js.JE.JsObj
+import mutable.Specification
+import matcher.XmlMatchers
+import mock.Mockito
 
 class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
   val eventAttributeMatcher = "(?s).*\\W(on[a-zA-Z]+)=.*".r

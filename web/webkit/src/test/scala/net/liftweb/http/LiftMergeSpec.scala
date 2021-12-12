@@ -8,11 +8,8 @@ import org.specs2._
   import matcher.XmlMatchers
   import mock.Mockito
 
-import org.mockito.Mockito._
-
 import common._
 
-import js.JE.JsObj
 import js.pageScript
 
 class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
