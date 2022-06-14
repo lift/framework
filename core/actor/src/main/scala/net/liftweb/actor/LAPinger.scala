@@ -40,14 +40,16 @@ object ThreadPoolRules {
 object LAPinger {
 
   /**The underlying <code>java.util.concurrent.ScheduledExecutor</code> */
-  private var service = Executors.newSingleThreadScheduledExecutor(TF)
+  @volatile var buildService: () => ScheduledExecutorService = () => Executors.newSingleThreadScheduledExecutor(TF)
+
+  private var service: ScheduledExecutorService = buildService()
 
   /**
    * Re-create the underlying <code>SingleThreadScheduledExecutor</code>
    */
   def restart: Unit = synchronized {
     if ((service eq null) || service.isShutdown)
-      service = Executors.newSingleThreadScheduledExecutor(TF)
+      service = buildService()
   }
 
   /**
