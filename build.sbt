@@ -1,46 +1,46 @@
 import Dependencies._
 import LiftSbtHelpers._
 
-organization in ThisBuild          := "net.liftweb"
-version in ThisBuild               := "3.6.0-SNAPSHOT"
-homepage in ThisBuild              := Some(url("http://www.liftweb.net"))
-licenses in ThisBuild              += ("Apache License, Version 2.0", url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
-startYear in ThisBuild             := Some(2006)
-organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
+ThisBuild / organization         := "net.liftweb"
+ThisBuild / version              := "3.6.0-SNAPSHOT"
+ThisBuild / homepage             := Some(url("https://www.liftweb.net"))
+ThisBuild / licenses             += ("Apache License, Version 2.0", url("https://www.apache.org/licenses/LICENSE-2.0.txt"))
+ThisBuild / startYear            := Some(2006)
+ThisBuild / organizationName     := "WorldWide Conferencing, LLC"
 
 val scala211Version = "2.11.12"
-val scala212Version = "2.12.12"
-val scala213Version = "2.13.2"
+val scala212Version = "2.12.15"
+val scala213Version = "2.13.8"
 
 val crossUpTo212 = Seq(scala212Version, scala211Version)
 val crossUpTo213 = scala213Version +: crossUpTo212
 
-scalaVersion in ThisBuild          := scala212Version
-crossScalaVersions in ThisBuild    := crossUpTo212 // default everyone to 2.12 for now
+ThisBuild / scalaVersion         := scala212Version
+ThisBuild / crossScalaVersions   := crossUpTo212 // default everyone to 2.12 for now
 
-libraryDependencies in ThisBuild ++= Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalactic, scalatest)
+ThisBuild / libraryDependencies ++= Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalactic, scalatest)
 
-scalacOptions in ThisBuild ++= Seq("-deprecation")
+ThisBuild / scalacOptions       ++= Seq("-deprecation")
 
 // Settings for Sonatype compliance
-pomIncludeRepository in ThisBuild := { _ => false }
-publishTo in ThisBuild := {
+ThisBuild / pomIncludeRepository := { _ => false }
+ThisBuild / publishTo := {
   if (isSnapshot.value) {
     Some(Opts.resolver.sonatypeSnapshots)
   } else {
     Some(Opts.resolver.sonatypeStaging)
   }
 }
-scmInfo in ThisBuild   := Some(ScmInfo(url("https://github.com/lift/framework"), "scm:git:https://github.com/lift/framework.git"))
-pomExtra in ThisBuild  := Developers.toXml
+ThisBuild / scmInfo   := Some(ScmInfo(url("https://github.com/lift/framework"), "scm:git:https://github.com/lift/framework.git"))
+ThisBuild / pomExtra  := Developers.toXml
 
-credentials in ThisBuild += Credentials(BuildPaths.getGlobalSettingsDirectory(state.value, BuildPaths.getGlobalBase(state.value)) / ".credentials")
+ThisBuild / credentials += Credentials(BuildPaths.getGlobalSettingsDirectory(state.value, BuildPaths.getGlobalBase(state.value)) / ".credentials")
 
 initialize := {
   printLogo(name.value, version.value, scalaVersion.value)
 }
 
-resolvers  in ThisBuild  ++= Seq(
+ThisBuild / resolvers  ++= Seq(
   "snapshots"     at "https://oss.sonatype.org/content/repositories/snapshots",
   "releases"      at "https://oss.sonatype.org/content/repositories/releases"
 )
@@ -70,7 +70,7 @@ lazy val actor =
     .dependsOn(common)
     .settings(
       description := "Simple Actor",
-      parallelExecution in Test := false
+      Test / parallelExecution := false
     )
     .settings(crossScalaVersions := crossUpTo213)
 
@@ -78,7 +78,7 @@ lazy val markdown =
   coreProject("markdown")
     .settings(
       description := "Markdown Parser",
-      parallelExecution in Test := false,
+      Test / parallelExecution := false,
       libraryDependencies ++= Seq(scalatest, scalatest_junit, scala_xml, scala_parser)
     )
     .settings(crossScalaVersions := crossUpTo213)
@@ -87,7 +87,7 @@ lazy val json =
   coreProject("json")
     .settings(
       description := "JSON Library",
-      parallelExecution in Test := false,
+      Test / parallelExecution := false,
       libraryDependencies ++= Seq(scalap(scalaVersion.value), paranamer,  scala_xml)
     )
     .settings(crossScalaVersions := crossUpTo213)
@@ -121,7 +121,7 @@ lazy val util =
     .dependsOn(actor, json, markdown)
     .settings(
       description := "Utilities Library",
-      parallelExecution in Test := false,
+      Test / parallelExecution := false,
       libraryDependencies ++= Seq(
         scala_compiler(scalaVersion.value),
         joda_time,
@@ -155,7 +155,7 @@ lazy val webkit =
     .dependsOn(util, testkit % "provided")
     .settings(
       description := "Webkit Library",
-      parallelExecution in Test := false,
+      Test / parallelExecution := false,
       libraryDependencies ++= Seq(
         commons_fileupload,
         rhino,
@@ -175,26 +175,26 @@ lazy val webkit =
           case _ => Seq.empty
         }
       },
-      initialize in Test := {
+      Test / initialize := {
         System.setProperty(
           "net.liftweb.webapptest.src.test.webapp",
-          ((sourceDirectory in Test).value / "webapp").absString
+          ((Test / sourceDirectory).value / "webapp").absString
         )
       },
-      unmanagedSourceDirectories in Compile += {
-        (sourceDirectory in Compile).value / ("scala_" + scalaBinaryVersion.value)
+      Compile / unmanagedSourceDirectories += {
+        (Compile / sourceDirectory).value / ("scala_" + scalaBinaryVersion.value)
       },
-      unmanagedSourceDirectories in Test += {
-        (sourceDirectory in Test).value / ("scala_" + scalaBinaryVersion.value)
+      Test / unmanagedSourceDirectories += {
+        (Test / sourceDirectory).value / ("scala_" + scalaBinaryVersion.value)
       },
-      compile in Compile := (compile in Compile).dependsOn(WebKeys.assets).value,
+      Compile / compile := (Compile / compile).dependsOn(WebKeys.assets).value,
       /**
         * This is to ensure that the tests in net.liftweb.webapptest run last
         * so that other tests (MenuSpec in particular) run before the SiteMap
         * is set.
         */
-      testGrouping in Test := {
-        (definedTests in Test).map { tests =>
+      Test / testGrouping := {
+        (Test / definedTests).map { tests =>
           import Tests._
 
           val (webapptests, others) = tests.partition { test =>
@@ -233,12 +233,12 @@ lazy val mapper =
     .dependsOn(db, proto)
     .settings(
       description := "Mapper Library",
-      parallelExecution in Test := false,
+      Test / parallelExecution := false,
       libraryDependencies ++= Seq(h2, derby, jbcrypt),
-      initialize in Test := {
+      Test / initialize := {
         System.setProperty(
           "derby.stream.error.file",
-          ((crossTarget in Test).value / "derby.log").absolutePath
+          ((Test / crossTarget).value / "derby.log").absolutePath
         )
       }
     )
@@ -260,12 +260,12 @@ lazy val mongodb =
     .dependsOn(json_ext, util)
     .settings(
       crossScalaVersions := crossUpTo213,
-      parallelExecution in Test := false,
+      Test / parallelExecution := false,
       libraryDependencies ++= Seq(mongo_java_driver, mongo_java_driver_async),
-      initialize in Test := {
+      Test / initialize := {
         System.setProperty(
           "java.util.logging.config.file",
-          ((resourceDirectory in Test).value / "logging.properties").absolutePath
+          ((Test / resourceDirectory).value / "logging.properties").absolutePath
         )
       }
     )
@@ -275,5 +275,5 @@ lazy val mongodb_record =
     .dependsOn(record, mongodb)
     .settings(
       crossScalaVersions := crossUpTo213,
-      parallelExecution in Test := false
+      Test / parallelExecution := false
     )
