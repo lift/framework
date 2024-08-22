@@ -135,7 +135,7 @@ object ResourceServer {
     allowedPaths = path orElse allowedPaths
   }
 
-  def rewrite(rw: PartialFunction[List[String], List[String]]) {
+  def rewrite(rw: PartialFunction[List[String], List[String]]) : Unit = {
     pathRewriter = rw orElse pathRewriter
   }
 }

@@ -646,7 +646,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     var availableOwners = Set[String]()
     var removedOwners = Set[String]()
 
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     nmessageCallback.asScala.foreach {
       case (functionName, funcHolder) if test(funcHolder) =>
         funcHolder.owner.foreach(removedOwners += _)
@@ -701,7 +701,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   }
 
   def doCometActorCleanup(): Unit = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
 
     this.nasyncComponents.values.asScala.foreach(_ ! ShutdownIfPastLifespan)
   }
@@ -716,7 +716,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * Destroy this session and the underlying container session.
    */
-  def destroySession() {
+  def destroySession() : Unit = {
     SessionMaster ! RemoveSession(this.underlyingId)
 
     S.request.foreach(_.request.session.terminate)
@@ -1131,7 +1131,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    */
   def performHeadMerge(in: NodeSeq, req: Req): Node = merge(in, req)
 
-  private def cleanUpBeforeRender {
+  private def cleanUpBeforeRender : Unit = {
     // Reset the mapping between ID and Style for Ajax notices.
     MsgErrorMeta(new HashMap)
     MsgWarningMeta(new HashMap)
@@ -2406,7 +2406,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * Queue a message for a comet that is not started yet.
    */
-  def queueCometMessage(cometType: String, msg: Any) {
+  def queueCometMessage(cometType: String, msg: Any) : Unit = {
     testStatefulFeature {
       cometPreMessagesByType.atomicUpdate(_ :+ cometType -> msg)
     }
@@ -2415,7 +2415,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * Queue a message for a comet that is not started yet.
    */
-  def queueCometMessage(cometType: String, cometName: Box[String], msg: Any) {
+  def queueCometMessage(cometType: String, cometName: Box[String], msg: Any) : Unit = {
     testStatefulFeature {
       cometPreMessagesById.atomicUpdate(_ :+ CometId(cometType, cometName) -> msg)
     }
@@ -2820,7 +2820,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
                   try {
                     func.asInstanceOf[Function2[Any, RoundTripHandlerFunc, Unit]](reified, new RoundTripHandlerFunc {
                       @volatile private var done_? = false
-                      def done() {
+                      def done() : Unit = {
                         if (!done_?) {
                           done_? = true
                           ca ! DoneMsg(guid)
@@ -2858,7 +2858,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
                       }
 
-                      def send(value: JValue) {
+                      def send(value: JValue) : Unit = {
                         if (!done_?) {
                           ca ! ItemMsg(guid, value)
                         }

@@ -177,7 +177,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Full(1) flip { _ => "No data found" } mustEqual Empty
     }
     "define an 'elements' method returning an iterator containing its value" in {
-      Full(1).elements.next must_== 1
+      Full(1).elements.next() must_== 1
     }
     "define a 'toList' method returning a List containing its value" in {
       Full(1).toList must_== List(1)

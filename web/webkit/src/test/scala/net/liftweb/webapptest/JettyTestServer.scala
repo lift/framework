@@ -19,8 +19,8 @@ package webapptest
 
 import java.net.URL
 
-import org.mortbay.jetty.Server
-import org.mortbay.jetty.webapp.WebAppContext
+import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.webapp.WebAppContext
 
 import net.sourceforge.jwebunit.junit.WebTester
 import junit.framework.AssertionFailedError
@@ -41,8 +41,8 @@ final class JettyTestServer(baseUrlBox: Box[URL]) {
     context.setWar(dir)
     //val context = new Context(_server, "/", Context.SESSIONS)
     //context.addFilter(new FilterHolder(new LiftFilter()), "/");
-    server.addHandler(context)
-    server.setGracefulShutdown(100)
+    server.setHandler(context)
+    server.setStopTimeout(100)
     server.setStopAtShutdown(true)
     (server, context)
   }
@@ -54,7 +54,7 @@ final class JettyTestServer(baseUrlBox: Box[URL]) {
   }
 
   def stop() {
-    context_.setShutdown(true)
+    context_.shutdown()
     server_.stop()
     server_.join()
   }

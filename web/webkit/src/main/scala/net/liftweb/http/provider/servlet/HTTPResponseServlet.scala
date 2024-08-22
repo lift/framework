@@ -21,7 +21,7 @@ package servlet
 
 import scala.collection.mutable.{ListBuffer}
 import java.io.{OutputStream}
-import javax.servlet.http.{HttpServletResponse, Cookie}
+import jakarta.servlet.http.{HttpServletResponse, Cookie}
 import net.liftweb.http.provider.encoder.CookieEncoder
 import net.liftweb.common._
 import net.liftweb.util._

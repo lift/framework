@@ -102,7 +102,7 @@ class LiftServlet extends Loggable {
 
     val req = if (null eq reqOrg) reqOrg else reqOrg.snapshot
 
-    def runFunction(doAnswer: LiftResponse => Unit) {
+    def runFunction(doAnswer: LiftResponse => Unit) : Unit = {
       Schedule.schedule(() => {
         val answerFunc: (=> LiftResponse) => Unit = response =>
           doAnswer(wrapState(req, session)(response))

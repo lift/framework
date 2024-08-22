@@ -201,7 +201,7 @@ trait BaseGetPoster {
 
       def isRepeatable() = true
 
-      def writeRequest(out: OutputStream) {
+      def writeRequest(out: OutputStream) : Unit = {
         out.write(bytes)
       }
     }
@@ -216,7 +216,7 @@ trait BaseGetPoster {
 
       def isRepeatable() = true
 
-      def writeRequest(out: OutputStream) {
+      def writeRequest(out: OutputStream) : Unit = {
         out.write(bytes)
       }
     }
@@ -269,7 +269,7 @@ trait BaseGetPoster {
 
       def isRepeatable() = true
 
-      def writeRequest(out: OutputStream) {
+      def writeRequest(out: OutputStream) : Unit = {
         out.write(bytes)
       }
     })
@@ -342,7 +342,7 @@ trait BaseGetPoster {
 
       def isRepeatable() = true
 
-      def writeRequest(out: OutputStream) {
+      def writeRequest(out: OutputStream) : Unit = {
         out.write(bytes)
       }
     })
@@ -456,7 +456,7 @@ trait TestKit extends ClientBuilder with GetPoster with GetPosterHelper {
   def baseUrl: String
 
   class TestHandler(res: TestResponse) {
-    def then(f: TestResponse => TestResponse): TestResponse = f(res)
+    def `then`(f: TestResponse => TestResponse): TestResponse = f(res)
 
     def also(f: TestResponse => Any): TestResponse = {f(res); res}
   }
@@ -518,14 +518,14 @@ trait TestFramework extends TestKit {
 
   // protected lazy val httpClient = new HttpClient(new MultiThreadedHttpConnectionManager)
 
-  def fork(cnt: Int)(f: Int => Any) {
+  def fork(cnt: Int)(f: Int => Any) : Unit = {
     val threads = for (t <- (1 to cnt).toList) yield {
-      val th = new Thread(new Runnable {def run {f(t)}})
+      val th = new Thread(new Runnable {def run : Unit = {f(t)}})
       th.start
       th
     }
 
-    def waitAll(in: List[Thread]) {
+    def waitAll(in: List[Thread]) : Unit = {
       in match {
         case Nil =>
         case x :: xs => x.join; waitAll(xs)
@@ -612,7 +612,7 @@ object TestHelpers {
   type CRK = JavaList[String]
 
   implicit def jitToIt[T](in: JavaIterator[T]): Iterator[T] = new Iterator[T] {
-    def next: T = in.next
+    def next(): T = in.next()
 
     def hasNext = in.hasNext
   }

@@ -19,7 +19,7 @@ package http
 package provider
 package servlet
 
-import javax.servlet.{ServletContext}
+import jakarta.servlet.{ServletContext}
 import java.net.URL
 import java.io.InputStream
 
