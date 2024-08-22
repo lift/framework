@@ -8,15 +8,10 @@ ThisBuild / licenses             += ("Apache License, Version 2.0", url("https:/
 ThisBuild / startYear            := Some(2006)
 ThisBuild / organizationName     := "WorldWide Conferencing, LLC"
 
-val scala211Version = "2.11.12"
-val scala212Version = "2.12.15"
-val scala213Version = "2.13.8"
+val scala213Version = "2.13.12"
 
-val crossUpTo212 = Seq(scala212Version, scala211Version)
-val crossUpTo213 = scala213Version +: crossUpTo212
 
-ThisBuild / scalaVersion         := scala212Version
-ThisBuild / crossScalaVersions   := crossUpTo212 // default everyone to 2.12 for now
+ThisBuild / scalaVersion         := scala213Version
 
 ThisBuild / libraryDependencies ++= Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalactic, scalatest)
 
@@ -45,7 +40,7 @@ ThisBuild / resolvers  ++= Seq(
   "releases"      at "https://oss.sonatype.org/content/repositories/releases"
 )
 
-lazy val liftProjects = core ++ web ++ persistence
+lazy val liftProjects = core ++ web 
 
 lazy val framework =
   liftProject("lift-framework", file("."))
@@ -63,7 +58,6 @@ lazy val common =
       description := "Common Libraties and Utilities",
       libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, scala_xml, scala_parser)
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val actor =
   coreProject("actor")
@@ -72,7 +66,6 @@ lazy val actor =
       description := "Simple Actor",
       Test / parallelExecution := false
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val markdown =
   coreProject("markdown")
@@ -81,7 +74,6 @@ lazy val markdown =
       Test / parallelExecution := false,
       libraryDependencies ++= Seq(scalatest, scalatest_junit, scala_xml, scala_parser)
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val json =
   coreProject("json")
@@ -90,13 +82,11 @@ lazy val json =
       Test / parallelExecution := false,
       libraryDependencies ++= Seq(scalap(scalaVersion.value), paranamer,  scala_xml)
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val documentationHelpers =
   coreProject("documentation-helpers")
     .settings(description := "Documentation Helpers")
     .dependsOn(util)
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val json_scalaz7 =
   coreProject("json-scalaz7")
@@ -105,7 +95,6 @@ lazy val json_scalaz7 =
       description := "JSON Library based on Scalaz 7",
       libraryDependencies ++= Seq(scalaz7)
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val json_ext =
   coreProject("json-ext")
@@ -114,7 +103,6 @@ lazy val json_ext =
       description := "Extentions to JSON Library",
       libraryDependencies ++= Seq(commons_codec, joda_time, joda_convert)
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val util =
   coreProject("util")
@@ -134,7 +122,6 @@ lazy val util =
         jbcrypt
       )
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 // Web Projects
 // ------------
@@ -148,7 +135,6 @@ lazy val testkit =
       description := "Testkit for Webkit Library",
       libraryDependencies ++= Seq(commons_httpclient, servlet_api)
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val webkit =
   webProject("webkit")
@@ -210,7 +196,6 @@ lazy val webkit =
 
     )
     .enablePlugins(SbtWeb)
-    .settings(crossScalaVersions := crossUpTo213)
 
 // Persistence Projects
 // --------------------
@@ -221,12 +206,10 @@ lazy val db =
   persistenceProject("db")
     .dependsOn(util, webkit)
     .settings(libraryDependencies += mockito_scalatest)
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val proto =
   persistenceProject("proto")
     .dependsOn(webkit)
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val mapper =
   persistenceProject("mapper")
@@ -242,13 +225,11 @@ lazy val mapper =
         )
       }
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val record =
   persistenceProject("record")
     .dependsOn(proto)
     .settings(libraryDependencies ++= Seq(jbcrypt))
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val squeryl_record =
   persistenceProject("squeryl-record")
@@ -259,7 +240,6 @@ lazy val mongodb =
   persistenceProject("mongodb")
     .dependsOn(json_ext, util)
     .settings(
-      crossScalaVersions := crossUpTo213,
       Test / parallelExecution := false,
       libraryDependencies ++= Seq(mongo_java_driver, mongo_java_driver_async),
       Test / initialize := {
@@ -274,6 +254,5 @@ lazy val mongodb_record =
   persistenceProject("mongodb-record")
     .dependsOn(record, mongodb)
     .settings(
-      crossScalaVersions := crossUpTo213,
       Test / parallelExecution := false
     )
