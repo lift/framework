@@ -290,3 +290,9 @@ Carlos Saltos
 
 ### Email: ###
 dev@csaltos.com
+
+### Name: ###
+Paul Dale
+
+### Email: ###
+paul.dale@gmail.com
