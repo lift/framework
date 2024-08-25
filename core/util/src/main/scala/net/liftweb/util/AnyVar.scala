@@ -107,14 +107,14 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
   protected def setFunc(name: String, value: T): Unit
   protected def clearFunc(name: String): Unit
 
-  private def _setFunc(name: String, value: T) {
+  private def _setFunc(name: String, value: T): Unit =  {
     setFunc(name, value)
 
     val sd = settingDefault_?
     changeFuncs.foreach(f => Helpers.tryo(f(Full(value), sd)))
   }
 
-  private def _clearFunc(name: String) {
+  private def _clearFunc(name: String): Unit =  {
     clearFunc(name)
     changeFuncs.foreach(f => Helpers.tryo(f(Empty, false)))
   }
@@ -145,7 +145,7 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
    *
    * @param f the function to execute on change
    */
-  def onChange(f: FuncType) {
+  def onChange(f: FuncType): Unit =  {
     changeFuncs ::= f
   }
 
@@ -253,7 +253,7 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
 
   protected def registerCleanupFunc(in: CleanUpParam => Unit): Unit
 
-  protected final def registerGlobalCleanupFunc(in: CleanUpParam => Unit) {
+  protected final def registerGlobalCleanupFunc(in: CleanUpParam => Unit): Unit =  {
     cuf ::= in
   }
 

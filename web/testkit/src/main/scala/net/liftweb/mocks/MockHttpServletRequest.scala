@@ -84,7 +84,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * Note that the String will be converted to bytes
    * based on the current setting of charEncoding.
    */
-  def body_= (s : String) : Unit = body_=(s, "text/plain")
+  def body_= (s : String): Unit = body_=(s, "text/plain")
 
   /**
    * Sets the body to the given string and content type.
@@ -92,7 +92,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * Note that the String will be converted to bytes
    * based on the current setting of charEncoding.
    */
-  def body_= (s : String, contentType : String) : Unit = {
+  def body_= (s : String, contentType : String): Unit = {
     body = s.getBytes(charEncoding)
     this.contentType = contentType
   }
@@ -104,7 +104,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * Note that the elements will be converted to bytes
    * based on the current setting of charEncoding.
    */
-  def body_= (nodes : NodeSeq) : Unit = body_=(nodes, "text/xml")
+  def body_= (nodes : NodeSeq): Unit = body_=(nodes, "text/xml")
 
   /**
    * Sets the body to the given elements and content type.
@@ -112,7 +112,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * Note that the elements will be converted to bytes
    * based on the current setting of charEncoding.
    */
-  def body_= (nodes : NodeSeq, contentType : String) : Unit = {
+  def body_= (nodes : NodeSeq, contentType : String): Unit = {
     body = nodes.toString.getBytes(charEncoding)
     this.contentType = contentType
   }
@@ -121,12 +121,12 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * Sets the body to the given json value. Also
    * sets the contentType to "application/json"
    */
-  def body_= (jval : JValue) : Unit = body_=(jval, "application/json")
+  def body_= (jval : JValue): Unit = body_=(jval, "application/json")
 
   /**
    * Sets the body to the given json value and content type.
    */
-  def body_= (jval : JValue, contentType : String) : Unit = {
+  def body_= (jval : JValue, contentType : String): Unit = {
     import json.JsonDSL._
     import json.JsonAST
 
@@ -192,7 +192,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
       null
     }
 
-  def queryString_= (q : String) : Unit = {
+  def queryString_= (q : String): Unit = {
     if (q != null && q.length > 0) {
       val newParams = ListBuffer[(String,String)]()
 
@@ -307,7 +307,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    *
    * @param url The URL to extract from
    */
-  def processUrl (url : String) : Unit = {
+  def processUrl (url : String): Unit = {
     if (url.toLowerCase.startsWith("http")) {
       processUrl(new URL(url))
     } else if (url.startsWith("/")) {
@@ -334,7 +334,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * @param url The URL to extract from
    * @param contextPath The servlet context of the request. Defaults to ""
    */
-  def processUrl (url : URL) : Unit = {
+  def processUrl (url : URL): Unit = {
     // Deconstruct the URL to set values
     url.getProtocol match {
       case "http" => scheme = "http"; secure = false
@@ -373,7 +373,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   /**
    * Adds an "Authorization" header, per RFC1945.
    */
-  def addBasicAuth (user : String, pass : String) : Unit = {
+  def addBasicAuth (user : String, pass : String): Unit = {
     val hashedCredentials =
       Helpers.base64Encode((user  + ":" + pass).getBytes)
     headers += "Authorization" -> List("Basic " + hashedCredentials)
@@ -547,7 +547,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * A utility method to set the given header to an RFC1123 date
    * based on the given long value (epoch seconds).
    */
-  def setDateHeader(s: String, l: Long) : Unit = {
+  def setDateHeader(s: String, l: Long): Unit = {
     headers += (s -> List(Helpers.toInternetDate(l)))
   }
 

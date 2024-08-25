@@ -48,7 +48,7 @@ sealed trait StringOrNodeSeq {
  * their needs dictate.
  */
 object StringOrNodeSeq {
-  implicit def strTo[T <% String](str: T): StringOrNodeSeq = 
+  implicit def strTo[T](str: T)(implicit ev: T => String): StringOrNodeSeq = 
     new StringOrNodeSeq {
       def nodeSeq: NodeSeq = Text(str)
     }

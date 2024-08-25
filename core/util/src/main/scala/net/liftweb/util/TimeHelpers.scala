@@ -274,8 +274,8 @@ trait TimeHelpers { self: ControlHelpers =>
         (total._1 / div._1, (total._1 % div._1, div._2) :: total._2)
       }._2
       def formatAmount(amountUnit: (Long, String)) = amountUnit match {
-        case (amount, unit) if (amount == 1) => amount + " " + unit
-        case (amount, unit) => amount + " " + unit + "s"
+        case (amount, unit) if (amount == 1) => s"${amount} ${unit}"
+        case (amount, unit) => s"${amount} ${unit}s"
       }
       divideInUnits(millis).filter(_._1 > 0).map(formatAmount(_)).mkString(", ")
     }
@@ -337,7 +337,7 @@ trait TimeHelpers { self: ControlHelpers =>
   def weeks(in: Long): Long = days(in) * 7L
 
   /** implicit def used to add the noTime method to the Date class */
-  implicit def toDateExtension(d: Date) = new DateExtension(d)
+  implicit def toDateExtension(d: Date): DateExtension = new DateExtension(d)
 
   /** This class adds a noTime method the Date class, in order to get at Date object starting at 00:00 */
   class DateExtension(date: Date) {
@@ -359,7 +359,7 @@ trait TimeHelpers { self: ControlHelpers =>
   }
 
   /** implicit def used to add the setXXX methods to the Calendar class */
-  implicit def toCalendarExtension(c: Calendar) = new CalendarExtension(c)
+  implicit def toCalendarExtension(c: Calendar): CalendarExtension = new CalendarExtension(c)
 
   /** This class adds the setXXX methods to the Calendar class. Each setter returns the updated Calendar */
   class CalendarExtension(c: Calendar) {
@@ -518,7 +518,7 @@ trait TimeHelpers { self: ControlHelpers =>
     }
   }
 
-  implicit class PeriodExtension[P <% Period](period: P) {
+  implicit class PeriodExtension[P](period: P)(implicit ev: P => Period) {
     def later: DateTime = new DateTime(millis).plus(period)
 
     def ago: DateTime = new DateTime(millis).minus(period)

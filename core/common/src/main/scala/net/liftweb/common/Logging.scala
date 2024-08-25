@@ -102,7 +102,7 @@ object Logger {
       f
     } finally {
       if (old eq null) 
-        MDC.clear
+        MDC.clear()
       else  
         SLF4JMDC.setContextMap(old)
     }

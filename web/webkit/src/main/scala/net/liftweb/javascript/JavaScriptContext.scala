@@ -23,7 +23,7 @@ object JavaScriptContext {
    * execution loanwrapper around everything and
    * also slurp in <script> tags with the data-lift-server attribute.
    */
-  def install() {
+  def install(): Unit = {
     LiftRules.allAround.append(JSWrapper)
     LiftRules.tagProcessor.prepend {
       case ("script", e, session) if e.attribute("data-lift-server").isDefined =>
@@ -91,12 +91,12 @@ object JavaScriptContext {
 
 
 
-    def init() {
+    def init(): Unit = {
       context = Context.enter()
       scope = context.initStandardObjects()
     }
 
-    def bye() {
+    def bye(): Unit = {
       if (initted) Context.exit()
     }
 

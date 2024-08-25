@@ -189,7 +189,7 @@ trait SecurityHelpers {
   def hexEncode(in: Array[Byte]): String = {
     val sb = new StringBuilder
     val len = in.length
-    def addDigit(in: Array[Byte], pos: Int, len: Int, sb: StringBuilder) {
+    def addDigit(in: Array[Byte], pos: Int, len: Int, sb: StringBuilder): Unit =  {
       if (pos < len) {
         val b: Int = in(pos)
         val msb = (b & 0xf0) >> 4

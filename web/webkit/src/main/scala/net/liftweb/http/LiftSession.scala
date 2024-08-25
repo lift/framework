@@ -547,7 +547,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     override private[liftweb] def magicSessionVar_? = true
   }
 
-  def terminateHint {
+  def terminateHint: Unit = {
     if (_running_?) {
       markedForTermination = true;
     }
@@ -673,7 +673,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * Called just before the session exits.  If there's clean-up work, override this method
    */
-  private[http] def cleanUpSession() {
+  private[http] def cleanUpSession(): Unit = {
     removeFunctionsIf(_ => true)
     notices = Nil
     nasyncComponents.clear
@@ -716,14 +716,14 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * Destroy this session and the underlying container session.
    */
-  def destroySession() : Unit = {
+  def destroySession(): Unit = {
     SessionMaster ! RemoveSession(this.underlyingId)
 
     S.request.foreach(_.request.session.terminate)
     this.doShutDown()
   }
 
-  private[http] def doShutDown() {
+  private[http] def doShutDown(): Unit = {
     if (running_?) {
       // only deal with comet on stateful sessions
       // stateless temporary sessions bar comet use
@@ -791,7 +791,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * This is used by CometActor to remove the PostPage JavaScript
    * functions from the given component during redraw.
    */
-  def clearPostPageJavaScriptForThisPage() {
+  def clearPostPageJavaScriptForThisPage(): Unit = {
     testStatefulFeature {
       accessPostPageFuncs {
         val rv: String = RenderVersion.get
@@ -810,7 +810,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * @param func -- the function that returns JavaScript to be appended to
    * responses associated with this page
    */
-  def addPostPageJavaScript(func: () => JsCmd) {
+  def addPostPageJavaScript(func: () => JsCmd): Unit = {
     testStatefulFeature {
       accessPostPageFuncs {
         // The page or cometactor that the functions are associated with
@@ -849,7 +849,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
       }
     }
 
-    def run(count: Int, funcs: List[() => JsCmd]) {
+    def run(count: Int, funcs: List[() => JsCmd]): Unit = {
       funcs.reverse.foreach(f => accumulatedJavaScript += f())
 
       latestPostPageFunctions.foreach { latest =>
@@ -904,8 +904,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
       }
     }
 
-      import scala.collection.JavaConverters._
-      (0 /: nmessageCallback.asScala)((l, v) => l + (v._2.owner match {
+      import scala.jdk.CollectionConverters._
+      (nmessageCallback.asScala.foldLeft(0))((l, v) => l + (v._2.owner match {
         case Full(owner) if (owner == ownerName) =>
           v._2.lastSeen = time
           1
@@ -920,7 +920,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * Returns true if there are functions bound for this owner
    */
   private[http] def hasFuncsForOwner(owner: String): Boolean = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
 
     !nmessageCallback.asScala.find(_._2.owner == owner).isEmpty
   }
@@ -937,7 +937,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
         SessionMaster.sendMsg(RemoveSession(this.underlyingId))
 
-        import scala.collection.JavaConverters._
+        import scala.jdk.CollectionConverters._
         nasyncComponents.asScala.foreach {
           case (_, comp) => done ::= (() => tryo(comp ! ShutDown))
         }
@@ -1131,7 +1131,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    */
   def performHeadMerge(in: NodeSeq, req: Req): Node = merge(in, req)
 
-  private def cleanUpBeforeRender : Unit = {
+  private def cleanUpBeforeRender: Unit = {
     // Reset the mapping between ID and Style for Ajax notices.
     MsgErrorMeta(new HashMap)
     MsgWarningMeta(new HashMap)
@@ -1202,7 +1202,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   private def allElems(in: NodeSeq, f: Elem => Boolean): List[Elem] = {
     val lb = new ListBuffer[Elem]
 
-    def appendAll(in: NodeSeq, lb: ListBuffer[Elem]) {
+    def appendAll(in: NodeSeq, lb: ListBuffer[Elem]): Unit = {
       in.foreach {
         case Group(ns) => appendAll(ns, lb)
         case e: Elem if f(e) => lb += e; appendAll(e.child, lb)
@@ -1219,7 +1219,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   object currentSourceContext extends TransientRequestVar[Any](Empty)
 
   def runSourceContext(value: Any, xform: NodeSeq => NodeSeq, ns: NodeSeq): NodeSeq = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     value match {
       case null => NodeSeq.Empty
       case None => NodeSeq.Empty
@@ -1705,7 +1705,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
                       if (inst.dispatch.isDefinedAt(method)) {
                         val res = inst.dispatch(method)(kids)
 
-                        inst.mergeIntoForm(isForm, res, SHtml.hidden(() => inst.registerThisSnippet))
+                        inst.mergeIntoForm(isForm, res, SHtml.hidden(() => inst.registerThisSnippet()))
                         /* (if (isForm && !res.isEmpty) SHtml.hidden(() => inst.registerThisSnippet) else NodeSeq.Empty) ++
                         res*/
                       } else reportSnippetError(page, snippetName,
@@ -2316,7 +2316,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * Finds all Comet actors by type
    */
   def findComet(theType: String): List[LiftCometActor] = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
 
     testStatefulFeature {
       nasyncComponents.asScala.toList.flatMap {
@@ -2406,7 +2406,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * Queue a message for a comet that is not started yet.
    */
-  def queueCometMessage(cometType: String, msg: Any) : Unit = {
+  def queueCometMessage(cometType: String, msg: Any): Unit = {
     testStatefulFeature {
       cometPreMessagesByType.atomicUpdate(_ :+ cometType -> msg)
     }
@@ -2415,7 +2415,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   /**
    * Queue a message for a comet that is not started yet.
    */
-  def queueCometMessage(cometType: String, cometName: Box[String], msg: Any) : Unit = {
+  def queueCometMessage(cometType: String, cometName: Box[String], msg: Any): Unit = {
     testStatefulFeature {
       cometPreMessagesById.atomicUpdate(_ :+ CometId(cometType, cometName) -> msg)
     }
@@ -2820,14 +2820,14 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
                   try {
                     func.asInstanceOf[Function2[Any, RoundTripHandlerFunc, Unit]](reified, new RoundTripHandlerFunc {
                       @volatile private var done_? = false
-                      def done() : Unit = {
+                      def done(): Unit = {
                         if (!done_?) {
                           done_? = true
                           ca ! DoneMsg(guid)
                         }
                       }
 
-                      def failure(msg: String) {
+                      def failure(msg: String): Unit = {
                         if (!done_?) {
                           done_? = true
                           ca ! FailMsg(guid, msg)
@@ -2858,7 +2858,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
                       }
 
-                      def send(value: JValue) : Unit = {
+                      def send(value: JValue): Unit = {
                         if (!done_?) {
                           ca ! ItemMsg(guid, value)
                         }

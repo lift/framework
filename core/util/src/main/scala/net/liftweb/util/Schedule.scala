@@ -150,7 +150,7 @@ sealed trait Schedule extends Loggable {
   def schedule(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] = 
     synchronized {
       val r = new Runnable {
-        def run() { 
+        def run(): Unit =  { 
           try {
             f.apply()
           } catch {

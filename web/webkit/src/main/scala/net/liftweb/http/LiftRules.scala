@@ -536,7 +536,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * For each unload hook registered, run them during destroy()
    */
-  private[http] def runUnloadHooks() {
+  private[http] def runUnloadHooks(): Unit = {
     unloadHooks.toList.foreach{f =>
       tryo{f()}
     }
@@ -1145,7 +1145,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   * There will be significant performance penalties (serializing the
   * service of requests... only one at a time) for changing the SiteMap.
   */
-  def setSiteMapFunc(smf: () => SiteMap) {
+  def setSiteMapFunc(smf: () => SiteMap): Unit = {
     sitemapFunc = Full(smf)
     if (!Props.devMode) {
       resolveSitemap()
@@ -1155,7 +1155,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Define the sitemap.
    */
-  def setSiteMap(sm: SiteMap) {
+  def setSiteMap(sm: SiteMap): Unit = {
     this.setSiteMapFunc(() => sm)
   }
 
@@ -1294,7 +1294,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
   @volatile private[http] var ending = false
 
-  private[http] def bootFinished() {
+  private[http] def bootFinished(): Unit = {
     _doneBoot = true
   }
 
@@ -1413,7 +1413,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Tells Lift where to find Snippets,Views, Comet Actors and Lift ORM Model object
    */
-  def addToPackages(what: String) {
+  def addToPackages(what: String): Unit = {
     if (doneBoot) throw new IllegalStateException("Cannot modify after boot.");
     otherPackages = what :: otherPackages
   }
@@ -1421,7 +1421,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * Tells Lift where to find Snippets, Views, Comet Actors and Lift ORM Model object
    */
-  def addToPackages(what: Package) {
+  def addToPackages(what: Package): Unit = {
     if (doneBoot) throw new IllegalStateException("Cannot modify after boot.");
     otherPackages = what.getName :: otherPackages
   }
@@ -1455,7 +1455,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   def loadResource(name: String): Box[Array[Byte]] = doWithResource(name) { stream =>
     val buffer = new Array[Byte](2048)
     val out = new ByteArrayOutputStream
-    def reader {
+    def reader: Unit = {
       val len = stream.read(buffer)
       if (len < 0) return
       else if (len > 0) out.write(buffer, 0, len)
@@ -1729,7 +1729,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * @param prefix the prefix to be added on the root relative paths. If this
    *               is Empty, the prefix will be the application context path.
    */
-  def fixCSS(path: List[String], prefix: Box[String]) {
+  def fixCSS(path: List[String], prefix: Box[String]): Unit = {
 
     val liftReq: LiftRules.LiftRequestPF = new LiftRules.LiftRequestPF {
       def functionName = "Default CSS Fixer"
@@ -2043,19 +2043,19 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * Register an AsyncMeta provider in addition to the default
    * Jetty6, Jetty7, and Servlet 3.0 providers
    */
-  def addSyncProvider(asyncMeta: AsyncProviderMeta) {
+  def addSyncProvider(asyncMeta: AsyncProviderMeta): Unit = {
     if (doneBoot) throw new IllegalStateException("Cannot modify after boot.")
     asyncMetaList ::= asyncMeta
   }
 
-  def updateAsyncMetaList(f: List[AsyncProviderMeta] => List[AsyncProviderMeta]) {
+  def updateAsyncMetaList(f: List[AsyncProviderMeta] => List[AsyncProviderMeta]): Unit = {
     if (doneBoot) throw new IllegalStateException("Cannot modify after boot.")
     asyncMetaList = f(asyncMetaList)
 
   }
 
 
-  private def ctor() {
+  private def ctor(): Unit = {
     appendGlobalFormBuilder(FormBuilderLocator[String]((value, setter) => SHtml.text(value, setter)))
     appendGlobalFormBuilder(FormBuilderLocator[Int]((value, setter) => SHtml.text(value.toString, s => Helpers.asInt(s).foreach((setter)))))
     appendGlobalFormBuilder(FormBuilderLocator[Boolean]((value, setter) => SHtml.checkbox(value, s => setter(s))))
@@ -2113,7 +2113,7 @@ class RulesSeq[T] {
   private val app = new ThreadGlobal[List[T]]
   private val cur = new ThreadGlobal[List[T]]
 
-  private def safe_?(f: => Any) {
+  private def safe_?(f: => Any): Unit = {
     doneBoot match {
       case false => f
       case _ => throw new IllegalStateException("Cannot modify after boot.");
@@ -2186,7 +2186,7 @@ class RulesSeq[T] {
     this
   }
 
-  private[http] def remove(f: T => Boolean) {
+  private[http] def remove(f: T => Boolean): Unit = {
     safe_? {
       rules = rules.filterNot(f)
     }
@@ -2335,7 +2335,7 @@ trait FormVendor {
 
   private val globalForms: CHash[String, List[FormBuilderLocator[_]]] = new CHash
 
-  def prependGlobalFormBuilder[T](builder: FormBuilderLocator[T]) {
+  def prependGlobalFormBuilder[T](builder: FormBuilderLocator[T]): Unit = {
     globalForms.synchronized {
       val name = builder.manifest.toString
       if (globalForms.containsKey(name)) {
@@ -2346,7 +2346,7 @@ trait FormVendor {
     }
   }
 
-  def appendGlobalFormBuilder[T](builder: FormBuilderLocator[T]) {
+  def appendGlobalFormBuilder[T](builder: FormBuilderLocator[T]): Unit = {
     globalForms.synchronized {
       val name = builder.manifest.toString
       if (globalForms.containsKey(name)) {
@@ -2357,19 +2357,19 @@ trait FormVendor {
     }
   }
 
-  def prependSessionFormBuilder[T](builder: FormBuilderLocator[T]) {
+  def prependSessionFormBuilder[T](builder: FormBuilderLocator[T]): Unit = {
     sessionForms.set(prependBuilder(builder, sessionForms))
   }
 
-  def appendSessionFormBuilder[T](builder: FormBuilderLocator[T]) {
+  def appendSessionFormBuilder[T](builder: FormBuilderLocator[T]): Unit = {
     sessionForms.set(appendBuilder(builder, sessionForms))
   }
 
-  def prependRequestFormBuilder[T](builder: FormBuilderLocator[T]) {
+  def prependRequestFormBuilder[T](builder: FormBuilderLocator[T]): Unit = {
     requestForms.set(prependBuilder(builder, requestForms))
   }
 
-  def appendRequestFormBuilder[T](builder: FormBuilderLocator[T]) {
+  def appendRequestFormBuilder[T](builder: FormBuilderLocator[T]): Unit = {
     requestForms.set(appendBuilder(builder, requestForms))
   }
 

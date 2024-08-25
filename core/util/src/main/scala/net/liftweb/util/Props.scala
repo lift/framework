@@ -87,7 +87,7 @@ private[util] trait Props extends Logger {
    * Ensure that all of the specified properties exist; throw an exception if
    * any of the specified values are not keys for available properties.
    */
-  def requireOrDie(what: String*) {
+  def requireOrDie(what: String*): Unit =  {
     require(what :_*).toList match {
       case Nil =>
       case bad => throw new Exception("The following required properties are not defined: "+bad.mkString(","))
@@ -214,7 +214,7 @@ private[util] trait Props extends Logger {
 
     def allowModification = !runModeInitialised
 
-    def onModificationProhibited() {
+    def onModificationProhibited(): Unit =  {
       warn("Setting property " + name + " has no effect. Run mode already initialised to " + mode + ".")
     }
   }

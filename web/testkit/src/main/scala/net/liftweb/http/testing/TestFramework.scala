@@ -201,7 +201,7 @@ trait BaseGetPoster {
 
       def isRepeatable() = true
 
-      def writeRequest(out: OutputStream) : Unit = {
+      def writeRequest(out: OutputStream): Unit = {
         out.write(bytes)
       }
     }
@@ -216,7 +216,7 @@ trait BaseGetPoster {
 
       def isRepeatable() = true
 
-      def writeRequest(out: OutputStream) : Unit = {
+      def writeRequest(out: OutputStream): Unit = {
         out.write(bytes)
       }
     }
@@ -269,7 +269,7 @@ trait BaseGetPoster {
 
       def isRepeatable() = true
 
-      def writeRequest(out: OutputStream) : Unit = {
+      def writeRequest(out: OutputStream): Unit = {
         out.write(bytes)
       }
     })
@@ -342,7 +342,7 @@ trait BaseGetPoster {
 
       def isRepeatable() = true
 
-      def writeRequest(out: OutputStream) : Unit = {
+      def writeRequest(out: OutputStream): Unit = {
         out.write(bytes)
       }
     })
@@ -518,14 +518,14 @@ trait TestFramework extends TestKit {
 
   // protected lazy val httpClient = new HttpClient(new MultiThreadedHttpConnectionManager)
 
-  def fork(cnt: Int)(f: Int => Any) : Unit = {
+  def fork(cnt: Int)(f: Int => Any): Unit = {
     val threads = for (t <- (1 to cnt).toList) yield {
-      val th = new Thread(new Runnable {def run : Unit = {f(t)}})
+      val th = new Thread(new Runnable {def run: Unit = {f(t)}})
       th.start
       th
     }
 
-    def waitAll(in: List[Thread]) : Unit = {
+    def waitAll(in: List[Thread]): Unit = {
       in match {
         case Nil =>
         case x :: xs => x.join; waitAll(xs)

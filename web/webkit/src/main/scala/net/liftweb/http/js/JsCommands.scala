@@ -812,7 +812,7 @@ object JsCmds {
     ) + " = " + right.toJsCmd + ";};"
   }
 
-  implicit def jsExpToJsCmd(in: JsExp) = in.cmd
+  implicit def jsExpToJsCmd(in: JsExp) : JsCmd = in.cmd
 
   case class CmdPair(left: JsCmd, right: JsCmd) extends JsCmd {
     import scala.collection.mutable.ListBuffer
@@ -824,7 +824,7 @@ object JsCmds {
     }
 
     @scala.annotation.tailrec
-    private def appendDo(acc: ListBuffer[JsCmd], cmds: List[JsCmd]) {
+    private def appendDo(acc: ListBuffer[JsCmd], cmds: List[JsCmd]): Unit = {
       cmds match {
         case Nil =>
         case CmdPair(l, r) :: rest => appendDo(acc, l :: r :: rest)

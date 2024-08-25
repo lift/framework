@@ -39,7 +39,7 @@ trait HTTPProvider {
   /**
    * Call this from your implementation when the application terminates.
    */
-  protected def terminate {
+  protected def terminate: Unit = {
     if (actualServlet != null) {
       actualServlet.destroy
       actualServlet = null
@@ -84,8 +84,8 @@ trait HTTPProvider {
       try
       {
         val b: Bootable = loader.map(b => Class.forName(b).newInstance.asInstanceOf[Bootable]) openOr DefaultBootstrap
-        preBoot
-        b.boot
+        preBoot()
+        b.boot()
       } catch {
         // The UnavailableException is the idiomatic way to tell a Java application container that
         // the boot process has gone horribly, horribly wrong. That _must_ bubble to the application
@@ -123,7 +123,7 @@ trait HTTPProvider {
       }
     }
 
-  private def preBoot() {
+  private def preBoot(): Unit = {
     // do this stateless
     LiftRules.statelessDispatch.prepend(NamedPF("Classpath service") {
       case r@Req(mainPath :: subPath, suffx, _) if (mainPath == LiftRules.resourceServerPath) =>
@@ -131,7 +131,7 @@ trait HTTPProvider {
     })
   }
 
-  private def postBoot {
+  private def postBoot: Unit = {
     if (!LiftRules.logServiceRequestTiming) {
       LiftRules.installServiceRequestTimer(NoOpServiceTimer)
     }

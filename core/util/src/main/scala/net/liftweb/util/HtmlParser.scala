@@ -35,7 +35,7 @@ trait Html5Writer {
    * @param m the attributes
    * @param writer the place to write the attribute
    */
-  protected def writeAttributes(m: MetaData, writer: Writer) {
+  protected def writeAttributes(m: MetaData, writer: Writer): Unit =  {
     m match {
       case null =>
       case Null =>
@@ -117,7 +117,7 @@ trait Html5Writer {
    * @param str the String to escape
    * @param the place to send the escaped characters
    */
-  protected def escape(str: String, sb: Writer, reverse: Boolean) {
+  protected def escape(str: String, sb: Writer, reverse: Boolean): Unit =  {
     val len = str.length
     var pos = 0
     while (pos < len) {
@@ -376,7 +376,7 @@ trait Html5Parser {
       is.setEncoding("UTF-8")
       hp.parse(is)
 
-      saxer.scopeStack.pop
+      saxer.scopeStack.pop()
 
       in.close()
       saxer.rootElem match {

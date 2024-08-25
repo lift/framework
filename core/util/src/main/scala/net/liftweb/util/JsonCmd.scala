@@ -67,7 +67,7 @@ class ResponseInfoHolder {
 
   def docType = _docType
 
-  def docType_=(in: Box[String]) {
+  def docType_=(in: Box[String]): Unit =  {
     _docType = in
     _setDocType = true
   }

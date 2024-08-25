@@ -66,16 +66,16 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
   }
   def getStatus = statusCode
 
-  def addIntHeader(s: String, i: Int) : Unit = {
+  def addIntHeader(s: String, i: Int): Unit = {
     addHeader(s, i.toString)
   }
-  def setIntHeader(s: String, i: Int) : Unit = {
+  def setIntHeader(s: String, i: Int): Unit = {
     setHeader(s, i.toString)
   }
-  def addHeader(s1: String, s2: String) : Unit = {
+  def addHeader(s1: String, s2: String): Unit = {
     headers += (s1 -> (headers.getOrElse(s1, Nil) ::: List(s2)))
   }
-  def setHeader(s1: String, s2: String) : Unit = {
+  def setHeader(s1: String, s2: String): Unit = {
     headers += (s1 -> List(s2))
   }
 
@@ -89,24 +89,24 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
     headers.keySet.toSeq.asJava
   }
 
-  def addDateHeader(s: String, l: Long) : Unit = {
+  def addDateHeader(s: String, l: Long): Unit = {
     addHeader(s, (new Date(l)).toString)
   }
-  def setDateHeader(s: String, l: Long) : Unit = {
+  def setDateHeader(s: String, l: Long): Unit = {
     setHeader(s, (new Date(l)).toString)
   }
 
-  def sendRedirect(uri: String) : Unit = {
+  def sendRedirect(uri: String): Unit = {
     // Send back a 301 to the URL mentioned
     statusCode = 301
     addHeader("Location", uri)
   }
 
-  def sendError(code: Int) : Unit = {
+  def sendError(code: Int): Unit = {
     statusCode = code
   }
 
-  def sendError(code: Int, s: String) : Unit = {
+  def sendError(code: Int, s: String): Unit = {
     sendError(code)
     statusString = s
   }
@@ -129,14 +129,14 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
   }
   def getLocale: Locale = locale
   def setLocale(l: Locale) = locale = l
-  def reset : Unit = {
+  def reset: Unit = {
     // well, reset all the state to it's original values. yikes. later.
   }
   def isCommitted = false
-  def resetBuffer : Unit = {
+  def resetBuffer: Unit = {
     // reset the buffer.
   }
-  def flushBuffer : Unit = {
+  def flushBuffer: Unit = {
     // flush the buffer
   }
   def getBufferSize(): Int = bufferSize

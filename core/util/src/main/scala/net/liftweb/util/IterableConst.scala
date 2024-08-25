@@ -14,7 +14,7 @@ trait IterableConst {
   def constList(nodeSeq: NodeSeq): Seq[NodeSeq]
 }
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * The implementation for a NodeSeq Iterable Const

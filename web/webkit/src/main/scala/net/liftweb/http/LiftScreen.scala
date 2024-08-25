@@ -60,7 +60,7 @@ trait AbstractScreen extends Factory with Loggable {
    * the Screen or Wizard that owns the Screen and not
    * from external code.
    */
-  def addFields(fields: () => FieldContainer) : Unit = {
+  def addFields(fields: () => FieldContainer): Unit = {
     _fieldList = _fieldList ::: List(fields)
   }
 
@@ -74,7 +74,7 @@ trait AbstractScreen extends Factory with Loggable {
   /**
    * Override this method to do any setup of this screen
    */
-  protected def localSetup() : Unit = {
+  protected def localSetup(): Unit = {
 
   }
 
@@ -1490,7 +1490,7 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
 
   protected class ScreenSnapshot(private[http] val screenVars: Map[String, (NonCleanAnyVar[_], Any)],
                                  private[http] val snapshot: Box[ScreenSnapshot]) extends Snapshot {
-    def restore() : Unit = {
+    def restore(): Unit = {
       registerThisSnippet();
       ScreenVars.set(screenVars)
       PrevSnapshot.set(snapshot)
@@ -1571,7 +1571,7 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
     f(name)
   }
 
-  protected def setLocalAction(s: String) : Unit = {
+  protected def setLocalAction(s: String): Unit = {
     logger.trace("Setting LocalAction (%s) to %s".format(
       Integer.toString(System.identityHashCode(LocalAction), 16), s))
     LocalAction.set(s)
@@ -1707,7 +1707,7 @@ trait LiftScreen extends AbstractScreen with StatefulSnippet with ScreenWizardRe
     }
   }
 
-  protected def renderWithErrors(errors: List[FieldError]) : Unit = {
+  protected def renderWithErrors(errors: List[FieldError]): Unit = {
     S.error(errors)
     AjaxOnDone.set(replayForm)
   }

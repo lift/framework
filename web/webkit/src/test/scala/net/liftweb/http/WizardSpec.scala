@@ -34,7 +34,7 @@ class WizardSpec extends Specification  {
   class WizardForTesting extends Wizard {
     object completeInfo extends WizardVar(false)
 
-    def finish() : Unit = {
+    def finish(): Unit = {
       S.notice("Thank you for registering your pet")
       completeInfo.set(true)
     }
