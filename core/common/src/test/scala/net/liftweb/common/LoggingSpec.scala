@@ -86,7 +86,7 @@ class LoggingSpec extends Specification {
         logger.info("Logged with mdc1=(1,2), mdc2=xx")
       }
       logger.info("Logged with mdc1=(1,2), mdc2=yy")
-      MDC.clear
+      MDC.clear()
       logger.info("No MDC values")
       success
     }

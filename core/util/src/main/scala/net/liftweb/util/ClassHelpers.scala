@@ -200,7 +200,7 @@ trait ClassHelpers { self: ControlHelpers =>
       clz.getMethod(meth).invoke(clz.newInstance)
     } catch {
       case c : InvocationTargetException => {
-          def findRoot(e : Throwable) { if (e.getCause == null || e.getCause == e) throw e else findRoot(e.getCause) }
+          def findRoot(e : Throwable): Unit =  { if (e.getCause == null || e.getCause == e) throw e else findRoot(e.getCause) }
           findRoot(c)
         }
     }

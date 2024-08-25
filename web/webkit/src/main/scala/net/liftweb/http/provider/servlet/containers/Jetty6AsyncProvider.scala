@@ -20,7 +20,7 @@ package provider
 package servlet 
 package containers 
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 import net.liftweb.common._
 import net.liftweb.http._

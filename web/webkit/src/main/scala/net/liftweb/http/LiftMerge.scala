@@ -74,10 +74,10 @@ private[http] trait LiftMerge {
     val waitUntil = millis + LiftRules.lazySnippetTimeout.vend.millis
     val stripComments: Boolean = LiftRules.stripComments.vend
 
-    def waitUntilSnippetsDone() {
+    def waitUntilSnippetsDone(): Unit ={
       val myMillis = millis
       snippetHashs.synchronized {
-        if (myMillis >= waitUntil || snippetHashs.isEmpty || !snippetHashs.values.toIterator.contains(Empty)) ()
+        if (myMillis >= waitUntil || snippetHashs.isEmpty || !snippetHashs.values.iterator.contains(Empty)) ()
         else {
           snippetHashs.wait(waitUntil - myMillis)
           waitUntilSnippetsDone()

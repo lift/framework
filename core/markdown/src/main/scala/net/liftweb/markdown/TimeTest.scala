@@ -82,12 +82,12 @@ object TimeTest {
         (end - start, t)
     }
 
-    private def runActuarius(markdown:String, iterations:Int) {
+    private def runActuarius(markdown:String, iterations:Int): Unit = {
         for (i <- 0 until iterations) actuariusProcessor(markdown)
     }
 
 
-    def testRun(markdown:String, iterations:Int) {
+    def testRun(markdown:String, iterations:Int): Unit = {
         println("Running Actuarius " + iterations + " times...")
         println("... took " + (executionTime(() => runActuarius(markdown, iterations)))._1 + "ms")
     }
@@ -124,7 +124,7 @@ object TimeTest {
 
     }
 
-    def main(args:Array[String]) {
+    def main(args:Array[String]):Unit = {
         /*
         val markdown = readFile("/home/chris/sbt_projects/markdown_race/test.txt").mkString*100
         val iterations = 10

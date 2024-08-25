@@ -11,7 +11,7 @@ sealed trait IterableFunc extends Function1[NodeSeq, Seq[NodeSeq]] {
 }
 
 object IterableFunc {
-  implicit def itNodeSeq[C <% Iterable[NodeSeq]](it: NodeSeq => C): IterableFunc =
+  implicit def itNodeSeq[C](it: NodeSeq => C)(implicit ev: C => Iterable[NodeSeq]): IterableFunc =
     new IterableFunc {
       def apply(in: NodeSeq): Seq[NodeSeq] = it(in).toSeq
     }

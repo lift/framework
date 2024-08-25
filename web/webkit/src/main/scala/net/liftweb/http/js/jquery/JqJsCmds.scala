@@ -425,7 +425,7 @@ object JqJE {
 }
 
 object JqJsCmds {
-  implicit def jsExpToJsCmd(in: JsExp) = in.cmd
+  implicit def jsExpToJsCmd(in: JsExp) : JsCmd = in.cmd
 
   /**
    * Queues the JavaScript in cmd for execution when the document is

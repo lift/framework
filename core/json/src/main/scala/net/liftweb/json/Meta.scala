@@ -31,7 +31,7 @@ import java.sql.Timestamp
 case class TypeInfo(clazz: Class[_], parameterizedType: Option[ParameterizedType])
 
 trait ParameterNameReader {
-  def lookupParameterNames(constructor: JConstructor[_]): Traversable[String]
+  def lookupParameterNames(constructor: JConstructor[_]): Iterable[String]
 }
 
 private[json] object Meta {
@@ -218,7 +218,7 @@ private[json] object Meta {
       def getActualTypeArguments = typeArgs.toArray
       def getOwnerType = owner
       def getRawType = owner
-      override def toString = getOwnerType + "[" + getActualTypeArguments.mkString(",") + "]"
+      override def toString = s"${getOwnerType}[${getActualTypeArguments.mkString(",")}]"
     }
 
   private[json] def unmangleName(name: String) =
@@ -236,7 +236,7 @@ private[json] object Meta {
         cache.set(c + (x -> ret))
         ret
       }
-      c.getOrElse(x, addToCache)
+      c.getOrElse(x, addToCache())
     }
   }
 

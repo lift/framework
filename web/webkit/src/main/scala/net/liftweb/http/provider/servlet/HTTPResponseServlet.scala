@@ -21,7 +21,7 @@ package servlet
 
 import scala.collection.mutable.{ListBuffer}
 import java.io.{OutputStream}
-import javax.servlet.http.{HttpServletResponse, Cookie}
+import jakarta.servlet.http.{HttpServletResponse, Cookie}
 import net.liftweb.http.provider.encoder.CookieEncoder
 import net.liftweb.common._
 import net.liftweb.util._
@@ -49,7 +49,7 @@ class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
       url
     }
 
-  def addHeaders(headers: List[HTTPParam]) {
+  def addHeaders(headers: List[HTTPParam]): Unit = {
     val appearOnce = Set(LiftRules.overwrittenReponseHeaders.vend.map(_.toLowerCase): _*)
     for (h <- headers;
          value <- h.values) {

@@ -190,10 +190,10 @@ object Templates {
             var ret: NodeSeq = null
 
             while (!found && se.hasNext) {
-              val (suffix, parser) = se.next
+              val (suffix, parser) = se.next()
               val le = sl.iterator
               while (!found && le.hasNext) {
-                val p = le.next
+                val p = le.next()
                 val name = pls + p + (if (suffix.length > 0) "." + suffix else "")
                 import scala.xml.dtd.ValidationException
                 val xmlb = try {

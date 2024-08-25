@@ -16,7 +16,7 @@
 package net.liftweb
 package mockweb
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 import scala.xml.NodeSeq
 
@@ -105,7 +105,7 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification with X
    * Converts a String description into a WebSpecBridge that can
    * then be used to set up either an S or Req instance.
    */
-  implicit def strToWebSpecBridge (description : String) =
+  implicit def strToWebSpecBridge (description : String) : WebSpecBridge =
     new WebSpecBridge(description)
 
   /**

@@ -148,7 +148,7 @@ trait BaseParsers extends RegexParsers {
         if (in.atEnd) Failure("End of input.", in)
         else {
             val c = in.first
-            val lower:SortedMap[Char,Char] = rs.to(c)
+            val lower:SortedMap[Char,Char] = rs.rangeTo(c)
             val (begin:Char, end:Char) = if (lower.isEmpty) ('\u0001', '\u0000') //this invalid pair always causes failure
                                          else lower.last
                                
@@ -237,7 +237,7 @@ trait BaseParsers extends RegexParsers {
     def xmlNameChar:Parser[Char] = ranges(xmlNameCharRanges)
     /** Parses an XML name (tag or attribute name)
      */
-    def xmlName:Parser[String] = xmlNameStartChar ~ (xmlNameChar*) ^^ {case c ~ cs => c + cs.mkString}
+    def xmlName:Parser[String] = xmlNameStartChar ~ (xmlNameChar*) ^^ {case c ~ cs => s"${c}${cs.mkString}"}
     /** Parses a Simplified xml attribute: everything between quotes ("foo")
      * everything between the quotes is run through the escape handling
      * That way you can omit xml escaping when writing inline XML in markdown.
@@ -253,7 +253,7 @@ trait BaseParsers extends RegexParsers {
     /** Parses an xml start or empty tag, attribute values are escaped.
      */
     def xmlStartOrEmptyTag:Parser[String] = '<' ~> xmlName ~ (xmlAttr*) ~ ows ~ (">" | "/>") ^^ {
-        case name ~ attrs ~ w ~ e => '<' + name + attrs.mkString  + w + e
+        case name ~ attrs ~ w ~ e => s"<${name}${attrs.mkString}${w}${e}"
     }
 
     /** Parses closing xml tags.

@@ -222,11 +222,11 @@ trait Mailer extends SimpleInjector {
   /**
    * Synchronously send an email.
    */
-  def blockingSendMail(from: From, subject: Subject, rest: MailTypes*) {
+  def blockingSendMail(from: From, subject: Subject, rest: MailTypes*): Unit =  {
     msgSendImpl(from, subject, rest.toList)
   }
 
-  def msgSendImpl(from: From, subject: Subject, info: List[MailTypes]) {
+  def msgSendImpl(from: From, subject: Subject, info: List[MailTypes]): Unit =  {
     val session = authenticator match {
       case Full(a) => jndiSession openOr Session.getInstance(buildProps, a)
       case _ => jndiSession openOr Session.getInstance(buildProps)
@@ -354,7 +354,7 @@ trait Mailer extends SimpleInjector {
   /**
    * Asynchronously send an email.
    */
-  def sendMail(from: From, subject: Subject, rest: MailTypes*) {
+  def sendMail(from: From, subject: Subject, rest: MailTypes*): Unit = {
     // forward it to an actor so there's no time on this thread spent sending the message
     msgSender ! MessageInfo(from, subject, rest.toList)
   }
