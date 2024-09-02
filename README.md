@@ -15,12 +15,21 @@ Because Lift applications are written in [Scala](http://www.scala-lang.org), an 
 
 ## Getting Started
 
-**Compatibility note:**
-As of Lift 3.0, you'll need to be running Java 8 to use Lift. For those using Java 6 or Java 7,
-you'll need to use Lift 2.6 until you can upgrade your Java installation.
-
 You can create a new Lift project using your favorite build system by adding Lift as a dependency.
 Below we walk through setting up Lift in sbt and Maven.
+
+### A note on Java Compatibility
+
+It's worth noting that the version of Java you're running may change what version of Lift you're
+able to run. The following represents our Java compatibility for the recent major releases.
+
+| Lift Version | Java Version |
+|--------------|--------------|
+|2.6           |Java >= 6     |
+|3.0+          |Java >= 8     |
+|4.0+          |Java >= 11    |
+
+If you do not have a compatible Java version you will get errors when you try to use the Framework.
 
 ### With sbt (new project)
 
