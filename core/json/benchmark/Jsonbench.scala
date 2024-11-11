@@ -5,13 +5,11 @@
  * - lift-json-???.jar
  */
 object Jsonbench extends Benchmark {
-  import scala.util.parsing.json.JSON
   import org.codehaus.jackson._
   import org.codehaus.jackson.map._
   import net.liftweb.json.JsonParser
 
   def main(args: Array[String]) = {
-    benchmark("Scala std") { JSON.parse(json) }
     val mapper = new ObjectMapper
     benchmark("Jackson") { mapper.readValue(json, classOf[JsonNode]) }
     benchmark("lift-json") { JsonParser.parse(json) }

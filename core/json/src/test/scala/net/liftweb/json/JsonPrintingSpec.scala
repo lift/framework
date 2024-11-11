@@ -32,7 +32,7 @@ class JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
   "JSON Printing Specification".title
 
   "rendering does not change semantics" in {
-    val rendering = (json: JValue) => parse(JsonAST.prettyRender(json)) == parse(JsonAST.compactRender(json))
+    val rendering = (json: JValue) => JsonParser.parse(JsonAST.prettyRender(json)) == JsonParser.parse(JsonAST.compactRender(json))
     forAll(rendering)
   }
 
@@ -106,8 +106,6 @@ class JsonPrintingSpec extends Specification  with JValueGen with ScalaCheck {
       render(JDouble(Double.NaN)) must throwAn[IllegalArgumentException]
     }
   }
-
-  private def parse(json: String) = scala.util.parsing.json.JSON.parseRaw(json)
 
   implicit def arbDoc: Arbitrary[JValue] = Arbitrary(genJValue)
 }
