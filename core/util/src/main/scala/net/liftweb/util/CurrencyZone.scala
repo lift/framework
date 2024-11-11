@@ -18,7 +18,8 @@ package net.liftweb
 package util
 
 import java.util.Locale
-import java.text.{NumberFormat, DecimalFormat}
+import java.text.{DecimalFormat, NumberFormat}
+import scala.annotation.nowarn
 
 trait TwoFractionDigits {
     def numberOfFractionDigits = 2
@@ -30,9 +31,10 @@ trait DollarCurrency extends TwoFractionDigits {
 }
 
 /* Various Currencies */
+@nowarn("msg=constructor Locale in class Locale is deprecated \\(since 19\\)") // Use Locale.of when only JDK 19+ is supported
 object AU extends CurrencyZone {
     type Currency = AUD
-    var locale: Locale = Locale.of("en", "AU")
+    var locale: Locale = new Locale("en", "AU")
     def make(x: BigDecimal): AUD = new Currency{def amount: BigDecimal = x}
     abstract class AUD extends AbstractCurrency("AUD") with DollarCurrency {}
 }
