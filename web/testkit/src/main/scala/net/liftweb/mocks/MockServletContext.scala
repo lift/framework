@@ -21,7 +21,6 @@ import common.Logger
 
 import scala.collection.mutable.HashMap
 import scala.jdk.CollectionConverters._
-
 import java.io.PrintWriter
 import java.io.StringReader
 import java.io.BufferedReader
@@ -36,6 +35,8 @@ import java.util.Locale
 import java.util.Vector
 import jakarta.servlet._
 import jakarta.servlet.http._
+
+import scala.annotation.nowarn
 
 /**
  * An example of how to use these mock classes in your unit tests:
@@ -87,7 +88,7 @@ class MockServletContext(var target: String) extends ServletContext {
   def getSessionTimeout(): Int = 5
   def setRequestCharacterEncoding(x$1: String): Unit = {}
   def setResponseCharacterEncoding(x$1: String): Unit = {}
-  def setSessionTimeout(x$1: Int): Unit = 5
+  def setSessionTimeout(x$1: Int): Unit = {}
   def getResourceAsStream(path: String): java.io.InputStream = {
     val file = Paths.get(target + path)
     if (Files.exists(file)) {
@@ -227,6 +228,7 @@ class MockHttpSession extends HttpSession {
     def hasMoreElements() = keys.hasNext
     def nextElement(): String = keys.next()
   }
+  @nowarn("msg=trait HttpSessionContext in package http is deprecated")
   def getSessionContext(): HttpSessionContext = null
   def getMaxInactiveInterval(): Int = maxii
   def setMaxInactiveInterval(i: Int): Unit = maxii = i

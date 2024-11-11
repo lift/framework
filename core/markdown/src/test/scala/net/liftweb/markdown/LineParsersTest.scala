@@ -19,7 +19,8 @@ package net.liftweb.markdown
  * Christoph Henkelmann http://henkelmann.eu/
  */
 
-import org.scalatest.{Matchers,FlatSpec}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.junit.runner.RunWith
 import org.scalatestplus.junit.JUnitRunner
 
@@ -27,7 +28,7 @@ import org.scalatestplus.junit.JUnitRunner
  * tests parsing of individual lines
  */
 @RunWith(classOf[JUnitRunner])
-class LineParsersTest extends FlatSpec with Matchers with LineParsers{
+class LineParsersTest extends AnyFlatSpec with Matchers with LineParsers{
 
     "The LineParsers" should "parse horizontal rulers" in {
         val p = ruler

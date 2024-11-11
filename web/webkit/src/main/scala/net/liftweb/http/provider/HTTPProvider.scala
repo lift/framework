@@ -83,7 +83,7 @@ trait HTTPProvider {
   protected def bootLift(loader: Box[String]): Unit = {
       try
       {
-        val b: Bootable = loader.map(b => Class.forName(b).newInstance.asInstanceOf[Bootable]) openOr DefaultBootstrap
+        val b: Bootable = loader.map(b => Class.forName(b).getDeclaredConstructor().newInstance().asInstanceOf[Bootable]) openOr DefaultBootstrap
         preBoot()
         b.boot()
       } catch {

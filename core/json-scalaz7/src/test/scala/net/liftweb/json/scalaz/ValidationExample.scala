@@ -16,11 +16,11 @@ object ValidationExample extends Specification {
   case class Person(name: String, age: Int)
 
   "Validation" should {
-    def min(x: Int): Int => Result[Int] = (y: Int) => 
-      if (y < x) Fail("min", y + " < " + x) else y.success
+    def min(x: Int): Int => Result[Int] = (y: Int) =>
+      if (y < x) Fail("min", s"$y < $x") else y.success
 
-    def max(x: Int): Int => Result[Int] = (y: Int) => 
-      if (y > x) Fail("max", y + " > " + x) else y.success
+    def max(x: Int): Int => Result[Int] = (y: Int) =>
+      if (y > x) Fail("max", s"$y > $x") else y.success
 
     val json = JsonParser.parse(""" {"name":"joe","age":17} """)
 
@@ -56,8 +56,8 @@ object ValidationExample extends Specification {
   "Range filtering" should {
     val json = JsonParser.parse(""" [{"s":10,"e":17},{"s":12,"e":13},{"s":11,"e":8}] """)
 
-    def ascending: (Int, Int) => Result[(Int, Int)] = (x1: Int, x2: Int) => 
-      if (x1 > x2) Fail("asc", x1 + " > " + x2) else (x1, x2).success
+    def ascending: (Int, Int) => Result[(Int, Int)] = (x1: Int, x2: Int) =>
+      if (x1 > x2) Fail("asc", s"$x1 > $x2") else (x1, x2).success
 
     // Valid range is a range having start <= end
     implicit def rangeJSON: JSONR[Range] = new JSONR[Range] {
@@ -74,7 +74,7 @@ object ValidationExample extends Specification {
       val r = fromJSON[List[Range]](json)
       r mustEqual Failure(NonEmptyList(UncategorizedError("asc", "11 > 8", Nil)))
     }
- 
+
     "optionally return only valid ranges" in {
       val ranges = json.children.map(fromJSON[Range]).filter(_.isSuccess).sequence[({type λ[α]=ValidationNel[Error, α]})#λ, Range]
       ranges mustEqual Success(List(Range(10, 17), Range(12, 13)))

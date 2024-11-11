@@ -159,7 +159,7 @@ class TestRunner(clearDB: Box[() => Any], setupDB: Box[() => Any],beforeAssertLi
     TestResults(log.toList)
   }
 
-  (run _, applyAssert _)
+  (() => run, applyAssert _)
 }
 }
 

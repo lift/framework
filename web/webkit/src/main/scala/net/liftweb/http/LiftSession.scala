@@ -2180,11 +2180,11 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           Helpers.tryo(shutdownFunc.foreach(_(this)))
         }
 
-        override def lifespan = Full(LiftRules.clientActorLifespan.vend.apply(this))
+        override def lifespan: Full[TimeSpan] = Full(TimeSpan(LiftRules.clientActorLifespan.vend.apply(this)))
 
         override def hasOuter = false
 
-        override def parentTag = <div style="display: none"/>
+        override def parentTag: Elem = <div style="display: none"/>
 
         override def lowPriority: PartialFunction[Any, Unit] = new PartialFunction[Any, Unit] {
           def isDefinedAt(x: Any) = true
@@ -2240,7 +2240,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
         case Group(nodes) =>
           Group(processSurroundAndInclude(page, nodes))
 
-        case elem@DataAttrNode(toDo) => toDo match {
+        case DataAttrNode(toDo) => toDo match {
           case DataAttributeProcessorAnswerNodes(nodes) =>
             processSurroundAndInclude(page, nodes)
 
@@ -2721,7 +2721,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
 
 
-        override def lifespan = Full(LiftRules.clientActorLifespan.vend.apply(this))
+        override def lifespan = Full(TimeSpan(LiftRules.clientActorLifespan.vend.apply(this)))
 
         override def hasOuter = false
 

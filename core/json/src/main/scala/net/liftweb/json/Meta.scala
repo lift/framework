@@ -93,7 +93,7 @@ private[json] object Meta {
   private val paranamer = new CachingParanamer(new BytecodeReadingParanamer)
 
   object ParanamerReader extends ParameterNameReader {
-    def lookupParameterNames(constructor: JConstructor[_]): Traversable[String] =
+    def lookupParameterNames(constructor: JConstructor[_]): Iterable[String] =
       paranamer.lookupParameterNames(constructor)
   }
 

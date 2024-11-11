@@ -48,7 +48,7 @@ trait AbstractExamples extends Specification {
   "Transformation example" in {
     val uppercased = parse(person).transformField { case JField(n, v) => JField(n.toUpperCase, v) }
     val rendered = compactRender(uppercased)
-    rendered mustEqual 
+    rendered mustEqual
       """{"PERSON":{"NAME":"Joe","AGE":35,"SPOUSE":{"PERSON":{"NAME":"Marilyn","AGE":33}}}}"""
   }
 
@@ -135,7 +135,7 @@ trait AbstractExamples extends Specification {
   }
 
   "Generate JSON with DSL example" in {
-    val json: JValue = 
+    val json: JValue =
       ("id" -> 5) ~
       ("tags" -> Map("a" -> 5, "b" -> 7))
     print(json) mustEqual """{"id":5,"tags":{"a":5,"b":7}}"""
@@ -168,7 +168,7 @@ object Examples {
 """
 
   val person = """
-{ 
+{
   "person": {
     "name": "Joe",
     "age": 35,
@@ -182,19 +182,19 @@ object Examples {
 }
 """
 
-  val personDSL = 
+  val personDSL =
     ("person" ->
       ("name" -> "Joe") ~
       ("age" -> 35) ~
-      ("spouse" -> 
-        ("person" -> 
+      ("spouse" ->
+        ("person" ->
           ("name" -> "Marilyn") ~
           ("age" -> 33)
         )
       )
     )
 
-  val objArray = 
+  val objArray =
 """
 { "name": "joe",
   "address": {
@@ -216,5 +216,5 @@ object Examples {
 
   val nulls = ("f1" -> (null: String)) ~ ("f2" -> List(null, "s"))
   val quoted = """["foo \" \n \t \r bar"]"""
-  val symbols = ("f1" -> 'foo) ~ ("f2" -> 'bar)
+  val symbols = ("f1" -> Symbol("foo")) ~ ("f2" -> Symbol("bar"))
 }

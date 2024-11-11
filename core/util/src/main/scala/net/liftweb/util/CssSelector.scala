@@ -27,7 +27,7 @@ sealed trait CssSelector {
   def withSubnode(sn: SubNode): CssSelector
 }
 
-final case class ElemSelector(elem: String, subNodes: Box[SubNode]) extends 
+final case class ElemSelector(elem: String, subNodes: Box[SubNode]) extends
   CssSelector {
   def withSubnode(sn: SubNode): CssSelector = this.copy(subNodes = Full(sn))
 }
@@ -36,7 +36,7 @@ final case class StarSelector(subNodes: Box[SubNode], singleDepth: Boolean) exte
   def withSubnode(sn: SubNode): CssSelector = this.copy(subNodes = Full(sn))
 }
 
-final case class IdSelector(id: String, subNodes: Box[SubNode]) extends 
+final case class IdSelector(id: String, subNodes: Box[SubNode]) extends
   CssSelector {
   def withSubnode(sn: SubNode): CssSelector = this.copy(subNodes = Full(sn))
 }
@@ -56,7 +56,7 @@ final case class EnclosedSelector(selector: CssSelector, kid: CssSelector) exten
   def withSubnode(sn: SubNode): CssSelector = this
 }
 
-final case class AttrSelector(name: String, value: String, 
+final case class AttrSelector(name: String, value: String,
 subNodes: Box[SubNode]) extends CssSelector {
   def withSubnode(sn: SubNode): CssSelector = this.copy(subNodes = Full(sn))
 }
@@ -64,7 +64,7 @@ subNodes: Box[SubNode]) extends CssSelector {
 sealed trait SubNode
 
 object SubNode {
-  def unapply(bind: CssBind): Option[Box[SubNode]] = 
+  def unapply(bind: CssBind): Option[Box[SubNode]] =
     Some(bind.css.flatMap(_.subNodes))
 }
 
@@ -80,7 +80,6 @@ final case class PrependKidsSubNode() extends SubNode with WithKids {
   def transform(original: NodeSeq, newNs: NodeSeq): NodeSeq = newNs ++ original
 }
 
-@deprecated("Please use DontMergeClassValue instead.", "3.3.0")
 final case object DontMergeAttributes extends SubNode
 
 final case object DontMergeClass extends SubNode
@@ -231,7 +230,7 @@ object CssSelectorParser extends PackratParsers with ImplicitConversions {
     }
 
 
-  private lazy val id: Parser[String] = letter ~ 
+  private lazy val id: Parser[String] = letter ~
   rep(letter | number | '-' | '_' | ':' | '.') ^^ {
     case first ~ rest => (first :: rest).mkString
   }
@@ -240,7 +239,7 @@ object CssSelectorParser extends PackratParsers with ImplicitConversions {
 
   private def isNumber(c: Char): Boolean = c.isDigit
 
-    
+
   private lazy val letter: Parser[Char] = elem("letter", isLetter)
   private lazy val number: Parser[Char] = elem("number", isNumber)
 
@@ -248,7 +247,7 @@ object CssSelectorParser extends PackratParsers with ImplicitConversions {
   private lazy val subNode: Parser[SubNode] = rep(' ') ~>
   ((opt('*') ~ '[' ~> attrName <~ '+' ~ ']' ^^ {
     name => AttrAppendSubNode(name)
-  }) | 
+  }) |
   (opt('*') ~ '[' ~> attrName <~ '!' ~ ']' ^^ {
     name => AttrRemoveSubNode(name)
   }) |    (opt('*') ~ '[' ~> attrName <~ ']' ^^ {
@@ -286,9 +285,9 @@ object CssSelectorParser extends PackratParsers with ImplicitConversions {
     })) ^^ {
       case s => s.mkString
     })
-    
+
   }
 
-  
+
 }
 

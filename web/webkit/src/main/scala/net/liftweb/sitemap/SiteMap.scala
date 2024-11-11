@@ -136,11 +136,11 @@ sealed class SiteMapSingleton {
    *
    * @return a function which will apply the changes to a SiteMap
    */
-  def sitemapMutator(pf: PartialFunction[Menu, List[Menu]])(or: SiteMap => SiteMap): SiteMap => SiteMap = 
+  def sitemapMutator(pf: PartialFunction[Menu, List[Menu]])(or: SiteMap => SiteMap): SiteMap => SiteMap =
     (sm: SiteMap) => {
       var fired = false
 
-      def theFunc: Menu => List[Menu] = 
+      def theFunc: Menu => List[Menu] =
         (menu: Menu) => {
           if (fired) {
             List(menu)
@@ -150,8 +150,8 @@ sealed class SiteMapSingleton {
           } else List(menu.rebuild(doAMenuItem _))
         }
 
-        
-      def doAMenuItem(in: List[Menu]): List[Menu] = 
+
+      def doAMenuItem(in: List[Menu]): List[Menu] =
         in.flatMap(theFunc)
 
       val ret = sm.rebuild(_.flatMap(theFunc))
@@ -214,7 +214,7 @@ sealed class SiteMapSingleton {
     def unapply(menu: Menu): Option[Menu] =
       menu.loc.params.find(matchFunc).map(ignore => menu)
   }
-                       
+
 
   def findAndTestLoc(name: String): Box[Loc[_]] =
   findLoc(name).flatMap(l => l.testAccess match {
@@ -242,8 +242,8 @@ sealed class SiteMapSingleton {
   /**
    * A Java-callable method that builds a SiteMap
    */
-  def build(kids: Array[ConvertableToMenu]): SiteMap = 
-    this.apply(kids :_*)
+  def build(kids: Array[ConvertableToMenu]): SiteMap =
+    this.apply(kids.toSeq :_*)
 
   def apply(kids: ConvertableToMenu *) = new SiteMap(Nil, kids :_*)
 

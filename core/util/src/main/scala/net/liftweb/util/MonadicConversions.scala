@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 /**
  * Holds the implicit conversions from/to MonadicCondition
@@ -23,7 +23,7 @@ package util
 object MonadicConversions {
   import scala.language.implicitConversions
 
-  implicit def bool2Monadic(cond: Boolean) = cond match {
+  implicit def bool2Monadic(cond: Boolean): MonadicCondition = cond match {
     case true => True
     case _ => False(Nil)
   }

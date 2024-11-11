@@ -238,11 +238,6 @@ trait Html5Writer {
               pc.buildString(sb)
               writer.append(sb)
             }
-            case pc: scala.xml.PCData => {
-              val sb = new StringBuilder()
-              pc.buildString(sb)
-              writer.append(sb)
-            }
             case Unparsed(text) => writer.append(text)
             case a: Atom[_] if a.getClass eq classOf[Atom[_]] =>
               writer.append(a.data.toString)

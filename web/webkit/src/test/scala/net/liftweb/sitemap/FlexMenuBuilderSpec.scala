@@ -82,7 +82,7 @@ object FlexMenuBuilderSpec extends WebSpec(FlexMenuBuilderSpecBoot.boot _) {
  * you could just use "() => bootstrap.Boot.boot".
  */
 object FlexMenuBuilderSpecBoot {
-  def boot() {
+  def boot() : Unit = {
     def siteMap = SiteMap(
       Menu.i("Home") / "index",
       Menu.i("Help") / "help" submenus (

@@ -138,9 +138,9 @@ trait Mailer extends SimpleInjector {
    * To change the way the host is calculated, set this to the function that calcualtes the host name.
    * By default: System.getProperty("mail.smtp.host")
    */
-  var hostFunc: () => String = _host _
+  var hostFunc: () => String = () => _host
 
-  private def _host = properties.getProperty("mail.smtp.host") match {
+  private def _host: String = properties.getProperty("mail.smtp.host") match {
     case null => "localhost"
     case s => s
   }

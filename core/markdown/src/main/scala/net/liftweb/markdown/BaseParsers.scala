@@ -20,9 +20,9 @@ package net.liftweb.markdown
  */
 
 import scala.language.postfixOps
-
 import util.parsing.combinator.RegexParsers
 import collection.SortedMap
+import scala.annotation.nowarn
 
 /**
  * Basic parsers for Markdown Source.
@@ -241,6 +241,7 @@ trait BaseParsers extends RegexParsers {
      * everything between the quotes is run through the escape handling
      * That way you can omit xml escaping when writing inline XML in markdown.
      */
+    @nowarn("msg=method \\+ in class Char is deprecated.*") // keeping + because it's just much more readable in that case
     def xmlAttrVal:Parser[String] =
       ('"'  ~> ((not('"')  ~> aChar)*) <~ '"'  ^^ {'"' +  _.mkString + '"' }) |
       ('\'' ~> ((not('\'') ~> aChar)*) <~ '\'' ^^ {'\'' + _.mkString + '\''})
