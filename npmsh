@@ -1,8 +1,0 @@
-#!/bin/bash
-
-set -ev
-
-cd web/webkit
-npm run lint
-npm run test
-cd -
