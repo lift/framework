@@ -55,7 +55,7 @@ lazy val core: Seq[ProjectReference] =
 lazy val common =
   coreProject("common")
     .settings(
-      description := "Common Libraties and Utilities",
+      description := "Common Libraries and Utilities",
       libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, scala_xml, scala_parser)
     )
 
@@ -201,7 +201,7 @@ lazy val webkit =
 // Persistence Projects
 // --------------------
 lazy val persistence: Seq[ProjectReference] =
-  Seq(db, proto, mapper, record, squeryl_record, mongodb, mongodb_record)
+  Seq(db, proto, mapper, record, mongodb, mongodb_record)
 
 lazy val db =
   persistenceProject("db")
@@ -231,11 +231,6 @@ lazy val record =
   persistenceProject("record")
     .dependsOn(proto)
     .settings(libraryDependencies ++= Seq(jbcrypt))
-
-lazy val squeryl_record =
-  persistenceProject("squeryl-record")
-    .dependsOn(record, db)
-    .settings(libraryDependencies ++= Seq(h2, squeryl))
 
 lazy val mongodb =
   persistenceProject("mongodb")

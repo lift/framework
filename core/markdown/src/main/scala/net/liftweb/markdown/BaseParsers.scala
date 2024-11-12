@@ -21,7 +21,6 @@ package net.liftweb.markdown
 
 import scala.language.postfixOps
 
-import util.parsing.json.Parser
 import util.parsing.combinator.RegexParsers
 import collection.SortedMap
 
@@ -151,7 +150,7 @@ trait BaseParsers extends RegexParsers {
             val lower:SortedMap[Char,Char] = rs.rangeTo(c)
             val (begin:Char, end:Char) = if (lower.isEmpty) ('\u0001', '\u0000') //this invalid pair always causes failure
                                          else lower.last
-                               
+
             if (begin <= c && c <= end) Success(c, in.rest)
             else                        Failure(verboseString(c) + " not in range " +
                                             verboseString(begin) + " - " + verboseString(end),
@@ -161,7 +160,7 @@ trait BaseParsers extends RegexParsers {
 
     /**
      * Succeeds if the given parsers succeeds and the given function is defined at the parse result.
-     * Returns the result of the method applied to the given parsers result. 
+     * Returns the result of the method applied to the given parsers result.
      */
     def acceptMatch[S,T](f:PartialFunction[S,T])(p:Parser[S]):Parser[T] = Parser { in =>
         p(in) match {
@@ -242,7 +241,7 @@ trait BaseParsers extends RegexParsers {
      * everything between the quotes is run through the escape handling
      * That way you can omit xml escaping when writing inline XML in markdown.
      */
-    def xmlAttrVal:Parser[String] = 
+    def xmlAttrVal:Parser[String] =
       ('"'  ~> ((not('"')  ~> aChar)*) <~ '"'  ^^ {'"' +  _.mkString + '"' }) |
       ('\'' ~> ((not('\'') ~> aChar)*) <~ '\'' ^^ {'\'' + _.mkString + '\''})
     /** Parses an XML Attribute with simplified value handling like xmlAttrVal.
