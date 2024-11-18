@@ -193,7 +193,7 @@ There is [additional documentation on the wiki](http://www.assembla.com/spaces/l
 
 ### Homepage
 
-The main Lift website is [http://www.liftweb.net](http://www.liftweb.net). The site contains information on the latest Lift releases, a getting started guide, links to several Lift online books, and additional information.
+The main Lift website is [https://liftweb.net](https://liftweb.net). The site contains information on the latest Lift releases, a getting started guide, links to several Lift online books, and additional information.
 
 ### Mailing List
 
