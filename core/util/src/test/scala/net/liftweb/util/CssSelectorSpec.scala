@@ -37,7 +37,7 @@ class CssSelectorSpec extends Specification with XmlMatchers {
     }
 
     "select an id" in {
-      CssSelectorParser.parse("#foo").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse("#foo").openOrThrowException("If the box is empty, we want a failure") must_==
         IdSelector("foo", Empty)
     }
 
@@ -50,53 +50,53 @@ class CssSelectorSpec extends Specification with XmlMatchers {
     }
 
     ":button must  parse" in {
-      CssSelectorParser.parse(":button").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(":button").openOrThrowException("If the box is empty, we want a failure") must_==
       AttrSelector("type", "button", Empty)
     }
 
 
     ":checkbox must  parse" in {
-      CssSelectorParser.parse(":checkbox").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(":checkbox").openOrThrowException("If the box is empty, we want a failure") must_==
       AttrSelector("type", "checkbox", Empty)
     }
 
     ":file must  parse" in {
-      CssSelectorParser.parse(":file").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(":file").openOrThrowException("If the box is empty, we want a failure") must_==
       AttrSelector("type", "file", Empty)
     }
 
     ":password must  parse" in {
-      CssSelectorParser.parse(":password").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(":password").openOrThrowException("If the box is empty, we want a failure") must_==
       AttrSelector("type", "password", Empty)
     }
 
     ":radio must  parse" in {
-      CssSelectorParser.parse(":radio").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(":radio").openOrThrowException("If the box is empty, we want a failure") must_==
       AttrSelector("type", "radio", Empty)
     }
 
     ":reset must  parse" in {
-      CssSelectorParser.parse(":reset").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(":reset").openOrThrowException("If the box is empty, we want a failure") must_==
       AttrSelector("type", "reset", Empty)
     }
 
     ":submit must  parse" in {
-      CssSelectorParser.parse(":submit").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(":submit").openOrThrowException("If the box is empty, we want a failure") must_==
       AttrSelector("type", "submit", Empty)
     }
 
     ":text must  parse" in {
-      CssSelectorParser.parse(":text").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(":text").openOrThrowException("If the box is empty, we want a failure") must_==
       AttrSelector("type", "text", Empty)
     }
 
     "select an id with attr subnodes" in {
-      CssSelectorParser.parse("#foo  *[dog] ").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse("#foo  *[dog] ").openOrThrowException("If the box is empty, we want a failure") must_==
       IdSelector("foo", Full(AttrSubNode("dog")))
     }
 
     "select an id with no star attr subnodes" in {
-      CssSelectorParser.parse("#foo  [woof] ").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse("#foo  [woof] ").openOrThrowException("If the box is empty, we want a failure") must_==
       IdSelector("foo", Full(AttrSubNode("woof")))
     }
 
@@ -184,27 +184,27 @@ class CssSelectorSpec extends Specification with XmlMatchers {
     }
 
     "select a class with subnodes" in {
-      CssSelectorParser.parse(".foo  * ").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(".foo  * ").openOrThrowException("If the box is empty, we want a failure") must_==
       ClassSelector("foo", Full(KidsSubNode()))
     }
 
     "Support selecting this node" in {
-      CssSelectorParser.parse(".foo  ^^ ").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(".foo  ^^ ").openOrThrowException("If the box is empty, we want a failure") must_==
       ClassSelector("foo", Full(SelectThisNode(false)))
     }
 
     "Support selecting this node" in {
-      CssSelectorParser.parse(".foo  ^* ").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(".foo  ^* ").openOrThrowException("If the box is empty, we want a failure") must_==
       ClassSelector("foo", Full(SelectThisNode(true)))
     }
 
     "select a class with attr subnodes" in {
-      CssSelectorParser.parse(".foo  *[dog] ").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(".foo  *[dog] ").openOrThrowException("If the box is empty, we want a failure") must_==
       ClassSelector("foo", Full(AttrSubNode("dog")))
     }
 
     "select an id with no star attr subnodes" in {
-      CssSelectorParser.parse(".foo  [woof] ").openOrThrowException("If the box is empty, we want a failure") must_== 
+      CssSelectorParser.parse(".foo  [woof] ").openOrThrowException("If the box is empty, we want a failure") must_==
       ClassSelector("foo", Full(AttrSubNode("woof")))
     }
 
@@ -564,7 +564,7 @@ class CssBindHelpersSpec extends Specification with XmlMatchers {
 
 
     "Java number support" in {
-      val f = "a *" #> Full(new java.lang.Long(12))
+      val f = "a *" #> Full(java.lang.Long.valueOf(12))
       val xml = <a>Hello</a>
 
       f(xml) must ==/ (<a>12</a>)
@@ -925,7 +925,7 @@ object CheckTheImplicitConversionsForToCssBindPromoter {
   bog #> "Hello"
   bog #> <span/>
   bog #> 1
-  bog #> 'foo
+  bog #> Symbol("foo")
   bog #> 44L
   bog #> 1.22
   bog #> false
@@ -964,14 +964,14 @@ object CheckTheImplicitConversionsForToCssBindPromoter {
   val nsf: NodeSeq => NodeSeq = bog #> "Hello" &
     bog #> <span/> &
     bog #> 1 &
-    bog #> 'foo &
+    bog #> Symbol("foo") &
     bog #> 44L &
     bog #> false
 
   "foo" #> "Hello"
   "foo" #> <span/>
   "foo" #> 1
-  "foo" #> 'foo
+  "foo" #> Symbol("foo")
   "foo" #> 44L
   "foo" #> false
 
@@ -1004,7 +1004,7 @@ object CheckTheImplicitConversionsForToCssBindPromoter {
   val nsf2: NodeSeq => NodeSeq = "foo" #> "Hello" &
     "foo" #> <span/> &
     "foo" #> 1 &
-    "foo" #> 'foo &
+    "foo" #> Symbol("foo") &
     "foo" #> 44L &
     "foo" #> false
 

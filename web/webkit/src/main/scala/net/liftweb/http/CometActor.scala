@@ -683,7 +683,7 @@ trait BaseCometActor extends LiftActor with LiftCometActor with CssBindImplicits
    */
   def jsonToIncludeInCode: JsCmd = _jsonToIncludeCode
 
-  private lazy val (_sendJson, _jsonToIncludeCode) = S.createJsonFunc(Full(_defaultPrefix), onJsonError, receiveJson _)
+  private lazy val (_sendJson, _jsonToIncludeCode) = S.createJsonFunc(Full(_defaultPrefix), onJsonError, () => receiveJson)
 
   /**
    * Set this method to true to have the Json call code included in the Comet output
@@ -961,7 +961,7 @@ trait BaseCometActor extends LiftActor with LiftCometActor with CssBindImplicits
 
     case ShutdownIfPastLifespan =>
       for {
-        ls <- lifespan if listeners.isEmpty && (lastListenerTime + ls.millis + 1000l) < millis
+        ls <- lifespan if listeners.isEmpty && (lastListenerTime + ls.millis + 1000L) < millis
       } {
         this ! ShutDown
       }

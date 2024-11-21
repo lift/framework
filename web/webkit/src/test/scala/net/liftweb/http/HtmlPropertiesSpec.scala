@@ -28,7 +28,7 @@ import common.{ Box, Empty, Full }
 * you could just use "() => bootstrap.Boot.boot".
 */
 object HtmlPropertiesSpecBoot {
-  def boot() {
+  def boot() : Unit = {
     LiftRules.htmlProperties.default.set((_: Req) match {
       case r @ Req("html5" :: _, _, _) =>
         println("Html5 request: " + r)

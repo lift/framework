@@ -18,9 +18,11 @@ package net.liftweb
 package json
 
 import util.control.Exception._
-
 import org.specs2.mutable.Specification
 
+import scala.annotation.nowarn
+
+@nowarn("msg=Unicode escapes in triple quoted strings are deprecated; use the literal character instead") // IIUC, it's what is tested
 object ParserBugs extends Specification {
   "Unicode ffff is a valid char in string literal" in {
     parseOpt(""" {"x":"\uffff"} """).isDefined mustEqual true

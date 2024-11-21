@@ -117,11 +117,11 @@ class Jetty7AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
     else if (resumed)
       RetryState.RESUMED
     else {
-      setTimeout.invoke(cont, new java.lang.Long(timeout))
+      setTimeout.invoke(cont, java.lang.Long.valueOf(timeout))
       suspendMeth.invoke(cont)
       RetryState.SUSPENDED
     }
-    
+
   }
 
   def resume(what: (Req, LiftResponse)): Boolean = {

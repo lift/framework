@@ -144,7 +144,7 @@ class CombParserHelpersSpec extends Specification with ScalaCheck {
 
 
 object AbcdStringGen {
-  implicit def abcdString =
+  implicit def abcdString: Gen[String] =
     for (
       len <- choose(4, 4);
       string <- pick(len, List("a", "b", "c", "d"))

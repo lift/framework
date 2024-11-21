@@ -32,7 +32,7 @@ import json.Serialization.{read, write => swrite}
 class JodaTimeSerializerSpec extends Specification  {
   "JodaTimeSerializer Specification".title
 
-  implicit val formats = Serialization.formats(NoTypeHints) ++ JodaTimeSerializers.all
+  implicit val formats: Formats = Serialization.formats(NoTypeHints) ++ JodaTimeSerializers.all
 
   "Serialize joda time types" in {
     val x = JodaTypes(new Duration(10*1000), new Instant(System.currentTimeMillis),
@@ -43,7 +43,7 @@ class JodaTimeSerializerSpec extends Specification  {
   }
 
   "DateTime and DateMidnight use configured date format" in {
-    implicit val formats = new net.liftweb.json.DefaultFormats {                      
+    implicit val formats = new net.liftweb.json.DefaultFormats {
       override def dateFormatter = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss'Z'")
     } ++ JodaTimeSerializers.all
 
@@ -59,7 +59,7 @@ class JodaTimeSerializerSpec extends Specification  {
   }
 }
 
-case class JodaTypes(duration: Duration, instant: Instant, dateTime: DateTime, 
+case class JodaTypes(duration: Duration, instant: Instant, dateTime: DateTime,
                      dateMidnight: DateMidnight, interval: Interval, localDate: LocalDate,
                      localTime: LocalTime, period: Period)
 

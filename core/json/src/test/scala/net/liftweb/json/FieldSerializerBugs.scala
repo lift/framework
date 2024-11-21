@@ -22,7 +22,7 @@ import org.specs2.mutable.Specification
 object FieldSerializerBugs extends Specification {
   import Serialization.{read, write => swrite}
 
-  implicit val formats = DefaultFormats + FieldSerializer[AnyRef]()
+  implicit val formats: Formats = DefaultFormats + FieldSerializer[AnyRef]()
 
 /* FIXME: For some reason this fails on CI
   "AtomicInteger should not cause stack overflow" in {

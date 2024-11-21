@@ -333,7 +333,7 @@ case class ContentSecurityPolicyViolation(
   originalPolicy: String
 )
 object ContentSecurityPolicyViolation extends LazyLoggable {
-  private[this] implicit val formats  = DefaultFormats
+  private[this] implicit val formats: DefaultFormats.type = DefaultFormats
 
   def defaultViolationHandler: DispatchPF = {
     case request @ Req(start :: "content-security-policy-report" :: Nil, _, _) if start == LiftRules.liftContextRelativePath =>

@@ -23,7 +23,7 @@ import org.specs2.mutable.Specification
 class ExtractionExamples extends Specification {
   "Extraction Examples Specification".title
 
-  implicit val formats = DefaultFormats
+  implicit val formats: DefaultFormats.type = DefaultFormats
 
   "Extraction example" in {
     val json = parse(testJson)
@@ -47,13 +47,13 @@ class ExtractionExamples extends Specification {
 
   "Map with primitive values extraction example" in {
     val json = parse(testJson)
-    json.extract[PersonWithMap] mustEqual 
+    json.extract[PersonWithMap] mustEqual
       PersonWithMap("joe", Map("street" -> "Bulevard", "city" -> "Helsinki"))
   }
 
   "Map with object values extraction example" in {
     val json = parse(twoAddresses)
-    json.extract[PersonWithAddresses] mustEqual 
+    json.extract[PersonWithAddresses] mustEqual
       PersonWithAddresses("joe", Map("address1" -> Address("Bulevard", "Helsinki"),
                                      "address2" -> Address("Soho", "London")))
   }
@@ -78,7 +78,7 @@ class ExtractionExamples extends Specification {
 
   "Primitive extraction example" in {
     val json = parse(primitives)
-    json.extract[Primitives] mustEqual Primitives(124, 123L, 126.5, 127.5.floatValue, "128", 'symb, 125, 129.byteValue, true)
+    json.extract[Primitives] mustEqual Primitives(124, 123L, 126.5, 127.5.floatValue, "128", Symbol("symb"), 125, 129.byteValue, true)
   }
 
   "Null extraction example" in {
@@ -107,38 +107,38 @@ class ExtractionExamples extends Specification {
 
   "Multidimensional array extraction example" in {
     parse(multiDimensionalArrays).extract[MultiDim] mustEqual MultiDim(
-      List(List(List(1, 2), List(3)), List(List(4), List(5, 6))), 
+      List(List(List(1, 2), List(3)), List(List(4), List(5, 6))),
       List(List(Name("joe"), Name("mary")), List(Name("mazy"))))
   }
-  
+
   "Flatten example with simple case class" in {
     val f = Extraction.flatten(Extraction.decompose(SimplePerson("joe", Address("Bulevard", "Helsinki"))))
     val e = Map(".name" -> "\"joe\"", ".address.street" -> "\"Bulevard\"", ".address.city"   -> "\"Helsinki\"")
-    
+
     f mustEqual e
   }
-  
+
   "Unflatten example with top level string and int" in {
     val m = Map(".name" -> "\"joe\"", ".age" -> "32")
-    
+
     Extraction.unflatten(m) mustEqual JObject(List(JField("name",JString("joe")), JField("age",JInt(32))))
   }
-  
+
   "Unflatten example with top level string and double" in {
     val m = Map(".name" -> "\"joe\"", ".age" -> "32.2")
-  
+
     Extraction.unflatten(m) mustEqual JObject(List(JField("name",JString("joe")), JField("age",JDouble(32.2))))
   }
-  
+
   "Unflatten example with two-level string properties" in {
     val m = Map(".name" -> "\"joe\"", ".address.street" -> "\"Bulevard\"", ".address.city"   -> "\"Helsinki\"")
-    
+
     Extraction.unflatten(m) mustEqual JObject(List(JField("name", JString("joe")), JField("address", JObject(List(JField("street", JString("Bulevard")), JField("city", JString("Helsinki")))))))
   }
-  
+
   "Unflatten example with top level array" in {
     val m = Map(".foo[2]" -> "2", ".foo[0]" -> "0", ".foo[1]" -> "1")
-    
+
     Extraction.unflatten(m) mustEqual JObject(List(JField("foo", JArray(List(JInt(0), JInt(1), JInt(2))))))
   }
 
@@ -147,22 +147,22 @@ class ExtractionExamples extends Specification {
 
     Extraction.unflatten(m) mustEqual JObject(List(JField("photo", JString("photo string")), JField("photographer", JString("photographer string")), JField("other", JString("other string"))))
   }
-  
+
   "Flatten and unflatten are symmetric" in {
     val parsed = parse(testJson)
-    
+
     Extraction.unflatten(Extraction.flatten(parsed)) mustEqual parsed
   }
-  
+
   "Flatten preserves empty sets" in {
     val s = SetWrapper(Set())
-    
+
     Extraction.flatten(Extraction.decompose(s)).get(".set") mustEqual Some("[]")
   }
-  
+
   "Flatten and unflatten are symmetric with empty sets" in {
     val s = SetWrapper(Set())
-    
+
     Extraction.unflatten(Extraction.flatten(Extraction.decompose(s))).extract[SetWrapper] mustEqual s
   }
 
@@ -228,7 +228,7 @@ class ExtractionExamples extends Specification {
     parse("""{"a":[{"b":"c"}]}""").extract[Map[String, List[Map[String, String]]]] mustEqual Map("a" -> List(Map("b" -> "c")))
   }
 
-  val testJson = 
+  val testJson =
 """
 { "name": "joe",
   "address": {
@@ -277,7 +277,7 @@ class ExtractionExamples extends Specification {
 }
 """
 
-  val primitives = 
+  val primitives =
 """
 {
   "l": 123,

@@ -18,7 +18,8 @@ package net.liftweb
 package util
 
 import java.util.Locale
-import java.text.{NumberFormat, DecimalFormat}
+import java.text.{DecimalFormat, NumberFormat}
+import scala.annotation.nowarn
 
 trait TwoFractionDigits {
     def numberOfFractionDigits = 2
@@ -30,31 +31,32 @@ trait DollarCurrency extends TwoFractionDigits {
 }
 
 /* Various Currencies */
+@nowarn("msg=constructor Locale in class Locale is deprecated \\(since 19\\)") // Use Locale.of when only JDK 19+ is supported
 object AU extends CurrencyZone {
     type Currency = AUD
-    var locale = new Locale("en", "AU")
-    def make(x: BigDecimal) = new Currency{def amount = x}
+    var locale: Locale = new Locale("en", "AU")
+    def make(x: BigDecimal): AUD = new Currency{def amount: BigDecimal = x}
     abstract class AUD extends AbstractCurrency("AUD") with DollarCurrency {}
 }
 
 object US extends CurrencyZone {
     type Currency = USD
-    var locale = Locale.US
-    def make(x: BigDecimal) = new Currency{def amount = x}
+    var locale: Locale = Locale.US
+    def make(x: BigDecimal): USD = new Currency{def amount: BigDecimal = x}
     abstract class USD extends AbstractCurrency("USD") with DollarCurrency {}
 }
 
 object GB extends CurrencyZone {
     type Currency = GBP
-    var locale = Locale.UK
-    def make(x: BigDecimal) = new Currency{def amount = x}
+    var locale: Locale = Locale.UK
+    def make(x: BigDecimal): GBP = new Currency{def amount: BigDecimal = x}
     abstract class GBP extends AbstractCurrency("GBP") with TwoFractionDigits {def currencySymbol = "£"}
 }
 
 object EU extends CurrencyZone {
     type Currency = EUR
-    var locale = Locale.GERMANY // guess this is why its a var
-    def make(x: BigDecimal) = new Currency{def amount = x; override val _locale = locale}
+    var locale: Locale = Locale.GERMANY // guess this is why its a var
+    def make(x: BigDecimal): EUR = new Currency{def amount: BigDecimal = x; override val _locale: Locale = locale}
     abstract class EUR extends AbstractCurrency("EUR") with TwoFractionDigits {def currencySymbol = "€"}
 }
 
@@ -85,8 +87,8 @@ abstract class CurrencyZone {
 
         val _locale: Locale = locale
         def amount: BigDecimal
-        def floatValue = amount.floatValue
-        def doubleValue = amount.doubleValue
+        def floatValue: Float = amount.floatValue
+        def doubleValue: Double = amount.doubleValue
         def currencySymbol: String
         def numberOfFractionDigits: Int
         def scale: Int
@@ -101,21 +103,21 @@ abstract class CurrencyZone {
         def -(that: Int): Currency = this - make(that)
 
         def /(that: Currency): Currency =
-        make(new BigDecimal(this.amount.bigDecimal.divide(that.amount.bigDecimal, scale, java.math.BigDecimal.ROUND_HALF_UP)) )
+        make(new BigDecimal(this.amount.bigDecimal.divide(that.amount.bigDecimal, scale, java.math.RoundingMode.HALF_UP)) )
         def /(that: Int): Currency = this / make(that)
 
-        def compare(that: Currency) = this.amount compare that.amount
+        def compare(that: Currency): Int = this.amount compare that.amount
 
-        override def equals(that: Any) = that match {
+        override def equals(that: Any): Boolean = that match {
             case that: AbstractCurrency => this.designation+this.format("", scale) == that.designation+that.format("", scale)
             case _ => false
         }
 
-        override def hashCode = (this.designation+format("", scale)).hashCode
+        override def hashCode: Int = (this.designation+format("", scale)).hashCode
 
         def round(precision: Int) = make(BigDecimal(get(precision)))
 
-        override def toString = format("", numberOfFractionDigits)
+        override def toString: String = format("", numberOfFractionDigits)
 
         def format(fd: Int): String = format(currencySymbol, fd)
 
@@ -127,9 +129,9 @@ abstract class CurrencyZone {
                 case _ => amount.setScale(numberOfFractionDigits, BigDecimal.RoundingMode.HALF_UP).doubleValue;
             }
 
-            val numberFormat = NumberFormat.getCurrencyInstance(_locale);
-            numberFormat.setMinimumFractionDigits(numberOfFractionDigits);
-            numberFormat.setMaximumFractionDigits(numberOfFractionDigits);
+            val numberFormat = NumberFormat.getCurrencyInstance(_locale)
+            numberFormat.setMinimumFractionDigits(numberOfFractionDigits)
+            numberFormat.setMaximumFractionDigits(numberOfFractionDigits)
             val symbol=numberFormat.getCurrency.getSymbol(_locale)
             numberFormat.format(moneyValue).replace(symbol, currencySymbol)
 
@@ -142,7 +144,7 @@ abstract class CurrencyZone {
             val df = nf.asInstanceOf[DecimalFormat]
             val groupingSeparator = df.getDecimalFormatSymbols.getGroupingSeparator
 
-            format("", numberOfFractionDigits).replaceAll(groupingSeparator+"", "");
+            format("", numberOfFractionDigits).replaceAll(groupingSeparator.toString+"", "")
         }
 
     }

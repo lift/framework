@@ -158,7 +158,7 @@ trait PaginatorSnippet[T] extends Paginator[T] {
       Text(S.?("paginator.norecords"))
     else
       Text(S.?("paginator.displayingrecords",
-              Array(recordsFrom, recordsTo, count).map(_.asInstanceOf[AnyRef]) : _*))
+              Array(recordsFrom, recordsTo, count).map(_.asInstanceOf[AnyRef]).toSeq : _*))
 
   /**
    * The template prefix for general navigation components

@@ -199,8 +199,8 @@ object LiftRules extends LiftRulesMocker {
 
   def defaultFuncNameGenerator(runMode: Props.RunModes.Value): () => String = {
     runMode match {
-      case Props.RunModes.Test => S.generateTestFuncName _
-      case _                   => S.generateFuncName _
+      case Props.RunModes.Test => () => S.generateTestFuncName
+      case _                   => () => S.generateFuncName
     }
   }
 }
@@ -2246,7 +2246,7 @@ object RulesSeq {
 
 private[http] case object DefaultBootstrap extends Bootable {
   def boot(): Unit = {
-    val f = createInvoker("boot", Class.forName("bootstrap.liftweb.Boot").newInstance.asInstanceOf[AnyRef])
+    val f = createInvoker("boot", Class.forName("bootstrap.liftweb.Boot").getDeclaredConstructor().newInstance().asInstanceOf[AnyRef])
     f.map {f => f()}
   }
 }

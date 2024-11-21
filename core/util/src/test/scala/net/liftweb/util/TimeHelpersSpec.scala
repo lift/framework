@@ -232,7 +232,7 @@ object forAllTimeZones extends Around {
   import MatchersImplicits._
 
   override def around[T: AsResult](f: => T) = synchronized {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     // setDefault is on static context so tests should be sequenced
     // some timezones for java (used in formatters) and for Joda (other computations) has other offset
     val commonJavaAndJodaTimeZones = (TimeZone.getAvailableIDs.toSet & DateTimeZone.getAvailableIDs.asScala.toSet).filter { timeZoneId =>
