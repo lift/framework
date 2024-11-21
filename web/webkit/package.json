@@ -24,10 +24,10 @@
   "devDependencies": {
     "jasmine-core": "^2.4.0",
     "jshint": "^2.9.1-rc2",
-    "karma": "^0.13.15",
+    "karma": "^6.4.4",
     "karma-jasmine": "^0.3.6",
     "karma-mocha-reporter": "^1.1.3",
     "karma-phantomjs-launcher": "^0.2.1",
-    "phantomjs": "^1.9.19"
+    "phantomjs": "^2.1.7"
   }
 }
