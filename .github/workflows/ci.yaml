@@ -17,5 +17,6 @@ jobs:
       with:
         distribution: temurin
         java-version: ${{ matrix.java }}
+    - uses: sbt/setup-sbt@v1
     - name: Build and Test
       run: sbt test
