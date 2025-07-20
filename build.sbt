@@ -20,12 +20,12 @@ ThisBuild / scalacOptions       ++= Seq("-deprecation")
 // Settings for Sonatype compliance
 ThisBuild / pomIncludeRepository := { _ => false }
 ThisBuild / publishTo := {
-  if (isSnapshot.value) {
-    Some(Opts.resolver.sonatypeSnapshots)
-  } else {
-    Some(Opts.resolver.sonatypeStaging)
-  }
+  val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
+  if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
+  else localStaging.value
 }
+ThisBuild / publishMavenStyle := true
+
 ThisBuild / scmInfo   := Some(ScmInfo(url("https://github.com/lift/framework"), "scm:git:https://github.com/lift/framework.git"))
 ThisBuild / pomExtra  := Developers.toXml
 
