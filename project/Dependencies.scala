@@ -21,7 +21,7 @@ object Dependencies {
 
   type ModuleMap = String => ModuleID
 
-  lazy val slf4jVersion = "1.7.25"
+  lazy val slf4jVersion = "1.7.36"
 
   // Compile scope:
   // Scope available in all classpath, transitive by default.
@@ -43,7 +43,7 @@ object Dependencies {
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
   lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "1.3.0"
   lazy val scala_parallel_collections =  "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0"
-  lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.7.10"
+  lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.7.15"
   lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "1.1.2"
   lazy val xerces                 = "xerces" % "xercesImpl" % "2.11.0"
 
@@ -54,7 +54,7 @@ object Dependencies {
 
   // Provided scope:
   // Scope provided by container, available only in compile and test classpath, non-transitive by default.
-  lazy val logback         = "ch.qos.logback"    % "logback-classic"       % "1.2.3"        % Provided
+  lazy val logback         = "ch.qos.logback"    % "logback-classic"       % "1.2.13"       % Provided
   lazy val log4j           = "log4j"             % "log4j"                 % "1.2.17"       % Provided
   lazy val slf4j_log4j12   = "org.slf4j"         % "slf4j-log4j12"         % slf4jVersion   % Provided
   lazy val persistence_api = "javax.persistence" % "persistence-api"       % "1.0.2"        % Provided
