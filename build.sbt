@@ -8,7 +8,7 @@ ThisBuild / licenses             += ("Apache License, Version 2.0", url("https:/
 ThisBuild / startYear            := Some(2006)
 ThisBuild / organizationName     := "WorldWide Conferencing, LLC"
 
-val scala213Version = "2.13.12"
+val scala213Version = "2.13.16"
 
 
 ThisBuild / scalaVersion         := scala213Version
