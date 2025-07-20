@@ -8,3 +8,4 @@ lazy val buildPlugin = RootProject(uri("https://github.com/lift/sbt-lift-build.g
 lazy val root        = (project in file(".")).dependsOn(buildPlugin)
 
 addSbtPlugin("com.github.sbt" % "sbt-unidoc" % "0.5.0")
+addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.6.4")
