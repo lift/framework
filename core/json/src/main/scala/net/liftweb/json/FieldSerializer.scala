@@ -17,8 +17,6 @@
 package net.liftweb
 package json
 
-import scala.reflect.ClassTag
-
 /**
  * Serializer which serializes all fields of a class too.
  *
@@ -32,7 +30,7 @@ import scala.reflect.ClassTag
  * )
  * </pre>
  */
-case class FieldSerializer[A: ClassTag](
+case class FieldSerializer[A: Extraction.TypeExtractor](
   serializer:   PartialFunction[(String, Any), Option[(String, Any)]] = Map(),
   deserializer: PartialFunction[JField, JField] = Map()
 )

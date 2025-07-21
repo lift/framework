@@ -17,7 +17,6 @@
 package net.liftweb
 package json
 
-import scala.reflect.ClassTag
 
 /** Functions to serialize and deserialize a case class.
  * Custom serializer can be inserted if a class is not a case class.
