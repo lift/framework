@@ -702,8 +702,8 @@ object JsonAST {
      * res0: Person("joe")
      * }}}
      */
-    def extract[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]): A =
-      Extraction.extract(this)(formats, mf)
+    def extract[A](implicit formats: Formats, te: Extraction.TypeExtractor[A]): A =
+      Extraction.extract(this)(formats, te)
 
     /**
      * Optionally extract a value into a concrete Scala instance from its `JValue` representation.
@@ -730,8 +730,8 @@ object JsonAST {
      * res1: Option[Person] = Some(Person(joe))
      * }}}
      */
-    def extractOpt[A](implicit formats: Formats, mf: scala.reflect.Manifest[A]): Option[A] =
-      Extraction.extractOpt(this)(formats, mf)
+    def extractOpt[A](implicit formats: Formats, te: Extraction.TypeExtractor[A]): Option[A] =
+      Extraction.extractOpt(this)(formats, te)
 
     /**
      * Attempt to extract a concrete Scala instance of type `A` from this `JValue` and, on failing to do so, return
@@ -751,8 +751,8 @@ object JsonAST {
      * res0: Person("joe")
      * }}}
      */
-    def extractOrElse[A](default: => A)(implicit formats: Formats, mf: scala.reflect.Manifest[A]): A =
-      Extraction.extractOpt(this)(formats, mf).getOrElse(default)
+    def extractOrElse[A](default: => A)(implicit formats: Formats, te: Extraction.TypeExtractor[A]): A =
+      Extraction.extractOpt(this)(formats, te).getOrElse(default)
 
     def toOpt: Option[JValue] = this match {
       case JNothing => None

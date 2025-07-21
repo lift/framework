@@ -17,7 +17,7 @@
 package net.liftweb
 package json
 
-import scala.reflect.Manifest
+import scala.reflect.ClassTag
 
 /** Functions to serialize and deserialize a case class.
  * Custom serializer can be inserted if a class is not a case class.
@@ -58,13 +58,13 @@ object Serialization {
 
   /** Deserialize from a String.
    */
-  def read[A](json: String)(implicit formats: Formats, mf: Manifest[A]): A =
-    parse(json).extract(formats, mf)
+  def read[A](json: String)(implicit formats: Formats, te: Extraction.TypeExtractor[A]): A =
+    parse(json).extract(formats, te)
 
   /** Deserialize from a Reader.
    */
-  def read[A](in: Reader)(implicit formats: Formats, mf: Manifest[A]): A =
-    JsonParser.parse(in).extract(formats, mf)
+  def read[A](in: Reader)(implicit formats: Formats, te: Extraction.TypeExtractor[A]): A =
+    JsonParser.parse(in).extract(formats, te)
 
   /** Create Serialization formats with given type hints.
    * <p>
