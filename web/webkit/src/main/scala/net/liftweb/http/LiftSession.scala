@@ -36,8 +36,8 @@ import json._
 import org.mozilla.javascript.Scriptable
 import org.mozilla.javascript.UniqueTag
 import json.JsonAST.{JString, JValue}
+import json.Extraction.TypeExtractor.fromManifest
 import scala.xml.Group
-
 
 object LiftSession {
 
@@ -2780,7 +2780,10 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
               func <- map.get(name)
               payload = in \ "payload"
               reified <- if (func.manifest == jvmanifest) Some(payload) else {
-                try {Some(payload.extract(defaultFormats, func.manifest))} catch {
+                // n.b. this should have applied the implicit conversion from the
+                // compiler, but it doesn't want to for some unknown reason.
+                // For now, I'm manually invoking fromManifest.
+                try {Some(payload.extract(defaultFormats, fromManifest(func.manifest)))} catch {
                   case e: Exception =>
                     logger.error("Failed to extract "+payload+" as "+func.manifest, e)
                     ca ! FailMsg(guid, "Failed to extract payload as "+func.manifest+" exception "+ e.getMessage)
