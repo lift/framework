@@ -1,7 +1,15 @@
 name: CI
 on:
   pull_request:
+    branches:
+      - main
+      - lift-4.0
+      - lift-5.0
   push:
+    branches:
+      - main
+      - lift-4.0
+      - lift-5.0
 jobs:
   test:
     strategy:
