@@ -21,13 +21,56 @@ import java.lang.reflect.{Constructor => JConstructor, Type, InvocationTargetExc
 import java.lang.{Integer => JavaInteger, Long => JavaLong, Short => JavaShort, Byte => JavaByte, Boolean => JavaBoolean, Double => JavaDouble, Float => JavaFloat}
 import java.util.Date
 import java.sql.Timestamp
-import scala.reflect.Manifest
+import scala.reflect.{ClassTag, Manifest}
 
 /** Function to extract values from JSON AST using case classes.
  *
  *  See: ExtractionExamples.scala
  */
 object Extraction {
+  
+  /** Type information extractor that abstracts over Manifest (Scala 2.13) and future Scala 3 implementations.
+   *  
+   *  This trait provides a clean abstraction that allows the JSON extraction system to work 
+   *  with different type information sources:
+   *  - Scala 2.13: Uses Manifest for full type information including generics
+   *  - Scala 3: Can be implemented with inline macros using the new metaprogramming system
+   *  
+   *  Usage example:
+   *  {{{
+   *  case class Person(name: String)
+   *  val json: JValue = ...
+   *  val person = json.extract[Person] // TypeExtractor[Person] is implicitly derived
+   *  }}}
+   */
+  trait TypeExtractor[A] {
+    def runtimeClass: Class[_]
+    def typeArguments: List[TypeExtractor[_]]
+  }
+  
+  object TypeExtractor {
+    /** Scala 2.13 implementation using Manifest - provides full type information including generics. */
+    implicit def fromManifest[A](implicit mf: Manifest[A]): TypeExtractor[A] = new TypeExtractor[A] {
+      def runtimeClass: Class[_] = mf.runtimeClass
+      def typeArguments: List[TypeExtractor[_]] = mf.typeArguments.map(arg => fromManifest(arg))
+    }
+    
+    /** Future Scala 3 macro-based implementation.
+     *  This would replace the Manifest-based approach in Scala 3.
+     *  
+     *  Example implementation for Scala 3:
+     *  {{{
+     *  inline implicit def derive[A]: TypeExtractor[A] = ${ deriveImpl[A] }
+     *  
+     *  def deriveImpl[A: Type](using Quotes): Expr[TypeExtractor[A]] = {
+     *    import quotes.reflect._
+     *    val tpe = TypeRepr.of[A]
+     *    // Extract type information using Scala 3 reflection
+     *    // Create TypeExtractor with full generic type information
+     *  }
+     *  }}}
+     */
+  }
   import Meta._
   import Meta.Reflection._
 
@@ -35,11 +78,13 @@ object Extraction {
    * @see net.liftweb.json.JsonAST.JValue#extract
    * @throws MappingException is thrown if extraction fails
    */
-  def extract[A](json: JValue)(implicit formats: Formats, mf: Manifest[A]): A = {
-    def allTypes(mf: Manifest[_]): List[Class[_]] = mf.runtimeClass :: (mf.typeArguments flatMap allTypes)
-
+  def extract[A](json: JValue)(implicit formats: Formats, te: TypeExtractor[A]): A = {
+    def convertTypeExtractorToClasses(te: TypeExtractor[_]): List[Class[_]] = {
+      te.runtimeClass :: te.typeArguments.flatMap(convertTypeExtractorToClasses)
+    }
+    
     try {
-      val types = allTypes(mf)
+      val types = convertTypeExtractorToClasses(te)
       extract0(json, types.head, types.tail).asInstanceOf[A]
     } catch {
       case e: MappingException => throw e
@@ -50,8 +95,8 @@ object Extraction {
   /** Extract a case class from JSON.
    * @see net.liftweb.json.JsonAST.JValue#extract
    */
-  def extractOpt[A](json: JValue)(implicit formats: Formats, mf: Manifest[A]): Option[A] =
-    try { Some(extract(json)(formats, mf)) } catch { case _: MappingException => None }
+  def extractOpt[A](json: JValue)(implicit formats: Formats, te: TypeExtractor[A]): Option[A] =
+    try { Some(extract(json)(formats, te)) } catch { case _: MappingException => None }
 
   /** Decompose a case class into JSON.
    * <p>
@@ -403,9 +448,14 @@ object Extraction {
         else if (classOf[Seq[_]].isAssignableFrom(c)) newCollection(root, m, a => List(a.toSeq: _*))
         else if (c == classOf[Option[_]]) newOption(root, m)
         else fail("Expected collection but got " + m + " for class " + c)
+
       case Dict(m) => root match {
         case JObject(xs) => Map(xs.map(x => (x.name, build(x.value, m))): _*)
         case x => fail("Expected object but got " + x)
+      }
+
+      case _ => {
+        fail("Unexpected mapping type: " + mapping)
       }
     }
 
