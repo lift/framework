@@ -448,9 +448,14 @@ object Extraction {
         else if (classOf[Seq[_]].isAssignableFrom(c)) newCollection(root, m, a => List(a.toSeq: _*))
         else if (c == classOf[Option[_]]) newOption(root, m)
         else fail("Expected collection but got " + m + " for class " + c)
+
       case Dict(m) => root match {
         case JObject(xs) => Map(xs.map(x => (x.name, build(x.value, m))): _*)
         case x => fail("Expected object but got " + x)
+      }
+
+      case _ => {
+        fail("Unexpected mapping type: " + mapping)
       }
     }
 
