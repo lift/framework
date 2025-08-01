@@ -55,19 +55,6 @@ object Extraction {
       def typeArguments: List[TypeExtractor[_]] = mf.typeArguments.map(arg => fromManifest(arg))
     }
     
-    /** Lower priority fallback implementation using ClassTag when Manifest is not available.
-     *  This provides only basic runtime class information without generics.
-     */
-    object LowPriority {
-      implicit def fromClassTag[A](implicit ct: ClassTag[A]): TypeExtractor[A] = new TypeExtractor[A] {
-        def runtimeClass: Class[_] = ct.runtimeClass
-        def typeArguments: List[TypeExtractor[_]] = Nil // ClassTag limitation
-      }
-    }
-    
-    // Import the low priority implicits
-    import LowPriority._
-    
     /** Future Scala 3 macro-based implementation.
      *  This would replace the Manifest-based approach in Scala 3.
      *  
