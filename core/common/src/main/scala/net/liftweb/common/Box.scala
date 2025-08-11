@@ -1118,11 +1118,11 @@ object BoxOrRaw {
     RawBoxOrRaw(r: T)
 
   implicit def boxToBoxOrRaw[T, Q](r: Box[Q])(implicit ev: Q => T): BoxOrRaw[T] = {
-    BoxedBoxOrRaw(r.map(v => v: T))
+    BoxedBoxOrRaw(r.map(v => ev(v)))
   }
 
   implicit def optionToBoxOrRaw[T, Q](r: Option[Q])(implicit ev: Q => T): BoxOrRaw[T] = {
-    BoxedBoxOrRaw(r.map(v => v: T))
+    BoxedBoxOrRaw(r.map(v => ev(v)))
   }
 
   implicit def borToBox[T](in: BoxOrRaw[T]): Box[T] = in.box
