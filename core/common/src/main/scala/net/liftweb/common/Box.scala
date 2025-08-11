@@ -275,7 +275,7 @@ sealed trait BoxTrait extends OptionImplicits {
    * res1: net.liftweb.common.Box[Int] = Full(5)
    * }}}
    */
-  def asA[B](in: T forSome { type T })(implicit m: Manifest[B]): Box[B] = {
+  def asA[B](in: Any)(implicit m: Manifest[B]): Box[B] = {
     (Box !! in).asA[B]
   }
 }
