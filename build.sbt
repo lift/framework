@@ -9,9 +9,11 @@ ThisBuild / startYear            := Some(2006)
 ThisBuild / organizationName     := "WorldWide Conferencing, LLC"
 
 val scala213Version = "2.13.16"
+val scala3LTSVersion = "3.3.6"
 
 
 ThisBuild / scalaVersion         := scala213Version
+ThisBuild / crossScalaVersions   := Seq(scala213Version, scala3LTSVersion)
 
 ThisBuild / libraryDependencies ++= Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalactic, scalatest)
 
