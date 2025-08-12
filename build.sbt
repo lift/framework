@@ -58,7 +58,7 @@ lazy val common =
   coreProject("common")
     .settings(
       description := "Common Libraries and Utilities",
-      libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, scala_xml, scala_parser)
+      libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, scala_xml, scala_parser, scalamock)
     )
 
 lazy val actor =
