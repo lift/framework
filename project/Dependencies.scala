@@ -84,6 +84,8 @@ object Dependencies {
   lazy val scalatest_junit = "org.scalatestplus" %% "junit-4-12" % "3.2.19.0" % Test
   lazy val mockito_scalatest = "org.mockito" %% "mockito-scala-scalatest" % "1.14.3" % Test
 
+  lazy val scalamock = "org.scalamock" %% "scalamock" % "7.4.1" % Test
+
   // Aliases
   lazy val h2 = h2database
 
