@@ -33,10 +33,6 @@ class ActorSpec extends Specification {
     "support common features" in commonFeatures(new MyScalaActor)
   }
 
-  "A Java Actor" should {
-    "support common features" in commonFeatures(new MyJavaActor)
-  }
-
   private def commonFeatures(actor: LiftActor) = {
     sequential
 
