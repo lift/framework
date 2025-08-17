@@ -21,13 +21,10 @@ package net.liftweb.markdown
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.junit.runner.RunWith
-import org.scalatestplus.junit.JUnitRunner
 
 /**
  * Tests the behavior of the complete parser, i.e. all parsing steps together.
  */
-@RunWith(classOf[JUnitRunner])
 class TransformerTest extends AnyFlatSpec with Matchers with Transformer {
 
     "The Transformer" should "create xhtml fragments from markdown" in {

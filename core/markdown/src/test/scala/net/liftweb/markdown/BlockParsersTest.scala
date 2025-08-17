@@ -19,17 +19,14 @@ package net.liftweb.markdown
  * Christoph Henkelmann http://henkelmann.eu/
  */
 
-import org.junit.runner.RunWith
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatestplus.junit.JUnitRunner
 import scala.xml.Group
 import scala.xml.NodeSeq
 
 /**
  * Tests the parsing on block level.
  */
-@RunWith(classOf[JUnitRunner])
 class BlockParsersTest extends AnyFlatSpec with Matchers with BlockParsers {
 
   "The BlockParsers" should "parse optional empty lines" in {

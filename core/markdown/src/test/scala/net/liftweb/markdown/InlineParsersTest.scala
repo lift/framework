@@ -21,13 +21,9 @@ package net.liftweb.markdown
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.junit.runner.RunWith
-import org.scalatestplus.junit.JUnitRunner
-
 /**
  * Tests Inline Parsing, i.e. emphasis , strong text, links, escapes etc.
  */
-@RunWith(classOf[JUnitRunner])
 class InlineParsersTest extends AnyFlatSpec with Matchers with InlineParsers{
 
     ///////////////////////////////////////////////////////////////
@@ -221,11 +217,11 @@ class InlineParsersTest extends AnyFlatSpec with Matchers with InlineParsers{
     }
 
     it should "allow inline xml and escape its parameters" in {
-        runSucceedingParsingTests(inline(Map()), xmlInlineTests)
+        runSucceedingParsingTests(inlineParser(Map()), xmlInlineTests)
     }
 
     it should "parse mixed inline cases" in {
-        runSucceedingParsingTests(inline(Map()), mixedTests)
+        runSucceedingParsingTests(inlineParser(Map()), mixedTests)
     }
 
     val ld1 = new LinkDefinition("id", "http://www.example.com",     Some("Title"))
@@ -245,7 +241,7 @@ class InlineParsersTest extends AnyFlatSpec with Matchers with InlineParsers{
     }
 
     it should "resolve reference links" in {
-        val p  = inline(map)
+        val p  = inlineParser(map)
         apply(p, "[text][id]")  should equal ("""<a href="http://www.example.com" title="Title">text</a>""")
         apply(p, "[text] [id]") should equal ("""<a href="http://www.example.com" title="Title">text</a>""")
         apply(p, "[id][]")      should equal ("""<a href="http://www.example.com" title="Title">id</a>""")
@@ -259,7 +255,7 @@ class InlineParsersTest extends AnyFlatSpec with Matchers with InlineParsers{
     }
 
     it should "resolve reference images" in {
-        val p  = inline(map)
+        val p  = inlineParser(map)
         apply(p, "![text][id]")  should equal ("""<img src="http://www.example.com" alt="text" title="Title" />""")
         apply(p, "![text] [id]") should equal ("""<img src="http://www.example.com" alt="text" title="Title" />""")
         apply(p, "![id][]")      should equal ("""<img src="http://www.example.com" alt="id" title="Title" />""")
@@ -273,12 +269,12 @@ class InlineParsersTest extends AnyFlatSpec with Matchers with InlineParsers{
     }
 
     it should "handle all inline cases with the inline replacer" in {
-        runSucceedingParsingTests(inline(Map()), allInlineTests)
+        runSucceedingParsingTests(inlineParser(Map()), allInlineTests)
         val concatTests = for (
             (a1, a2) <- allInlineTests;
             (b1, b2) <- allInlineTests;
             (c1, c2) <- allInlineTests) yield (a1+ " " + b1 + " " + c1, a2 + " " + b2 + " " +c2);
 
-        runSucceedingParsingTests(inline(Map()), concatTests)
+        runSucceedingParsingTests(inlineParser(Map()), concatTests)
     }
 }

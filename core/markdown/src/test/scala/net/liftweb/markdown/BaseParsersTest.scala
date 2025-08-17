@@ -19,17 +19,14 @@ package net.liftweb.markdown
  * Christoph Henkelmann http://henkelmann.eu/
  */
 
-import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import collection.SortedMap
-import org.junit.runner.RunWith
 
 /**
  * Tests basic parsers that are used by the more complex parsing steps.
  */
 
-@RunWith(classOf[JUnitRunner])
 class BaseParsersTest extends AnyFlatSpec with Matchers with BaseParsers{
 
     "The BaseParsers" should "parse a newline" in {

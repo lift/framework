@@ -66,11 +66,11 @@ object TimeTest {
         val reader = new InputStreamReader(Files.newInputStream(Paths.get(path)))
         val writer = new StringWriter()
         val buffer = new Array[Char](1024)
-		var read = reader.read(buffer)
-		while (read != -1) {
-			writer.write(buffer, 0, read)
-			read = reader.read(buffer)
-		}
+        var read = reader.read(buffer)
+        while (read != -1) {
+            writer.write(buffer, 0, read)
+            read = reader.read(buffer)
+        }
         //turn read input into a string
         writer.toString
     }

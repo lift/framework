@@ -21,13 +21,10 @@ package net.liftweb.markdown
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.junit.runner.RunWith
-import org.scalatestplus.junit.JUnitRunner
 
 /**
  * Tests the Line Tokenizer that prepares input for parsing.
  */
-@RunWith(classOf[JUnitRunner])
 class LineTokenizerTest extends AnyFlatSpec with Matchers {
 
   val tokenizer = new LineTokenizer
