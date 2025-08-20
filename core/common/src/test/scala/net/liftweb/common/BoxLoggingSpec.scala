@@ -3,10 +3,10 @@ package common
 
 import org.slf4j.{Logger=>SLF4JLogger}
 
-import org.specs2.mock.Mockito
+import org.scalamock.specs2.MockContext
 import org.specs2.mutable.Specification
 
-class BoxLoggingSpec extends Specification with Mockito {
+class BoxLoggingSpec extends Specification {
   class MockBoxLoggingClass extends BoxLogging {
     var loggedErrors = List[(String, Option[Throwable])]()
     var loggedWarns = List[(String, Option[Throwable])]()
@@ -410,44 +410,45 @@ class BoxLoggingSpec extends Specification with Mockito {
       import net.liftweb.common.Logger
       import org.slf4j.{Logger => SLF4JLogger}
 
-      val mockLogger = mock[SLF4JLogger]
-      mockLogger.isErrorEnabled() returns true
+      "log to the Lift logger" in new MockContext {
+        val mockLogger = mock[SLF4JLogger]
+        (mockLogger.isErrorEnabled: () => Boolean).expects().returning(true).anyNumberOfTimes()
 
-      class MyLoggable extends LoggableBoxLogging {
-        override val logger = new Logger {
-          override protected def _logger = mockLogger
+        class MyLoggable extends LoggableBoxLogging {
+          override val logger = new Logger {
+            override protected def _logger = mockLogger
+          }
         }
-      }
 
-      "log to the Lift logger" in {
+        (mockLogger.error(_: String)).expects(*).once()
+        (mockLogger.error(_: String, _: Throwable)).expects(*, *).once()
+
         val result =
           new MyLoggable {
             Failure("Failed").logFailure("Second")
             Failure("Excepted", Full(new Exception("uh-oh")), Empty).logFailure("Third")
           }
-
-        (there was one(mockLogger).error(any[String])) and
-        (there was one(mockLogger).error(any[String], any[Exception]))
       }
     }
 
     "when logging with in SLF4J context" in {
       import org.slf4j.{Logger => SLF4JLogger}
 
-      val mockLogger = mock[SLF4JLogger]
+      "log to the SLF4J logger" in new MockContext {
+        val mockLogger = mock[SLF4JLogger]
+        (mockLogger.isErrorEnabled: () => Boolean).expects().returning(true).anyNumberOfTimes()
 
-      class TestClass extends SLF4JBoxLogging {
-        val logger = mockLogger
-      }
+        class TestClass extends SLF4JBoxLogging {
+          val logger = mockLogger
+        }
 
-      "log to the SLF4J logger" in {
+        (mockLogger.error(_: String)).expects(*).once()
+        (mockLogger.error(_: String, _: Throwable)).expects(*, *).once()
+
         new TestClass {
           Failure("Failed").logFailure("Second")
           Failure("Excepted", Full(new Exception("uh-oh")), Empty).logFailure("Third")
         }
-
-        there was one(mockLogger).error(any[String])
-        there was one(mockLogger).error(any[String], any[Exception])
       }
     }
   }

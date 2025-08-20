@@ -41,10 +41,10 @@ object Dependencies {
   lazy val scala_compiler: ModuleMap = "org.scala-lang"          % "scala-compiler"     % _
   lazy val scalaz7_core           = "org.scalaz"                %% "scalaz-core"        % "7.2.28"
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
-  lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "1.3.0"
+  lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "2.1.0"
   lazy val scala_parallel_collections =  "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0"
   lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.7.15"
-  lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "1.1.2"
+  lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "2.4.0"
   lazy val xerces                 = "xerces" % "xercesImpl" % "2.11.0"
 
   // Aliases
@@ -72,17 +72,19 @@ object Dependencies {
   lazy val derby       = "org.apache.derby"         % "derby"                    % "10.7.1.1" % Test
   lazy val h2database  = "com.h2database"           % "h2"                       % "1.2.147"  % Test
 
-  lazy val specs2      = "org.specs2"        %% "specs2-core"          % "4.9.4"         % Test
+  lazy val specs2      = "org.specs2"        %% "specs2-core"          % "4.21.0"         % Test
   lazy val scalacheck  = "org.specs2"        %% "specs2-scalacheck"    % specs2.revision % Test
   lazy val specs2Prov  = "org.specs2"        %% "specs2-core"          % specs2.revision % Provided
   lazy val specs2Matchers = "org.specs2"     %% "specs2-matcher-extra" % specs2.revision % Test
   lazy val specs2MatchersProv = "org.specs2" %% "specs2-matcher-extra" % specs2.revision % Provided
   lazy val specs2Mock  = "org.specs2"        %% "specs2-mock"          % specs2.revision % Test
 
-  lazy val scalactic       = "org.scalactic"     %% "scalactic"  % "3.1.2"   % Test
-  lazy val scalatest       = "org.scalatest"     %% "scalatest"  % "3.1.2"   % Test
+  lazy val scalactic       = "org.scalactic"     %% "scalactic"  % "3.2.19"   % Test
+  lazy val scalatest       = "org.scalatest"     %% "scalatest"  % "3.2.19"   % Test
   lazy val scalatest_junit = "org.scalatestplus" %% "junit-4-12" % "3.1.2.0" % Test
   lazy val mockito_scalatest = "org.mockito" %% "mockito-scala-scalatest" % "1.14.3" % Test
+
+  lazy val scalamock = "org.scalamock" %% "scalamock" % "7.4.1" % Test
 
   // Aliases
   lazy val h2 = h2database

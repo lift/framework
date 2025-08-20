@@ -9,11 +9,13 @@ ThisBuild / startYear            := Some(2006)
 ThisBuild / organizationName     := "WorldWide Conferencing, LLC"
 
 val scala213Version = "2.13.16"
+val scala3LTSVersion = "3.3.6"
 
 
 ThisBuild / scalaVersion         := scala213Version
+ThisBuild / crossScalaVersions   := Seq(scala213Version, scala3LTSVersion)
 
-ThisBuild / libraryDependencies ++= Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalactic, scalatest)
+ThisBuild / libraryDependencies ++= Seq(specs2, specs2Matchers, scalacheck, scalactic, scalatest)
 
 ThisBuild / scalacOptions       ++= Seq("-deprecation")
 
@@ -56,7 +58,7 @@ lazy val common =
   coreProject("common")
     .settings(
       description := "Common Libraries and Utilities",
-      libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, scala_xml, scala_parser)
+      libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, scala_xml, scala_parser, scalamock)
     )
 
 lazy val actor =
@@ -154,7 +156,8 @@ lazy val webkit =
         mockito_scalatest,
         jquery,
         jasmineCore,
-        jasmineAjax
+        jasmineAjax,
+        specs2Mock
       ),
       libraryDependencies ++= {
         CrossVersion.partialVersion(scalaVersion.value) match {
@@ -197,58 +200,3 @@ lazy val webkit =
 
     )
     .enablePlugins(SbtWeb)
-
-// Persistence Projects
-// --------------------
-lazy val persistence: Seq[ProjectReference] =
-  Seq(db, proto, mapper, record, mongodb, mongodb_record)
-
-lazy val db =
-  persistenceProject("db")
-    .dependsOn(util, webkit)
-    .settings(libraryDependencies += mockito_scalatest)
-
-lazy val proto =
-  persistenceProject("proto")
-    .dependsOn(webkit)
-
-lazy val mapper =
-  persistenceProject("mapper")
-    .dependsOn(db, proto)
-    .settings(
-      description := "Mapper Library",
-      Test / parallelExecution := false,
-      libraryDependencies ++= Seq(h2, derby, jbcrypt),
-      Test / initialize := {
-        System.setProperty(
-          "derby.stream.error.file",
-          ((Test / crossTarget).value / "derby.log").absolutePath
-        )
-      }
-    )
-
-lazy val record =
-  persistenceProject("record")
-    .dependsOn(proto)
-    .settings(libraryDependencies ++= Seq(jbcrypt))
-
-lazy val mongodb =
-  persistenceProject("mongodb")
-    .dependsOn(json_ext, util)
-    .settings(
-      Test / parallelExecution := false,
-      libraryDependencies ++= Seq(mongo_java_driver, mongo_java_driver_async),
-      Test / initialize := {
-        System.setProperty(
-          "java.util.logging.config.file",
-          ((Test / resourceDirectory).value / "logging.properties").absolutePath
-        )
-      }
-    )
-
-lazy val mongodb_record =
-  persistenceProject("mongodb-record")
-    .dependsOn(record, mongodb)
-    .settings(
-      Test / parallelExecution := false
-    )

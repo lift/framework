@@ -143,7 +143,7 @@ trait BoxLogging {
       }
     }
 
-    private def logFailure(message: String, logFn: (String, Option[Throwable])=>Unit): Unit = {
+    def logFailure(message: String, logFn: (String, Option[Throwable])=>Unit): Unit = {
       doLog(message, logFn, ()=>logFn(s"$message: Box was Empty.", None))
     }
 

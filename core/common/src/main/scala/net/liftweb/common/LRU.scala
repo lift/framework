@@ -131,9 +131,9 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
   def remove(key: K): Unit = {
     localMap.get(key) match {
       case null =>
-	case v =>
-          v.remove
-      localMap.remove(key)
+      case v =>
+        v.remove
+        localMap.remove(key)
     }
   }
 
@@ -148,9 +148,9 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
     localMap.get(key) match {
       case null =>
         val what = new LinkedListElem[K, V] {def value1 = key}
-      what.value2 = value
-      addAtHead(what)
-      localMap.put(key, what)
+        what.value2 = value
+        addAtHead(what)
+        localMap.put(key, what)
 
       doRemoveIfTooMany()
 
