@@ -12,33 +12,24 @@ lives with precious free time, they must be intentional with the community suppo
 Lift. To that end, the Committers have decided to embrace the following support policy for releases
 of Lift:
 
-* Lift ships a new release every six months, with three milestones and at least one release
-  candidate building up to each release. Each normal release results in a bump of the middle number
-  of the version (e.g. 3.1.0 to 3.2.0).
 * Brand new features are always a part of new releases. API-incompatible changes will only ship as a
   part of a major release, which results in a bump of the first number of the version (e.g. 2.6.0 to
   3.0.0).
 * Bug fixes and minor performance improvements can, by consensus of the Committers, be shipped for
   releases for 18 months after their release date.
-* Security fixes will be shipped for the current and previous two major releases.
-  * Due to a change in our release scheme, Lift 2.5 will receive security fixes until the release
-  of Lift 4.0 and Lift 2.6 will receive security fixes until the release of Lift 5.0.
-  * Any application using Lift 2.4 or earlier should be upgraded as soon as possible.
-  * Major releases aren't on a regular schedule, but we will announce and update this policy with
-  actual dates when major releases become planned.
+* Security fixes will be shipped for previous two minor releases until a new major release is made
+  at which point the last minor release of the previous major will receive updates for six months
+  after the release of the most recent major.
 
-As of July 11th, 2018 the current support status looks like this:
+As of August 20th, 2025 the current support status looks like this:
 
 |Version  |Initial Release  | Last Release     | Current Support Status          |
 |---------|-----------------|------------------|---------------------------------|
-|< 2.5    |                 |                  | Not supported                   |
-|2.5      |June 2013        | 2.5.4 (Jan 2016) | Security fixes (until Lift 4.0) |
-|2.6      |January 2015     | 2.6.3 (Jan 2016) | Security fixes (until Lift 5.0) |
-|3.0      |November 2016    | 3.0.2 (Sep 2017) | Security fixes (until Lift 6.0) |
-|3.1      |July 2017        | 3.1.1 (Sep 2017) | Minor fixes (until Jan 2019)    |
-|3.2      |January 2018     | 3.2.0 (Jan 2018) | Minor fixes (until July 2019)   |
-|3.3      |July 2018        | 3.3.0 (Jul 2018) | Minor fixes (until Jan 2020)    |
-|3.4      |Jan 2019 (est)   | N/A              | Active development              |
+|< 3.4    |                 |                  | Not supported                   |
+|3.4      |October 2019     | 3.4.3 (Nov 2020) | Security fixes only             |
+|3.5      |October 2021     | 3.5.0 (Oct 2021) | Security fixes only             |
+|4.0      |Not yet released | N/A              | Active development              |
+|5.0      |Not yet released | N/A              | Subsequent release              |
 
 Per this support policy please ensure you're using a currently supported version of Lift before:
 
@@ -61,11 +52,5 @@ become quite challenging. If you're in this position, please reach out to the co
 If your needs are more involved, you may want to consider hiring a member of the Lift community
 or a Lift Committer to help you upgrade your application. A number of members in the community do
 part-time consulting off and on and several more consult full time as their day job.
-
-### I need to plan for longer-term support of a Lift application
-
-For some organizations 18 months just isn't a sufficient support window. If your organization is in
-this situation, please consider reaching out on the [Mailing List][ml]. You may be able to hire a
-Lift community member to help you provide longer-term support for your application.
 
 [ml]: https://groups.google.com/forum/#!forum/liftweb
