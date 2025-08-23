@@ -174,7 +174,7 @@ trait InlineParsers extends BaseParsers {
 
     /** Parser for inline markdown, always consumes all input, returns the resulting HTML.
      */
-    def inline(m:LinkMap):Parser[String] = (oneInline(new InlineContext(m))*) ^^ {_.mkString}
+    def inlineParser(m:LinkMap):Parser[String] = (oneInline(new InlineContext(m))*) ^^ {_.mkString}
 
 
 
@@ -365,7 +365,7 @@ trait InlineParsers extends BaseParsers {
     /**
      * Runs the inline parser on the given input and returns the result
      */
-    def applyInline(s:String, m:LinkMap)  = apply(inline(m), s)
+    def applyInline(s:String, m:LinkMap)  = apply(inlineParser(m), s)
 
     /**
      * Escapes the given string so it it can be embedded in xml.
@@ -388,7 +388,7 @@ trait InlineParsers extends BaseParsers {
         result.toString
     }
 
-  private lazy val entList = List(("quot",34), ("amp",38), ("lt",60), ("gt",62), ("nbsp",160), ("iexcl",161), ("cent",162), ("pound",163), ("curren",164), ("yen",165),
+    private lazy val entList = List(("quot",34), ("amp",38), ("lt",60), ("gt",62), ("nbsp",160), ("iexcl",161), ("cent",162), ("pound",163), ("curren",164), ("yen",165),
     ("euro",8364), ("brvbar",166), ("sect",167), ("uml",168), ("copy",169), ("ordf",170), ("laquo",171), ("shy",173), ("reg",174), ("trade",8482),
     ("macr",175), ("deg",176), ("plusmn",177), ("sup2",178), ("sup3",179), ("acute",180), ("micro",181), ("para",182), ("middot",183), ("cedil",184),
     ("sup1",185), ("ordm",186), ("raquo",187), ("frac14",188), ("frac12",189), ("frac34",190), ("iquest",191), ("times",215), ("divide",247),
@@ -416,9 +416,9 @@ trait InlineParsers extends BaseParsers {
     ("xi",958), ("omicron",959), ("pi",960), ("rho",961), ("sigmaf",962), ("sigma",963), ("tau",964), ("upsilon",965), ("phi",966), ("chi",967),
     ("psi",968), ("omega",969), ("thetasym",977), ("upsih",978), ("piv",982))
 
-  private lazy val validEntitySet = Set(entList.map(_._1) :_*)
+    private lazy val validEntitySet = Set(entList.map(_._1) :_*)
 
-  private def checkForSemi(i: Int, s: CharSequence, end: Int): Boolean = {
+    private def checkForSemi(i: Int, s: CharSequence, end: Int): Boolean = {
     var pos = i + 1
     val last = i + 10
     val sb = new StringBuffer(20)

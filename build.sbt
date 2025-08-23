@@ -74,7 +74,7 @@ lazy val markdown =
     .settings(
       description := "Markdown Parser",
       Test / parallelExecution := false,
-      libraryDependencies ++= Seq(scalatest, scalatest_junit, scala_xml, scala_parser)
+      libraryDependencies ++= Seq(scalatest, scala_xml, scala_parser)
     )
 
 lazy val json =
