@@ -76,15 +76,23 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
    * Get the future value
    */
   @scala.annotation.tailrec
-  final def get: T = synchronized {
-    if (satisfied) item
-    else if (aborted) throw new AbortedFutureException(failure)
-    else {
-      this.wait()
-      if (satisfied) item
-      else if (aborted) throw new AbortedFutureException(failure)
-      else get
+  final def get: T = {
+    synchronized {
+      if (satisfied) {
+        return item
+      } else if (aborted) {
+        throw new AbortedFutureException(failure)
+      } else {
+        this.wait()
+        if (satisfied) {
+          return item
+        } else if (aborted) {
+          throw new AbortedFutureException(failure)
+        }
+      }
     }
+
+    get
   }
 
   /**
