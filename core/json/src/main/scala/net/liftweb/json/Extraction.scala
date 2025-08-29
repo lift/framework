@@ -48,9 +48,22 @@ object Extraction {
     def typeArguments: List[TypeExtractor[_]]
   }
   
-  // TypeExtractor companion object is provided by version-specific implementations:
-  // - scala-2.13/TypeExtractor.scala (uses Manifest)
-  // - scala-3/TypeExtractor.scala (uses inline macros)
+  object TypeExtractor extends LowPriorityTypeExtractor {
+    // High priority: Scala 2 implementation using Manifest
+    implicit def fromManifest[A](implicit mf: scala.reflect.Manifest[A]): TypeExtractor[A] = new TypeExtractor[A] {
+      def runtimeClass: Class[_] = mf.runtimeClass
+      def typeArguments: List[TypeExtractor[_]] = mf.typeArguments.map(arg => fromManifest(arg))
+    }
+  }
+  
+  // Low priority implicits for Scala 3 fallback
+  trait LowPriorityTypeExtractor {
+    // Lower priority: Scala 3 fallback using ClassTag when Manifest is not available
+    implicit def fromClassTag[A](implicit ct: scala.reflect.ClassTag[A]): TypeExtractor[A] = new TypeExtractor[A] {
+      def runtimeClass: Class[_] = ct.runtimeClass
+      def typeArguments: List[TypeExtractor[_]] = List.empty // ClassTag doesn't provide generic type info
+    }
+  }
   import Meta._
   import Meta.Reflection._
 
