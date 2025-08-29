@@ -223,7 +223,9 @@ object JsonParser {
       }
     }
 
-    do {
+    // Scala 3 compatible version of do-while loop
+    var continue = true
+    while (continue) {
       token = p.nextToken
       token match {
         case OpenObj          => vals.push(IntermediateJObject(scala.collection.mutable.ListBuffer()))
@@ -236,9 +238,9 @@ object JsonParser {
         case CloseObj         => closeBlock(vals.popAny)
         case OpenArr          => vals.push(IntermediateJArray(scala.collection.mutable.ListBuffer()))
         case CloseArr         => closeBlock(vals.popAny)
-        case End              =>
+        case End              => continue = false
       }
-    } while (token != End)
+    }
 
     root getOrElse JNothing
   }

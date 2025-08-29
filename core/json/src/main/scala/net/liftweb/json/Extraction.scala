@@ -48,29 +48,9 @@ object Extraction {
     def typeArguments: List[TypeExtractor[_]]
   }
   
-  object TypeExtractor {
-    /** Scala 2.13 implementation using Manifest - provides full type information including generics. */
-    implicit def fromManifest[A](implicit mf: Manifest[A]): TypeExtractor[A] = new TypeExtractor[A] {
-      def runtimeClass: Class[_] = mf.runtimeClass
-      def typeArguments: List[TypeExtractor[_]] = mf.typeArguments.map(arg => fromManifest(arg))
-    }
-    
-    /** Future Scala 3 macro-based implementation.
-     *  This would replace the Manifest-based approach in Scala 3.
-     *  
-     *  Example implementation for Scala 3:
-     *  {{{
-     *  inline implicit def derive[A]: TypeExtractor[A] = ${ deriveImpl[A] }
-     *  
-     *  def deriveImpl[A: Type](using Quotes): Expr[TypeExtractor[A]] = {
-     *    import quotes.reflect._
-     *    val tpe = TypeRepr.of[A]
-     *    // Extract type information using Scala 3 reflection
-     *    // Create TypeExtractor with full generic type information
-     *  }
-     *  }}}
-     */
-  }
+  // TypeExtractor companion object is provided by version-specific implementations:
+  // - scala-2.13/TypeExtractor.scala (uses Manifest)
+  // - scala-3/TypeExtractor.scala (uses inline macros)
   import Meta._
   import Meta.Reflection._
 

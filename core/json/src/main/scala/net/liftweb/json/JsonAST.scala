@@ -74,7 +74,7 @@ object JsonAST {
    * not extend this class because it really ''can't'' properly exist as a
    * first-class citizen of JSON.
    */
-  sealed abstract class JValue extends Diff.Diffable {
+  sealed abstract class JValue extends Diff.Diffable with JsonASTExtensions {
     type Values
 
     /**
@@ -193,83 +193,9 @@ object JsonAST {
       JObject(find(this))
     }
 
-    /**
-     * Find immediate children of this `[[JValue]]` that match a specific `JValue` subclass.
-     *
-     * This methid will search a `[[JObject]]` or `[[JArray]]` for values of a specific type and
-     * return a `List` of those values if they any are found.
-     *
-     * So given some JSON like so:
-     *
-     * {{{
-     *  [
-     *    {
-     *      "thinga":1,
-     *      "thingb":"bacon"
-     *    },{
-     *      "thingc":3,
-     *      "thingd":"Wakka"
-     *    },{
-     *      "thinge":{
-     *        "thingf":4
-     *      },
-     *      "thingg":true
-     *    }
-     *  ]
-     * }}}
-     *
-     * You would use this method like so:
-     *
-     * {{{
-     * scala> json \ classOf[JInt]
-     * res0: List[net.liftweb.json.JInt#Values] = List(1, 3)
-     * }}}
-     *
-     * This method does require that whatever type you're searching for is subtype of `JValue`.
-     */
-    def \[A <: JValue](clazz: Class[A]): List[A#Values] =
-      findDirect(children, typePredicate(clazz) _).asInstanceOf[List[A]] map { _.values }
-
-    /**
-     * Find all descendants of this `JValue` that match a specific `JValue` subclass.
-     *
-     * Unlike its cousin `\`, this method will recurse down into all children looking for
-     * type matches searching a `[[JObject]]` or `[[JArray]]` for values of a specific type and
-     * return a `List` of those values if they are found.
-     *
-     * So given some JSON like so:
-     *
-     * {{{
-     *  [
-     *    {
-     *      "thinga":1,
-     *      "thingb":"bacon"
-     *    },{
-     *      "thingc":3,
-     *      "thingd":"Wakka"
-     *    },{
-     *      "thinge":{
-     *        "thingf":4
-     *      },
-     *      "thingg":true
-     *    }
-     *  ]
-     * }}}
-     *
-     * You would use this method like so:
-     *
-     * {{{
-     * scala> json \\ classOf[JInt]
-     * res0: List[net.liftweb.json.JInt#Values] = List(1, 3, 4)
-     * }}}
-     */
-    def \\[A <: JValue](clazz: Class[A]): List[A#Values] =
-      (this filter typePredicate(clazz) _).asInstanceOf[List[A]] map { _.values }
-
-    private def typePredicate[A <: JValue](clazz: Class[A])(json: JValue) = json match {
-      case x if x.getClass == clazz => true
-      case _ => false
-    }
+    // Type-based search methods (\ and \\) are provided by version-specific extensions:
+    // - scala-2.13/JsonASTExtensions.scala (uses path-dependent types A#Values)
+    // - scala-3/JsonASTExtensions.scala (uses alternative approach for type safety)
 
     /**
      * Return the element in the `i`-th position from a `[[JArray]]`.
@@ -1138,31 +1064,31 @@ trait Implicits {
 object JsonDSL extends JsonDSL
 trait JsonDSL extends Implicits {
   implicit def seq2jvalue[A](s: Iterable[A])(implicit ev: A => JValue) : JArray =
-    JArray(s.toList.map { a => val v: JValue = a; v })
+    JArray(s.toList.map { a => ev(a) })
 
   implicit def map2jvalue[A](m: Map[String, A])(implicit ev: A => JValue): JObject =
-    JObject(m.toList.map { case (k, v) => JField(k, v) })
+    JObject(m.toList.map { case (k, v) => JField(k, ev(v)) })
 
   implicit def option2jvalue[A](opt: Option[A])(implicit ev: A => JValue): JValue = opt match {
-    case Some(x) => x
+    case Some(x) => ev(x)
     case None => JNothing
   }
 
   implicit def symbol2jvalue(x: Symbol) :JString = JString(x.name)
-  implicit def pair2jvalue[A](t: (String, A))(implicit ev: A => JValue) : JObject = JObject(List(JField(t._1, t._2)))
+  implicit def pair2jvalue[A](t: (String, A))(implicit ev: A => JValue) : JObject = JObject(List(JField(t._1, ev(t._2))))
   implicit def list2jvalue(l: List[JField]) : JObject = JObject(l)
   implicit def jobject2assoc(o: JObject) : JsonListAssoc = new JsonListAssoc(o.obj)
   implicit def pair2Assoc[A](t: (String, A))(implicit ev: A => JValue): JsonAssoc[A] = new JsonAssoc(t)
 
   class JsonAssoc[A](left: (String, A))(implicit ev1: A => JValue) {
     def ~[B](right: (String, B))(implicit ev: B => JValue) = {
-      val l: JValue = left._2
-      val r: JValue = right._2
+      val l: JValue = ev1(left._2)
+      val r: JValue = ev(right._2)
       JObject(JField(left._1, l) :: JField(right._1, r) :: Nil)
     }
 
     def ~(right: JObject) = {
-      val l: JValue = left._2
+      val l: JValue = ev1(left._2)
       JObject(JField(left._1, l) :: right.obj)
     }
   }
