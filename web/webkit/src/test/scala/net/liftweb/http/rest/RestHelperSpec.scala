@@ -5,7 +5,9 @@ import net.liftweb.mocks.MockHttpServletRequest
 import net.liftweb.common.Full
 
 import net.liftweb.actor.LAFuture
-import net.liftweb.json._
+
+import org.json4s._
+import org.json4s.native._
 
 import net.liftweb.http._
 

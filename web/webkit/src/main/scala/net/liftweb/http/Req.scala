@@ -22,12 +22,13 @@ import java.nio.file.{Files, Path}
 import scala.xml._
 
 import common._
-import json._
 import util._
 import Helpers._
 import http.provider._
 import sitemap._
 
+import org.json4s._
+import org.json4s.native._
 
 object UserAgentCalculator extends Factory {
   /**

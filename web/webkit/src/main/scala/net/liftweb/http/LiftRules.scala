@@ -28,7 +28,6 @@ import js._
 import JE._
 import JsCmds._
 import auth._
-import json._
 
 import scala.xml._
 import java.util.{Locale, TimeZone, ResourceBundle, Date}
@@ -38,6 +37,9 @@ import scala.reflect.Manifest
 
 import java.util.concurrent.atomic.AtomicInteger
 import net.liftweb.actor.{LiftActor, LAFuture}
+
+import org.json4s._
+import org.json4s.native._
 
 class LiftRulesJBridge {
   def liftRules: LiftRules = LiftRules
@@ -233,12 +235,12 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * By default, use prettyRender for dev mode and compactRender for other modes.
    */
   val jsonOutputConverter = new FactoryMaker[JsonAST.JValue => String]({
-    import json.{prettyRender, compactRender}
+    import org.json4s.native.JsonMethods._
 
     if (Props.devMode) {
-      prettyRender _
+      (jv: JsonAST.JValue) => pretty(render(jv))
     } else {
-      compactRender _
+      (jv: JsonAST.JValue) => compact(render(jv))
     }
   }){}
 

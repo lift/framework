@@ -29,6 +29,9 @@ import js._
 import provider._
 import http.rest.RestContinuation
 
+import org.json4s._
+import org.json4s.native._
+
 
 class SJBridge {
   def s = S
@@ -2732,7 +2735,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   }
 
 
-  import json.JsonAST._
   /**
    * Build a handler for incoming JSON commands based on the new Json Parser
    *
@@ -2766,8 +2768,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   def createJsonFunc(name: Box[String], onError: Box[JsCmd], pfp: PFPromoter[JValue, JsCmd]): (JsonCall, JsCmd) = {
     functionLifespan(true) {
       val key = formFuncName
-
-      import json._
 
       def jsonCallback(in: List[String]): JsCmd = {
         val f = pfp.pff()
@@ -2887,8 +2887,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * passed JSON does not parse, the function will not be invoked.
    */
   def jsonFmapFunc[T](in: JValue => JsCmd)(f: String => T)(implicit dummy: AvoidTypeErasureIssues1): T = {
-    import json._
-
     val name = formFuncName
     addFunctionMap(name, SFuncHolder((s: String) => JsonParser.parseOpt(s).map(in) getOrElse JsCmds.Noop))
     f(name)

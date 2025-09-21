@@ -23,7 +23,8 @@ import net.liftweb.util._
 import net.liftweb.http.provider._
 import js._
 import net.liftweb.util.Helpers._
-import net.liftweb.json.JsonAST
+import org.json4s._
+import org.json4s.native._
 import java.io.{OutputStream, OutputStreamWriter, Writer, ByteArrayOutputStream}
 
 /**

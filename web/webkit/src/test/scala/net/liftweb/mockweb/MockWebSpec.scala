@@ -89,7 +89,7 @@ class MockWebSpec extends Specification  {
 
       mockReq.method = "POST"
 
-      import json.JsonDSL._
+      import org.json4s.JsonDSL._
 
       mockReq.body = ("name" -> "joe") ~ ("age" -> 35)
 

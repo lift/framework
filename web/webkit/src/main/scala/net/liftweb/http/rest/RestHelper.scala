@@ -20,17 +20,17 @@ package rest
 
 import net.liftweb._
 import actor.LAFuture
-import json._
 import common._
 import util._
-import scala.xml.{Elem, Node, Text}
+import scala.xml._
+
+import org.json4s._
+import org.json4s.native._
 
 /**
  * Mix this trait into a class to provide a list of REST helper methods
  */
 trait RestHelper extends LiftRules.DispatchPF {
-  import JsonAST._
-
   /**
    * Will the request accept a JSON response?  Yes if
    * the Accept header contains "text/json", "application/json" or
@@ -453,7 +453,7 @@ trait RestHelper extends LiftRules.DispatchPF {
   /**
    * Return the implicit Formats instance for JSON conversion
    */
-  protected implicit def formats: Formats = net.liftweb.json.DefaultFormats
+  protected implicit def formats: Formats = org.json4s.DefaultFormats
 
   /**
    * The default way to convert a JsonXmlAble into JSON or XML
@@ -762,7 +762,7 @@ trait RestHelper extends LiftRules.DispatchPF {
    */
   protected def mergeJson(original: JValue, toMerge: JValue): JValue = {
     def replace(lst: List[JField], f: JField): List[JField] = 
-      f :: lst.filterNot(_.name == f.name)
+      f :: lst.filterNot(_._1 == f._1)
 
     original match {
       case JObject(fields) => 

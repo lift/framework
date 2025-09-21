@@ -2,7 +2,8 @@ package net.liftweb.util
 
 import net.liftweb.common.Box
 import scala.xml.NodeSeq
-import net.liftweb.json.JsonAST.JValue
+import org.json4s._
+import org.json4s.native.JsonMethods._
 import scala.reflect.runtime.universe._
 
 /**

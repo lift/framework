@@ -11,7 +11,6 @@ ThisBuild / organizationName     := "WorldWide Conferencing, LLC"
 val scala213Version = "2.13.16"
 val scala3LTSVersion = "3.3.6"
 
-
 ThisBuild / scalaVersion         := scala213Version
 ThisBuild / crossScalaVersions   := Seq(scala213Version, scala3LTSVersion)
 
@@ -52,7 +51,7 @@ lazy val framework =
 // Core Projects
 // -------------
 lazy val core: Seq[ProjectReference] =
-  Seq(common, actor, markdown, json, json_scalaz7, json_ext, util)
+  Seq(common, actor, markdown, util)
 
 lazy val common =
   coreProject("common")
@@ -77,38 +76,14 @@ lazy val markdown =
       libraryDependencies ++= Seq(scalatest, scala_xml, scala_parser)
     )
 
-lazy val json =
-  coreProject("json")
-    .settings(
-      description := "JSON Library",
-      Test / parallelExecution := false,
-      libraryDependencies ++= Seq(scalap(scalaVersion.value), paranamer,  scala_xml)
-    )
-
 lazy val documentationHelpers =
   coreProject("documentation-helpers")
     .settings(description := "Documentation Helpers")
     .dependsOn(util)
 
-lazy val json_scalaz7 =
-  coreProject("json-scalaz7")
-    .dependsOn(json)
-    .settings(
-      description := "JSON Library based on Scalaz 7",
-      libraryDependencies ++= Seq(scalaz7)
-    )
-
-lazy val json_ext =
-  coreProject("json-ext")
-    .dependsOn(common, json)
-    .settings(
-      description := "Extentions to JSON Library",
-      libraryDependencies ++= Seq(commons_codec, joda_time, joda_convert)
-    )
-
 lazy val util =
   coreProject("util")
-    .dependsOn(actor, json, markdown)
+    .dependsOn(actor, markdown)
     .settings(
       description := "Utilities Library",
       Test / parallelExecution := false,
@@ -121,7 +96,8 @@ lazy val util =
         log4j,
         htmlparser,
         xerces,
-        jbcrypt
+        jbcrypt,
+        json4s_native,
       )
     )
 
@@ -135,7 +111,7 @@ lazy val testkit =
     .dependsOn(util)
     .settings(
       description := "Testkit for Webkit Library",
-      libraryDependencies ++= Seq(commons_httpclient, servlet_api)
+      libraryDependencies ++= Seq(commons_httpclient, servlet_api, json4s_native, json4s_xml)
     )
 
 lazy val webkit =
@@ -151,7 +127,7 @@ lazy val webkit =
         specs2Prov,
         specs2MatchersProv,
         jetty11,
-	jettywebapp,
+	      jettywebapp,
         jwebunit,
         mockito_scalatest,
         jquery,

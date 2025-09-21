@@ -26,9 +26,11 @@ import org.specs2.execute.Result
 
 import common.{Box,Empty,Full}
 import http._
-import net.liftweb.json.JsonAST._
 import mocks.MockHttpServletRequest
 
+import org.json4s._
+import org.json4s.native.JsonMethods
+import org.json4s.JsonAST._
 
 /**
  * This trait provides Lift-specific extensions to the Specification

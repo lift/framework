@@ -30,8 +30,9 @@ import org.specs2.mock.Mockito
 import org.specs2.specification.Scope
 
 import common._
-import json.JsonDSL._
-import json.JsonParser
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.native._
 import util.Helpers.tryo
 
 import provider._
@@ -127,7 +128,7 @@ class ReqSpec extends Specification with XmlMatchers with Mockito {
 
     class mockJsonReq(jsonString: String = """{ "booyan": "shazam", "booyak": 5, "bazam": 2.5 }""") extends mockReq {
       val testJson = jsonString
-      val parsedJson = tryo(JsonParser.parse(jsonString)) openOr json.JsonAST.JNothing
+      val parsedJson = tryo(JsonParser.parse(jsonString)) openOr JsonAST.JNothing
 
       def bodyBytes = {
         testJson.getBytes("UTF-8")

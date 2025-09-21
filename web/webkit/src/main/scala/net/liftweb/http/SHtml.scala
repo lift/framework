@@ -26,7 +26,10 @@ import http.js.AjaxInfo
 import JE._
 import JsCmds._
 import scala.xml._
-import json._
+
+import org.json4s._
+import org.json4s.native._
+import org.json4s.native.JsonMethods._
 
 class SHtmlJBridge {
   def sHtml = SHtml
