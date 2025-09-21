@@ -23,7 +23,7 @@ import org.specs2.mutable.Specification
 class ExtractionExamples extends Specification {
   "Extraction Examples Specification".title
 
-  implicit val formats: DefaultFormats.type = DefaultFormats
+  implicit val formats: Formats = DefaultFormats
 
   "Extraction example" in {
     val json = parse(testJson)

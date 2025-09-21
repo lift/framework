@@ -81,9 +81,10 @@ trait AbstractExamples extends Specification {
   }
 
   "Unbox values using XPath-like type expression" in {
-    (parse(objArray) \ "children" \\ classOf[JInt] mustEqual List(5, 3)) and
-      (parse(lotto) \ "lotto" \ "winning-numbers" \ classOf[JInt] mustEqual List(2, 45, 34, 23, 7, 5, 3)) and
-      (parse(lotto) \\ "winning-numbers" \ classOf[JInt] mustEqual List(2, 45, 34, 23, 7, 5, 3))
+    // In Scala 3, the type-based extractor returns List[Any]; widen expected types accordingly
+    (parse(objArray) \ "children" \\ classOf[JInt] mustEqual List[Any](5, 3)) and
+      (parse(lotto) \ "lotto" \ "winning-numbers" \ classOf[JInt] mustEqual List[Any](2, 45, 34, 23, 7, 5, 3)) and
+      (parse(lotto) \\ "winning-numbers" \ classOf[JInt] mustEqual List[Any](2, 45, 34, 23, 7, 5, 3))
   }
 
   "Quoted example" in {

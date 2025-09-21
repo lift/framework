@@ -31,7 +31,7 @@ object FieldSerializerExamples extends Specification {
   cat.name = "tommy"
 
   "All fields are serialized by default" in {
-    implicit val formats = DefaultFormats + FieldSerializer[WildDog]()
+    implicit val formats: Formats = DefaultFormats + FieldSerializer[WildDog]()
     val ser = swrite(dog)
     val dog2 = read[WildDog](ser)
     (dog2.name mustEqual dog.name) and
@@ -46,20 +46,20 @@ object FieldSerializerExamples extends Specification {
       renameFrom("animalname", "name")
     )
 
-    implicit val formats = DefaultFormats + dogSerializer
+    implicit val formats: Formats = DefaultFormats + dogSerializer
 
     val ser = swrite(dog)
     val dog2 = read[WildDog](ser)
-    (dog2.name mustEqual dog.name)
-      (dog2.color mustEqual dog.color)
-      (dog2.owner must beNull)
-      (dog2.size mustEqual dog.size)
+    (dog2.name mustEqual dog.name) and
+      (dog2.color mustEqual dog.color) and
+      (dog2.owner must beNull) and
+      (dog2.size mustEqual dog.size) and
       ((parse(ser) \ "animalname") mustEqual JString("pluto"))
   }
 
   "Selects best matching serializer" in {
     val dogSerializer = FieldSerializer[WildDog](ignore("name"))
-    implicit val formats = DefaultFormats + FieldSerializer[AnyRef]() + dogSerializer
+    implicit val formats: Formats = DefaultFormats + FieldSerializer[AnyRef]() + dogSerializer
 
     val dog2 = read[WildDog](swrite(dog))
     val cat2 = read[WildCat](swrite(cat))

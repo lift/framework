@@ -35,7 +35,7 @@ object FieldSerializerBugs extends Specification {
   */
 
   "Name with symbols is correctly serialized" in {
-    implicit val formats = DefaultFormats + FieldSerializer[AnyRef]()
+    implicit val formats: Formats = DefaultFormats + FieldSerializer[AnyRef]()
 
     val s = WithSymbol(5)
     val str = Serialization.write(s)
@@ -44,7 +44,7 @@ object FieldSerializerBugs extends Specification {
   }
 
   "FieldSerialization should work with Options" in {
-    implicit val formats = DefaultFormats + FieldSerializer[ClassWithOption]()
+    implicit val formats: Formats = DefaultFormats + FieldSerializer[ClassWithOption]()
 
     val t = new ClassWithOption
     t.field = Some(5)

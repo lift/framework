@@ -28,42 +28,9 @@ import scala.reflect.{ClassTag, Manifest}
  *  See: ExtractionExamples.scala
  */
 object Extraction {
-  
-  /** Type information extractor that abstracts over Manifest (Scala 2.13) and future Scala 3 implementations.
-   *  
-   *  This trait provides a clean abstraction that allows the JSON extraction system to work 
-   *  with different type information sources:
-   *  - Scala 2.13: Uses Manifest for full type information including generics
-   *  - Scala 3: Can be implemented with inline macros using the new metaprogramming system
-   *  
-   *  Usage example:
-   *  {{{
-   *  case class Person(name: String)
-   *  val json: JValue = ...
-   *  val person = json.extract[Person] // TypeExtractor[Person] is implicitly derived
-   *  }}}
-   */
-  trait TypeExtractor[A] {
-    def runtimeClass: Class[_]
-    def typeArguments: List[TypeExtractor[_]]
-  }
-  
-  object TypeExtractor extends LowPriorityTypeExtractor {
-    // High priority: Scala 2 implementation using Manifest
-    implicit def fromManifest[A](implicit mf: scala.reflect.Manifest[A]): TypeExtractor[A] = new TypeExtractor[A] {
-      def runtimeClass: Class[_] = mf.runtimeClass
-      def typeArguments: List[TypeExtractor[_]] = mf.typeArguments.map(arg => fromManifest(arg))
-    }
-  }
-  
-  // Low priority implicits for Scala 3 fallback
-  trait LowPriorityTypeExtractor {
-    // Lower priority: Scala 3 fallback using ClassTag when Manifest is not available
-    implicit def fromClassTag[A](implicit ct: scala.reflect.ClassTag[A]): TypeExtractor[A] = new TypeExtractor[A] {
-      def runtimeClass: Class[_] = ct.runtimeClass
-      def typeArguments: List[TypeExtractor[_]] = List.empty // ClassTag doesn't provide generic type info
-    }
-  }
+  // Back-compat: re-expose TypeExtractor under Extraction for existing call sites
+  type TypeExtractor[A] = net.liftweb.json.TypeExtractor[A]
+  val TypeExtractor: net.liftweb.json.TypeExtractor.type = net.liftweb.json.TypeExtractor
   import Meta._
   import Meta.Reflection._
 
