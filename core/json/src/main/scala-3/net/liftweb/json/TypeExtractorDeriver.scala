@@ -16,42 +16,33 @@ private object TypeExtractorDeriver {
     }
 
     def runtimeClassExpr(tpe: TypeRepr): Expr[Class[_]] = {
-      // Simplified approach: use TypeRepr's direct methods
+      // Use TypeRepr to get class name and use Class.forName
       val normalized = normalize(tpe)
+      val symbol = normalized.typeSymbol
 
-      // Try the most direct approach first
-      def extractClassName(t: TypeRepr): Option[String] = {
-        // Extract the type symbol and check if it's a class
-        val symbol = t.typeSymbol
-        if (symbol.isClassDef) {
-          Some(symbol.fullName)
-        } else {
-          // For applied types, get the constructor symbol
-          t match {
-            case AppliedType(tycon, _) =>
-              val tyconSymbol = tycon.typeSymbol
-              if (tyconSymbol.isClassDef) Some(tyconSymbol.fullName) else None
-            case _ => None
-          }
+      if (symbol.isClassDef) {
+        val className = symbol.fullName
+        // Handle some known problematic cases
+        className match {
+          case "scala.Int" => '{ classOf[Int] }
+          case "scala.Long" => '{ classOf[Long] }
+          case "scala.Double" => '{ classOf[Double] }
+          case "scala.Float" => '{ classOf[Float] }
+          case "scala.Boolean" => '{ classOf[Boolean] }
+          case "scala.Byte" => '{ classOf[Byte] }
+          case "scala.Short" => '{ classOf[Short] }
+          case "scala.Char" => '{ classOf[Char] }
+          case "java.lang.String" | "scala.Predef.String" => '{ classOf[String] }
+          case "scala.Unit" => '{ classOf[scala.runtime.BoxedUnit] }
+          case _ =>
+            try {
+              '{ Class.forName(${ Expr(className) }) }
+            } catch {
+              case _ => '{ classOf[Object] }
+            }
         }
-      }
-
-      extractClassName(normalized) match {
-        case Some(name) =>
-          // Handle special Scala types that don't map directly to Java classes
-          name match {
-            case "scala.Any" | "scala.AnyRef" | "scala.AnyVal" | "scala.Nothing" | "scala.Null" =>
-              '{ classOf[Object] }.asExprOf[Class[_]]
-            case "scala.Unit" =>
-              '{ classOf[scala.runtime.BoxedUnit] }.asExprOf[Class[_]]
-            case n if n.startsWith("scala.") && n.contains("$") =>
-              // Internal Scala types - fallback to Object
-              '{ classOf[Object] }.asExprOf[Class[_]]
-            case _ =>
-              '{ Class.forName(${ Expr(name) }) }.asExprOf[Class[_]]
-          }
-        case None =>
-          '{ classOf[Object] }.asExprOf[Class[_]]
+      } else {
+        '{ classOf[Object] }
       }
     }
 
