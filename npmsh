@@ -2,7 +2,10 @@
 
 set -ev
 
+node -v
+
 cd web/webkit
 npm run lint
 npm run test
+npm run minify
 cd -
