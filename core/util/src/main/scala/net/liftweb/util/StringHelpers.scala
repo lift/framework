@@ -58,7 +58,7 @@ trait StringHelpers {
     })
     val map: Map[String, String] = Map.empty
 
-    (list.foldLeft(map))((m, next) => m + (next))
+    list.foldLeft(map) { (m, next) => m + next }
   }
 
   /**

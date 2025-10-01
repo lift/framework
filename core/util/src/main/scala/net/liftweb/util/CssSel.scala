@@ -870,8 +870,7 @@ object CanBind extends CssBindImplicits {
 
   implicit def iterableDouble[T[Double]](implicit f: T[Double] => Iterable[Double]): CanBind[T[Double]] =
     new CanBind[T[Double]] {
-      def apply(info: => T[Double])(ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.flatMap(a =>
-        if (a == null) Nil else List(Text(a.toString)))
+      def apply(info: => T[Double])(ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.flatMap(a => List(Text(a.toString)))
     }
 
   implicit def iterableBindableTransform[T[_]](implicit f: T[Bindable] => Iterable[Bindable]): CanBind[T[Bindable]] =
