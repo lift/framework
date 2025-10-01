@@ -32,12 +32,13 @@ import Helpers._
 import builtin.snippet._
 import js._
 import provider._
-import json._
 import org.mozilla.javascript.Scriptable
 import org.mozilla.javascript.UniqueTag
-import json.JsonAST.{JString, JValue}
-import json.Extraction.TypeExtractor.fromManifest
 import scala.xml.Group
+
+import org.json4s._
+import org.json4s.native._
+import org.json4s.native.JsonMethods._
 
 object LiftSession {
 
@@ -2193,11 +2194,11 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
               case jsCmd: JsCmd => partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(jsCmd, false)))
               case jsExp: JsExp => partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(jsExp.cmd, false)))
               case jv: JsonAST.JValue => {
-                val s: String = json.prettyRender(jv)
+                val s: String = JsonMethods.pretty(JsonMethods.render(jv))
                 partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(JsRaw(toCall+"("+s+")").cmd, false)))
               }
               case x: AnyRef => {
-                import json._
+                import org.json4s._
                 implicit val formats = Serialization.formats(NoTypeHints)
 
                 val ser: Box[String] = Helpers.tryo(Serialization.write(x))
@@ -2732,7 +2733,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           case jsExp: JsExp => partialUpdate(JsCmds.JsSchedule(JsCmds.JsTry(jsExp.cmd, false)))
 
           case ItemMsg(guid, value) =>
-            partialUpdate(JsCmds.JsSchedule(JsRaw(s"lift.sendEvent(${guid.encJs}, {'success': ${compactRender(value)}} )").cmd))
+            partialUpdate(JsCmds.JsSchedule(JsRaw(s"lift.sendEvent(${guid.encJs}, {'success': ${JsonMethods.compact(JsonMethods.render(value))}} )").cmd))
           case DoneMsg(guid) =>
             partialUpdate(JsCmds.JsSchedule(JsRaw(s"lift.sendEvent(${guid.encJs}, {'done': true} )").cmd))
 
@@ -2780,10 +2781,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
               func <- map.get(name)
               payload = in \ "payload"
               reified <- if (func.manifest == jvmanifest) Some(payload) else {
-                // n.b. this should have applied the implicit conversion from the
-                // compiler, but it doesn't want to for some unknown reason.
-                // For now, I'm manually invoking fromManifest.
-                try {Some(payload.extract(defaultFormats, fromManifest(func.manifest)))} catch {
+                try {Some(payload.extract(defaultFormats, func.manifest))} catch {
                   case e: Exception =>
                     logger.error("Failed to extract "+payload+" as "+func.manifest, e)
                     ca ! FailMsg(guid, "Failed to extract payload as "+func.manifest+" exception "+ e.getMessage)

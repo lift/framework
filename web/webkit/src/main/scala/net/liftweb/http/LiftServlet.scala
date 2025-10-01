@@ -26,7 +26,8 @@ import util.Helpers._
 import js._
 import auth._
 import provider._
-import json.JsonAST.JValue
+
+import org.json4s._
 
 /**
  * Wrap a LiftResponse and cache the result to avoid computing the actual response

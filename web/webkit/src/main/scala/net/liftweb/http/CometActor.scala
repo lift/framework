@@ -21,7 +21,8 @@ import net.liftweb.common._
 import net.liftweb.actor._
 import net.liftweb.util.Helpers._
 import net.liftweb.util._
-import net.liftweb.json._
+import org.json4s._
+import org.json4s.native._
 import scala.xml.{NodeSeq, Text, Elem, Node, Group, Null, PrefixedAttribute, UnprefixedAttribute}
 import scala.collection.mutable.ListBuffer
 import net.liftweb.http.js._

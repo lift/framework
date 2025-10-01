@@ -21,10 +21,10 @@ package js
 import org.specs2.mutable.Specification
 
 import common._
-import json._
-import JsonDSL._
 import util.Helpers._
 
+import org.json4s._
+import org.json4s.JsonDSL._
 
 /**
  * System under specification for JsExp.

@@ -37,7 +37,9 @@ import scala.xml.NodeSeq
 import common.{Box,Empty}
 import util.Helpers
 
-import json.JsonAST._
+import org.json4s._
+import org.json4s.native._
+import org.json4s.JsonAST._
 
 /**
  * A Mock ServletRequest. Change its state to create the request you are
@@ -127,10 +129,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * Sets the body to the given json value and content type.
    */
   def body_= (jval : JValue, contentType : String): Unit = {
-    import json.JsonDSL._
-    import json.JsonAST
-
-    body = JsonAST.prettyRender(jval).getBytes(charEncoding)
+    body = JsonMethods.pretty(JsonMethods.render(jval)).getBytes(charEncoding)
     this.contentType = contentType
   }
 

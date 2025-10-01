@@ -20,8 +20,8 @@ package mockweb
 import common.Full
 import http._
 import http.rest._
-import json._
-import json.JsonDSL._
+import org.json4s._
+import org.json4s.JsonDSL._
 import mocks.MockHttpServletRequest
 
 /**

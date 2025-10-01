@@ -18,7 +18,7 @@ package mocks
 
 import org.specs2.mutable.Specification
 
-import json.JsonDSL._
+import org.json4s.JsonDSL._
 
 
 /**

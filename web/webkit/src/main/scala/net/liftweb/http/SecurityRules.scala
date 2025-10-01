@@ -22,11 +22,12 @@ import java.net.URI
 import scala.concurrent.duration._
 
 import common._
-import json._
 import util.Props
 import util.Helpers.tryo
 
 import LiftRules._
+
+import org.json4s._
 
 /**
  * Rules for HTTPS usage by a Lift application.

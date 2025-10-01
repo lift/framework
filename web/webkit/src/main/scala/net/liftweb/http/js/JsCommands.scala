@@ -23,6 +23,9 @@ import net.liftweb.common._
 import net.liftweb.util._
 import scala.xml.Node
 
+import org.json4s._
+import org.json4s.native._
+
 object JsCommands {
   def create = new JsCommands(Nil)
 
@@ -151,10 +154,8 @@ trait JsObj extends JsExp {
  * helpful conversions to/from Lift's JSON library
  */
 object JsExp {
-  import json._
-
   implicit def jValueToJsExp(jv: JValue): JsExp = new JsExp {
-    lazy val toJsCmd = compactRender(jv)
+    lazy val toJsCmd = JsonMethods.compact(JsonMethods.render(jv))
   }
 
   implicit def strToJsExp(str: String): JE.Str = JE.Str(str)

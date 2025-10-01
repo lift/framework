@@ -22,8 +22,9 @@ import scala.language.implicitConversions
 
 import net.liftweb.util.Helpers._
 import net.liftweb.util._
-import net.liftweb.json._
-import JsonDSL._
+import org.json4s._
+import org.json4s.native._
+import org.json4s.JsonDSL._
 import net.liftweb.common._
 import scala.xml._
 import scala.xml.Utility.trim
@@ -208,7 +209,7 @@ trait BaseGetPoster {
 
   implicit def jsonToRequestEntity(body: JValue): RequestEntity =
     new RequestEntity {
-      val bytes = compactRender(body).toString.getBytes("UTF-8")
+      val bytes = JsonMethods.compact(JsonMethods.render(body)).toString.getBytes("UTF-8")
 
       def getContentLength() = bytes.length
 
@@ -831,7 +832,7 @@ abstract class BaseResponse(override val baseUrl: String,
   private object FindElem {
     def unapply(in: NodeSeq): Option[Elem] = in match {
       case e: Elem => Some(e)
-      case d: Document => unapply(d.docElem)
+      case d: scala.xml.Document => unapply(d.docElem)
       case g: Group => unapply(g.nodes)
       case n: Text => None
       case sn: SpecialNode => None
