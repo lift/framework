@@ -320,7 +320,7 @@ trait HtmlHelpers extends CssBindImplicits {
           </i>
           </div>)
 
-        case _ => Empty
+      case _ => Empty
     }
   }
 

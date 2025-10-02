@@ -171,14 +171,14 @@ trait ListHelpers {
    */
   def enumToList[T](`enum`: java.util.Enumeration[T]): List[T] = {
     import scala.jdk.CollectionConverters._
-    enum.asScala.toList
+    `enum`.asScala.toList
   }
 
   /**
    * Convert a java.util.Enumeration to a List[String] using the toString method on each element
    */
   def enumToStringList[C](`enum`: java.util.Enumeration[C]): List[String] =
-    enumToList(enum).map(_.toString)
+    enumToList(`enum`).map(_.toString)
 
   /**
    * Return the first element of a List or a default value if the list is empty

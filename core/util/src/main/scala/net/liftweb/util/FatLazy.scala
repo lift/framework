@@ -58,7 +58,7 @@ class FatLazy[T](f: => T) {
    * Test whether the value of this class has been set or initialized from the default.
    */
   def defined_? = synchronized {
-    value != None
+    value.toOption != None
   }
 
   /**

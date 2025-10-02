@@ -80,12 +80,12 @@ sealed trait Schedule extends Loggable {
   /**
    * Re-create the underlying <code>SingleThreadScheduledExecutor</code>
    */
-  def restart: Unit = synchronized
-  { if ((service eq null) || service.isShutdown)
-    service = buildService()
-   if ((pool eq null) || pool.isShutdown)
-     pool = buildExecutor()
- }
+  def restart: Unit = synchronized { if ((service eq null) || service.isShutdown)
+    if ((service eq null) || service.isShutdown)
+      service = buildService()
+    if ((pool eq null) || pool.isShutdown)
+      pool = buildExecutor()
+  }
 
 
   /**

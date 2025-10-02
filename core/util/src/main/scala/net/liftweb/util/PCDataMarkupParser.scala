@@ -99,6 +99,9 @@ class PCDataXmlParser(val input: Source) extends ConstructingHandler with PCData
   val preserveWS = true
   ent ++= HtmlEntities()
   import scala.xml._
+
+  /** Public accessor for curInput.hasNext to work around Scala 3 protected access restrictions */
+  def hasMoreInput: Boolean = curInput.hasNext
   /** parse attribute and create namespace scope, metadata
    *  [41] Attributes    ::= { S Name Eq AttValue }
    */
@@ -190,7 +193,7 @@ object PCDataXmlParser {
   private def apply(source: Source): Box[NodeSeq] = {
     for {
       p <- tryo{new PCDataXmlParser(source)}
-      _ = while (p.ch != '<' && p.curInput.hasNext) p.nextch() // side effects, baby
+      _ = while (p.ch != '<' && p.hasMoreInput) p.nextch() // side effects, baby
       bd <- tryo(p.document())
       doc <- Box !! bd
     } yield (doc.children: NodeSeq)

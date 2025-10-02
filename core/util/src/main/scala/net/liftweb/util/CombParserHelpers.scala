@@ -86,7 +86,7 @@ trait CombParserHelpers {
    * of the case (uppercase or lowercase)
    */
   def acceptCI[ES](es: ES)(implicit ev: ES => List[Elem]): Parser[List[Elem]] =
-  es.foldRight[Parser[List[Elem]]](
+  ev(es).foldRight[Parser[List[Elem]]](
     success(Nil)){(x, pxs) => acceptCIChar(x) ~ pxs ^^ mkList}
 
   def xform(in: Char): Char = Character.toUpperCase(in)
