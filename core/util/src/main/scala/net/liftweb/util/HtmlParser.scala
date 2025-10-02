@@ -363,6 +363,15 @@ trait Html5Parser {
           }
           buffer.setLength(0)
         }
+
+        // Override endDocument to handle empty hStack case in Scala 3
+        // Scala 3's List.last throws "None.get" error on empty lists
+        override def endDocument(): Unit = {
+          if (hStack.nonEmpty) {
+            epilogue = hStack.init.reverse
+            hStack = hStack.last :: Nil
+          }
+        }
       }
 
       saxer.scopeStack = saxer.scopeStack.prepended(TopScope)
