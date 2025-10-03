@@ -84,14 +84,12 @@ trait ToBoxTheResponse {
       (baseUrl + fullUrl, httpClient.executeMethod(getter)) match {
         case (server, responseCode) =>
           val respHeaders = slurpApacheHeaders(getter.getResponseHeaders)
+          val body = for {
+            st <- Box !! getter.getResponseBodyAsStream
+            bytes <- tryo(readWholeStream(st))
+          } yield bytes
 
-        Full(new TheResponse(baseUrl,
-                             responseCode, getter.getStatusText,
-                             respHeaders,
-                             for {st <- Box !! getter.getResponseBodyAsStream
-                                  bytes <- tryo(readWholeStream(st))
-                                } yield bytes,
-                             httpClient))
+          Full(new TheResponse(baseUrl, responseCode, getter.getStatusText, respHeaders, body, httpClient))
       }
     } catch {
       case e: IOException => Failure(baseUrl + fullUrl, Full(e), Empty)
@@ -793,9 +791,7 @@ class HttpResponse(baseUrl: String,
                    code: Int, msg: String,
                    headers: Map[String, List[String]],
                    body: Box[Array[Byte]],
-                   theHttpClient: HttpClient) extends
-  BaseResponse(baseUrl, code, msg, headers, body, theHttpClient) with
-  ToResponse with TestResponse {
+                   theHttpClient: HttpClient) extends BaseResponse(baseUrl, code, msg, headers, body, theHttpClient) with ToResponse with TestResponse {
   }
 
 /**
@@ -806,9 +802,7 @@ class TheResponse(baseUrl: String,
                   code: Int, msg: String,
                   headers: Map[String, List[String]],
                   body: Box[Array[Byte]],
-                  theHttpClient: HttpClient) extends
-  BaseResponse(baseUrl, code, msg, headers, body, theHttpClient) with
-  ToBoxTheResponse {
+                  theHttpClient: HttpClient) extends BaseResponse(baseUrl, code, msg, headers, body, theHttpClient) with ToBoxTheResponse {
     type SelfType = TheResponse
 
   }
