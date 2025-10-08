@@ -51,8 +51,7 @@ trait Paginator[T] extends Loggable {
    * Calculates the number of pages the items will be spread across
    */
   def numPages =
-    (count/itemsPerPage).toInt +
-  (if(count % itemsPerPage > 0) 1 else 0)
+    (count/itemsPerPage).toInt + (if(count % itemsPerPage > 0) 1 else 0)
   /**
    * Calculates the current page number, based on the value of 'first.'
    */

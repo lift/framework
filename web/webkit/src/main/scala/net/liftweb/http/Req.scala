@@ -165,20 +165,18 @@ trait UserAgentCalculator {
   /**
    * Is the Req coming from an iPhone
    */
-  lazy val isIPhone: Boolean = 
-    UserAgentCalculator.iPhoneCalcFunction.vend.
-  map(_.apply(userAgent)) openOr 
-    isSafari && (userAgent.map(s => 
-      s.indexOf("(iPhone") >= 0) openOr false)
+  lazy val isIPhone: Boolean =
+    UserAgentCalculator.iPhoneCalcFunction.vend.map(_.apply(userAgent)) openOr
+      isSafari && (userAgent.map(s =>
+        s.indexOf("(iPhone") >= 0) openOr false)
 
   /**
    * Is the Req coming from an iPad
    */
-  lazy val isIPad: Boolean = 
-    UserAgentCalculator.iPadCalcFunction.vend.
-  map(_.apply(userAgent)) openOr 
-  isSafari && (userAgent.map(s =>
-    s.indexOf("(iPad") >= 0) openOr false)
+  lazy val isIPad: Boolean =
+    UserAgentCalculator.iPadCalcFunction.vend.map(_.apply(userAgent)) openOr
+      isSafari && (userAgent.map(s =>
+        s.indexOf("(iPad") >= 0) openOr false)
 
   lazy val firefoxVersion: Box[Double] = 
     UserAgentCalculator.firefoxCalcFunction.vend.apply(userAgent)
@@ -464,13 +462,13 @@ object Req {
       // post/put of XML or JSON... eagerly read the stream
       if ((reqType.post_? ||
            reqType.put_?) && contentType.dmap(false){
-	_.toLowerCase match {
-	  case x => 
-	    x.startsWith("text/xml") || 
-	    x.startsWith("application/xml") || 
-	  x.startsWith("text/json") ||
-	  x.startsWith("application/json")
-	}}) {
+        _.toLowerCase match {
+          case x =>
+            x.startsWith("text/xml") ||
+            x.startsWith("application/xml") ||
+            x.startsWith("text/json") ||
+            x.startsWith("application/json")
+        }}) {
         ParamCalcInfo(queryStringParam._1, 
                       queryStringParam._2 ++ localParams, 
                       Nil, 
@@ -684,7 +682,7 @@ final case class ContentType(theType: String,
      */
     def matches(contentType: (String, String)): Boolean =
       (theType == "*" || (theType == contentType._1)) &&
-    (subtype == "*" || subtype == contentType._2)
+        (subtype == "*" || subtype == contentType._2)
     
     /**
      * Is it a wildcard

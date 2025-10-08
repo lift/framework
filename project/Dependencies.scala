@@ -82,17 +82,38 @@ object Dependencies {
   lazy val derby       = "org.apache.derby"         % "derby"                    % "10.7.1.1" % Test
   lazy val h2database  = "com.h2database"           % "h2"                       % "1.2.147"  % Test
 
-  lazy val specs2      = "org.specs2"        %% "specs2-core"          % "4.21.0"         % Test
-  lazy val scalacheck  = "org.specs2"        %% "specs2-scalacheck"    % specs2.revision % Test
-  lazy val specs2Prov  = "org.specs2"        %% "specs2-core"          % specs2.revision % Provided
-  lazy val specs2Matchers = "org.specs2"     %% "specs2-matcher-extra" % specs2.revision % Test
-  lazy val specs2MatchersProv = "org.specs2" %% "specs2-matcher-extra" % specs2.revision % Provided
-  lazy val specs2Mock  = "org.specs2"        %% "specs2-mock"          % specs2.revision % Test
+  // Specs2 versions differ between Scala 2 and Scala 3
+  def specs2Version(scalaVersion: String): String = {
+    CrossVersion.partialVersion(scalaVersion) match {
+      case Some((2, 13)) => "4.21.0"
+      case Some((3, _))  => "5.6.4"
+      case _             => "4.21.0"
+    }
+  }
+
+  lazy val specs2: ModuleMap = (version: String) => "org.specs2" %% "specs2-core" % specs2Version(version) % Test
+  lazy val scalacheck: ModuleMap = (version: String) => "org.specs2" %% "specs2-scalacheck" % specs2Version(version) % Test
+  lazy val specs2Prov: ModuleMap = (version: String) => "org.specs2" %% "specs2-core" % specs2Version(version) % Provided
+  lazy val specs2Matchers: ModuleMap = (version: String) => "org.specs2" %% "specs2-matcher-extra" % specs2Version(version) % Test
+  lazy val specs2MatchersProv: ModuleMap = (version: String) => "org.specs2" %% "specs2-matcher-extra" % specs2Version(version) % Provided
+  lazy val specs2Mock: ModuleMap = (version: String) => {
+    CrossVersion.partialVersion(version) match {
+      case Some((2, 13)) => "org.specs2" %% "specs2-mock" % specs2Version(version) % Test
+      case Some((3, _))  => "org.scalatestplus" %% "mockito-5-18" % "3.2.19.0" % Test
+      case _             => "org.specs2" %% "specs2-mock" % specs2Version(version) % Test
+    }
+  }
 
   lazy val scalactic       = "org.scalactic"     %% "scalactic"  % "3.2.19"   % Test
   lazy val scalatest       = "org.scalatest"     %% "scalatest"  % "3.2.19"   % Test
   lazy val scalatest_junit = "org.scalatestplus" %% "junit-4-12" % "3.1.2.0" % Test
-  lazy val mockito_scalatest = "org.mockito" %% "mockito-scala-scalatest" % "1.14.3" % Test
+  lazy val mockito_scalatest: ModuleMap = (version: String) => {
+    CrossVersion.partialVersion(version) match {
+      case Some((2, 13)) => "org.mockito" %% "mockito-scala-scalatest" % "1.14.3" % Test
+      case Some((3, _))  => "org.scalatestplus" %% "mockito-5-18" % "3.2.19.0" % Test
+      case _             => "org.mockito" %% "mockito-scala-scalatest" % "1.14.3" % Test
+    }
+  }
 
   lazy val scalamock = "org.scalamock" %% "scalamock" % "7.4.1" % Test
 

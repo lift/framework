@@ -69,8 +69,7 @@ object Jetty7AsyncProvider extends AsyncProviderMeta {
    * return a function that vends the ServletAsyncProvider
    */
   def providerFunction: Box[HTTPRequest => ServletAsyncProvider] =
-    Full(req => new Jetty7AsyncProvider(req)).
-  filter(i => suspendResumeSupport_?)
+    Full(req => new Jetty7AsyncProvider(req)).filter(i => suspendResumeSupport_?)
 }
 
 /**

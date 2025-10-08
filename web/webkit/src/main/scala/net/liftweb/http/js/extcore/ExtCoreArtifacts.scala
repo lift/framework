@@ -106,8 +106,8 @@ object ExtCoreArtifacts extends JSArtifacts {
    * for processing
    */
   def onLoad(cmd: JsCmd): JsCmd = new JsCmd {
-  	def toJsCmd = "Ext.onReady(function() {" + cmd.toJsCmd + "})"
-	}
+    def toJsCmd = "Ext.onReady(function() {" + cmd.toJsCmd + "})"
+  }
 
   /**
    * Fades out the element having the provided id, by waiting

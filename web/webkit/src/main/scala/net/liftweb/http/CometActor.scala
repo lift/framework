@@ -1240,7 +1240,7 @@ trait BaseCometActor extends LiftActor with LiftCometActor with CssBindImplicits
         Empty
       }
 
-      new RenderOut(Full(in: NodeSeq), internalFixedRender, additionalJs, Empty, false)
+    new RenderOut(Full(in: NodeSeq), internalFixedRender, additionalJs, Empty, false)
   }
 
   protected implicit def jsToXmlOrJsCmd(in: JsCmd): RenderOut = {

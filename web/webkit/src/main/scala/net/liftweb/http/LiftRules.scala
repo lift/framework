@@ -463,10 +463,11 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   val statelessReqTest = RulesSeq[StatelessReqTestPF]
 
   val statelessSession: FactoryMaker[Req => LiftSession with StatelessSession] =
-    new FactoryMaker((req: Req) => new LiftSession(req.contextPath,
-                                                   Helpers.nextFuncName,
-                                                   Empty) with
-                     StatelessSession) {}
+    new FactoryMaker((req: Req) =>
+      new LiftSession(req.contextPath,
+                      Helpers.nextFuncName,
+                      Empty) with StatelessSession
+    ) {}
 
 
   /**
@@ -538,7 +539,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   /**
    * For each unload hook registered, run them during destroy()
    */
-  private[http] def runUnloadHooks(): Unit = {
+  def runUnloadHooks(): Unit = {
     unloadHooks.toList.foreach{f =>
       tryo{f()}
     }
@@ -1243,7 +1244,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   val deferredSnippetFailure: FactoryMaker[Failure => NodeSeq] =
   new FactoryMaker(() => {
-    failure: Failure => {
+    (failure: Failure) => {
       if (Props.devMode)
         <div style="border: red solid 2px">A lift:parallel snippet failed to render.Message:{failure.msg}{failure.exception match {
           case Full(e) =>
@@ -1292,9 +1293,8 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
 
 
 
-  private[http] val reqCnt = new AtomicInteger(0)
-
-  @volatile private[http] var ending = false
+  @volatile var ending = false
+  val reqCnt = new AtomicInteger(0)
 
   private[http] def bootFinished(): Unit = {
     _doneBoot = true
