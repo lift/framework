@@ -906,7 +906,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     }
 
       import scala.jdk.CollectionConverters._
-      (nmessageCallback.asScala.foldLeft(0))((l, v) => l + (v._2.owner match {
+      nmessageCallback.asScala.foldLeft(0)((l, v) => l + (v._2.owner match {
         case Full(owner) if (owner == ownerName) =>
           v._2.lastSeen = time
           1
@@ -914,7 +914,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           v._2.lastSeen = time
           1
         case _ => 0
-    }))
+      }))
   }
 
   /**
@@ -2426,7 +2426,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * Queue a message for a comet that is not started yet.
    */
   @deprecated("Please use queueCometMessage instead.", "3.1")
-  def setupComet(cometType: String, cometName: Box[String], msg: Any) {
+  def setupComet(cometType: String, cometName: Box[String], msg: Any): Unit = {
     queueCometMessage(cometType, cometName, msg)
   }
 

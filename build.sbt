@@ -14,7 +14,13 @@ val scala3LTSVersion = "3.3.6"
 ThisBuild / scalaVersion         := scala213Version
 ThisBuild / crossScalaVersions   := Seq(scala213Version, scala3LTSVersion)
 
-ThisBuild / libraryDependencies ++= Seq(specs2, specs2Matchers, scalacheck, scalactic, scalatest)
+ThisBuild / libraryDependencies ++= Seq(
+  specs2(scalaVersion.value),
+  specs2Matchers(scalaVersion.value),
+  scalacheck(scalaVersion.value),
+  scalactic,
+  scalatest
+)
 
 ThisBuild / scalacOptions       ++= Seq("-deprecation")
 
@@ -124,16 +130,16 @@ lazy val webkit =
         commons_fileupload,
         rhino,
         servlet_api,
-        specs2Prov,
-        specs2MatchersProv,
+        specs2Prov(scalaVersion.value),
+        specs2MatchersProv(scalaVersion.value),
         jetty11,
 	      jettywebapp,
         jwebunit,
-        mockito_scalatest,
+        mockito_scalatest(scalaVersion.value),
         jquery,
         jasmineCore,
         jasmineAjax,
-        specs2Mock
+        specs2Mock(scalaVersion.value)
       ),
       libraryDependencies ++= {
         CrossVersion.partialVersion(scalaVersion.value) match {

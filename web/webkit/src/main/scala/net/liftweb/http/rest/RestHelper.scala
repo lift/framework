@@ -69,7 +69,7 @@ trait RestHelper extends LiftRules.DispatchPF {
    * it works, empty if it does
    */
   protected def anyToJValue(in: Any): Box[JValue] = Helpers.tryo{
-    implicit def formats = DefaultFormats
+    implicit def formats: Formats = DefaultFormats
     Extraction.decompose(in)
   }
   

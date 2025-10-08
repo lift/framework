@@ -103,7 +103,7 @@ trait Loc[T] {
    */
   def queryParameters(what: Box[T]): List[(String, String)] =
     addlQueryParams.flatMap(_()) :::
-  calcQueryParams.flatMap(_(what))
+      calcQueryParams.flatMap(_(what))
 
   protected def appendQueryParams(what: T)(nodeSeq: NodeSeq): NodeSeq =
     Text(appendQueryParameters(nodeSeq.text, Full(what)))
