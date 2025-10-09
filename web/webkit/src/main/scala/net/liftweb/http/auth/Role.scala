@@ -119,7 +119,7 @@ trait Role {
    */
   def isParentOf(roleName: String): Boolean = !this.getRoleByName(roleName).isEmpty
 
-  override def toString = {
+  override def toString: String = {
     var str = "Role(" + name;
     for (role <- childs) {
       str = str + ", " + role.toString

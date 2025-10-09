@@ -285,7 +285,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * sure to set them early in the boot process.
    */
   @volatile var securityRules: () => SecurityRules = () => defaultSecurityRules
-  private[http] lazy val lockedSecurityRules = securityRules()
+  lazy val lockedSecurityRules = securityRules()
 
   /**
    * Defines the resources that are protected by authentication and authorization. If this function
@@ -672,7 +672,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   @volatile var siteMapFailRedirectLocation: List[String] = List()
 
-  private[http] def notFoundOrIgnore(requestState: Req, session: Box[LiftSession]): Box[LiftResponse] = {
+  def notFoundOrIgnore(requestState: Req, session: Box[LiftSession]): Box[LiftResponse] = {
     if (passNotFoundToChain) Empty
     else session match {
       case Full(session) => Full(session.checkRedirect(requestState.createNotFound))
@@ -921,7 +921,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   val viewDispatch = RulesSeq[ViewDispatchPF]
 
-  private[http] def snippet(name: String): Box[DispatchSnippet] = NamedPF.applyBox(name, snippetDispatch.toList)
+  def snippet(name: String): Box[DispatchSnippet] = NamedPF.applyBox(name, snippetDispatch.toList)
 
   /**
    * If the request times out (or returns a non-Response) you can
@@ -1296,7 +1296,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   @volatile var ending = false
   val reqCnt = new AtomicInteger(0)
 
-  private[http] def bootFinished(): Unit = {
+  def bootFinished(): Unit = {
     _doneBoot = true
   }
 
@@ -1323,7 +1323,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
   val allAround = RulesSeq[LoanWrapper]
 
 
-  private[http] def dispatchTable(req: HTTPRequest): List[DispatchPF] = {
+  def dispatchTable(req: HTTPRequest): List[DispatchPF] = {
     req match {
       case null => dispatch.toList
       case _ => SessionMaster.getSession(req, Empty) match {
@@ -1616,7 +1616,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * Runs responseTransformers
    */
   def performTransform(in: LiftResponse): LiftResponse = responseTransformers.toList.foldLeft(in) {
-    case (in, pf: PartialFunction[_, _]) =>
+    case (in, pf: PartialFunction[LiftResponse, LiftResponse]) =>
       if (pf.isDefinedAt(in)) pf(in) else in
     case (in, f) => f(in)
   }
@@ -1975,7 +1975,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   def mimeHeaders = _mimeHeaders.get
 
-  private[http] def withMimeHeaders[T](map: Map[String, List[String]])(f: => T): T = _mimeHeaders.doWith(Full(map))(f)
+  def withMimeHeaders[T](map: Map[String, List[String]])(f: => T): T = _mimeHeaders.doWith(Full(map))(f)
 
   @volatile var templateCache: Box[TemplateCache[(Locale, List[String]), NodeSeq]] = {
     if (Props.productionMode) {

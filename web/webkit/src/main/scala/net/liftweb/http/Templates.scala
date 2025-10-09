@@ -301,15 +301,12 @@ abstract class SnippetFailureException(msg: String) extends LiftFlowOfControlExc
   def snippetFailure: LiftRules.SnippetFailures.Value
 
   def buildStackTrace: NodeSeq =
-    getStackTrace.toList.dropWhile
-  {
-    e => {
+    getStackTrace.toList.dropWhile { e =>
       val cn = e.getClassName
       cn.startsWith("net.liftweb.http") ||
       cn.startsWith("net.liftweb.common") ||
       cn.startsWith("net.liftweb.util")
-    }
-  }.filter {
+    }.filter {
     e => {
       val cn = e.getClassName
       !cn.startsWith("java.lang") &&

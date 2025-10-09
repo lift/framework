@@ -473,10 +473,9 @@ class LiftServlet extends Loggable {
                 // run the continuation in the new session
                 // if there is a continuation
                 continuation match {
-                  case Full(func) => {
+                  case Full(func) =>
                     func()
                     S.redirectTo("/")
-                  }
                   case _ => // do nothing
                 }
 

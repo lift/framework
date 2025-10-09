@@ -448,8 +448,8 @@ object Req {
             case n :: v :: _ => Full((urlDecode(n), urlDecode(v)))
             case n :: _ => Full((urlDecode(n), ""))
           }} yield (name, value)
-            
-            val names: List[String] = params.map(_._1).distinct
+
+      val names: List[String] = params.map(_._1).distinct
       val nvp: Map[String, List[String]] = params.foldLeft(Map[String, List[String]]()) {
         case (map, (name, value)) => map + (name -> (map.getOrElse(name, Nil) ::: List(value)))
       }

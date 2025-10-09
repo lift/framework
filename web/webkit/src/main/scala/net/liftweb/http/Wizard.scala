@@ -365,7 +365,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
 
   def currentScreen: Box[Screen] = CurrentScreen.is
 
-  def createSnapshot = {
+  override protected def createSnapshot: WizardSnapshot = {
     val cs = CurrentScreen.is
     val prev = PrevSnapshot.is
     val onFirst = OnFirstScreen.is
@@ -513,7 +513,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
     /**
      * Define a field within the screen
      */
-    trait Field extends super.Field with ConfirmField {
+    trait WizardField extends _root_.net.liftweb.http.AbstractScreen#Field with ConfirmField {
       /**
        * Is this field on the confirm screen
        */
@@ -521,8 +521,13 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
 
       override protected def otherFuncVendors(what: Manifest[ValueType]):
       Box[(ValueType, ValueType => Any) => NodeSeq] =
-        Wizard.this.vendForm(manifest) or WizardRules.vendForm(manifest)
+        Wizard.this.vendForm(what) or WizardRules.vendForm(what)
     }
+
+    // In Scala 3, we cannot shadow the parent Field trait with the same name
+    // Users should use WizardField instead
+    @deprecated("Use WizardField instead", "4.0")
+    type Field = WizardField
 
     Wizard.this._register(this)
 

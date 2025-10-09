@@ -50,7 +50,7 @@ trait NamedCometActorSnippet {
    */
   final def render(xhtml: NodeSeq): NodeSeq = {
     for (sess <- S.session) sess.sendCometMessage(
-      cometClass, Full(name), CometName(name)
+      cometClass, Full(name), name
     )
     <lift:comet type={cometClass} name={name}>{xhtml}</lift:comet>
   }
