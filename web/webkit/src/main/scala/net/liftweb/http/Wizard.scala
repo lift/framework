@@ -513,7 +513,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
     /**
      * Define a field within the screen
      */
-    trait WizardField extends _root_.net.liftweb.http.AbstractScreen#Field with ConfirmField {
+    trait WizardField extends Field with ConfirmField {
       /**
        * Is this field on the confirm screen
        */
@@ -523,11 +523,6 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
       Box[(ValueType, ValueType => Any) => NodeSeq] =
         Wizard.this.vendForm(what) or WizardRules.vendForm(what)
     }
-
-    // In Scala 3, we cannot shadow the parent Field trait with the same name
-    // Users should use WizardField instead
-    @deprecated("Use WizardField instead", "4.0")
-    type Field = WizardField
 
     Wizard.this._register(this)
 
