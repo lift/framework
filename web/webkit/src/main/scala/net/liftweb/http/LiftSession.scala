@@ -923,7 +923,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
   private[http] def hasFuncsForOwner(owner: String): Boolean = {
     import scala.jdk.CollectionConverters._
 
-    !nmessageCallback.asScala.find(_._2.owner == owner).isEmpty
+    !nmessageCallback.asScala.find(_._2.owner.contains(owner)).isEmpty
   }
 
   private def shutDown() = {
@@ -2248,8 +2248,11 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           case DataAttributeProcessorAnswerFork(nodeFunc) =>
             processOrDefer(true)(processSurroundAndInclude(page, nodeFunc()))
           case DataAttributeProcessorAnswerFuture(nodeFuture) =>
-            processOrDefer(true)(processSurroundAndInclude(page,
-              nodeFuture.get(15000).openOr(NodeSeq.Empty)))
+            val nodes: NodeSeq = nodeFuture.get(15000) match {
+              case Full(ns: NodeSeq) => ns
+              case _ => NodeSeq.Empty
+            }
+            processOrDefer(true)(processSurroundAndInclude(page, nodes))
         }
 
         case elem @ SnippetNode(element, kids, isLazy, attrs, snippetName) if snippetName != _lastFoundSnippet.value =>
@@ -2273,7 +2276,11 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           case DataAttributeProcessorAnswerFork(nodeFunc) =>
             processOrDefer(true)(nodeFunc())
           case DataAttributeProcessorAnswerFuture(nodeFuture) =>
-            processOrDefer(true)(nodeFuture.get(15000).openOr(NodeSeq.Empty))
+            val nodes: NodeSeq = nodeFuture.get(15000) match {
+              case Full(ns: NodeSeq) => ns
+              case _ => NodeSeq.Empty
+            }
+            processOrDefer(true)(nodes)
         }
 
         case v: Elem =>

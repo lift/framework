@@ -2865,7 +2865,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
           ret
 
           case _ =>
-            val ret = LiftSession(httpRequest.session, req.contextPath)
+          val ret = LiftSession(httpRequest.session, req.contextPath)
           ret.fixSessionTime()
           SessionMaster.addSession(ret,
                                    req,

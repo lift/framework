@@ -23,6 +23,7 @@ import actor._
 import util._
   import Helpers._
 import provider._
+import scala.jdk.CollectionConverters._
 
 private[http] case class AddSession(session: LiftSession)
 
