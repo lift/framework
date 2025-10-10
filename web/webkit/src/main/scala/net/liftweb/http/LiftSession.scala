@@ -2248,7 +2248,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           case DataAttributeProcessorAnswerFork(nodeFunc) =>
             processOrDefer(true)(processSurroundAndInclude(page, nodeFunc()))
           case DataAttributeProcessorAnswerFuture(nodeFuture) =>
-            val nodes: NodeSeq = nodeFuture.get(15000) match {
+            val future: Box[NodeSeq] = nodeFuture.get(15000)
+            val nodes: NodeSeq = future match {
               case Full(ns: NodeSeq) => ns
               case _ => NodeSeq.Empty
             }
@@ -2276,7 +2277,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           case DataAttributeProcessorAnswerFork(nodeFunc) =>
             processOrDefer(true)(nodeFunc())
           case DataAttributeProcessorAnswerFuture(nodeFuture) =>
-            val nodes: NodeSeq = nodeFuture.get(15000) match {
+            val future: Box[NodeSeq] = nodeFuture.get(15000)
+            val nodes: NodeSeq = future match {
               case Full(ns: NodeSeq) => ns
               case _ => NodeSeq.Empty
             }
