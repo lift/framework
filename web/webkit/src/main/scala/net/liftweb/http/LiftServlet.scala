@@ -1013,22 +1013,14 @@ class LiftServlet extends Loggable {
           response.outputStream.flush()
 
         case StreamingResponse(stream, endFunc, _, _, _, _) =>
-          import scala.language.reflectiveCalls
-
           try {
             var len = 0
             val ba = new Array[Byte](8192)
             val os = response.outputStream
-            stream match {
-              case jio: java.io.InputStream => len = jio.read(ba)
-              case stream => len = stream.read(ba)
-            }
+            len = stream.read(ba)
             while (len >= 0) {
               if (len > 0) os.write(ba, 0, len)
-              stream match {
-                case jio: java.io.InputStream => len = jio.read(ba)
-                case stream => len = stream.read(ba)
-              }
+              len = stream.read(ba)
             }
             response.outputStream.flush()
           } finally {

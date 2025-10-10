@@ -25,7 +25,7 @@ import js._
 import net.liftweb.util.Helpers._
 import org.json4s._
 import org.json4s.native._
-import java.io.{OutputStream, OutputStreamWriter, Writer, ByteArrayOutputStream}
+import java.io.{InputStream, OutputStream, OutputStreamWriter, Writer, ByteArrayOutputStream}
 
 /**
  * 200 response but without body.
@@ -361,7 +361,7 @@ final case class InMemoryResponse(data: Array[Byte], headers: List[(String, Stri
   override def toString = "InMemoryResponse(" + (new String(data, "UTF-8")) + ", " + headers + ", " + cookies + ", " + code + ")"
 }
 
-final case class StreamingResponse(data: {def read(buf: Array[Byte]): Int}, onEnd: () => Unit, size: Long, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int) extends BasicResponse {
+final case class StreamingResponse(data: InputStream, onEnd: () => Unit, size: Long, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int) extends BasicResponse {
   def toResponse = this
 
   override def toString = "StreamingResponse( steaming_data , " + headers + ", " + cookies + ", " + code + ")"
