@@ -24,10 +24,10 @@ import scala.xml.XML
 import org.specs2.matcher.XmlMatchers
 
 import org.mockito.Mockito._
+import org.scalatestplus.mockito.MockitoSugar
 
 import org.specs2.mutable.Specification
-import org.specs2.mock.Mockito
-import org.specs2.specification.Scope
+import org.specs2.execute.Scope
 
 import common._
 import org.json4s._
@@ -40,7 +40,7 @@ import provider._
 /**
  * System under specification for Req.
  */
-class ReqSpec extends Specification with XmlMatchers with Mockito {
+class ReqSpec extends Specification with XmlMatchers with MockitoSugar {
   "Req Specification".title
 
   private val iPhoneUserAgents =
@@ -65,7 +65,7 @@ class ReqSpec extends Specification with XmlMatchers with Mockito {
       val uac = new UserAgentCalculator {
         def userAgent = Full("Mozilla/5.0 (Windows; U; Windows NT 6.1; zh-HK) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5")
       }
-      uac.safariVersion.openOrThrowException("legacy code") must_== 5
+      uac.safariVersion.openOrThrowException("legacy code") === 5
     }
 
     "Do the right thing with iPhone" in {
@@ -74,8 +74,8 @@ class ReqSpec extends Specification with XmlMatchers with Mockito {
           val uac = new UserAgentCalculator {
             def userAgent = Full(agent)
           }
-          uac.isIPhone must_== true
-          uac.isIPad must_== false
+          uac.isIPhone === true
+          uac.isIPad === false
         }
       }
 
@@ -88,8 +88,8 @@ class ReqSpec extends Specification with XmlMatchers with Mockito {
           val uac = new UserAgentCalculator {
             def userAgent = Full(agent)
           }
-          uac.isIPhone must_== false
-          uac.isIPad must_== true
+          uac.isIPhone === false
+          uac.isIPad === true
         }
       }
 
@@ -105,7 +105,7 @@ class ReqSpec extends Specification with XmlMatchers with Mockito {
         userAgentCalculator.ieVersion
       }
 
-      ieVersions must_== List(6, 7, 8, 9, 10, 11)
+      ieVersions === List(6, 7, 8, 9, 10, 11)
     }
 
     trait mockReq extends Scope {
@@ -150,11 +150,11 @@ class ReqSpec extends Specification with XmlMatchers with Mockito {
       }
 
       "with an application/json Content-Type should return the result of parsing the JSON" in new mockJsonReq {
-        req("application/json").json should_== Full(parsedJson)
+        req("application/json").json === Full(parsedJson)
       }
 
       "with a text/json Content-Type should return the result of parsing the JSON" in new mockJsonReq {
-        req("text/json").json should_== Full(parsedJson)
+        req("text/json").json === Full(parsedJson)
       }
 
       "with invalid JSON and a text/json Content-Type should return a Failure" in new mockJsonReq("epic fail") {
@@ -164,15 +164,15 @@ class ReqSpec extends Specification with XmlMatchers with Mockito {
 
     "when forcing a request body JSON parse with forcedBodyAsJson" in {
       "with an invalid Content-Type should return the result of parsing the JSON" in new mockJsonReq {
-        req("text/plain").forcedBodyAsJson should_== Full(parsedJson)
+        req("text/plain").forcedBodyAsJson === Full(parsedJson)
       }
 
       "with an application/json Content-Type should return the result of parsing the JSON" in new mockJsonReq {
-        req("application/json").forcedBodyAsJson should_== Full(parsedJson)
+        req("application/json").forcedBodyAsJson === Full(parsedJson)
       }
 
       "with a text/json Content-Type should return the result of parsing the JSON" in new mockJsonReq {
-        req("text/json").forcedBodyAsJson should_== Full(parsedJson)
+        req("text/json").forcedBodyAsJson === Full(parsedJson)
       }
 
       "with invalid JSON should return a Failure" in new mockJsonReq("epic fail") {
@@ -186,11 +186,11 @@ class ReqSpec extends Specification with XmlMatchers with Mockito {
       }
 
       "with an application/xml Content-Type should return the result of parsing the JSON" in new mockXmlReq {
-        req("application/xml").xml should_== Full(parsedXml)
+        req("application/xml").xml === Full(parsedXml)
       }
 
       "with a text/xml Content-Type should return the result of parsing the JSON" in new mockXmlReq {
-        req("text/xml").xml should_== Full(parsedXml)
+        req("text/xml").xml === Full(parsedXml)
       }
 
       "with invalid XML and a text/xml Content-Type should return a Failure" in new mockXmlReq("epic fail") {
@@ -200,15 +200,15 @@ class ReqSpec extends Specification with XmlMatchers with Mockito {
 
     "when forcing a request body XML parse with forcedBodyAsXml" in {
       "with an invalid Content-Type should return the result of parsing the JSON" in new mockXmlReq {
-        req("text/plain").forcedBodyAsXml should_== Full(parsedXml)
+        req("text/plain").forcedBodyAsXml === Full(parsedXml)
       }
 
       "with an application/json Content-Type should return the result of parsing the JSON" in new mockXmlReq {
-        req("application/xml").forcedBodyAsXml should_== Full(parsedXml)
+        req("application/xml").forcedBodyAsXml === Full(parsedXml)
       }
 
       "with a text/json Content-Type should return the result of parsing the JSON" in new mockXmlReq {
-        req("text/xml").forcedBodyAsXml should_== Full(parsedXml)
+        req("text/xml").forcedBodyAsXml === Full(parsedXml)
       }
 
       "with invalid XML should return a Failure" in new mockXmlReq("epic fail") {

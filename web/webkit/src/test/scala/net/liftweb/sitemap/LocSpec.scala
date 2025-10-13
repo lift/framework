@@ -38,12 +38,12 @@ class LocSpec extends Specification  {
 
     "calculate default href for basic menu definition" in {
       val loc = (Menu("Test") / "foo" / "bar").toMenu.loc
-      loc.calcDefaultHref mustEqual "/foo/bar"
+      loc.calcDefaultHref === "/foo/bar"
     }
 
     "calculate href for menu with parameters" in {
       val loc = (Menu.param[Param]("Test", "Test", s => Full(Param(s)), p => p.s) / "foo" / "bar" / *).toLoc
-      loc.calcHref(Param("myparam")) mustEqual "/foo/bar/myparam"
+      loc.calcHref(Param("myparam")) === "/foo/bar/myparam"
     }
 
     "should not match a Req matching its Link when currentValue is Empty" in {
@@ -55,7 +55,7 @@ class LocSpec extends Specification  {
 
       testS(mockReq) {
         testReq(mockReq) { req =>
-          testLoc.doesMatch_?(req) mustEqual false
+          testLoc.doesMatch_?(req) === false
         }
       }
     }
@@ -69,7 +69,7 @@ class LocSpec extends Specification  {
 
       testS(mockReq) {
         testReq(mockReq) { req =>
-          testLoc.doesMatch_?(req) mustEqual true
+          testLoc.doesMatch_?(req) === true
         }
       }
     }
@@ -87,7 +87,7 @@ class LocSpec extends Specification  {
           val rewriteFn = testLoc.rewrite.openOrThrowException("No rewrite function")
 
           rewriteFn(rrq) must not(throwA[Exception])
-          rewriteFn(rrq)._2 must_== Empty
+          rewriteFn(rrq)._2 === Empty
         }
       }
     }

@@ -5,17 +5,14 @@ import scala.xml._
 
 import org.specs2._
   import execute.{Result, AsResult}
-  import mutable.{Around, Specification}
+  import mutable.Specification
   import matcher.XmlMatchers
-  import mock.Mockito
-
-import org.mockito.Mockito._
 
 import common._
 
 import js.JE.JsObj
 
-class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
+class HtmlNormalizerSpec extends Specification with XmlMatchers {
   val eventAttributeMatcher = "(?s).*\\W(on[a-zA-Z]+)=.*".r
 
   "HtmlNormalizer when normalizing HTML and event handlers" should {
@@ -120,7 +117,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
         )
 
       html must ==/(<myelement id="testid" />)
-      js.toJsCmd must_== """lift.onEvent("testid","event",function(event) {doStuff;});"""
+      js.toJsCmd === """lift.onEvent("testid","event",function(event) {doStuff;});"""
     }
 
     "generate ids for elements with events if they don't have one" in {
@@ -134,8 +131,8 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
 
       val id = html \@ "id"
 
-      id must not be empty
-      js.toJsCmd must_== s"""lift.onEvent("$id","event",function(event) {doStuff;});"""
+      id must not(beEmpty)
+      js.toJsCmd === s"""lift.onEvent("$id","event",function(event) {doStuff;});"""
     }
 
     "extract event js correctly for multiple elements" in {
@@ -151,7 +148,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           true
         )
 
-      js.toJsCmd must be matching("""(?s)\Qlift.onEvent("lift-event-js-\E[^"]+\Q","event",function(event) {doStuff;});
+      js.toJsCmd must beMatching("""(?s)\Qlift.onEvent("lift-event-js-\E[^"]+\Q","event",function(event) {doStuff;});
         |lift.onEvent("hello","event",function(event) {doStuff2;});
         |lift.onEvent("lift-event-js-\E[^"]+\Q","event",function(event) {doStuff3;});\E""".stripMargin('|').linesIterator.mkString("\n").r
       )
@@ -176,7 +173,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
 
       (html \ "myelement").map(_ \@ "href").filter(_.nonEmpty) must beEmpty
       (html \ "myelement").map(_ \@ "action").filter(_.nonEmpty) must beEmpty
-      js.toJsCmd must be matching("""(?s)\Qlift.onEvent("lift-event-js-\E[^"]+\Q","click",function(event) {doStuff; event.preventDefault();});
+      js.toJsCmd must beMatching("""(?s)\Qlift.onEvent("lift-event-js-\E[^"]+\Q","click",function(event) {doStuff; event.preventDefault();});
         |lift.onEvent("hello","submit",function(event) {doStuff2; event.preventDefault();});
         |lift.onEvent("hello2","click",function(event) {doStuff3; event.preventDefault();});
         |lift.onEvent("lift-event-js-\E[^"]+\Q","submit",function(event) {/doStuff4; event.preventDefault();});\E""".stripMargin('|').linesIterator.mkString("\n").r
@@ -197,8 +194,8 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           true
         )
 
-      (html \ "myelement").map(_ \@ "href").filter(_.nonEmpty) must_== List("doStuff", "javascrip://doStuff3")
-      (html \ "myelement").map(_ \@ "action").filter(_.nonEmpty) must_== List("javascrip:doStuff2", "doStuff4")
+      (html \ "myelement").map(_ \@ "href").filter(_.nonEmpty) === List("doStuff", "javascrip://doStuff3")
+      (html \ "myelement").map(_ \@ "action").filter(_.nonEmpty) === List("javascrip:doStuff2", "doStuff4")
       js.toJsCmd.trim must beEmpty
     }
 
@@ -227,7 +224,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           true
         ).nodes
 
-      (result \\ "link").map(_ \@ "href") must_==
+      (result \\ "link").map(_ \@ "href") ===
         "/context-path/testlink" ::
         "/context-path/testlink2" ::
         "/context-path/testlink3" :: Nil
@@ -259,7 +256,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           true
         ).nodes
 
-      (result \\ "script").map(_ \@ "src") must_==
+      (result \\ "script").map(_ \@ "src") ===
         "/context-path/testscript" ::
         "/context-path/testscript2" :: Nil
     }
@@ -290,7 +287,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           true
         ).nodes
 
-      (result \\ "a").map(_ \@ "href") must_==
+      (result \\ "a").map(_ \@ "href") ===
         "/context-path/testa1" ::
         "/context-path/testa2" ::
         "testa3" ::
@@ -325,7 +322,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           true
         ).nodes
 
-      (result \\ "form").map(_ \@ "action") must_==
+      (result \\ "form").map(_ \@ "action") ===
         "/context-path/testform1" ::
         "/context-path/testform2" ::
         "testform3" ::
@@ -360,7 +357,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           ).nodes
         }
 
-      (result \\ "script").map(_ \@ "src") must_==
+      (result \\ "script").map(_ \@ "src") ===
         "testscript" ::
         "testscript2" ::
         "testscript3" :: Nil
@@ -392,7 +389,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           ).nodes
         }
 
-      (result \\ "link").map(_ \@ "href") must_==
+      (result \\ "link").map(_ \@ "href") ===
         "testlink" ::
         "testlink2" ::
         "testlink3" :: Nil
@@ -424,7 +421,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           ).nodes
         }
 
-      (result \\ "a").map(_ \@ "href") must_==
+      (result \\ "a").map(_ \@ "href") ===
         "rewritten" ::
         "rewritten" ::
         "rewritten" :: Nil
@@ -456,7 +453,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           ).nodes
         }
 
-      (result \\ "form").map(_ \@ "action") must_==
+      (result \\ "form").map(_ \@ "action") ===
         "rewritten" ::
         "rewritten" ::
         "rewritten" :: Nil
@@ -492,8 +489,8 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           false
         )
 
-      html.toString must_== startingHtml.toString
-      js.toJsCmd.length must_== 0
+      html.toString === startingHtml.toString
+      js.toJsCmd.length === 0
     }
 
     "not extract events from hrefs and actions" in {
@@ -516,8 +513,8 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           false
         )
 
-      html.toString must_== startingHtml.toString
-      js.toJsCmd.length must_== 0
+      html.toString === startingHtml.toString
+      js.toJsCmd.length === 0
     }
 
     "normalize absolute link hrefs everywhere" in {
@@ -545,7 +542,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           false
         ).nodes
 
-      (result \\ "link").map(_ \@ "href") must_==
+      (result \\ "link").map(_ \@ "href") ===
         "/context-path/testlink" ::
         "/context-path/testlink2" ::
         "/context-path/testlink3" :: Nil
@@ -577,7 +574,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           false
         ).nodes
 
-      (result \\ "script").map(_ \@ "src") must_==
+      (result \\ "script").map(_ \@ "src") ===
         "/context-path/testscript" ::
         "/context-path/testscript2" :: Nil
     }
@@ -608,7 +605,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           false
         ).nodes
 
-      (result \\ "a").map(_ \@ "href") must_==
+      (result \\ "a").map(_ \@ "href") ===
         "/context-path/testa1" ::
         "/context-path/testa2" ::
         "testa3" ::
@@ -643,7 +640,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           false
         ).nodes
 
-      (result \\ "form").map(_ \@ "action") must_==
+      (result \\ "form").map(_ \@ "action") ===
         "/context-path/testform1" ::
         "/context-path/testform2" ::
         "testform3" ::
@@ -678,7 +675,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           ).nodes
         }
 
-      (result \\ "script").map(_ \@ "src") must_==
+      (result \\ "script").map(_ \@ "src") ===
         "testscript" ::
         "testscript2" ::
         "testscript3" :: Nil
@@ -710,7 +707,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           ).nodes
         }
 
-      (result \\ "link").map(_ \@ "href") must_==
+      (result \\ "link").map(_ \@ "href") ===
         "testlink" ::
         "testlink2" ::
         "testlink3" :: Nil
@@ -742,7 +739,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           ).nodes
         }
 
-      (result \\ "a").map(_ \@ "href") must_==
+      (result \\ "a").map(_ \@ "href") ===
         "rewritten" ::
         "rewritten" ::
         "rewritten" :: Nil
@@ -774,7 +771,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           ).nodes
         }
 
-      (result \\ "form").map(_ \@ "action") must_==
+      (result \\ "form").map(_ \@ "action") ===
         "rewritten" ::
         "rewritten" ::
         "rewritten" :: Nil

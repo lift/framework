@@ -62,7 +62,7 @@ class NamedCometPerTabSpec extends Specification  {
     }
     "not be created for a non existing key" in {
       NamedCometListener.getDispatchersFor(Full("2")).foreach(
-        actor => actor must_== Empty
+        actor => actor === Empty
       )
       success
     }

@@ -175,6 +175,7 @@ object OneShot extends Specification with RequestKit with XmlMatchers {
     tryo {
       jetty.stop()
     }
+    ()
   }
 
 

@@ -19,10 +19,10 @@ package net.liftweb.http.provider.servlet
 import net.liftweb.http.provider._
 import net.liftweb.mockweb.WebSpec
 import org.mockito.Mockito._
-import org.specs2.mock.Mockito
+import org.scalatestplus.mockito.MockitoSugar
 
 
-object OfflineRequestSnapshotSpec extends WebSpec with Mockito {
+object OfflineRequestSnapshotSpec extends WebSpec with MockitoSugar {
 
   private[this] val X_SSL = "X-SSL"
   private[this] val xSSLHeader = HTTPParam(X_SSL, List("true")) :: Nil
@@ -30,30 +30,30 @@ object OfflineRequestSnapshotSpec extends WebSpec with Mockito {
   "OfflineRequestSnapshot" should {
     "have a 'headers' method that returns the list of headers with a given name" in {
       val req = getRequestSnapshot(originalPort = 80, headers = xSSLHeader)
-      req.headers("X-SSL") shouldEqual List("true")
+      req.headers("X-SSL") === List("true")
       req.headers("Unknown") must beEmpty
     }
 
     "have the serverPort value" in {
       "443 when the 'X-SSL' header is set to the string 'true' (case-insensitive) and original port is 80" in {
         val port80Req = getRequestSnapshot(originalPort = 80, headers = xSSLHeader)
-        port80Req.serverPort shouldEqual 443
+        port80Req.serverPort === 443
       }
 
       s"equal to the original request-port when" in {
         s"the '$X_SSL' header is absent" in {
           val nonSSLReq = getRequestSnapshot(originalPort = 80)
-          nonSSLReq.serverPort shouldEqual 80
+          nonSSLReq.serverPort === 80
         }
 
         s"the '$X_SSL' header is not set to the string 'true' (case-insensitive)" in {
           val falseSSLHeaderReq = getRequestSnapshot(originalPort = 90, headers =  HTTPParam(X_SSL, List("anything")) :: Nil)
-          falseSSLHeaderReq.serverPort shouldEqual 90
+          falseSSLHeaderReq.serverPort === 90
         }
 
         "the original request-port is not 80" in {
           val req = getRequestSnapshot(originalPort = 90, headers = xSSLHeader)
-          req.serverPort shouldEqual 90
+          req.serverPort === 90
         }
       }
     }
@@ -64,9 +64,9 @@ object OfflineRequestSnapshotSpec extends WebSpec with Mockito {
       val params = HTTPParam("tennis", tennisParams) :: HTTPParam("swimming", swimmingParams) :: Nil
       val snapshot = getRequestSnapshot(80, params = params)
 
-      snapshot.param("tennis") shouldEqual tennisParams
+      snapshot.param("tennis") === tennisParams
       snapshot.param("Tennis") should beEmpty
-      snapshot.param("swimming") shouldEqual swimmingParams
+      snapshot.param("swimming") === swimmingParams
     }
   }
 

@@ -22,8 +22,8 @@ import java.util.Locale
 
 import net.liftweb.http.js.extcore.ExtCoreArtifacts
 import net.liftweb.http.js.jquery.JQueryArtifacts
-import org.specs2.execute.{Result, AsResult}
-import org.specs2.mutable.{Around,  Specification}
+import org.specs2.execute.{Result, AsResult, Scope}
+import org.specs2.mutable.Specification
 
 import common._
 import http.js._
@@ -42,10 +42,10 @@ class LiftJavaScriptSpec extends Specification  {
   private def session = new LiftSession("", randomString(20), Empty)
 
   "LiftJavaScript" should {
-    "create default settings" in withEnglishLocale {
+    "create default settings" in new WithLocale(Locale.ENGLISH) {
       S.initIfUninitted(session) {
         val settings = LiftJavaScript.settings
-        settings.toJsCmd must_== formatjs(
+        settings.toJsCmd === formatjs(
           """{"liftPath": "/lift",
             |"ajaxRetryCount": 3,
             |"ajaxPostTimeout": 5000,
@@ -61,11 +61,11 @@ class LiftJavaScriptSpec extends Specification  {
         )
       }
     }
-    "create internationalized default settings" in withPolishLocale {
+    "create internationalized default settings" in new WithLocale(Locale.forLanguageTag("pl-PL")) {
       S.initIfUninitted(session) {
         val settings = LiftJavaScript.settings
         val internationalizedMessage = "Nie mo\\u017cna skontaktowa\\u0107 si\\u0119 z serwerem"
-        settings.toJsCmd must_== formatjs(
+        settings.toJsCmd === formatjs(
           s"""{"liftPath": "/lift",
               |"ajaxRetryCount": 3,
               |"ajaxPostTimeout": 5000,
@@ -81,11 +81,11 @@ class LiftJavaScriptSpec extends Specification  {
         )
       }
     }
-    "create custom static settings" in withEnglishLocale {
+    "create custom static settings" in new WithLocale(Locale.ENGLISH) {
       S.initIfUninitted(session) {
         LiftRules.ajaxRetryCount = Full(4)
         val settings = LiftJavaScript.settings
-        settings.toJsCmd must_== formatjs(
+        settings.toJsCmd === formatjs(
           """{"liftPath": "/lift",
             |"ajaxRetryCount": 4,
             |"ajaxPostTimeout": 5000,
@@ -101,11 +101,11 @@ class LiftJavaScriptSpec extends Specification  {
         )
       }
     }
-    "create custom dynamic settings" in withEnglishLocale {
+    "create custom dynamic settings" in new WithLocale(Locale.ENGLISH) {
       S.initIfUninitted(session) {
         LiftRules.cometServer = () => Some("srvr1")
         val settings = LiftJavaScript.settings
-        settings.toJsCmd must_== formatjs(
+        settings.toJsCmd === formatjs(
           """{"liftPath": "/lift",
             |"ajaxRetryCount": 4,
             |"ajaxPostTimeout": 5000,
@@ -121,11 +121,11 @@ class LiftJavaScriptSpec extends Specification  {
         )
       }
     }
-    "create custom function settings" in withEnglishLocale {
+    "create custom function settings" in new WithLocale(Locale.ENGLISH) {
       S.initIfUninitted(session) {
         LiftRules.jsLogFunc = Full(v => JE.Call("lift.logError", v))
         val settings = LiftJavaScript.settings
-        settings.toJsCmd must_== formatjs(
+        settings.toJsCmd === formatjs(
           """{"liftPath": "/lift",
             |"ajaxRetryCount": 4,
             |"ajaxPostTimeout": 5000,
@@ -141,10 +141,10 @@ class LiftJavaScriptSpec extends Specification  {
         )
       }
     }
-    "create init command" in withEnglishLocale {
+    "create init command" in new WithLocale(Locale.ENGLISH) {
       S.initIfUninitted(session) {
         val init = LiftRules.javaScriptSettings.vend().map(_.apply(session)).map(LiftJavaScript.initCmd(_).toJsCmd)
-        init must_== Full(formatjs(List(
+        init === Full(formatjs(List(
           "var lift_settings = {};",
           "window.lift.extend(lift_settings,window.liftJQuery);",
           """window.lift.extend(lift_settings,{"liftPath": "/lift",
@@ -163,11 +163,11 @@ class LiftJavaScriptSpec extends Specification  {
         )))
       }
     }
-    "create init command with VanillaJS" in withEnglishLocale {
+    "create init command with VanillaJS" in new WithLocale(Locale.ENGLISH) {
       S.initIfUninitted(session) {
         LiftRules.jsArtifacts = ExtCoreArtifacts
         val init = LiftRules.javaScriptSettings.vend().map(_.apply(session)).map(LiftJavaScript.initCmd(_).toJsCmd)
-        init must_== Full(formatjs(List(
+        init === Full(formatjs(List(
           "var lift_settings = {};",
           "window.lift.extend(lift_settings,window.liftVanilla);",
           """window.lift.extend(lift_settings,{"liftPath": "/lift",
@@ -186,12 +186,12 @@ class LiftJavaScriptSpec extends Specification  {
         )))
       }
     }
-    "create init command with custom setting" in withEnglishLocale {
+    "create init command with custom setting" in new WithLocale(Locale.ENGLISH) {
       S.initIfUninitted(session) {
         LiftRules.jsArtifacts = JQueryArtifacts
         val settings = LiftJavaScript.settings.extend(JsObj("liftPath" -> "liftyStuff", "mysetting" -> 99))
         val init = LiftJavaScript.initCmd(settings)
-        init.toJsCmd must_== formatjs(List(
+        init.toJsCmd === formatjs(List(
           "var lift_settings = {};",
           "window.lift.extend(lift_settings,window.liftJQuery);",
           """window.lift.extend(lift_settings,{"liftPath": "liftyStuff",
@@ -223,12 +223,14 @@ class LiftJavaScriptSpec extends Specification  {
 
   object withPolishLocale extends WithLocale(Locale.forLanguageTag("pl-PL"))
 
-  class WithLocale(locale: Locale) extends Around {
-    override def around[T: AsResult](test: => T): Result = {
-      val savedDefaultLocale = Locale.getDefault
-      Locale.setDefault(locale)
+  class WithLocale(locale: Locale) extends Scope {
+    val savedDefaultLocale = Locale.getDefault
+    Locale.setDefault(locale)
+
+    // Cleanup happens automatically when scope exits via try/finally in specs2
+    override def toString = {
       try {
-        AsResult(test)
+        super.toString
       } finally {
         Locale.setDefault(savedDefaultLocale)
       }

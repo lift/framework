@@ -1,7 +1,7 @@
 package net.liftweb.http
 
 import net.liftweb.actor.LAFuture
-import net.liftweb.common.{Empty, Failure, Full}
+import net.liftweb.common.{Box, Empty, Failure, Full}
 import net.liftweb.mockweb.WebSpec
 import org.specs2.matcher.ThrownMessages
 
@@ -22,13 +22,13 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
     "fail if session is not available" in {
       val future = LAFutureWithSession.withCurrentSession("kaboom")
 
-      future.get(timeout) must_== Failure("LiftSession not available in this thread context", Empty, Empty)
+      future.get(timeout) === Failure("LiftSession not available in this thread context", Empty, Empty)
     }
 
     "succeed with original value if session is available" withSFor "/" in {
       val future = LAFutureWithSession.withCurrentSession("works!")
 
-      future.get(timeout) must_== Full("works!")
+      future.get(timeout) === Full("works!")
     }
 
     "have access to session variables in LAFuture task" withSFor "/" in {
@@ -36,7 +36,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
 
       val future = LAFutureWithSession.withCurrentSession(SessionVar1.is)
 
-      future.get(timeout) must_== Full("dzien dobry")
+      future.get(timeout) === Full("dzien dobry")
     }
 
     "have access to request variables in LAFuture task" withSFor "/" in {
@@ -44,7 +44,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
 
       val future = LAFutureWithSession.withCurrentSession(ReqVar1.is)
 
-      future.get(timeout) must_== Full("guten tag")
+      future.get(timeout) === Full("guten tag")
     }
 
     "have access to session variables in onComplete()" withSFor "/" in {
@@ -170,7 +170,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
         .filter(_.contains(SessionVar1.is))
         .filter(_.contains(SessionVar2.is))
 
-      filtered.get(timeout) must eventually(beEqualTo(Full("they see me rollin")))
+      filtered.get(timeout) must eventually(===(Full("they see me rollin"): Box[String]))
     }
 
     "have access to request variables in chains of filter()" withSFor "/" in {
@@ -182,7 +182,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
         .filter(_.contains(ReqVar1.is))
         .filter(_.contains(ReqVar2.is))
 
-      filtered.get(timeout) must eventually(beEqualTo("they see me rollin"))
+      filtered.get(timeout) must eventually(===(Full("they see me rollin"): Box[String]))
     }
 
     "have access to session variables in chains of withFilter()" withSFor "/" in {
@@ -194,7 +194,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
         .withFilter(_.contains(SessionVar1.is))
         .withFilter(_.contains(SessionVar2.is))
 
-      filtered.get(timeout) must eventually(beEqualTo("do not come between the nazgul and his prey"))
+      filtered.get(timeout) must eventually(===(Full("do not come between the nazgul and his prey"): Box[String]))
     }
 
     "have access to request variables in chains of withFilter()" withSFor "/" in {
@@ -206,7 +206,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
         .withFilter(_.contains(ReqVar1.is))
         .withFilter(_.contains(ReqVar2.is))
 
-      filtered.get(timeout) must eventually(beEqualTo("mustn't go that way, mustn't hurt the precious!"))
+      filtered.get(timeout) must eventually(===(Full("mustn't go that way, mustn't hurt the precious!"): Box[String]))
     }
 
     "have access to session variables in chains of map()" withSFor "/" in {
@@ -216,7 +216,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
       val future = LAFutureWithSession.withCurrentSession("a")
       val mapped = future.map(_ + SessionVar1.is).map(_ + SessionVar2.is)
 
-      mapped.get(timeout) must_== Full("abc")
+      mapped.get(timeout) === Full("abc")
     }
 
     "have access to request variables in chains of map()" withSFor "/" in {
@@ -226,7 +226,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
       val future = LAFutureWithSession.withCurrentSession("a")
       val mapped = future.map(_ + ReqVar1.is).map(_ + ReqVar2.is)
 
-      mapped.get(timeout) must_== Full("abc")
+      mapped.get(timeout) === Full("abc")
     }
 
     "have access to session variables in chains of flatMap()" withSFor "/" in {
@@ -244,7 +244,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
           LAFuture.build(out)
         }
 
-      mapped.get(timeout) must_== Full("def")
+      mapped.get(timeout) === Full("def")
     }
 
     "have access to request variables in chains of flatMap()" withSFor "/" in {
@@ -262,7 +262,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
           LAFuture.build(out)
         }
 
-      mapped.get(timeout) must_== Full("def")
+      mapped.get(timeout) === Full("def")
     }
 
     "have access to session variables in foreach()" withSFor "/" in {
@@ -299,15 +299,15 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
       val future = S.initIfUninitted(session1)(LAFutureWithSession.withCurrentSession("zero"))
 
       S.initIfUninitted(session2) {
-        future.map(v => SessionVar1.is).get(timeout) must eventually(beEqualTo("two"))
+        future.map(v => SessionVar1.is).get(timeout) must eventually(===(Full("two"): Box[String]))
       }
 
       S.initIfUninitted(session3) {
-        future.map(v => SessionVar1.is).get(timeout) must eventually(beEqualTo("three"))
+        future.map(v => SessionVar1.is).get(timeout) must eventually(===(Full("three"): Box[String]))
       }
 
       S.initIfUninitted(session1) {
-        future.map(v => SessionVar1.is).get(timeout) must eventually(beEqualTo("one"))
+        future.map(v => SessionVar1.is).get(timeout) must eventually(===(Full("one"): Box[String]))
       }
     }
   }
