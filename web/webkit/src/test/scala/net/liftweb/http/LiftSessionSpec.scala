@@ -55,7 +55,7 @@ class LiftSessionSpec extends Specification with BeforeEach {
 
   sequential
 
-  override def before = receivedMessages = Vector[Int]()
+  override def before = step { receivedMessages = Vector[Int]() }
 
   "A LiftSession" should {
 
@@ -74,7 +74,7 @@ class LiftSessionSpec extends Specification with BeforeEach {
           comet !? NoOp /* Block to allow time for all messages to be collected */
         }
 
-        receivedMessages mustEqual sendingMessages
+        receivedMessages === sendingMessages.toVector
       }
     }
 
@@ -101,7 +101,7 @@ class LiftSessionSpec extends Specification with BeforeEach {
         }
 
         // Assert that the message was seen twice
-        receivedMessages mustEqual Vector(1, 1)
+        receivedMessages === Vector(1, 1)
       }
     }
 

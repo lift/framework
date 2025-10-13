@@ -3,21 +3,20 @@ package http
 
 import scala.xml._
 
-import org.specs2._
-  import mutable.Specification
-  import matcher.XmlMatchers
-  import mock.Mockito
+import org.specs2.mutable.Specification
+import org.specs2.matcher.XmlMatchers
 
 import org.mockito.Mockito._
+import org.scalatestplus.mockito.MockitoSugar
 
 import common._
 
 import js.JE.JsObj
 import js.pageScript
 
-class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
+class LiftMergeSpec extends Specification with XmlMatchers with MockitoSugar {
   val mockReq = mock[Req]
-  mockReq.contextPath returns "/context-path"
+  when(mockReq.contextPath).thenReturn("/context-path")
 
   val testSession = new LiftSession("/context-path", "underlying id", Empty)
 
@@ -27,9 +26,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
   testRules.autoIncludeAjaxCalc.default.set(() => () => (_: LiftSession) => false)
   testRules.excludePathFromContextPathRewriting.default
     .set(
-      () => { in: String =>
-        in.startsWith("exclude-me")
-      }
+      () => (in: String) => in.startsWith("exclude-me")
     )
 
   val eventExtractingTestRules = new LiftRules()
@@ -62,7 +59,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           mockReq
         )
 
-      (result \ "head" \ "_") must_== (Seq(
+      (result \ "head" \ "_") === (Seq(
         <script src="testscript"></script>,
         <script src="testscript2"></script>,
         <link href="testlink" />,
@@ -97,7 +94,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           mockReq
         )
 
-      (result \ "body" \ "_").takeRight(3) must_== (Seq(
+      (result \ "body" \ "_").takeRight(3) === (Seq(
         <script src="testscript2"></script>,
         <link href="testlink" />,
         <link href="testlink2" />
@@ -133,7 +130,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           mockReq
         )
 
-      (result \ "body" \ "_").takeRight(3) must_== (Seq(
+      (result \ "body" \ "_").takeRight(3) === (Seq(
         <script src="testscript2"></script>,
         <link href="testlink" />,
         <link href="testlink2" />
@@ -168,7 +165,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           mockReq
         )
 
-      (result \\ "link").map(_ \@ "href") must_==
+      (result \\ "link").map(_ \@ "href") ===
         "/context-path/testlink" ::
         "/context-path/testlink2" ::
         "/context-path/testlink3" :: Nil
@@ -202,7 +199,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           mockReq
         )
 
-      (result \\ "script").map(_ \@ "src") must_==
+      (result \\ "script").map(_ \@ "src") ===
         "/context-path/testscript" ::
         "/context-path/testscript2" :: Nil
     }
@@ -235,7 +232,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           mockReq
         )
 
-      (result \\ "a").map(_ \@ "href") must_==
+      (result \\ "a").map(_ \@ "href") ===
         "/context-path/testa1" ::
         "testa3" ::
         "/context-path/testa2" ::
@@ -272,7 +269,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           mockReq
         )
 
-      (result \\ "form").map(_ \@ "action") must_==
+      (result \\ "form").map(_ \@ "action") ===
         "/context-path/testform1" ::
         "testform3" ::
         "/context-path/testform2" ::
@@ -309,7 +306,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           )
         }
 
-      (result \\ "script").map(_ \@ "src") must_==
+      (result \\ "script").map(_ \@ "src") ===
         "testscript" ::
         "testscript2" ::
         "testscript3" :: Nil
@@ -343,7 +340,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           )
         }
 
-      (result \\ "link").map(_ \@ "href") must_==
+      (result \\ "link").map(_ \@ "href") ===
         "testlink" ::
         "testlink2" ::
         "testlink3" :: Nil
@@ -377,7 +374,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           )
         }
 
-      (result \\ "a").map(_ \@ "href") must_==
+      (result \\ "a").map(_ \@ "href") ===
         "rewritten" ::
         "rewritten" ::
         "rewritten" :: Nil
@@ -411,7 +408,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
           )
         }
 
-      (result \\ "form").map(_ \@ "action") must_==
+      (result \\ "form").map(_ \@ "action") ===
         "rewritten" ::
         "rewritten" ::
         "rewritten" :: Nil
@@ -437,7 +434,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
 
       val scripts = (result \\ "script")
 
-      scripts must have length(1)
+      scripts must haveLength(1)
       scripts.map(_ \@ "src") must beLike {
         case scriptSrc :: Nil =>
           scriptSrc must beMatching("/context-path/lift/page/F[^.]+.js")
@@ -462,7 +459,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
 
       val scripts = (result \\ "script")
 
-      scripts must have length(1)
+      scripts must haveLength(1)
       scripts.map(_ \@ "src") must beLike {
         case scriptSrc :: Nil =>
           scriptSrc must beMatching("/context-path/lift/page/F[^.]+.js")

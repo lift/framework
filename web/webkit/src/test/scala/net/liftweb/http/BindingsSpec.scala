@@ -92,7 +92,7 @@ class BindingsSpec extends Specification with XmlMatchers {
       (a \ "@href").text
     }
 
-    href.endsWith("#bar") must_== true
+    href.endsWith("#bar") === true
 
   }
 }
@@ -106,9 +106,9 @@ class BindingsSpec extends Specification with XmlMatchers {
       
       val res = ("#frog" #> SHtml.text("", s => ()) ).apply(org)
 
-      (res \ "input" \ "@id").text must_== "frog"
+      (res \ "input" \ "@id").text === "frog"
       
-      (res \ "input" \ "@class").text must_== "dog cat"
+      (res \ "input" \ "@class").text === "dog cat"
     }
   }
 }

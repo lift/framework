@@ -34,7 +34,7 @@ class HtmlFixerSpec extends Specification  {
     testRules.extractInlineJavaScript = true
 
     "never extract inline JS in fixHtmlFunc" in new WithLiftContext(testRules, testSession) {
-      testFixer.fixHtmlFunc("test", <div onclick="clickMe();"></div>)(identity) must_==
+      testFixer.fixHtmlFunc("test", <div onclick="clickMe();"></div>)(identity) ===
         """"<div onclick=\"clickMe();\"></div>""""
     }
   }

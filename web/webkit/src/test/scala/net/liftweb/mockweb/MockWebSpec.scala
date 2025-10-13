@@ -78,8 +78,8 @@ class MockWebSpec extends Specification  {
     "provide a Req corresponding to a string url" in {
       testReq("http://foo.com/test/this?a=b&a=c", "/test") {
         req =>
-          req.uri must_== "/this"
-          req.params("a") must_== List("b","c")
+          req.uri === "/this"
+          req.params("a") === List("b","c")
       }
     }
 
@@ -90,12 +90,13 @@ class MockWebSpec extends Specification  {
       mockReq.method = "POST"
 
       import org.json4s.JsonDSL._
+      import org.json4s.native.JsonMethods._
 
-      mockReq.body = ("name" -> "joe") ~ ("age" -> 35)
+      mockReq.body = compact(render(("name" -> "joe") ~ ("age" -> 35))).getBytes("UTF-8")
 
       testReq(mockReq) {
         req =>
-          req.json_? must_== true
+          req.json_? === true
       }
     }
 
@@ -103,7 +104,7 @@ class MockWebSpec extends Specification  {
       LiftRulesMocker.devTestLiftRulesInstance.doWith(mockLiftRules) {
         useLiftRules.doWith(true) {
           testReq("http://foo.com/test/this") {
-            req => req.remoteAddr must_== "1.2.3.4"
+            req => req.remoteAddr === "1.2.3.4"
           }
         }
       }
@@ -113,7 +114,7 @@ class MockWebSpec extends Specification  {
       LiftRulesMocker.devTestLiftRulesInstance.doWith(mockLiftRules) {
         useLiftRules.doWith(true) {
           testReq("http://foo.com/test/stateless") {
-            req => req.path.partPath must_== List("stateless", "works")
+            req => req.path.partPath === List("stateless", "works")
           }
         }
       }
@@ -121,7 +122,7 @@ class MockWebSpec extends Specification  {
 
     "initialize S based on a string url" in {
       testS("http://foo.com/test/that?a=b&b=c") {
-        S.param("b") must_== Full("c")
+        S.param("b") === Full("c")
       }
     }
 
@@ -130,9 +131,9 @@ class MockWebSpec extends Specification  {
         new MockHttpServletRequest("http://foo.com/test/this?foo=bar", "/test")
 
       testS(mockReq) {
-        S.param("foo") must_== Full("bar")
+        S.param("foo") === Full("bar")
 
-        S.uri must_== "/this"
+        S.uri === "/this"
       }
     }
 
@@ -140,7 +141,7 @@ class MockWebSpec extends Specification  {
       LiftRulesMocker.devTestLiftRulesInstance.doWith(mockLiftRules) {
         useLiftRules.doWith(true) {
           testS("http://foo.com/test/stateless") {
-            S.request.foreach(_.path.partPath must_== List("stateless", "works"))
+            S.request.foreach(_.path.partPath === List("stateless", "works"))
           }
         }
       }
@@ -151,7 +152,7 @@ class MockWebSpec extends Specification  {
       LiftRulesMocker.devTestLiftRulesInstance.doWith(mockLiftRules) {
         useLiftRules.doWith(true) {
           testS("http://foo.com/test/stateful") {
-            S.request.foreach(_.path.partPath must_== List("stateful", "works"))
+            S.request.foreach(_.path.partPath === List("stateful", "works"))
           }
         }
       }
@@ -161,8 +162,8 @@ class MockWebSpec extends Specification  {
     "emulate a snippet invocation" in {
         testS("http://foo.com/test/stateful") {
           withSnippet("MyWidget.foo", new UnprefixedAttribute("bar", Text("bat"), Null)) {
-            S.currentSnippet must_== Full("MyWidget.foo")
-            S.attr("bar") must_== Full("bat")
+            S.currentSnippet === Full("MyWidget.foo")
+            S.attr("bar") === Full("bat")
           }
         }
     }
@@ -178,7 +179,7 @@ class MockWebSpec extends Specification  {
 
       // A second test
       testS("http://foo.com/test2", session) {
-        testVar.is must_== "Foo!"
+        testVar.is === "Foo!"
       }
     }
 

@@ -134,7 +134,7 @@ object ToHeadUsages extends Specification  {
       JettyTestServer.browse(
         "/index",html => {
           val idx = html.getPageSource.indexOf("&mdash;")
-          (idx >= 0) must_== true
+          (idx >= 0) === true
         }
       )
     }*/
@@ -196,6 +196,7 @@ object ToHeadUsages extends Specification  {
     tryo {
       jetty.stop()
     }
+    ()
   }
 
 }

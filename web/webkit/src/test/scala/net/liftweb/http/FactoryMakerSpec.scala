@@ -44,7 +44,7 @@ class FactoryMakerSpec extends Specification  {
 
       MyFactory.f1.vend
     }
-      res must_== List("Hello", "World")
+      res === List("Hello", "World")
     }
   }
 }

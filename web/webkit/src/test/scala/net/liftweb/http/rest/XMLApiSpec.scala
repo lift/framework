@@ -91,12 +91,12 @@ class XmlApiSpec extends Specification  {
          * new attributes makes comparison fail. Instead, we simply stringify and
          * reparse the response contents and that seems to fix the issue. */
         val converted = secureXML.loadString(x.xml.toString)
-        result(converted == expected, 
-         "%s matches %s".format(converted,expected),
-         "%s does not match %s".format(converted, expected),
-         response)
+        if (converted == expected)
+          org.specs2.execute.Success("%s matches %s".format(converted,expected))
+        else
+          org.specs2.execute.Failure("%s does not match %s".format(converted, expected))
       }
-      case other => result(false,"matches","not an XmlResponse", response)
+      case other => org.specs2.execute.Failure("not an XmlResponse")
     }
   }
 
@@ -121,8 +121,8 @@ class XmlApiSpec extends Specification  {
       failure must haveClass[XmlResponse]
       failure match {
         case x : XmlResponse => {
-          x.xml.attribute("success").map(_.text) must_== Some("false")
-          x.xml.attribute("msg").isDefined must_== true
+          x.xml.attribute("success").map(_.text) === Some("false")
+          x.xml.attribute("msg").isDefined === true
         }
       }
     }
