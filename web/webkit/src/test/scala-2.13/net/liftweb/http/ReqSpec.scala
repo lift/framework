@@ -22,12 +22,9 @@ import java.io.ByteArrayInputStream
 import scala.xml.XML
 
 import org.specs2.matcher.XmlMatchers
-
-import org.mockito.Mockito._
-import org.scalatestplus.mockito.MockitoSugar
-
 import org.specs2.mutable.Specification
-import org.specs2.execute.Scope
+import org.specs2.specification.Scope
+import org.specs2.mock.Mockito
 
 import common._
 import org.json4s._
@@ -40,7 +37,7 @@ import provider._
 /**
  * System under specification for Req.
  */
-class ReqSpec extends Specification with XmlMatchers with MockitoSugar {
+class ReqSpec extends Specification with XmlMatchers with Mockito {
   "Req Specification".title
 
   private val iPhoneUserAgents =
