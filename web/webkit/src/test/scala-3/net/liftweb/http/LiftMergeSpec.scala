@@ -5,17 +5,15 @@ import scala.xml._
 
 import org.specs2.mutable.Specification
 import org.specs2.matcher.XmlMatchers
-
-import org.mockito.Mockito._
-import org.scalatestplus.mockito.MockitoSugar
+import org.mockito.Mockito.{mock, when}
 
 import common._
 
 import js.JE.JsObj
 import js.pageScript
 
-class LiftMergeSpec extends Specification with XmlMatchers with MockitoSugar {
-  val mockReq = mock[Req]
+class LiftMergeSpec extends Specification with XmlMatchers {
+  val mockReq = mock(classOf[Req])
   when(mockReq.contextPath).thenReturn("/context-path")
 
   val testSession = new LiftSession("/context-path", "underlying id", Empty)

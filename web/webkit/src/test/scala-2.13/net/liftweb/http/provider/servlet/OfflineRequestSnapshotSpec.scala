@@ -18,11 +18,10 @@ package net.liftweb.http.provider.servlet
 
 import net.liftweb.http.provider._
 import net.liftweb.mockweb.WebSpec
-import org.mockito.Mockito._
-import org.scalatestplus.mockito.MockitoSugar
+import org.specs2.mock.Mockito
 
 
-object OfflineRequestSnapshotSpec extends WebSpec with MockitoSugar {
+object OfflineRequestSnapshotSpec extends WebSpec with Mockito {
 
   private[this] val X_SSL = "X-SSL"
   private[this] val xSSLHeader = HTTPParam(X_SSL, List("true")) :: Nil
@@ -77,10 +76,10 @@ object OfflineRequestSnapshotSpec extends WebSpec with MockitoSugar {
       override protected def context: HTTPContext = null
     }
 
-    when(mockHttpRequest.headers).thenReturn(headers)
-    when(mockHttpRequest.cookies).thenReturn(Nil)
-    when(mockHttpRequest.params).thenReturn(params)
-    when(mockHttpRequest.serverPort).thenReturn(originalPort)
+    mockHttpRequest.headers returns headers
+    mockHttpRequest.cookies returns Nil
+    mockHttpRequest.params returns params
+    mockHttpRequest.serverPort returns originalPort
     new OfflineRequestSnapshot(mockHttpRequest, httpProvider)
   }
 

@@ -22,7 +22,8 @@ import java.util.Locale
 
 import net.liftweb.http.js.extcore.ExtCoreArtifacts
 import net.liftweb.http.js.jquery.JQueryArtifacts
-import org.specs2.execute.{Result, AsResult, Scope}
+import org.specs2.execute.{Result, AsResult}
+import org.specs2.specification.Scope
 import org.specs2.mutable.Specification
 
 import common._
