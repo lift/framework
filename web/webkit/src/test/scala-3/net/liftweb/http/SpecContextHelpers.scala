@@ -1,58 +1,59 @@
 package net.liftweb
 package http
 
-import org.specs2.execute.{Result, AsResult, Scope}
+import org.specs2.execute.{Result, AsResult}
 import org.specs2.mutable.Specification
 
 import common.{Box, Empty}
 
 /**
- * Used for stacking other providers.
+ * Helper functions for wrapping test execution with Lift context.
+ *
+ * These functions properly wrap test code with ThreadLocal state management,
+ * ensuring that LiftRules and S (session) scope remain active during test execution.
  */
-trait BaseScope extends Scope {
-  // Base scope does nothing special
-}
-
-/**
- * Given an instance method or variable `rules`, wraps the spec in a setup of
- * that rules instance as the one used by Lift for the duration of the spec.
- */
-trait LiftRulesSetup extends Scope {
-  def rules: LiftRules
-
-  // Initialize rules when this scope is created
-  LiftRulesMocker.devTestLiftRulesInstance.doWith(rules) {}
-}
-
-/**
- * Given an instance method or variable `session` and `req`, wraps the spec in a setup
- * with S initialized for the duration of the spec.
- */
-trait SSetup extends Scope {
-  def session: LiftSession
-  def req: Box[Req]
-
-  // Initialize S when this scope is created
-  def initS[T](test: => T): T = {
-    S.init(req, session) {
-      test
+object SpecContextHelpers {
+  /**
+   * Wraps test execution with LiftRules context.
+   * The rules are active for the duration of the test execution.
+   *
+   * Example usage:
+   * {{{
+   * import SpecContextHelpers._
+   *
+   * "my test" in withLiftRules(testRules) {
+   *   // test code here - LiftRules are available
+   * }
+   * }}}
+   */
+  def withLiftRules[T: AsResult](rules: LiftRules)(test: =>T): Result = {
+    LiftRulesMocker.devTestLiftRulesInstance.doWith(rules) {
+      AsResult(test)
     }
   }
-}
 
-/**
- * Wraps a spec in a context where `rules` are the Lift rules in effect.
- */
-class WithRules(val rules: LiftRules) extends BaseScope with LiftRulesSetup
-
-/**
- * Wraps a spec in a context where `rules` are the Lift rules in effect, `session`
- * is the current Lift session, and `req`, if specified, is the current request.
- */
-class WithLiftContext(val rules: LiftRules, val session: LiftSession, val req: Box[Req] = Empty)
-  extends Scope with LiftRulesSetup with SSetup {
-
-  LiftRulesMocker.devTestLiftRulesInstance.doWith(rules) {
-    S.init(req, session) {}
+  /**
+   * Wraps test execution with both LiftRules and S (session) context.
+   * Both the rules and S scope are active for the duration of the test execution.
+   *
+   * Example usage:
+   * {{{
+   * import SpecContextHelpers._
+   *
+   * "my test" in withLiftContext(testRules, testSession) {
+   *   // test code here - LiftRules and S scope are available
+   * }
+   * }}}
+   */
+  def withLiftContext[T: AsResult](
+    rules: LiftRules,
+    session: LiftSession,
+    req: Box[Req] = Empty
+  )(test: =>T): Result = {
+    LiftRulesMocker.devTestLiftRulesInstance.doWith(rules) {
+      S.init(req, session) {
+        AsResult(test)
+      }
+    }
   }
 }

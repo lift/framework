@@ -11,6 +11,7 @@ import common._
 
 import js.JE.JsObj
 import js.pageScript
+import SpecContextHelpers._
 
 class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
   val mockReq = mock[Req]
@@ -33,7 +34,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
   eventExtractingTestRules.extractInlineJavaScript = true
 
   "LiftMerge when doing the final page merge" should {
-    "merge head segments in the page body in order into main head" in new WithRules(testRules) {
+    "merge head segments in the page body in order into main head" in withLiftRules(testRules) {
       val result =
         testSession.merge(
           <html>
@@ -65,7 +66,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
       ): NodeSeq)
     }
 
-    "merge tail segments in the page body in order at the end of the body" in new WithRules(testRules) {
+    "merge tail segments in the page body in order at the end of the body" in withLiftRules(testRules) {
       val result =
         testSession.merge(
           <html>
@@ -99,7 +100,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
       ): NodeSeq)
     }
 
-    "not merge tail segments in the head" in new WithRules(testRules) {
+    "not merge tail segments in the head" in withLiftRules(testRules) {
       val result =
         testSession.merge(
           <html>
@@ -135,7 +136,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
       ): NodeSeq)
     }
 
-    "normalize absolute link hrefs everywhere" in new WithLiftContext(testRules, testSession) {
+    "normalize absolute link hrefs everywhere" in withLiftContext(testRules, testSession) {
       val result =
         testSession.merge(
           <html>
@@ -169,7 +170,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
         "/context-path/testlink3" :: Nil
     }
 
-    "normalize absolute script srcs everywhere" in new WithLiftContext(testRules, testSession) {
+    "normalize absolute script srcs everywhere" in withLiftContext(testRules, testSession) {
       val result =
         testSession.merge(
           <html>
@@ -202,7 +203,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
         "/context-path/testscript2" :: Nil
     }
 
-    "normalize absolute a hrefs everywhere" in new WithLiftContext(testRules, testSession) {
+    "normalize absolute a hrefs everywhere" in withLiftContext(testRules, testSession) {
       val result =
         testSession.merge(
           <html>
@@ -239,7 +240,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
         "/context-path/testa5" :: Nil
     }
 
-    "normalize absolute form actions everywhere" in new WithLiftContext(testRules, testSession) {
+    "normalize absolute form actions everywhere" in withLiftContext(testRules, testSession) {
       val result =
         testSession.merge(
           <html>
@@ -276,7 +277,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
         "/context-path/testform5" :: Nil
     }
 
-    "not rewrite script srcs anywhere" in new WithLiftContext(testRules, testSession) {
+    "not rewrite script srcs anywhere" in withLiftContext(testRules, testSession) {
       val result =
         URLRewriter.doWith((_: String) => "rewritten") {
           testSession.merge(
@@ -310,7 +311,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
         "testscript3" :: Nil
     }
 
-    "not rewrite link hrefs anywhere" in new WithLiftContext(testRules, testSession) {
+    "not rewrite link hrefs anywhere" in withLiftContext(testRules, testSession) {
       val result =
         URLRewriter.doWith((_: String) => "rewritten") {
           testSession.merge(
@@ -344,7 +345,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
         "testlink3" :: Nil
     }
 
-    "rewrite a hrefs everywhere" in new WithLiftContext(testRules, testSession) {
+    "rewrite a hrefs everywhere" in withLiftContext(testRules, testSession) {
       val result =
         URLRewriter.doWith((_: String) => "rewritten") {
           testSession.merge(
@@ -378,7 +379,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
         "rewritten" :: Nil
     }
 
-    "rewrite form actions everywhere" in new WithLiftContext(testRules, testSession) {
+    "rewrite form actions everywhere" in withLiftContext(testRules, testSession) {
       val result =
         URLRewriter.doWith((_: String) => "rewritten") {
           testSession.merge(
@@ -412,7 +413,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
         "rewritten" :: Nil
     }
 
-    "include a page script in the page tail if events are extracted" in new WithLiftContext(eventExtractingTestRules, testSession) {
+    "include a page script in the page tail if events are extracted" in withLiftContext(eventExtractingTestRules, testSession) {
       val result =
         testSession.merge(
           <html>
@@ -444,7 +445,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
       }
     }
 
-    "include a page script in the page tail even if the page doesn't have a head and body" in new WithLiftContext(eventExtractingTestRules, testSession) {
+    "include a page script in the page tail even if the page doesn't have a head and body" in withLiftContext(eventExtractingTestRules, testSession) {
       val result =
         testSession.merge(
           <div onclick="tryme();">
