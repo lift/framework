@@ -22,6 +22,7 @@ import org.specs2.mutable.Specification
 
 import common._
 import util.Helpers._
+import SpecContextHelpers._
 
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -33,7 +34,7 @@ class HtmlFixerSpec extends Specification  {
     val testRules = new LiftRules()
     testRules.extractInlineJavaScript = true
 
-    "never extract inline JS in fixHtmlFunc" in new WithLiftContext(testRules, testSession) {
+    "never extract inline JS in fixHtmlFunc" in withLiftContext(testRules, testSession) {
       testFixer.fixHtmlFunc("test", <div onclick="clickMe();"></div>)(identity) ===
         """"<div onclick=\"clickMe();\"></div>""""
     }
