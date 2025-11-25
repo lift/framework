@@ -67,7 +67,6 @@ object Dependencies {
   lazy val logback         = "ch.qos.logback"    % "logback-classic"       % "1.2.13"       % Provided
   lazy val log4j           = "log4j"             % "log4j"                 % "1.2.17"       % Provided
   lazy val slf4j_log4j12   = "org.slf4j"         % "slf4j-log4j12"         % slf4jVersion   % Provided
-  lazy val persistence_api = "jakarta.persistence" % "jakarta.persistence-api" % "3.2.0"        % Provided
   lazy val servlet_api     = "jakarta.servlet"   % "jakarta.servlet-api"   % "6.1.0"        % Provided
   lazy val jquery          = "org.webjars.bower" % "jquery"                % "1.11.3"       % Provided
   lazy val jasmineCore     = "org.webjars.bower" % "jasmine-core"          % "2.4.1"        % Provided
