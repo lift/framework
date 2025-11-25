@@ -22,13 +22,13 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
     "fail if session is not available" in {
       val future = LAFutureWithSession.withCurrentSession("kaboom")
 
-      future.get(timeout) === Failure("LiftSession not available in this thread context", Empty, Empty)
+      future.get(timeout) mustEqual Failure("LiftSession not available in this thread context", Empty, Empty)
     }
 
     "succeed with original value if session is available" withSFor "/" in {
       val future = LAFutureWithSession.withCurrentSession("works!")
 
-      future.get(timeout) === Full("works!")
+      future.get(timeout) mustEqual Full("works!")
     }
 
     "have access to session variables in LAFuture task" withSFor "/" in {
@@ -36,7 +36,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
 
       val future = LAFutureWithSession.withCurrentSession(SessionVar1.is)
 
-      future.get(timeout) === Full("dzien dobry")
+      future.get(timeout) mustEqual Full("dzien dobry")
     }
 
     "have access to request variables in LAFuture task" withSFor "/" in {
@@ -44,7 +44,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
 
       val future = LAFutureWithSession.withCurrentSession(ReqVar1.is)
 
-      future.get(timeout) === Full("guten tag")
+      future.get(timeout) mustEqual Full("guten tag")
     }
 
     "have access to session variables in onComplete()" withSFor "/" in {
@@ -216,7 +216,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
       val future = LAFutureWithSession.withCurrentSession("a")
       val mapped = future.map(_ + SessionVar1.is).map(_ + SessionVar2.is)
 
-      mapped.get(timeout) === Full("abc")
+      mapped.get(timeout) mustEqual Full("abc")
     }
 
     "have access to request variables in chains of map()" withSFor "/" in {
@@ -226,7 +226,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
       val future = LAFutureWithSession.withCurrentSession("a")
       val mapped = future.map(_ + ReqVar1.is).map(_ + ReqVar2.is)
 
-      mapped.get(timeout) === Full("abc")
+      mapped.get(timeout) mustEqual Full("abc")
     }
 
     "have access to session variables in chains of flatMap()" withSFor "/" in {
@@ -244,7 +244,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
           LAFuture.build(out)
         }
 
-      mapped.get(timeout) === Full("def")
+      mapped.get(timeout) mustEqual Full("def")
     }
 
     "have access to request variables in chains of flatMap()" withSFor "/" in {
@@ -262,7 +262,7 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
           LAFuture.build(out)
         }
 
-      mapped.get(timeout) === Full("def")
+      mapped.get(timeout) mustEqual Full("def")
     }
 
     "have access to session variables in foreach()" withSFor "/" in {
