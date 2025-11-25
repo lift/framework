@@ -55,6 +55,7 @@ class LiftSessionSpec extends Specification with BeforeEach {
 
   sequential
 
+  // specs2 5.x: before method must wrap action in step
   override def before = step { receivedMessages = Vector[Int]() }
 
   "A LiftSession" should {
