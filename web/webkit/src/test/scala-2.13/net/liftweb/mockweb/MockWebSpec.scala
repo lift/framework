@@ -93,10 +93,11 @@ class MockWebSpec extends Specification  {
       import org.json4s.native.JsonMethods._
 
       mockReq.body = compact(render(("name" -> "joe") ~ ("age" -> 35))).getBytes("UTF-8")
+      mockReq.contentType = "application/json"
 
       testReq(mockReq) {
         req =>
-          req.json_? mustEqual true
+          req.json_? must_=== true
       }
     }
 
