@@ -69,7 +69,7 @@ class LocSpec extends Specification  {
 
       testS(mockReq) {
         testReq(mockReq) { req =>
-          testLoc.doesMatch_?(req) === true
+          testLoc.doesMatch_?(req) mustEqual true
         }
       }
     }
@@ -87,7 +87,7 @@ class LocSpec extends Specification  {
           val rewriteFn = testLoc.rewrite.openOrThrowException("No rewrite function")
 
           rewriteFn(rrq) must not(throwA[Exception])
-          rewriteFn(rrq)._2 === Empty
+          rewriteFn(rrq)._2 mustEqual Empty
         }
       }
     }

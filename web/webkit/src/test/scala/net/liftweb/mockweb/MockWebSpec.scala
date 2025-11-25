@@ -96,7 +96,7 @@ class MockWebSpec extends Specification  {
 
       testReq(mockReq) {
         req =>
-          req.json_? === true
+          req.json_? mustEqual true
       }
     }
 
@@ -122,7 +122,7 @@ class MockWebSpec extends Specification  {
 
     "initialize S based on a string url" in {
       testS("http://foo.com/test/that?a=b&b=c") {
-        S.param("b") === Full("c")
+        S.param("b") mustEqual Full("c")
       }
     }
 
@@ -162,8 +162,8 @@ class MockWebSpec extends Specification  {
     "emulate a snippet invocation" in {
         testS("http://foo.com/test/stateful") {
           withSnippet("MyWidget.foo", new UnprefixedAttribute("bar", Text("bat"), Null)) {
-            S.currentSnippet === Full("MyWidget.foo")
-            S.attr("bar") === Full("bat")
+            S.currentSnippet mustEqual Full("MyWidget.foo")
+            S.attr("bar") mustEqual Full("bat")
           }
         }
     }
