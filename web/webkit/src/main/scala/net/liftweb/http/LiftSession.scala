@@ -114,32 +114,32 @@ object LiftSession {
       val const = clz.getDeclaredConstructors()
 
       def nullConstructor(): Box[ConstructorType] =
-        const.find(_.getParameterTypes.length == 0).map(const => UnitConstructor(const))
+        const.find(_.getParameterTypes.length == 0).map(const => UnitConstructor(const, clz))
 
       pp match {
-        case Full(ParamPair(value, clz)) =>
+        case Full(ParamPair(value, paramClz)) =>
           const.find {
             cp => {
               cp.getParameterTypes.length == 2 &&
-                cp.getParameterTypes().apply(0).isAssignableFrom(clz) &&
+                cp.getParameterTypes().apply(0).isAssignableFrom(paramClz) &&
                 cp.getParameterTypes().apply(1).isAssignableFrom(classOf[LiftSession])
             }
           }.
-            map(const => PAndSessionConstructor(const)) orElse
+            map(const => PAndSessionConstructor(const, clz)) orElse
             const.find {
               cp => {
                 cp.getParameterTypes.length == 1 &&
-                  cp.getParameterTypes().apply(0).isAssignableFrom(clz)
+                  cp.getParameterTypes().apply(0).isAssignableFrom(paramClz)
               }
             }.
-              map(const => PConstructor(const)) orElse nullConstructor()
+              map(const => PConstructor(const, clz)) orElse nullConstructor()
 
         case _ =>
           nullConstructor()
       }
     }
 
-    (if (Props.devMode) {
+    val constructorBox = if (Props.devMode) {
       // no caching in dev mode
       calcConstructor()
     } else {
@@ -152,10 +152,12 @@ object LiftSession {
           nv
         }
       }
-    }).map {
-      case uc: UnitConstructor => uc.makeOne
-      case pc: PConstructor => pc.makeOne(pp.openOrThrowException("It's ok").v)
-      case psc: PAndSessionConstructor => psc.makeOne(pp.openOrThrowException("It's ok").v, session)
+    }
+
+    constructorBox.map {
+      case uc: UnitConstructor => uc.makeOne.asInstanceOf[T]
+      case pc: PConstructor => pc.makeOne(pp.openOrThrowException("It's ok").v).asInstanceOf[T]
+      case psc: PAndSessionConstructor => psc.makeOne(pp.openOrThrowException("It's ok").v, session).asInstanceOf[T]
     }
   }
 
@@ -1355,7 +1357,15 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
         c)
 
     } catch {
-      case e: IllegalAccessException => Empty
+      case e: IllegalAccessException =>
+        logger.debug(s"IllegalAccessException instantiating ${c.getName}", e)
+        Empty
+      case e: ClassCastException =>
+        logger.warn(s"ClassCastException instantiating ${c.getName} - reflection type mismatch", e)
+        Empty
+      case e: java.lang.reflect.InvocationTargetException =>
+        logger.warn(s"InvocationTargetException instantiating ${c.getName}", e.getCause)
+        Empty
     }
   }
 

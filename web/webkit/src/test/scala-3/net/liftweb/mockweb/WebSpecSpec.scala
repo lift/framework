@@ -153,9 +153,9 @@ class WebSpecSpec extends WebSpec(WebSpecSpecBoot.boot _) {
       })
     }
 
-    "properly process a template" in {
-      // FIXME: Scala 3 has ClassCastException with snippet instantiation
-      pending("Scala 3 snippet instantiation issue - ClassCastException during snippet loading")
+    "properly process a template" withTemplateFor("http://foo.com/net/liftweb/mockweb/webspecspectemplate") in {
+      case Full(template) => template.toString.contains("Hello, WebSpec!") === true
+      case other =>          failure("Error on template : " + other)
     }
   }
 }
