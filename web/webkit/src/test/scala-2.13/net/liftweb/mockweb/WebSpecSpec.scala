@@ -96,8 +96,8 @@ class WebSpecSpec extends WebSpec(WebSpecSpecBoot.boot _) {
     }
 
     "properly set up S with a HttpServletRequest" withSFor(testReq) in {
-      S.uri === "/this"
-      S.param("foo") === Full("bar")
+      S.uri must_=== "/this"
+      S.param("foo") must_=== Full("bar")
     }
 
     "properly set up a Req with a String url" withReqFor(testUrl) in {
@@ -135,9 +135,9 @@ class WebSpecSpec extends WebSpec(WebSpecSpecBoot.boot _) {
     "properly set an XML body" withSFor(testUrl) withPost(<test/>) in {
       S.request match {
         case Full(req) =>
-          req.xml_? === true
-          req.post_? === true
-          req.xml === Full(<test/>)
+          req.xml_? must_=== true
+          req.post_? must_=== true
+          req.xml must_=== Full(<test/>)
         case _ => failure("No request found in S")
       }
     }
