@@ -574,5 +574,11 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   def changeSessionId(): String = null
   def getContentLengthLong(): Long = body.length
 
+  override def getRequestId: String = ???
+
+  override def getProtocolRequestId: String = ???
+
+  override def getServletConnection: ServletConnection = ???
+
   def upgrade[T <: jakarta.servlet.http.HttpUpgradeHandler](x$1: Class[T]): T = ???
 }

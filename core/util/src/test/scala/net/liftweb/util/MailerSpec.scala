@@ -17,7 +17,7 @@
 package net.liftweb
 package util
 
-import javax.mail.internet.{MimeMessage, MimeMultipart}
+import jakarta.mail.internet.{MimeMessage, MimeMultipart}
 
 import org.specs2.mutable.Specification
 

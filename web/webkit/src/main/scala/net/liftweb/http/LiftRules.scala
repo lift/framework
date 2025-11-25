@@ -358,9 +358,9 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    */
   private def _getLiftSession(req: Req): LiftSession = {
     val wp = req.path.wholePath
-    val LiftPath = LiftRules.liftContextRelativePath
+    val LiftPath = LiftRules.liftContextRelativePath()
     val cometSessionId = wp match {
-      case LiftPath :: "comet" :: _ :: session :: _ => Full(session)
+      case LiftPath :+ "comet" :+ session :+ _ => Full(session)
       case _ => Empty
     }
 
@@ -1357,13 +1357,15 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
    * scoped. It does not include the context path and should not begin with a
    * /.
    */
-  @volatile var liftContextRelativePath = "lift"
+  @volatile var liftContextRelativePath: () => List[String] = () => List("lift")
+
+  @volatile var pageJsFunc: () => List[String] = () => liftContextRelativePath() :+ "page"
 
   /**
     * Returns a complete URI, including the context path, under which all
     * built-in Lift-handled requests are scoped.
     */
-  def liftPath: String = S.contextPath + "/" + liftContextRelativePath
+  def liftPath: String = S.contextPath + "/" + liftContextRelativePath().mkString("/")
 
   /**
    * If there is an alternative way of calculating the context path

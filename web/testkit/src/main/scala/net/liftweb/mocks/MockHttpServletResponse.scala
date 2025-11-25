@@ -96,7 +96,7 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
     setHeader(s, (new Date(l)).toString)
   }
 
-  def sendRedirect(uri: String): Unit = {
+  override def sendRedirect(uri: String): Unit = {
     // Send back a 301 to the URL mentioned
     statusCode = 301
     addHeader("Location", uri)
@@ -149,4 +149,6 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
   def getContentType(): String = contentType
   def getCharacterEncoding(): String = charEncoding
   def setContentLengthLong(l: Long): Unit = contentType = l.toString
+
+  override def sendRedirect(location: String, sc: Int, clearBuffer: Boolean): Unit = ???
 }

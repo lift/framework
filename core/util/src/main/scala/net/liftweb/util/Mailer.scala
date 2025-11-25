@@ -17,17 +17,15 @@
 package net.liftweb
 package util
 
-import javax.mail._
-import javax.mail.internet._
-import javax.naming.{Context, InitialContext}
+import jakarta.mail._
+import jakarta.mail.internet._
+import net.liftweb.actor._
+import net.liftweb.common._
+
 import java.util.Properties
-
+import javax.naming.{Context, InitialContext}
 import scala.language.implicitConversions
-import scala.xml.{Text, Elem, Node, NodeSeq}
-
-import common._
-import actor._
-
+import scala.xml.{Elem, Node, NodeSeq, Text}
 
 /**
  * Utilities for sending email.
@@ -340,7 +338,7 @@ trait Mailer extends SimpleInjector {
     part.setFileName(holder.name)
     part.setContentID(holder.name)
     part.setDisposition(if (holder.attachment) Part.ATTACHMENT else Part.INLINE)
-    part.setDataHandler(new javax.activation.DataHandler(new javax.activation.DataSource {
+    part.setDataHandler(new jakarta.activation.DataHandler(new jakarta.activation.DataSource {
       def getContentType = holder.mimeType
       def getInputStream = new java.io.ByteArrayInputStream(holder.bytes)
       def getName = holder.name

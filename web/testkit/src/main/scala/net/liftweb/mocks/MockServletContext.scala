@@ -228,8 +228,6 @@ class MockHttpSession extends HttpSession {
     def hasMoreElements() = keys.hasNext
     def nextElement(): String = keys.next()
   }
-  @nowarn("msg=trait HttpSessionContext in package http is deprecated")
-  def getSessionContext(): HttpSessionContext = null
   def getMaxInactiveInterval(): Int = maxii
   def setMaxInactiveInterval(i: Int): Unit = maxii = i
   def getServletContext(): ServletContext = null

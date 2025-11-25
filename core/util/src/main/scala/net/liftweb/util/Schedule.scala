@@ -58,7 +58,7 @@ sealed trait Schedule extends Loggable {
    */
   @volatile var blockingQueueSize: Box[Int] = Full(200000)
   
-  @volatile var buildExecutor: () => ThreadPoolExecutor =
+  @volatile var buildExecutor: () => ExecutorService =
     () => new ThreadPoolExecutor(threadPoolSize, 
                                  maxThreadPoolSize,
                                  60,
