@@ -81,7 +81,7 @@ class SnippetSpec extends Specification with XmlMatchers {
 
       val ret = Templates.checkForContentId(xml)
 
-      ret === xml
+      ret must ==/(xml)
     }
 
     "Snippet invocation works <lift:xxx/>" in {
@@ -444,8 +444,15 @@ class SnippetSpec extends Specification with XmlMatchers {
               S.currentAttr("c") === Empty
               S.currentAttr("d") === Full("d")
             }
+            // Verify currentAttr only sees "b" and "c" at this level
+            S.currentAttr("d") === Empty
           }
+          // Verify currentAttr only sees "a" at this level
+          S.currentAttr("b") === Empty
+          S.currentAttr("c") === Empty
         }
+        // Verify we've unwound completely
+        S.currentAttrs === Null
       }
     }
 
