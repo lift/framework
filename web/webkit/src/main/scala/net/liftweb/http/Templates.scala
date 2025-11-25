@@ -339,28 +339,34 @@ class StateInStatelessException(msg: String) extends SnippetFailureException(msg
   /**
    * a trait that defines some ways of constructing an instance
    */
-  private sealed trait ConstructorType
+  private sealed trait ConstructorType {
+    def targetClass: Class[_]
+  }
 
   /**
    * A unit constructor... just pass in null
    */
-  private final case class UnitConstructor(c: java.lang.reflect.Constructor[_]) extends ConstructorType {
-    def makeOne[T]: T = c.newInstance().asInstanceOf[T]
+  private final case class UnitConstructor(c: java.lang.reflect.Constructor[_], targetClass: Class[_]) extends ConstructorType {
+    def makeOne: AnyRef = {
+      targetClass.asInstanceOf[Class[AnyRef]].cast(c.newInstance().asInstanceOf[Object])
+    }
   }
 
   /**
    * A parameter and session constructor
    */
-  private final case class PAndSessionConstructor(c: java.lang.reflect.Constructor[_]) extends ConstructorType {
-    def makeOne[T](p: Any, s: LiftSession): T =
-      c.newInstance(p.asInstanceOf[Object], s).asInstanceOf[T]
+  private final case class PAndSessionConstructor(c: java.lang.reflect.Constructor[_], targetClass: Class[_]) extends ConstructorType {
+    def makeOne(p: Any, s: LiftSession): AnyRef = {
+      targetClass.asInstanceOf[Class[AnyRef]].cast(c.newInstance(p.asInstanceOf[Object], s).asInstanceOf[Object])
+    }
   }
 
   /**
    * A parameter constructor
    */
-  private final case class PConstructor(c: java.lang.reflect.Constructor[_]) extends ConstructorType {
-    def makeOne[T](p: Any): T =
-      c.newInstance(p.asInstanceOf[Object]).asInstanceOf[T]
+  private final case class PConstructor(c: java.lang.reflect.Constructor[_], targetClass: Class[_]) extends ConstructorType {
+    def makeOne(p: Any): AnyRef = {
+      targetClass.asInstanceOf[Class[AnyRef]].cast(c.newInstance(p.asInstanceOf[Object]).asInstanceOf[Object])
+    }
   }
 
