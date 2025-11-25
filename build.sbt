@@ -8,8 +8,8 @@ ThisBuild / licenses             += ("Apache License, Version 2.0", url("https:/
 ThisBuild / startYear            := Some(2006)
 ThisBuild / organizationName     := "WorldWide Conferencing, LLC"
 
-val scala213Version = "2.13.16"
-val scala3LTSVersion = "3.3.6"
+val scala213Version = "2.13.18"
+val scala3LTSVersion = "3.3.7"
 
 ThisBuild / scalaVersion         := scala213Version
 ThisBuild / crossScalaVersions   := Seq(scala213Version, scala3LTSVersion)
