@@ -71,7 +71,7 @@ class LiftSessionSpec extends Specification with BeforeEach {
           session.sendCometMessage(cometName, Full(cometName), message)
         }
 
-        session.findOrCreateComet[TestCometActor](Full(cometName), NodeSeq.Empty, Map.empty, (a: TestCometActor) => a).map { comet =>
+        session.findOrCreateComet[TestCometActor](Full(cometName), NodeSeq.Empty, Map.empty).map { comet =>
           comet !? NoOp /* Block to allow time for all messages to be collected */
         }
 
@@ -94,10 +94,10 @@ class LiftSessionSpec extends Specification with BeforeEach {
         session.sendCometMessage(cometType, 1)
 
         // Ensure both process the message
-        session.findOrCreateComet[TestCometActor](Full(cometName), NodeSeq.Empty, Map.empty, (a: TestCometActor) => a).map { comet =>
+        session.findOrCreateComet[TestCometActor](Full(cometName), NodeSeq.Empty, Map.empty).map { comet =>
           comet !? NoOp
         }
-        session.findOrCreateComet[TestCometActor](Empty, NodeSeq.Empty, Map.empty, (a: TestCometActor) => a).map { comet =>
+        session.findOrCreateComet[TestCometActor](Empty, NodeSeq.Empty, Map.empty).map { comet =>
           comet !? NoOp
         }
 
@@ -110,7 +110,7 @@ class LiftSessionSpec extends Specification with BeforeEach {
       val session = new LiftSession("Test Session", "", Empty)
 
       S.init(Empty, session) {
-        val result = session.findOrCreateComet[ExplodesInConstructorCometActor](Empty, NodeSeq.Empty, Map.empty, (a: ExplodesInConstructorCometActor) => a)
+        val result = session.findOrCreateComet[ExplodesInConstructorCometActor](Empty, NodeSeq.Empty, Map.empty)
 
         result match {
           case Failure(_, Full(ex: java.lang.reflect.InvocationTargetException), _) =>
