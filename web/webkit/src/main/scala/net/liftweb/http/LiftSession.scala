@@ -2494,6 +2494,29 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * configuration parameters. If a comet of that type with that name already
    * exists, it is returned; otherwise, a new one of that type is created and
    * set up, then returned.
+   */
+  private[http] def findOrCreateComet[T <: LiftCometActor](
+      cometName: Box[String],
+      cometHtml: NodeSeq,
+      cometAttributes: Map[String, String],
+  )(implicit cometManifest: Manifest[T]): Box[T] = {
+    val castClass = cometManifest.runtimeClass.asInstanceOf[Class[T]]
+    val typeName = castClass.getSimpleName
+
+    val creationInfo =
+      CometCreationInfo(typeName, cometName, cometHtml, cometAttributes, this)
+
+    findOrBuildComet(
+      creationInfo,
+      buildAndStoreComet(buildCometByClass(castClass, (a: T) => a))
+    )
+  }
+
+  /**
+   * Find or build a comet actor of the given type `T` with the given
+   * configuration parameters. If a comet of that type with that name already
+   * exists, it is returned; otherwise, a new one of that type is created and
+   * set up, then returned.
    * @param cometInitFunc a function that will be applied to the newly created comet actor
    *
    */

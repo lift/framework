@@ -28,8 +28,6 @@ object Dependencies {
   lazy val commons_codec          = "commons-codec"              % "commons-codec"      % "1.19.0"
   lazy val commons_fileupload     = "org.apache.commons"         % "commons-fileupload2-jakarta-servlet6" % "2.0.0-M4"
   lazy val commons_httpclient     = "commons-httpclient"         % "commons-httpclient" % "3.1"
-  lazy val javamail               = "jakarta.mail"                 % "jakarta.mail-api"         % "2.1.5"
-  lazy val jbcrypt                = "org.mindrot"                % "jbcrypt"            % "0.4"
   lazy val joda_time              = "joda-time"                  % "joda-time"          % "2.14.0"
   lazy val joda_convert           = "org.joda"                   % "joda-convert"       % "3.0.1"
   lazy val json4s_ext             = "org.json4s"                %% "json4s-ext"         % "4.0.7"
