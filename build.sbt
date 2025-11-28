@@ -98,11 +98,9 @@ lazy val util =
         joda_time,
         joda_convert,
         commons_codec,
-        javamail,
         log4j,
         htmlparser,
         xerces,
-        jbcrypt,
         json4s_native,
       )
     )

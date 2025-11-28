@@ -2496,9 +2496,9 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * set up, then returned.
    */
   private[http] def findOrCreateComet[T <: LiftCometActor](
-    cometName: Box[String],
-    cometHtml: NodeSeq,
-    cometAttributes: Map[String, String]
+      cometName: Box[String],
+      cometHtml: NodeSeq,
+      cometAttributes: Map[String, String],
   )(implicit cometManifest: Manifest[T]): Box[T] = {
     val castClass = cometManifest.runtimeClass.asInstanceOf[Class[T]]
     val typeName = castClass.getSimpleName
@@ -2508,7 +2508,59 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
     findOrBuildComet(
       creationInfo,
-      buildAndStoreComet(buildCometByClass(castClass))
+      buildAndStoreComet(buildCometByClass(castClass, (a: T) => a))
+    )
+  }
+
+  /**
+   * Find or build a comet actor of the given type `T` with the given
+   * configuration parameters. If a comet of that type with that name already
+   * exists, it is returned; otherwise, a new one of that type is created and
+   * set up, then returned.
+   * @param cometInitFunc a function that will be applied to the newly created comet actor
+   *
+   */
+  private[http] def findOrCreateComet[T <: LiftCometActor](
+      cometName: Box[String],
+      cometHtml: NodeSeq,
+      cometAttributes: Map[String, String],
+      cometInitFunc: T => T
+  )(implicit cometManifest: Manifest[T]): Box[T] = {
+    val castClass = cometManifest.runtimeClass.asInstanceOf[Class[T]]
+    val typeName = castClass.getSimpleName
+
+    val creationInfo =
+      CometCreationInfo(typeName, cometName, cometHtml, cometAttributes, this)
+
+    findOrBuildComet(
+      creationInfo,
+      buildAndStoreComet(buildCometByClass(castClass, cometInitFunc))
+    )
+  }
+
+  /**
+   * Find or build a comet actor of the given type `T` with the given
+   * configuration parameters. If a comet of that type with that name already
+   * exists, it is returned; otherwise, a new one of that type is created and
+   * set up, then returned.
+   *
+   * @param cometFactoryFunc a function that will be used to create the new comet actor
+   */
+  private[http] def findOrCreateCometByFactoryFunc[T <: LiftCometActor](
+      cometName: Box[String],
+      cometHtml: NodeSeq,
+      cometAttributes: Map[String, String],
+      cometFactoryFunc: () => T
+  )(implicit cometManifest: Manifest[T]): Box[T] = {
+    val castClass = cometManifest.runtimeClass.asInstanceOf[Class[T]]
+    val typeName = castClass.getSimpleName
+
+    val creationInfo =
+      CometCreationInfo(typeName, cometName, cometHtml, cometAttributes, this)
+
+    findOrBuildComet(
+      creationInfo,
+      buildAndStoreComet(buildCometByFactoryFunc(cometFactoryFunc))
     )
   }
 
@@ -2520,20 +2572,19 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
    * `LiftRules.buildPackage("comet")`.
    */
   private[http] def findOrCreateComet(
-    cometType: String,
-    cometName: Box[String] = Empty,
-    cometHtml: NodeSeq = NodeSeq.Empty,
-    cometAttributes: Map[String, String] = Map.empty
+      cometType: String,
+      cometName: Box[String] = Empty,
+      cometHtml: NodeSeq = NodeSeq.Empty,
+      cometAttributes: Map[String, String] = Map.empty
   ): Box[LiftCometActor] = {
     val creationInfo =
       CometCreationInfo(cometType, cometName, cometHtml, cometAttributes, this)
 
     findOrBuildComet(
       creationInfo,
-      buildAndStoreComet(buildCometByCreationInfo) _
+      buildAndStoreComet(buildCometByCreationInfo(_, a => a))
     )
   }
-
   // Private helper function to do common comet setup handling for
   // `findOrBuildComet` overloads.
   private def findOrBuildComet[T <: LiftCometActor](
@@ -2596,15 +2647,27 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     }
   }
 
+  /**
+   * Build and initialize the CometActor by the specified `buildFunc`
+   */
+  private def buildCometByFactoryFunc[T <: LiftCometActor](buildFunc: () => T)(creationInfo: CometCreationInfo): Box[T] = {
+    tryo{buildFunc()} match {
+      case r@Full(comet) =>
+        comet.callInitCometActor(creationInfo)
+        r
+      case other => other
+    }
+  }
+
   // Given a comet creation info, build a comet based on the comet type, first
   // attempting to use `LiftRules.cometCreationFactory` and then attempting to
   // find a match in `LiftRules.cometCreation`. Failing those, this will build it by
   // class name. Return a descriptive Failure if it's all gone sideways.
   //
   // Runs some base setup tasks before returning the comet.
-  private def buildCometByCreationInfo(creationInfo: CometCreationInfo): Box[LiftCometActor] = {
+  private def buildCometByCreationInfo(creationInfo: CometCreationInfo, cometInitFunc: LiftCometActor => LiftCometActor): Box[LiftCometActor] = {
     LiftRules.cometCreationFactory.vend.apply(creationInfo) or
-    NamedPF.applyBox(creationInfo, LiftRules.cometCreation.toList) or {
+        NamedPF.applyBox(creationInfo, LiftRules.cometCreation.toList) or {
       val cometType =
         findType[LiftCometActor](
           creationInfo.cometType,
@@ -2612,19 +2675,19 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
         )
 
       cometType.flatMap { cometClass =>
-        buildCometByClass(cometClass)(creationInfo)
+        buildCometByClass(cometClass, cometInitFunc)(creationInfo)
       } ?~ s"Failed to find specified comet class ${creationInfo.cometType}."
     }
   }
 
   // Given a comet Class and CometCreationInfo, instantiate the given
-  // comet and run setup tasks. Return a descriptive Failure if it's all
-  // gone sideways.
-  private def buildCometByClass[T <: LiftCometActor](cometClass: Class[T])(creationInfo: CometCreationInfo): Box[T] = {
+  // comet, apply `cometInitFunc` to it, and run setup tasks. Return a
+  // descriptive Failure if it's all gone sideways.
+  private def buildCometByClass[T <: LiftCometActor](cometClass: Class[T], cometInitFunc: T => T)(creationInfo: CometCreationInfo): Box[T] = {
     def buildWithNoArgConstructor = {
       val constructor = cometClass.getConstructor()
 
-      val comet = constructor.newInstance().asInstanceOf[T]
+      val comet = cometInitFunc(constructor.newInstance())
       comet.callInitCometActor(creationInfo)
 
       comet
@@ -2635,7 +2698,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
       val CometCreationInfo(_, name, defaultXml, attributes, _) = creationInfo
 
-      constructor.newInstance(this, name, defaultXml, attributes).asInstanceOf[T]
+      cometInitFunc(constructor.newInstance(this, name, defaultXml, attributes))
     }
 
     // We first attempt to use the no argument constructor. If we get a NoSuchMethodException,

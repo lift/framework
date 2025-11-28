@@ -318,26 +318,28 @@ class LiftServlet extends Loggable {
     }
 
     def cometOrAjax_?(req: Req): (Boolean, Boolean) = {
-      lazy val ajaxPath = LiftRules.liftContextRelativePath :: "ajax" :: Nil
-      lazy val cometPath = LiftRules.liftContextRelativePath :: "comet" :: Nil
+      lazy val ajaxPath = LiftRules.liftContextRelativePath() :+ "ajax"
+      lazy val cometPath = LiftRules.liftContextRelativePath() :+ "comet"
+      lazy val cometPathLength = cometPath.length
+      lazy val ajaxPathLength = ajaxPath.length
 
       val wp = req.path.wholePath
       val pathLen = wp.length
 
       def isComet: Boolean = {
-        if (pathLen < 3) {
+        if (pathLen <= cometPathLength) {
           false
         } else {
-          val kindaComet = wp.take(2) == cometPath
+          val kindaComet = wp.take(cometPathLength) == cometPath
 
           kindaComet && req.acceptsJavaScript_?
         }
       }
       def isAjax: Boolean = {
-        if (pathLen < 3) {
+        if (pathLen <= ajaxPathLength) {
           false
         } else {
-          val kindaAjax = wp.take(2) == ajaxPath
+          val kindaAjax = wp.take(ajaxPathLength) == ajaxPath
 
           kindaAjax && req.acceptsJavaScript_?
         }
@@ -578,11 +580,11 @@ class LiftServlet extends Loggable {
    * The requestVersion is passed to the function that is passed in.
    */
   private def extractVersions[T](path: List[String])(f: (Box[AjaxVersionInfo]) => T): T = {
-    val LiftPath = LiftRules.liftContextRelativePath
+    val LiftPath = LiftRules.liftContextRelativePath()
     path match {
-      case LiftPath :: "ajax" :: AjaxVersions(versionInfo @ AjaxVersionInfo(renderVersion, _, _)) :: _ =>
+      case LiftPath :+ "ajax" :+ AjaxVersions(versionInfo @ AjaxVersionInfo(renderVersion, _, _)) :+ _ =>
         RenderVersion.doWith(renderVersion)(f(Full(versionInfo)))
-      case LiftPath :: "ajax" :: renderVersion :: _ =>
+      case LiftPath :+ "ajax" :+ renderVersion :+ _ =>
         RenderVersion.doWith(renderVersion)(f(Empty))
       case _ => f(Empty)
     }
@@ -1042,11 +1044,11 @@ class LiftServlet extends Loggable {
 import net.liftweb.http.provider.servlet._
 
 private class SessionIdCalc(req: Req) {
-  private val LiftPath = LiftRules.liftContextRelativePath
+  private val LiftPath = LiftRules.liftContextRelativePath()
   lazy val id: Box[String] = req.request.sessionId match {
     case Full(id) => Full(id)
     case _ => req.path.wholePath match {
-      case LiftPath :: "comet" :: _ :: id :: _ :: _ => Full(id)
+      case LiftPath :+ "comet" :+ _ :+ id :+ _ :+ _ => Full(id)
       case _ => Empty
     }
   }

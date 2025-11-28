@@ -17,20 +17,14 @@
 package net.liftweb
 package util
 
-import java.io._
-import java.security._
-import javax.crypto._
-import javax.crypto.spec._
-import javax.xml.parsers.SAXParserFactory
-import javax.xml.XMLConstants
-
-import scala.xml.{Elem, XML}
-import scala.xml.factory.XMLLoader
-
 import org.apache.commons.codec.binary.Base64
 import org.apache.xerces.impl.Constants
 
-import common._
+import java.security._
+import javax.xml.XMLConstants
+import javax.xml.parsers.SAXParserFactory
+import scala.xml.factory.XMLLoader
+import scala.xml.{Elem, XML}
 
 object SecurityHelpers extends StringHelpers with IoHelpers with SecurityHelpers
 

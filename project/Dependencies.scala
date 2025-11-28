@@ -25,29 +25,27 @@ object Dependencies {
 
   // Compile scope:
   // Scope available in all classpath, transitive by default.
-  lazy val commons_codec          = "commons-codec"              % "commons-codec"      % "1.11"
-  lazy val commons_fileupload     = "org.apache.commons"         % "commons-fileupload2-jakarta-servlet5" % "2.0.0-M2"
+  lazy val commons_codec          = "commons-codec"              % "commons-codec"      % "1.19.0"
+  lazy val commons_fileupload     = "org.apache.commons"         % "commons-fileupload2-jakarta-servlet6" % "2.0.0-M4"
   lazy val commons_httpclient     = "commons-httpclient"         % "commons-httpclient" % "3.1"
-  lazy val javamail               = "javax.mail"                 % "mail"               % "1.4.7"
-  lazy val jbcrypt                = "org.mindrot"                % "jbcrypt"            % "0.4"
-  lazy val joda_time              = "joda-time"                  % "joda-time"          % "2.10"
-  lazy val joda_convert           = "org.joda"                   % "joda-convert"       % "2.1"
+  lazy val joda_time              = "joda-time"                  % "joda-time"          % "2.14.0"
+  lazy val joda_convert           = "org.joda"                   % "joda-convert"       % "3.0.1"
   lazy val json4s_ext             = "org.json4s"                %% "json4s-ext"         % "4.0.7"
   lazy val json4s_native          = "org.json4s"                %% "json4s-native"      % "4.0.7"
   lazy val json4s_xml             = "org.json4s"                %% "json4s-xml"         % "4.0.7"
-  lazy val htmlparser             = "nu.validator"               % "htmlparser"         % "1.4.12"
+  lazy val htmlparser             = "nu.validator"               % "htmlparser"         % "1.4.16"
   lazy val mongo_java_driver      = "org.mongodb"                % "mongodb-driver"     % "3.12.7"
   lazy val mongo_java_driver_async  = "org.mongodb"              % "mongodb-driver-async" % "3.12.7"
-  lazy val paranamer              = "com.thoughtworks.paranamer" % "paranamer"          % "2.8"
+  lazy val paranamer              = "com.thoughtworks.paranamer" % "paranamer"          % "2.8.3"
   lazy val scalajpa               = "org.scala-libs"             % "scalajpa"           % "1.5"
   lazy val scalap: ModuleMap      = "org.scala-lang"             % "scalap"             % _
-  lazy val scalaz7_core           = "org.scalaz"                %% "scalaz-core"        % "7.2.28"
+  lazy val scalaz7_core           = "org.scalaz"                %% "scalaz-core"        % "7.3.8"
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
-  lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "2.1.0"
+  lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "2.4.0"
   lazy val scala_parallel_collections =  "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0"
   lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.7.15"
   lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "2.4.0"
-  lazy val xerces                 = "xerces" % "xercesImpl" % "2.11.0"
+  lazy val xerces                 = "xerces" % "xercesImpl" % "2.12.0"
 
   lazy val scala_compiler: ModuleMap = (version: String) => {
     if (version.startsWith("2")) {
@@ -67,8 +65,7 @@ object Dependencies {
   lazy val logback         = "ch.qos.logback"    % "logback-classic"       % "1.2.13"       % Provided
   lazy val log4j           = "log4j"             % "log4j"                 % "1.2.17"       % Provided
   lazy val slf4j_log4j12   = "org.slf4j"         % "slf4j-log4j12"         % slf4jVersion   % Provided
-  lazy val persistence_api = "javax.persistence" % "persistence-api"       % "1.0.2"        % Provided
-  lazy val servlet_api     = "jakarta.servlet"   % "jakarta.servlet-api"   % "5.0.0"        % Provided
+  lazy val servlet_api     = "jakarta.servlet"   % "jakarta.servlet-api"   % "6.1.0"        % Provided
   lazy val jquery          = "org.webjars.bower" % "jquery"                % "1.11.3"       % Provided
   lazy val jasmineCore     = "org.webjars.bower" % "jasmine-core"          % "2.4.1"        % Provided
   lazy val jasmineAjax     = "org.webjars.bower" % "jasmine-ajax"          % "3.2.0"        % Provided

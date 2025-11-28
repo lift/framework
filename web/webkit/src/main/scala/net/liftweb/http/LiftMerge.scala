@@ -44,8 +44,8 @@ private[this] case class HtmlState(
 private[http] trait LiftMerge {
   self: LiftSession =>
 
-  private def scriptUrl(scriptFile: String) = {
-    S.encodeURL(s"${LiftRules.liftPath}/$scriptFile")
+  private def pageJsUrl = {
+    S.encodeURL(s"${S.contextPath}/${LiftRules.pageJsFunc().mkString("/")}/${RenderVersion.get}.js")
   }
 
   // Gather all page-specific JS into one JsCmd.
@@ -63,7 +63,7 @@ private[http] trait LiftMerge {
   private def pageScopedScriptFileWith(cmd: JsCmd) = {
     pageScript(Full(JavaScriptResponse(cmd, Nil, Nil, 200)))
 
-    <script type="text/javascript" src={scriptUrl(s"page/${RenderVersion.get}.js")}></script>
+    <script type="text/javascript" src={pageJsUrl}></script>
   }
 
   /**

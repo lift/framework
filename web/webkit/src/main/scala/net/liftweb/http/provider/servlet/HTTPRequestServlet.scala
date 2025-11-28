@@ -22,7 +22,7 @@ package servlet
 import java.io.InputStream
 import java.util.Locale
 import jakarta.servlet.http.HttpServletRequest
-import org.apache.commons.fileupload2.jakarta.servlet5._
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload
 import org.apache.commons.fileupload2.core.ProgressListener
 import net.liftweb.common._
 import net.liftweb.util._

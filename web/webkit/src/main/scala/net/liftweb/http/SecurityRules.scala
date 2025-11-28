@@ -337,7 +337,7 @@ object ContentSecurityPolicyViolation extends LazyLoggable {
   private[this] implicit val formats: DefaultFormats.type = DefaultFormats
 
   def defaultViolationHandler: DispatchPF = {
-    case request @ Req(start :: "content-security-policy-report" :: Nil, _, _) if start == LiftRules.liftContextRelativePath =>
+    case request @ Req(start :+ "content-security-policy-report", _, _) if start == LiftRules.liftContextRelativePath() =>
       val violation =
         for {
           requestJson <- request.forcedBodyAsJson

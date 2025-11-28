@@ -861,14 +861,83 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * receive updates like this using {S.addComet}.
    */
   def findOrCreateComet[T <: LiftCometActor](
-    cometName: Box[String],
-    cometHtml: NodeSeq,
-    cometAttributes: Map[String, String],
-    receiveUpdatesOnPage: Boolean
+      cometName: Box[String],
+      cometHtml: NodeSeq,
+      cometAttributes: Map[String, String],
+      receiveUpdatesOnPage: Boolean
   )(implicit cometManifest: Manifest[T]): Box[T] = {
     for {
       session <- session ?~ "Comet lookup and creation requires a session."
-      cometActor <- session.findOrCreateComet[T](cometName, cometHtml, cometAttributes)
+      cometActor <- session.findOrCreateComet[T](cometName, cometHtml, cometAttributes, (a: T) => a)
+    } yield {
+      if (receiveUpdatesOnPage)
+        addComet(cometActor)
+
+      cometActor
+    }
+  }
+
+  /**
+   * Find or build a comet actor of the given type `T` with the given
+   * configuration parameters. If a comet of that type with that name already
+   * exists, it is returned; otherwise, a new one of that type is created and
+   * set up, then returned.
+   *
+   * The `cometInitFunc` is applied to the comet actor after it is created and
+   * before it is returned.
+   *
+   * If `receiveUpdates` is `true`, updates to this comet will be pushed to
+   * the page currently being rendered or to the page that is currently
+   * invoking an AJAX callback. You can also separately register a comet to
+   * receive updates like this using {S.addComet}.
+   *
+   * @param cometName The name of the comet actor.
+   * @param cometHtml The HTML to be rendered by the comet actor.
+   * @param cometAttributes The attributes to be passed to the comet actor.
+   * @param receiveUpdatesOnPage Whether to register the comet to receive updates on the current page.
+   * @param cometInitFunc A function to initialize the comet actor after creation.
+   */
+
+  def findOrCreateCometWithInitFunc[T <: LiftCometActor](
+      cometName: Box[String],
+      cometHtml: NodeSeq,
+      cometAttributes: Map[String, String],
+      receiveUpdatesOnPage: Boolean,
+      cometInitFunc: T => T
+  )(implicit cometManifest: Manifest[T]): Box[T] = {
+    for {
+      session <- session ?~ "Comet lookup and creation requires a session."
+      cometActor <- session.findOrCreateComet[T](cometName, cometHtml, cometAttributes, cometInitFunc)
+    } yield {
+      if (receiveUpdatesOnPage)
+        addComet(cometActor)
+
+      cometActor
+    }
+  }
+
+  /**
+   * Find or build a comet actor of the given type `T` with the given
+   * configuration parameters. If a comet of that type with that name already
+   * exists, it is returned; otherwise, a new one of that type is created
+   * by `cometFactoryFunc` and
+   * set up, then returned.
+   *
+   * If `receiveUpdates` is `true`, updates to this comet will be pushed to
+   * the page currently being rendered or to the page that is currently
+   * invoking an AJAX callback. You can also separately register a comet to
+   * receive updates like this using {S.addComet}.
+   */
+  def findOrCreateCometByFactoryFunc[T <: LiftCometActor](
+      cometName: Box[String],
+      cometHtml: NodeSeq,
+      cometAttributes: Map[String, String],
+      receiveUpdatesOnPage: Boolean,
+      cometFactoryFunc: () => T
+  )(implicit cometManifest: Manifest[T]): Box[T] = {
+    for {
+      session <- session ?~ "Comet lookup and creation requires a session."
+      cometActor <- session.findOrCreateCometByFactoryFunc[T](cometName, cometHtml, cometAttributes, cometFactoryFunc)
     } yield {
       if (receiveUpdatesOnPage)
         addComet(cometActor)
