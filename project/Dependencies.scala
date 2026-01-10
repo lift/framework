@@ -45,7 +45,7 @@ object Dependencies {
   lazy val scala_parallel_collections =  "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0"
   lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.7.15"
   lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "2.4.0"
-  lazy val xerces                 = "xerces" % "xercesImpl" % "2.12.0"
+  lazy val xerces                 = "xerces" % "xercesImpl" % "2.12.2"
 
   lazy val scala_compiler: ModuleMap = (version: String) => {
     if (version.startsWith("2")) {
