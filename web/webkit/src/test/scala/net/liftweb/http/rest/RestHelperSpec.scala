@@ -5,12 +5,14 @@ import net.liftweb.mocks.MockHttpServletRequest
 import net.liftweb.common.Full
 
 import net.liftweb.actor.LAFuture
-import net.liftweb.json._
+
+import org.json4s._
+import org.json4s.native._
 
 import net.liftweb.http._
 
 object RestHelperSpecBoot {
-  def boot() {
+  def boot() : Unit = {
     LiftRules.dispatch.append(RestHelperSpecRest)
   }
 }
@@ -37,7 +39,7 @@ class RestHelperSpec extends WebSpec(RestHelperSpecBoot.boot _) {
     }
 
     "set OPTIONS method" withReqFor testOptionsReq in { req =>
-      req.options_? must_== true
+      req.options_? === true
     }
 
     "give the correct response" withReqFor testOptionsReq in { req =>
@@ -47,7 +49,7 @@ class RestHelperSpec extends WebSpec(RestHelperSpecBoot.boot _) {
     }
 
     "set PATCH method" withReqFor testPatchReq in { req =>
-      req.patch_? must_== true
+      req.patch_? === true
     }
 
     "respond async with something that CanResolveAsync" withReqFor testFutureReq in { req =>
@@ -67,7 +69,7 @@ class RestHelperSpec extends WebSpec(RestHelperSpecBoot.boot _) {
 
           result.get must beLike {
             case JsonResponse(_, _, _, code) =>
-              code must_== 200
+              code === 200
           }
       }
     }

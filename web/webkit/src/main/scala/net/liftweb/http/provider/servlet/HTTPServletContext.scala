@@ -19,7 +19,7 @@ package http
 package provider
 package servlet
 
-import javax.servlet.{ServletContext}
+import jakarta.servlet.{ServletContext}
 import java.net.URL
 import java.io.InputStream
 
@@ -47,11 +47,11 @@ class HTTPServletContext(val ctx: ServletContext) extends HTTPContext {
   def attributes: List[(String, Any)] = enumToList[String](ctx.getAttributeNames.asInstanceOf[java.util.Enumeration[String]]).
           map(n => (n, attribute(n) openOr ""))
 
-  def setAttribute(name: String, value: Any) {
+  def setAttribute(name: String, value: Any): Unit = {
     ctx.setAttribute(name, value)
   }
 
-  def removeAttribute(name: String) {
+  def removeAttribute(name: String): Unit = {
     ctx.removeAttribute(name)
   }
 

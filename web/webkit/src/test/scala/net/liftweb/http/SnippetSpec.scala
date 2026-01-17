@@ -81,7 +81,7 @@ class SnippetSpec extends Specification with XmlMatchers {
 
       val ret = Templates.checkForContentId(xml)
 
-      ret must_== xml
+      ret must ==/(xml)
     }
 
     "Snippet invocation works <lift:xxx/>" in {
@@ -134,9 +134,9 @@ class SnippetSpec extends Specification with XmlMatchers {
       val res = <div/>
 
       def testAttrs(in: NodeSeq): NodeSeq = {
-        S.attr("bing") must_== Full("bong")
-        S.attr("fuzz") must_== Full("faz snark")
-        S.attr("noodle") must_== Full("FatPoodle")
+        S.attr("bing") === Full("bong")
+        S.attr("fuzz") === Full("faz snark")
+        S.attr("noodle") === Full("FatPoodle")
         in
       }
 
@@ -157,9 +157,9 @@ class SnippetSpec extends Specification with XmlMatchers {
       val res = <div/>
 
       def testAttrs(in: NodeSeq): NodeSeq = {
-        S.attr("bing") must_== Full("bong")
-        S.attr("fuzz") must_== Full("faz snark")
-        S.attr("noodle") must_== Full("FatPoodle")
+        S.attr("bing") === Full("bong")
+        S.attr("fuzz") === Full("faz snark")
+        S.attr("noodle") === Full("FatPoodle")
         in
       }
 
@@ -180,9 +180,9 @@ class SnippetSpec extends Specification with XmlMatchers {
       val res = <div/>
 
       def testAttrs(in: NodeSeq): NodeSeq = {
-        S.attr("bing") must_== Full("bong")
-        S.attr("fuzz") must_== Full("faz snark")
-        S.attr("noodle") must_== Full("FatPoodle")
+        S.attr("bing") === Full("bong")
+        S.attr("fuzz") === Full("faz snark")
+        S.attr("noodle") === Full("FatPoodle")
         in
       }
 
@@ -204,9 +204,9 @@ class SnippetSpec extends Specification with XmlMatchers {
       val res = <div/>
 
       def testAttrs(in: NodeSeq): NodeSeq = {
-        S.attr("bing") must_== Full("bong")
-        S.attr("fuzz") must_== Full("faz snark")
-        S.attr("noodle") must_== Full("FatPoodle")
+        S.attr("bing") === Full("bong")
+        S.attr("fuzz") === Full("faz snark")
+        S.attr("noodle") === Full("FatPoodle")
         in
       }
 
@@ -249,7 +249,7 @@ class SnippetSpec extends Specification with XmlMatchers {
           }
         }
 
-      (ret.openOrThrowException("legacy code") \ "@class").text must_== "snippeterror"
+      (ret.openOrThrowException("legacy code") \ "@class").text === "snippeterror"
     }
 
     object myInfo extends SessionVar("")
@@ -281,7 +281,7 @@ class SnippetSpec extends Specification with XmlMatchers {
           }
         }
 
-      (ret.openOrThrowException("legacy code") \ "@class").text must_== "snippeterror"
+      (ret.openOrThrowException("legacy code") \ "@class").text === "snippeterror"
     }
 
     "Snippet invocation succeeds in normal mode" in {
@@ -314,7 +314,7 @@ class SnippetSpec extends Specification with XmlMatchers {
           }
         }
 
-      (ret.openOrThrowException("legacy code") \ "@class").text must_== "snippeterror"
+      (ret.openOrThrowException("legacy code") \ "@class").text === "snippeterror"
     }
 
     "Snippet invocation succeeds in normal mode (function table)" in {
@@ -340,8 +340,8 @@ class SnippetSpec extends Specification with XmlMatchers {
       S.init(makeReq, session) {
         val ret = SHtml.onSubmit(s => ())(<input/>)
 
-        ret.size must_== 1
-        (ret \ "@name").text.length must be > 0
+        ret.size === 1
+        (ret \ "@name").text.length must beGreaterThan(0)
       }
     }
 
@@ -351,8 +351,8 @@ class SnippetSpec extends Specification with XmlMatchers {
       S.init(makeReq, session) {
         val ret = SHtml.onSubmitBoolean(s => ())(<input type="checkbox"/>)
 
-        ret.size must_== 2
-        (ret \\ "input" ).flatMap(_ \ "@name").map(_.text).mkString.length must be > 0
+        ret.size === 2
+        (ret \\ "input" ).flatMap(_ \ "@name").map(_.text).mkString.length must beGreaterThan(0)
       }
     }
 
@@ -383,7 +383,7 @@ class SnippetSpec extends Specification with XmlMatchers {
                                             <input class="lift:Splunker"/>)
       }
 
-      (ret.openOrThrowException("legacy code") \ "@name").text.length must be > 0
+      (ret.openOrThrowException("legacy code") \ "@name").text.length must beGreaterThan(0)
       */
       pending
     }
@@ -400,7 +400,7 @@ class SnippetSpec extends Specification with XmlMatchers {
           } yield s.processSurroundAndInclude("test",
                                               <div class="l:foo?eager_eval=true">a<lift:foo>b</lift:foo></div>)
         }
-        myInfo.is must_== "ab"
+        myInfo.is === "ab"
       }
     }
   }
@@ -411,26 +411,26 @@ class SnippetSpec extends Specification with XmlMatchers {
         S.withAttrs(new UnprefixedAttribute("a", "a", Null)) {
           S.withAttrs(new UnprefixedAttribute("b", "b", new UnprefixedAttribute("c", "c", Null))) {
             S.withAttrs(new UnprefixedAttribute("d", "d", Null)) {
-              S.attr("a") must_== Full("a")
-              S.attr("b") must_== Full("b")
-              S.attr("c") must_== Full("c")
-              S.attr("d") must_== Full("d")
+              S.attr("a") === Full("a")
+              S.attr("b") === Full("b")
+              S.attr("c") === Full("c")
+              S.attr("d") === Full("d")
 
               // Also check currentAttrs (should be set only for the inner-most call)
-              S.currentAttr("a") must_== Empty
-              S.currentAttr("b") must_== Empty
-              S.currentAttr("c") must_== Empty
-              S.currentAttr("d") must_== Full("d")
+              S.currentAttr("a") === Empty
+              S.currentAttr("b") === Empty
+              S.currentAttr("c") === Empty
+              S.currentAttr("d") === Full("d")
             }
             // Make sure the stack is unwound
-            S.attr("d") must_== Empty
+            S.attr("d") === Empty
           }
-          S.attr("b") must_== Empty
-          S.attr("c") must_== Empty
+          S.attr("b") === Empty
+          S.attr("c") === Empty
         }
-        S.attr("a") must_== Empty
-        S.attrs must_== Nil
-        S.currentAttrs must_== Null
+        S.attr("a") === Empty
+        S.attrs === Nil
+        S.currentAttrs === Null
       }
     }
 
@@ -439,13 +439,20 @@ class SnippetSpec extends Specification with XmlMatchers {
         S.withAttrs(new UnprefixedAttribute("a", "a", Null)) {
           S.withAttrs(new UnprefixedAttribute("b", "b", new UnprefixedAttribute("c", "c", Null))) {
             S.withAttrs(new UnprefixedAttribute("d", "d", Null)) {
-              S.currentAttr("a") must_== Empty
-              S.currentAttr("b") must_== Empty
-              S.currentAttr("c") must_== Empty
-              S.currentAttr("d") must_== Full("d")
+              S.currentAttr("a") === Empty
+              S.currentAttr("b") === Empty
+              S.currentAttr("c") === Empty
+              S.currentAttr("d") === Full("d")
             }
+            // Verify currentAttr only sees "b" and "c" at this level
+            S.currentAttr("d") === Empty
           }
+          // Verify currentAttr only sees "a" at this level
+          S.currentAttr("b") === Empty
+          S.currentAttr("c") === Empty
         }
+        // Verify we've unwound completely
+        S.currentAttrs === Null
       }
     }
 
@@ -454,20 +461,20 @@ class SnippetSpec extends Specification with XmlMatchers {
         S.withAttrs(new PrefixedAttribute("foo", "a", "a", Null)) {
           S.withAttrs(new PrefixedAttribute("foo", "b", "b", Null)) {
             S.withAttrs(new PrefixedAttribute("bar", "a", "aBar", Null)) {
-              S.attr("a") must_== Empty
-              S.attr("foo", "a") must_== Full("a")
+              S.attr("a") === Empty
+              S.attr("foo", "a") === Full("a")
 
-              S.attr("bar", "a") must_== Full("aBar")
+              S.attr("bar", "a") === Full("aBar")
 
               val fooMap = S.prefixedAttrsToMap("foo", Map())
 
-              fooMap("a") must_== "a"
-              fooMap("b") must_== "b"
+              fooMap("a") === "a"
+              fooMap("b") === "b"
 
               val barMap = S.prefixedAttrsToMap("bar")
 
-              barMap("a") must_== "aBar"
-              barMap.get("b") must_== None
+              barMap("a") === "aBar"
+              barMap.get("b") === None
             }
           }
         }

@@ -19,7 +19,9 @@ package util
 
 import org.specs2.mutable.Specification
 
-import json._
+import org.json4s._
+import org.json4s.native.JsonParser
+import org.json4s.native.JsonMethods._
 
 
 /**

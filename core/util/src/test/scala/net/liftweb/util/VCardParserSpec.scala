@@ -27,20 +27,19 @@ import org.specs2.mutable.Specification
 class VCardParserSpec extends Specification with XmlMatchers {
   "VCardParser Specification".title
 
+  val vcard =
+    """BEGIN:VCARD
+      |VERSION:2.1
+      |N:Gump;Forrest
+      |FN:Forrest Gump
+      |ORG:Bubba Gump Shrimp Co.
+      |TITLE:Shrimp Man
+      |TEL;WORK;VOICE:(111) 555-1212
+      |TEL;HOME;VOICE:(404) 555-1212
+      |END:VCARD""".stripMargin
+
   "VCard" should {
     "parse a basic VCard (2.1) correctly" in {
-
-    val vcard =
-      """BEGIN:VCARD
-        |VERSION:2.1
-        |N:Gump;Forrest
-        |FN:Forrest Gump
-        |ORG:Bubba Gump Shrimp Co.
-        |TITLE:Shrimp Man
-        |TEL;WORK;VOICE:(111) 555-1212
-        |TEL;HOME;VOICE:(404) 555-1212
-        |END:VCARD""".stripMargin
-
       val list = VCardParser.parse(vcard)
       list must beLike {
         case Left(l)  => {
@@ -58,7 +57,6 @@ class VCardParserSpec extends Specification with XmlMatchers {
               VCardEntry(VCardKey("END", Nil), List("VCARD")))
         }
       }
-
     }
 
     "parse a basic Apple VCard (3.0) correctly" in {

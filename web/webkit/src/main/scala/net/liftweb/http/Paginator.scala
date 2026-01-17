@@ -51,8 +51,7 @@ trait Paginator[T] extends Loggable {
    * Calculates the number of pages the items will be spread across
    */
   def numPages =
-    (count/itemsPerPage).toInt +
-  (if(count % itemsPerPage > 0) 1 else 0)
+    (count/itemsPerPage).toInt + (if(count % itemsPerPage > 0) 1 else 0)
   /**
    * Calculates the current page number, based on the value of 'first.'
    */
@@ -158,7 +157,7 @@ trait PaginatorSnippet[T] extends Paginator[T] {
       Text(S.?("paginator.norecords"))
     else
       Text(S.?("paginator.displayingrecords",
-              Array(recordsFrom, recordsTo, count).map(_.asInstanceOf[AnyRef]) : _*))
+              Array(recordsFrom, recordsTo, count).map(_.asInstanceOf[AnyRef]).toSeq : _*))
 
   /**
    * The template prefix for general navigation components
@@ -306,7 +305,7 @@ trait SortedPaginatorSnippet[T, C] extends SortedPaginator[T, C] with PaginatorS
     val headerTransforms =
       headers.zipWithIndex.map {
         case ((binding, _), colIndex) =>
-          s".$binding *" #> { ns: NodeSeq =>
+          s".$binding *" #> { (ns: NodeSeq) =>
             <a href={sortedPageUrl(first, sortedBy(colIndex))}>{ns}</a>
           }
       }

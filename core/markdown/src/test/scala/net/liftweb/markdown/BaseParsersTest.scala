@@ -19,18 +19,15 @@ package net.liftweb.markdown
  * Christoph Henkelmann http://henkelmann.eu/
  */
 
-import org.scalatestplus.junit.JUnitRunner
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import collection.SortedMap
-import org.junit.runner.RunWith
 
 /**
  * Tests basic parsers that are used by the more complex parsing steps.
  */
 
-@RunWith(classOf[JUnitRunner])
-class BaseParsersTest extends FlatSpec with Matchers with BaseParsers{
+class BaseParsersTest extends AnyFlatSpec with Matchers with BaseParsers{
 
     "The BaseParsers" should "parse a newline" in {
         val p = nl
@@ -46,13 +43,13 @@ class BaseParsersTest extends FlatSpec with Matchers with BaseParsers{
         apply(p, "    ") should equal ("    ")
         apply(p, "\t\t") should equal ("\t\t")
         apply(p, "  \t  \t  ") should equal ("  \t  \t  ")
-        //we want newlines to be treated diferrently from other ws
+        //we want newlines to be treated differently from other ws
         an [IllegalArgumentException] should be thrownBy(apply(p, "\n"))
     }
 
     it should "be able to look behind" in {
-        apply (((elem('a') ~ lookbehind(Set('a')) ~ elem('b'))^^{case a~lb~b=>a+""+b}), "ab") should equal ("ab")
-        an [IllegalArgumentException] should be thrownBy { apply (((elem('a') ~ lookbehind(Set('b')) ~ elem('b'))^^{case a~b=>a+""+b}), "ab") }
+        apply (((elem('a') ~ lookbehind(Set('a')) ~ elem('b'))^^{case a~lb~b=>s"$a$b"}), "ab") should equal ("ab")
+        an [IllegalArgumentException] should be thrownBy { apply (((elem('a') ~ lookbehind(Set('b')) ~ elem('b'))^^{case a~b=>s"$a$b"}), "ab") }
 
         apply( (elem('a') ~ not(lookbehind(Set(' ', '\t', '\n'))) ~ '*' ), "a*"  )
 

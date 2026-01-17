@@ -23,6 +23,9 @@ import net.liftweb.common._
 import net.liftweb.util._
 import scala.xml.Node
 
+import org.json4s._
+import org.json4s.native._
+
 object JsCommands {
   def create = new JsCommands(Nil)
 
@@ -151,10 +154,8 @@ trait JsObj extends JsExp {
  * helpful conversions to/from Lift's JSON library
  */
 object JsExp {
-  import json._
-
   implicit def jValueToJsExp(jv: JValue): JsExp = new JsExp {
-    lazy val toJsCmd = compactRender(jv)
+    lazy val toJsCmd = JsonMethods.compact(JsonMethods.render(jv))
   }
 
   implicit def strToJsExp(str: String): JE.Str = JE.Str(str)
@@ -812,7 +813,7 @@ object JsCmds {
     ) + " = " + right.toJsCmd + ";};"
   }
 
-  implicit def jsExpToJsCmd(in: JsExp) = in.cmd
+  implicit def jsExpToJsCmd(in: JsExp) : JsCmd = in.cmd
 
   case class CmdPair(left: JsCmd, right: JsCmd) extends JsCmd {
     import scala.collection.mutable.ListBuffer
@@ -824,7 +825,7 @@ object JsCmds {
     }
 
     @scala.annotation.tailrec
-    private def appendDo(acc: ListBuffer[JsCmd], cmds: List[JsCmd]) {
+    private def appendDo(acc: ListBuffer[JsCmd], cmds: List[JsCmd]): Unit = {
       cmds match {
         case Nil =>
         case CmdPair(l, r) :: rest => appendDo(acc, l :: r :: rest)

@@ -264,7 +264,7 @@ trait HttpHelpers {
    */
   def findElems(nodes: NodeSeq)(f: Elem => Boolean): NodeSeq = {
     val ret = new ListBuffer[Elem]
-    def find(what: NodeSeq) {
+    def find(what: NodeSeq): Unit =  {
       what.foreach {
         case Group(g) => find(g)
         case e: Elem =>
@@ -287,7 +287,7 @@ trait HttpHelpers {
   def findInElems[T](nodes: NodeSeq)(f: Elem => Iterable[T]): List[T] = {
     val ret = new ListBuffer[T]
 
-    def find(what: NodeSeq) {
+    def find(what: NodeSeq): Unit =  {
       what.foreach {
         case Group(g) => find(g)
         case e: Elem =>
@@ -328,7 +328,7 @@ trait HttpHelpers {
   def deepFindKids(in: NodeSeq, prefix: String, label: String): NodeSeq = {
     val ret: ListBuffer[Node] = new ListBuffer
 
-    def doIt(in: NodeSeq) {
+    def doIt(in: NodeSeq): Unit = {
       in.foreach {
         case e: Elem if e.prefix == prefix && e.label == label =>
           e.child.foreach(ret.+=)

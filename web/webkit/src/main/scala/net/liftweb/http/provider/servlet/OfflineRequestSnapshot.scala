@@ -58,7 +58,7 @@ private [servlet] class OfflineRequestSnapshot(req: HTTPRequest, val provider: H
   /**
    * Destroy the underlying servlet session... null for offline requests
    */
-  def destroyServletSession() {
+  def destroyServletSession(): Unit = {
     // do nothing here
   }
 

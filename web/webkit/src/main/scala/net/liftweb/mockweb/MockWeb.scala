@@ -18,7 +18,7 @@
 package net.liftweb {
 package mockweb {
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 import common.{Box,Empty,Full}
 import http.{LiftRules,LiftSession,Req,S}

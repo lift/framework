@@ -103,7 +103,7 @@ trait Loc[T] {
    */
   def queryParameters(what: Box[T]): List[(String, String)] =
     addlQueryParams.flatMap(_()) :::
-  calcQueryParams.flatMap(_(what))
+      calcQueryParams.flatMap(_(what))
 
   protected def appendQueryParams(what: T)(nodeSeq: NodeSeq): NodeSeq =
     Text(appendQueryParameters(nodeSeq.text, Full(what)))
@@ -387,7 +387,7 @@ trait Loc[T] {
 
   private var _menu: Menu = _
 
-  private[sitemap] def menu_=(m: Menu) {
+  private[sitemap] def menu_=(m: Menu): Unit = {
     _menu = m
     m.siteMap.addLoc(this)
   }
@@ -470,7 +470,7 @@ trait Loc[T] {
 
   def inGroup_?(group: String): Boolean = groupSet.contains(group)
 
-  def init() {
+  def init(): Unit = {
     params.foreach(_ onCreate(this))
   }
 
@@ -533,7 +533,7 @@ object Loc {
    * in a SiteMap
    */
   trait LocParam[-T] {
-    def onCreate(loc: Loc[_]){
+    def onCreate(loc: Loc[_]): Unit = {
     }
   }
 
@@ -549,7 +549,7 @@ object Loc {
    */
   case class HttpAuthProtected(role: (Req) => Box[Role]) extends AnyLocParam {
 
-    override def onCreate(loc: Loc[_]) {
+    override def onCreate(loc: Loc[_]): Unit = {
       LiftRules.httpAuthProtectedResource.append(
         new LiftRules.HttpAuthProtectedResourcePF() {
           def isDefinedAt(in: Req) = in.path.partPath == loc.link.uriList
@@ -730,7 +730,7 @@ object Loc {
    */
   trait LocSnippets extends PartialFunction[String, NodeSeq => NodeSeq] with ValueSnippets[Any] with AnyLocParam {
     def snippets = {
-      case (s, _) if isDefinedAt(s) => apply(s)
+      case (s, _) if isDefinedAt(s) => this.apply(s)
     }
   }
 

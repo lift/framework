@@ -63,21 +63,21 @@ class MenuSpec extends Specification {
     "Properly render a menu item with default link text" in {
       testSiteMap("http://test.com/foo/baz") {
         S.withAttrs(new UnprefixedAttribute("name", "foobar", Null)) {
-          Menu.item(NodeSeq.Empty).toString mustEqual """<a href="/foo/bar">foobar</a>"""
+          Menu.item(NodeSeq.Empty).toString === """<a href="/foo/bar">foobar</a>"""
         }
       }
     }
     "Properly render a menu item with passed in link text" in {
       testSiteMap("http://test.com/foo/baz") {
         S.withAttrs(new UnprefixedAttribute("name", "foobar", Null)) {
-          Menu.item(Text("Foo")).toString mustEqual """<a href="/foo/bar">Foo</a>"""
+          Menu.item(Text("Foo")).toString === """<a href="/foo/bar">Foo</a>"""
         }
       }
     }
     "Hide item when on same page by default" in {
       testSiteMap("http://test.com/foo/baz") {
         S.withAttrs(new UnprefixedAttribute("name", "foobaz", Null)) {
-          Menu.item(NodeSeq.Empty).toString mustEqual ""
+          Menu.item(NodeSeq.Empty).toString === ""
         }
       }
     }
@@ -86,7 +86,7 @@ class MenuSpec extends Specification {
       testSiteMap("http://test.com/foo/baz") {
         val donthide = new UnprefixedAttribute("donthide", "true", Null)
         S.withAttrs(new UnprefixedAttribute("name", "foobaz", donthide)) {
-          Menu.item(NodeSeq.Empty).toString mustEqual "foobaz"
+          Menu.item(NodeSeq.Empty).toString === "foobaz"
         }
       }
     }
@@ -94,7 +94,7 @@ class MenuSpec extends Specification {
       testSiteMap("http://test.com/foo/baz") {
         val linkToSelf = new UnprefixedAttribute("linkToSelf", "true", Null)
         S.withAttrs(new UnprefixedAttribute("name", "foobaz", linkToSelf)) {
-          Menu.item(NodeSeq.Empty).toString mustEqual """<a href="/foo/baz">foobaz</a>"""
+          Menu.item(NodeSeq.Empty).toString === """<a href="/foo/baz">foobaz</a>"""
         }
       }
     }
@@ -113,7 +113,7 @@ class MenuSpec extends Specification {
     //         println(s"S.ajax_?: ${S.request.map(_.ajax_?)}")
 
     //         S.withAttrs(new UnprefixedAttribute("name", "foobar", Null)) {
-    //           Menu.item(NodeSeq.Empty).toString mustEqual """<a href="/foo/bar">foobar</a>"""
+    //           Menu.item(NodeSeq.Empty).toString === """<a href="/foo/bar">foobar</a>"""
     //         }
     //       }
     //     }

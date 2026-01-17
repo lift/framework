@@ -16,7 +16,7 @@
 package net.liftweb
 package mockweb
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 import scala.xml.NodeSeq
 
@@ -26,9 +26,11 @@ import org.specs2.execute.Result
 
 import common.{Box,Empty,Full}
 import http._
-import net.liftweb.json.JsonAST._
 import mocks.MockHttpServletRequest
 
+import org.json4s._
+import org.json4s.native.JsonMethods
+import org.json4s.JsonAST._
 
 /**
  * This trait provides Lift-specific extensions to the Specification
@@ -105,7 +107,7 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification with X
    * Converts a String description into a WebSpecBridge that can
    * then be used to set up either an S or Req instance.
    */
-  implicit def strToWebSpecBridge (description : String) =
+  implicit def strToWebSpecBridge (description : String) : WebSpecBridge =
     new WebSpecBridge(description)
 
   /**
@@ -124,8 +126,7 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification with X
      */
     def withPost (text : String, contentType : String = "text/plain") : T =
       withMods { mockReq =>
-        mockReq.body = text
-        mockReq.contentType = contentType
+        mockReq.body_=(text, contentType)
         mockReq.method = "POST"
       }
 
@@ -133,7 +134,7 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification with X
      * Modifies the request to POST the given request body JSON.
      */
     def withPost (jval : JValue) = withMods { mockReq =>
-      mockReq.body = jval
+      mockReq.body_=(jval)
       mockReq.method = "POST"
     }
 
@@ -141,7 +142,7 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification with X
      * Modifies the request to POST the given request body XML.
      */    
     def withPost (node : NodeSeq) = withMods { mockReq =>
-      mockReq.body = node
+      mockReq.body_=(node)
       mockReq.method = "POST"
     }
 
@@ -151,8 +152,7 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification with X
      */
     def withPut (text : String, contentType : String = "text/plain") =
       withMods { mockReq =>
-        mockReq.body = text
-        mockReq.contentType = contentType
+        mockReq.body_=(text, contentType)
         mockReq.method = "PUT"
       }
 
@@ -160,7 +160,7 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification with X
      * Modifies the request to PUT the given request body JSON.
      */
     def withPut (jval : JValue) = withMods { mockReq =>
-      mockReq.body = jval
+      mockReq.body_=(jval)
       mockReq.method = "PUT"
     }
 
@@ -168,7 +168,7 @@ abstract class WebSpec(boot : () => Any = () => {}) extends Specification with X
      * Modifies the request to PUT the given request body XML.
      */    
     def withPut (node : NodeSeq) = withMods { mockReq =>
-      mockReq.body = node
+      mockReq.body_=(node)
       mockReq.method = "PUT"
     }
 

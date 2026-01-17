@@ -66,17 +66,6 @@ class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen 
     "be converted to a date starting from the epoch time, using the date method" in forAllTimeZones {
       3.seconds.after(new Date(0)) must beTrue
     }
-    "be implicitly converted to a Long" in forAllTimeZones {
-      (3.seconds == 3000L) must_== true
-    }
-    "be compared to an int" in forAllTimeZones {
-      (3.seconds == 3000) must_== true
-      (3.seconds != 2000) must_== true
-    }
-    "be compared to a long" in forAllTimeZones {
-      (3.seconds == 3000L) must_== true
-      (3.seconds != 2000L) must_== true
-    }
     "be compared to another TimeSpan" in forAllTimeZones {
       3.seconds must_== 3.seconds
       3.seconds must_!= 2.seconds
@@ -92,16 +81,6 @@ class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen 
     }
     "return a new TimeSpan representing the difference of the 2 times when substracted with another TimeSpan" in forAllTimeZones {
       3.seconds - 4.seconds must_== (-1).seconds
-    }
-    "have a later method returning a date relative to now plus the time span" in forAllTimeZones {
-      val expectedTime = new Date().getTime + 3.seconds.millis
-
-      3.seconds.later.getMillis must beCloseTo(expectedTime, 1000L)
-    }
-    "have an ago method returning a date relative to now minus the time span" in forAllTimeZones {
-      val expectedTime = new Date().getTime - 3.seconds.millis
-
-      3.seconds.ago.getMillis must beCloseTo(expectedTime, 1000L)
     }
     "have a toString method returning the relevant number of weeks, days, hours, minutes, seconds, millis" in forAllTimeZones {
       val conversionIsOk = forAll(timeAmounts)((t: TimeAmounts) => { val (timeSpanToString, timeSpanAmounts) = t
@@ -138,11 +117,6 @@ class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen 
     }
     "provide a noTime function on Date objects to transform a date into a date at the same day but at 00:00" in forAllTimeZones {
       hourFormat(now.noTime) must_== "00:00:00"
-    }
-
-    "make sure noTime does not change the day" in forAllTimeZones {
-      dateFormatter.format(0.days.ago.noTime.toDate) must_== dateFormatter.format(new DateTime().toDate)
-      dateFormatter.format(3.days.ago.noTime.toDate) must_== dateFormatter.format(new Date(millis - (3 * 24 * 60 * 60 * 1000)))
     }
 
     "provide a day function returning the day of month corresponding to a given date (relative to UTC)" in forAllTimeZones {
@@ -232,7 +206,7 @@ object forAllTimeZones extends Around {
   import MatchersImplicits._
 
   override def around[T: AsResult](f: => T) = synchronized {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     // setDefault is on static context so tests should be sequenced
     // some timezones for java (used in formatters) and for Joda (other computations) has other offset
     val commonJavaAndJodaTimeZones = (TimeZone.getAvailableIDs.toSet & DateTimeZone.getAvailableIDs.asScala.toSet).filter { timeZoneId =>

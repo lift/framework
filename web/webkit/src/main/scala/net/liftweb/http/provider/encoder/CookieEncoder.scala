@@ -179,7 +179,7 @@ object CookieEncoder {
   }
 
   private def stripTrailingSeparator(buf: StringBuilder) = {
-    if (buf.length() > 0) {
+    if (buf.nonEmpty) {
       buf.setLength(buf.length() - 2);
     }
     buf.toString()

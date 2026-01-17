@@ -18,7 +18,7 @@ package net.liftweb
 package mocks
 
 import scala.collection.mutable.HashMap
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import java.io.PrintWriter
 import java.io.StringReader
 import java.io.BufferedReader
@@ -32,8 +32,8 @@ import java.util.Arrays
 import java.util.Date
 import java.util.Locale
 import java.util.Vector
-import javax.servlet._
-import javax.servlet.http._
+import jakarta.servlet._
+import jakarta.servlet.http._
 
 /**
  * A Mock HttpServletResponse. Take a peek at it's writer or
@@ -66,16 +66,16 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
   }
   def getStatus = statusCode
 
-  def addIntHeader(s: String, i: Int) {
+  def addIntHeader(s: String, i: Int): Unit = {
     addHeader(s, i.toString)
   }
-  def setIntHeader(s: String, i: Int) {
+  def setIntHeader(s: String, i: Int): Unit = {
     setHeader(s, i.toString)
   }
-  def addHeader(s1: String, s2: String) {
+  def addHeader(s1: String, s2: String): Unit = {
     headers += (s1 -> (headers.getOrElse(s1, Nil) ::: List(s2)))
   }
-  def setHeader(s1: String, s2: String) {
+  def setHeader(s1: String, s2: String): Unit = {
     headers += (s1 -> List(s2))
   }
 
@@ -89,24 +89,24 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
     headers.keySet.toSeq.asJava
   }
 
-  def addDateHeader(s: String, l: Long) {
+  def addDateHeader(s: String, l: Long): Unit = {
     addHeader(s, (new Date(l)).toString)
   }
-  def setDateHeader(s: String, l: Long) {
+  def setDateHeader(s: String, l: Long): Unit = {
     setHeader(s, (new Date(l)).toString)
   }
 
-  def sendRedirect(uri: String) {
+  override def sendRedirect(uri: String): Unit = {
     // Send back a 301 to the URL mentioned
     statusCode = 301
     addHeader("Location", uri)
   }
 
-  def sendError(code: Int) {
+  def sendError(code: Int): Unit = {
     statusCode = code
   }
 
-  def sendError(code: Int, s: String) {
+  def sendError(code: Int, s: String): Unit = {
     sendError(code)
     statusString = s
   }
@@ -129,14 +129,14 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
   }
   def getLocale: Locale = locale
   def setLocale(l: Locale) = locale = l
-  def reset {
+  def reset: Unit = {
     // well, reset all the state to it's original values. yikes. later.
   }
   def isCommitted = false
-  def resetBuffer {
+  def resetBuffer: Unit = {
     // reset the buffer.
   }
-  def flushBuffer {
+  def flushBuffer: Unit = {
     // flush the buffer
   }
   def getBufferSize(): Int = bufferSize
@@ -149,4 +149,6 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
   def getContentType(): String = contentType
   def getCharacterEncoding(): String = charEncoding
   def setContentLengthLong(l: Long): Unit = contentType = l.toString
+
+  override def sendRedirect(location: String, sc: Int, clearBuffer: Boolean): Unit = ???
 }

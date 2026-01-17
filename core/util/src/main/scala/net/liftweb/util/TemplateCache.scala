@@ -53,7 +53,7 @@ object NoCache extends TemplateCache[(Locale, List[String]), NodeSeq] {
 
   def set(key: T, node: NodeSeq): NodeSeq = node
 
-  def delete(key: T) {
+  def delete(key: T): Unit =  {
   }
 }
 
@@ -82,7 +82,7 @@ TemplateCache[(Locale, List[String]), NodeSeq] {
     node
   }
 
-  override def delete(key: T) {
+  override def delete(key: T): Unit = {
     cache.synchronized(cache.remove(key))
   }
 

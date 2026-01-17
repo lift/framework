@@ -22,11 +22,12 @@ import java.net.URI
 import scala.concurrent.duration._
 
 import common._
-import json._
 import util.Props
 import util.Helpers.tryo
 
 import LiftRules._
+
+import org.json4s._
 
 /**
  * Rules for HTTPS usage by a Lift application.
@@ -333,10 +334,10 @@ case class ContentSecurityPolicyViolation(
   originalPolicy: String
 )
 object ContentSecurityPolicyViolation extends LazyLoggable {
-  private[this] implicit val formats = DefaultFormats
+  private[this] implicit val formats: DefaultFormats.type = DefaultFormats
 
   def defaultViolationHandler: DispatchPF = {
-    case request @ Req(start :: "content-security-policy-report" :: Nil, _, _) if start == LiftRules.liftContextRelativePath =>
+    case request @ Req(start :+ "content-security-policy-report", _, _) if start == LiftRules.liftContextRelativePath() =>
       val violation =
         for {
           requestJson <- request.forcedBodyAsJson

@@ -76,15 +76,23 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
    * Get the future value
    */
   @scala.annotation.tailrec
-  final def get: T = synchronized {
-    if (satisfied) item
-    else if (aborted) throw new AbortedFutureException(failure)
-    else {
-      this.wait()
-      if (satisfied) item
-      else if (aborted) throw new AbortedFutureException(failure)
-      else get
+  final def get: T = {
+    synchronized {
+      if (satisfied) {
+        return item
+      } else if (aborted) {
+        throw new AbortedFutureException(failure)
+      } else {
+        this.wait()
+        if (satisfied) {
+          return item
+        } else if (aborted) {
+          throw new AbortedFutureException(failure)
+        }
+      }
     }
+
+    get
   }
 
   /**
@@ -92,7 +100,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
    * value has not been satisfied, execute the function
    * when the value is satified
    */
-  def foreach(f: T => Unit) {
+  def foreach(f: T => Unit):Unit = {
     onSuccess(f)
   }
 
@@ -188,7 +196,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
   /**
    * Abort the future.  It can never be satified
    */
-  def abort() {
+  def abort(): Unit = {
     fail(Empty)
   }
 
@@ -197,7 +205,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
    *
    * @param f the function to execute on success.
    */
-  def onSuccess(f: T => Unit) {
+  def onSuccess(f: T => Unit): Unit = {
     val contextFn = LAFuture.inContext(f, context)
     synchronized {
       if (satisfied) {LAFuture.executeWithObservers(scheduler, () => contextFn(item))} else
@@ -212,7 +220,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
    *
    * @param f the function to execute. Will receive a Box[Nothing] which may be a Failure if there's exception data
    */
-  def onFail(f: Box[Nothing] => Unit) {
+  def onFail(f: Box[Nothing] => Unit): Unit = {
     val contextFn = LAFuture.inContext(f, context)
     synchronized {
       if (aborted) LAFuture.executeWithObservers(scheduler, () => contextFn(failure)) else
@@ -227,7 +235,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
    *
    * @param f the function to execute on completion of the Future
    */
-  def onComplete(f: Box[T] => Unit) {
+  def onComplete(f: Box[T] => Unit): Unit = {
     val contextFn = LAFuture.inContext(f, context)
     synchronized {
       if (satisfied) {LAFuture.executeWithObservers(scheduler, () => contextFn(Full(item)))} else
@@ -240,7 +248,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
    * If the execution fails, do this
    * @param e
    */
-  def fail(e: Exception) {
+  def fail(e: Exception): Unit = {
     fail(Failure(e.getMessage, Full(e), Empty))
   }
 
@@ -248,7 +256,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
    * If the execution fails as a Box[Nothing], do this
    * @param e
    */
-  def fail(e: Box[Nothing]) {
+  def fail(e: Box[Nothing]): Unit = {
     synchronized {
       if (!satisfied && !aborted) {
         aborted = true
@@ -311,14 +319,14 @@ object LAFuture {
    *
    * @param future
    */
-  private def notifyObservers(future: LAFuture[_]) {
+  private def notifyObservers(future: LAFuture[_]): Unit = {
     val observers = threadInfo.get()
     if (null eq observers) {} else {
       observers.foreach(_(future))
     }
   }
 
-  private def executeWithObservers(scheduler: LAScheduler, f: () => Unit) {
+  private def executeWithObservers(scheduler: LAScheduler, f: () => Unit): Unit = {
     val cur = threadInfo.get()
     scheduler.execute(() => {
       val old = threadInfo.get()

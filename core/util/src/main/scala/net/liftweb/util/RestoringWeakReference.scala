@@ -74,10 +74,10 @@ class RestoringWeakReference[T <: AnyRef](private var reference:WeakReference[T]
 }
 object RestoringWeakReference {
   def apply[T <: AnyRef](restorer:()=>T) = {
-	new RestoringWeakReference(new WeakReference(restorer()), restorer)
+    new RestoringWeakReference(new WeakReference(restorer()), restorer)
   }
   def apply[T <: AnyRef](starter:T, restorer:()=>T) = {
-	new RestoringWeakReference(new WeakReference(starter), restorer)
+    new RestoringWeakReference(new WeakReference(starter), restorer)
   }
 }
 

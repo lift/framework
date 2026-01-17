@@ -72,3 +72,10 @@ node_modules
 
 # VSCode
 .vscode
+
+# metals
+.bsp
+.bloop
+project/.bloop
+project/metals.sbt
+project/project/

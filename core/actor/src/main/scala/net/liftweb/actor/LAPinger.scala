@@ -40,14 +40,16 @@ object ThreadPoolRules {
 object LAPinger {
 
   /**The underlying <code>java.util.concurrent.ScheduledExecutor</code> */
-  private var service = Executors.newSingleThreadScheduledExecutor(TF)
+  @volatile var buildService: () => ScheduledExecutorService = () => Executors.newSingleThreadScheduledExecutor(TF)
+
+  private var service: ScheduledExecutorService = buildService()
 
   /**
    * Re-create the underlying <code>SingleThreadScheduledExecutor</code>
    */
   def restart: Unit = synchronized {
     if ((service eq null) || service.isShutdown)
-      service = Executors.newSingleThreadScheduledExecutor(TF)
+      service = buildService()
   }
 
   /**
@@ -75,7 +77,7 @@ object LAPinger {
     try {
       service.schedule(r, delay, TimeUnit.MILLISECONDS)
     } catch {
-      case e: RejectedExecutionException => throw PingerException(msg + " could not be scheduled on " + to, e)
+      case e: RejectedExecutionException => throw PingerException(msg.toString + " could not be scheduled on " + to, e)
     }
   }
 

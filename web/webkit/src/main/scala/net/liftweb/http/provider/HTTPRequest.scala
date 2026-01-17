@@ -220,7 +220,7 @@ trait HTTPRequest {
    *
    * @param encoding - the encoding that will be used (e.g. UTF-8)
    */
-  def setCharacterEncoding(encoding: String)
+  def setCharacterEncoding(encoding: String): Unit 
 
   /**
    * Creates a new HTTPRequest instance as a copy of this one. It is used when

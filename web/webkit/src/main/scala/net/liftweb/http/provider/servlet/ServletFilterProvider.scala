@@ -19,8 +19,8 @@ package http
 package provider 
 package servlet 
 
-import javax.servlet._
-import javax.servlet.http._
+import jakarta.servlet._
+import jakarta.servlet.http._
 
 import net.liftweb.common._
 import net.liftweb.util._
@@ -32,7 +32,7 @@ trait ServletFilterProvider extends Filter with HTTPProvider {
   var ctx: HTTPContext = _
 
   //We need to capture the ServletContext on init
-  def init(config: FilterConfig) {
+  override def init(config: FilterConfig): Unit = {
     ctx = new HTTPServletContext(config.getServletContext)
 
     LiftRules.setContext(ctx)
@@ -42,7 +42,7 @@ trait ServletFilterProvider extends Filter with HTTPProvider {
   }
 
   //And throw it away on destruction
-  def destroy {
+  override def destroy: Unit = {
     ctx = null
     terminate
   }

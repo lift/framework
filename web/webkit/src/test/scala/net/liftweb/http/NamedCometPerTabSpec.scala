@@ -42,7 +42,7 @@ class NamedCometPerTabSpec extends Specification  {
   "A NamedCometDispatcher" should {
     step {
       val cometA= new CometA{override def name= Full("1")}
-      cometA.localSetup
+      cometA.localSetup()
 
       // HACK! to ensure tests doesn't fail when trying to access actor before they've been registered
       Thread.sleep(500)
@@ -62,7 +62,7 @@ class NamedCometPerTabSpec extends Specification  {
     }
     "not be created for a non existing key" in {
       NamedCometListener.getDispatchersFor(Full("2")).foreach(
-        actor => actor must_== Empty
+        actor => actor === Empty
       )
       success
     }

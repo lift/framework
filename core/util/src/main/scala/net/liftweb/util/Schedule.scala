@@ -58,7 +58,7 @@ sealed trait Schedule extends Loggable {
    */
   @volatile var blockingQueueSize: Box[Int] = Full(200000)
   
-  @volatile var buildExecutor: () => ThreadPoolExecutor =
+  @volatile var buildExecutor: () => ExecutorService =
     () => new ThreadPoolExecutor(threadPoolSize, 
                                  maxThreadPoolSize,
                                  60,
@@ -80,12 +80,12 @@ sealed trait Schedule extends Loggable {
   /**
    * Re-create the underlying <code>SingleThreadScheduledExecutor</code>
    */
-  def restart: Unit = synchronized
-  { if ((service eq null) || service.isShutdown)
-    service = buildService()
-   if ((pool eq null) || pool.isShutdown)
-     pool = buildExecutor()
- }
+  def restart: Unit = synchronized { if ((service eq null) || service.isShutdown)
+    if ((service eq null) || service.isShutdown)
+      service = buildService()
+    if ((pool eq null) || pool.isShutdown)
+      pool = buildExecutor()
+  }
 
 
   /**
@@ -150,7 +150,7 @@ sealed trait Schedule extends Loggable {
   def schedule(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] = 
     synchronized {
       val r = new Runnable {
-        def run() { 
+        def run(): Unit =  { 
           try {
             f.apply()
           } catch {

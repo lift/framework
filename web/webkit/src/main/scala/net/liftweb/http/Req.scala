@@ -22,12 +22,13 @@ import java.nio.file.{Files, Path}
 import scala.xml._
 
 import common._
-import json._
 import util._
 import Helpers._
 import http.provider._
 import sitemap._
 
+import org.json4s._
+import org.json4s.native._
 
 object UserAgentCalculator extends Factory {
   /**
@@ -164,20 +165,18 @@ trait UserAgentCalculator {
   /**
    * Is the Req coming from an iPhone
    */
-  lazy val isIPhone: Boolean = 
-    UserAgentCalculator.iPhoneCalcFunction.vend.
-  map(_.apply(userAgent)) openOr 
-    isSafari && (userAgent.map(s => 
-      s.indexOf("(iPhone") >= 0) openOr false)
+  lazy val isIPhone: Boolean =
+    UserAgentCalculator.iPhoneCalcFunction.vend.map(_.apply(userAgent)) openOr
+      isSafari && (userAgent.map(s =>
+        s.indexOf("(iPhone") >= 0) openOr false)
 
   /**
    * Is the Req coming from an iPad
    */
-  lazy val isIPad: Boolean = 
-    UserAgentCalculator.iPadCalcFunction.vend.
-  map(_.apply(userAgent)) openOr 
-  isSafari && (userAgent.map(s =>
-    s.indexOf("(iPad") >= 0) openOr false)
+  lazy val isIPad: Boolean =
+    UserAgentCalculator.iPadCalcFunction.vend.map(_.apply(userAgent)) openOr
+      isSafari && (userAgent.map(s =>
+        s.indexOf("(iPad") >= 0) openOr false)
 
   lazy val firefoxVersion: Box[Double] = 
     UserAgentCalculator.firefoxCalcFunction.vend.apply(userAgent)
@@ -309,7 +308,7 @@ class OnDiskFileParamHolder(override val name: String, override val mimeType: St
    */
   def length : Long = if (localPath == null) 0 else Files.size(localPath)
 
-  protected override def finalize {
+  protected override def finalize(): Unit = {
     tryo(Files.delete(localPath))
   }
 }
@@ -320,7 +319,7 @@ object OnDiskFileParamHolder {
     val file: Path = Files.createTempFile("lift_mime", "upload")
     val fos = Files.newOutputStream(file)
     val ba = new Array[Byte](8192)
-    def doUpload() {
+    def doUpload(): Unit = {
       inputStream.read(ba) match {
         case x if x < 0 =>
         case 0 => doUpload()
@@ -449,8 +448,8 @@ object Req {
             case n :: v :: _ => Full((urlDecode(n), urlDecode(v)))
             case n :: _ => Full((urlDecode(n), ""))
           }} yield (name, value)
-            
-            val names: List[String] = params.map(_._1).distinct
+
+      val names: List[String] = params.map(_._1).distinct
       val nvp: Map[String, List[String]] = params.foldLeft(Map[String, List[String]]()) {
         case (map, (name, value)) => map + (name -> (map.getOrElse(name, Nil) ::: List(value)))
       }
@@ -463,13 +462,13 @@ object Req {
       // post/put of XML or JSON... eagerly read the stream
       if ((reqType.post_? ||
            reqType.put_?) && contentType.dmap(false){
-	_.toLowerCase match {
-	  case x => 
-	    x.startsWith("text/xml") || 
-	    x.startsWith("application/xml") || 
-	  x.startsWith("text/json") ||
-	  x.startsWith("application/json")
-	}}) {
+        _.toLowerCase match {
+          case x =>
+            x.startsWith("text/xml") ||
+            x.startsWith("application/xml") ||
+            x.startsWith("text/json") ||
+            x.startsWith("application/json")
+        }}) {
         ParamCalcInfo(queryStringParam._1, 
                       queryStringParam._2 ++ localParams, 
                       Nil, 
@@ -683,7 +682,7 @@ final case class ContentType(theType: String,
      */
     def matches(contentType: (String, String)): Boolean =
       (theType == "*" || (theType == contentType._1)) &&
-    (subtype == "*" || subtype == contentType._2)
+        (subtype == "*" || subtype == contentType._2)
     
     /**
      * Is it a wildcard
@@ -885,15 +884,12 @@ class Req(val path: ParsePath,
   /**
    * A request that is neither Ajax or Comet
    */
-  lazy val standardRequest_? : Boolean = path.partPath match {
-    case x :: _ if x == LiftRules.liftContextRelativePath => false
-    case _ => true
-  }
+  lazy val standardRequest_? : Boolean = !path.partPath.startsWith(LiftRules.liftContextRelativePath())
 
   /**
    * Make the servlet session go away
    */
-  def destroyServletSession() {
+  def destroyServletSession(): Unit = {
     for {
       httpReq <- Box !! request
     } httpReq.destroyServletSession()

@@ -26,7 +26,8 @@ import util.Helpers._
 import js._
 import auth._
 import provider._
-import json.JsonAST.JValue
+
+import org.json4s._
 
 /**
  * Wrap a LiftResponse and cache the result to avoid computing the actual response
@@ -67,7 +68,7 @@ class LiftServlet extends Loggable {
       }
 
       tryo {
-        Schedule.shutdown
+        Schedule.shutdown()
       }
       tryo {
         LAScheduler.shutdown()
@@ -102,7 +103,7 @@ class LiftServlet extends Loggable {
 
     val req = if (null eq reqOrg) reqOrg else reqOrg.snapshot
 
-    def runFunction(doAnswer: LiftResponse => Unit) {
+    def runFunction(doAnswer: LiftResponse => Unit): Unit = {
       Schedule.schedule(() => {
         val answerFunc: (=> LiftResponse) => Unit = response =>
           doAnswer(wrapState(req, session)(response))
@@ -189,7 +190,7 @@ class LiftServlet extends Loggable {
   private def authPassed_?(req: Req): Boolean = {
 
     val checkRoles: (Role, List[Role]) => Boolean = {
-      case (resRole, roles) => (false /: roles)((l, r) => l || resRole.isChildOf(r.name))
+      case (resRole, roles) => (roles.foldLeft(false))((l, r) => l || resRole.isChildOf(r.name))
     }
 
     val role = NamedPF.applyBox(req, LiftRules.httpAuthProtectedResource.toList)
@@ -254,7 +255,7 @@ class LiftServlet extends Loggable {
     def authPassed_?(req: Req): Boolean = {
 
       val checkRoles: (Role, List[Role]) => Boolean = {
-        case (resRole, roles) => (false /: roles)((l, r) => l || resRole.isChildOf(r.name))
+        case (resRole, roles) => (roles.foldLeft(false))((l, r) => l || resRole.isChildOf(r.name))
       }
 
       val role = NamedPF.applyBox(req, LiftRules.httpAuthProtectedResource.toList)
@@ -317,26 +318,28 @@ class LiftServlet extends Loggable {
     }
 
     def cometOrAjax_?(req: Req): (Boolean, Boolean) = {
-      lazy val ajaxPath = LiftRules.liftContextRelativePath :: "ajax" :: Nil
-      lazy val cometPath = LiftRules.liftContextRelativePath :: "comet" :: Nil
+      lazy val ajaxPath = LiftRules.liftContextRelativePath() :+ "ajax"
+      lazy val cometPath = LiftRules.liftContextRelativePath() :+ "comet"
+      lazy val cometPathLength = cometPath.length
+      lazy val ajaxPathLength = ajaxPath.length
 
       val wp = req.path.wholePath
       val pathLen = wp.length
 
       def isComet: Boolean = {
-        if (pathLen < 3) {
+        if (pathLen <= cometPathLength) {
           false
         } else {
-          val kindaComet = wp.take(2) == cometPath
+          val kindaComet = wp.take(cometPathLength) == cometPath
 
           kindaComet && req.acceptsJavaScript_?
         }
       }
       def isAjax: Boolean = {
-        if (pathLen < 3) {
+        if (pathLen <= ajaxPathLength) {
           false
         } else {
-          val kindaAjax = wp.take(2) == ajaxPath
+          val kindaAjax = wp.take(ajaxPathLength) == ajaxPath
 
           kindaAjax && req.acceptsJavaScript_?
         }
@@ -472,10 +475,9 @@ class LiftServlet extends Loggable {
                 // run the continuation in the new session
                 // if there is a continuation
                 continuation match {
-                  case Full(func) => {
+                  case Full(func) =>
                     func()
                     S.redirectTo("/")
-                  }
                   case _ => // do nothing
                 }
 
@@ -578,11 +580,11 @@ class LiftServlet extends Loggable {
    * The requestVersion is passed to the function that is passed in.
    */
   private def extractVersions[T](path: List[String])(f: (Box[AjaxVersionInfo]) => T): T = {
-    val LiftPath = LiftRules.liftContextRelativePath
+    val LiftPath = LiftRules.liftContextRelativePath()
     path match {
-      case LiftPath :: "ajax" :: AjaxVersions(versionInfo @ AjaxVersionInfo(renderVersion, _, _)) :: _ =>
+      case LiftPath :+ "ajax" :+ AjaxVersions(versionInfo @ AjaxVersionInfo(renderVersion, _, _)) :+ _ =>
         RenderVersion.doWith(renderVersion)(f(Full(versionInfo)))
-      case LiftPath :: "ajax" :: renderVersion :: _ =>
+      case LiftPath :+ "ajax" :+ renderVersion :+ _ =>
         RenderVersion.doWith(renderVersion)(f(Empty))
       case _ => f(Empty)
     }
@@ -920,7 +922,7 @@ class LiftServlet extends Loggable {
 
   val dumpRequestResponse = Props.getBool("dump.request.response", false)
 
-  private def logIfDump(request: Req, response: BasicResponse) {
+  private def logIfDump(request: Req, response: BasicResponse): Unit = {
     if (dumpRequestResponse) {
       val toDump = request.uri + "\n" +
         request.params + "\n" +
@@ -940,7 +942,7 @@ class LiftServlet extends Loggable {
    * Sends the  { @code HTTPResponse } to the browser using data from the
    * { @link Response } and  { @link Req }.
    */
-  private[http] def sendResponse(liftResp: LiftResponse, response: HTTPResponse, request: Req) {
+  private[http] def sendResponse(liftResp: LiftResponse, response: HTTPResponse, request: Req): Unit = {
     def fixHeaders(headers: List[(String, String)]) = headers map ((v) => v match {
       case ("Location", uri) =>
         val u = request
@@ -1013,22 +1015,14 @@ class LiftServlet extends Loggable {
           response.outputStream.flush()
 
         case StreamingResponse(stream, endFunc, _, _, _, _) =>
-          import scala.language.reflectiveCalls
-
           try {
             var len = 0
             val ba = new Array[Byte](8192)
             val os = response.outputStream
-            stream match {
-              case jio: java.io.InputStream => len = jio.read(ba)
-              case stream => len = stream.read(ba)
-            }
+            len = stream.read(ba)
             while (len >= 0) {
               if (len > 0) os.write(ba, 0, len)
-              stream match {
-                case jio: java.io.InputStream => len = jio.read(ba)
-                case stream => len = stream.read(ba)
-              }
+              len = stream.read(ba)
             }
             response.outputStream.flush()
           } finally {
@@ -1050,11 +1044,11 @@ class LiftServlet extends Loggable {
 import net.liftweb.http.provider.servlet._
 
 private class SessionIdCalc(req: Req) {
-  private val LiftPath = LiftRules.liftContextRelativePath
+  private val LiftPath = LiftRules.liftContextRelativePath()
   lazy val id: Box[String] = req.request.sessionId match {
     case Full(id) => Full(id)
     case _ => req.path.wholePath match {
-      case LiftPath :: "comet" :: _ :: id :: _ :: _ => Full(id)
+      case LiftPath :+ "comet" :+ _ :+ id :+ _ :+ _ => Full(id)
       case _ => Empty
     }
   }

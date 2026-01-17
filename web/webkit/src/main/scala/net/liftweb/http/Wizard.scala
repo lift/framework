@@ -51,7 +51,7 @@ object WizardRules extends Factory with FormVendor {
       currentWizards.is.contains(id)
     }
 
-  private[http] def deregisterWizardSession(id: String) {
+  private[http] def deregisterWizardSession(id: String): Unit = {
     S.synchronizeForSession {
       currentWizards.set(currentWizards.is - id)
     }
@@ -158,7 +158,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
    * Override this method to do setup the first time the
    * screen is entered
    */
-  protected def localSetup() {
+  protected def localSetup(): Unit = {
 
   }
 
@@ -181,7 +181,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
         // val notices = S.getAllNotices
         S.seeOther(S.uri, () => {
           // S.appendNotices(notices)
-          localSnapshot.restore
+          localSnapshot.restore()
         })
       }
     }
@@ -256,7 +256,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
         // if (currentScreen.isEmpty) S.seeOther(Referer.is)
       }), // nextId: (String, () => Unit),
       Full(prevId -> (() => {
-        this.prevScreen
+        this.prevScreen()
       })), // prevId: Box[(String, () => Unit)],
       cancelId -> (() => {
         WizardRules.deregisterWizardSession(CurrentSession.is); redirectBack()
@@ -278,7 +278,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
 
   protected def wizardBottom: Box[Elem] = None
 
-  private def doTransition(from: Box[Screen], to: Box[Screen]) {
+  private def doTransition(from: Box[Screen], to: Box[Screen]): Unit = {
     to.foreach(_.enterScreen())
 
     (from, to) match {
@@ -300,7 +300,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
                        val currentScreen: Box[Screen],
                        private[http] val snapshot: Box[WizardSnapshot],
                        private val firstScreen: Boolean) extends Snapshot {
-    def restore() {
+    def restore(): Unit = {
       registerThisSnippet();
       ScreenVars.set(screenVars)
       if (CurrentScreen.set_?) {
@@ -319,7 +319,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
     }
   }
 
-  private def _register(screen: Screen) {
+  private def _register(screen: Screen): Unit = {
     _screenList = _screenList ::: List(screen)
   }
 
@@ -365,7 +365,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
 
   def currentScreen: Box[Screen] = CurrentScreen.is
 
-  def createSnapshot = {
+  override protected def createSnapshot: WizardSnapshot = {
     val cs = CurrentScreen.is
     val prev = PrevSnapshot.is
     val onFirst = OnFirstScreen.is
@@ -395,7 +395,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
 
           nextScreen match {
             case Empty =>
-              def useAndFinish(in: List[LoanWrapper]) {
+              def useAndFinish(in: List[LoanWrapper]): Unit = {
                 in match {
                   case Nil => {
                     WizardRules.deregisterWizardSession(CurrentSession.is)
@@ -486,7 +486,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
      *
      * @param from the screen we're coming from
      */
-    def transitionIntoFrom(from: Box[Screen]) {
+    def transitionIntoFrom(from: Box[Screen]): Unit = {
     }
 
     /**
@@ -496,7 +496,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
      *
      * @param to the screen we're transitioning to
      */
-    def transitionOutOfTo(to: Box[Screen]) {
+    def transitionOutOfTo(to: Box[Screen]): Unit = {
     }
 
     /**
@@ -513,7 +513,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
     /**
      * Define a field within the screen
      */
-    trait Field extends super.Field with ConfirmField {
+    trait WizardField extends Field with ConfirmField {
       /**
        * Is this field on the confirm screen
        */
@@ -521,7 +521,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
 
       override protected def otherFuncVendors(what: Manifest[ValueType]):
       Box[(ValueType, ValueType => Any) => NodeSeq] =
-        Wizard.this.vendForm(manifest) or WizardRules.vendForm(manifest)
+        Wizard.this.vendForm(what) or WizardRules.vendForm(what)
     }
 
     Wizard.this._register(this)
@@ -535,7 +535,7 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
      * to do on finish.  This method is called before the main Wizard's
      * finish method
      */
-    def finish() {
+    def finish(): Unit = {
     }
 
     /**
@@ -543,13 +543,13 @@ trait Wizard extends StatefulSnippet with Factory with ScreenWizardRendered {
      * to do on finish.  This method is executed after the main Wizards
      * finish() method.
      */
-    def postFinish() {
+    def postFinish(): Unit = {
     }
 
-    private[http] def enterScreen() {
+    private[http] def enterScreen(): Unit = {
       if (!_touched) {
         _touched.set(true)
-        localSetup()
+        this.localSetup()
       }
     }
 

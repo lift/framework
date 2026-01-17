@@ -64,7 +64,7 @@ class MsgSpec extends Specification with XmlMatchers {
           LiftRules.noticesToJsCmd().toString.replace("\n", "")
         }
 
-        result must_== """JsCmd(jQuery('#'+"foo").html("Error, <span class=\"funky\">Notice</span>");jQuery('#'+"bar").html("Warning");)"""
+        result === """JsCmd(jQuery('#'+"foo").html("Error, <span class=\"funky\">Notice</span>");jQuery('#'+"bar").html("Warning");)"""
       }
     }
   }

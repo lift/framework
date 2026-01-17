@@ -174,7 +174,7 @@ trait InlineParsers extends BaseParsers {
 
     /** Parser for inline markdown, always consumes all input, returns the resulting HTML.
      */
-    def inline(m:LinkMap):Parser[String] = (oneInline(new InlineContext(m))*) ^^ {_.mkString}
+    def inlineParser(m:LinkMap):Parser[String] = (oneInline(new InlineContext(m))*) ^^ {_.mkString}
 
 
 
@@ -185,7 +185,7 @@ trait InlineParsers extends BaseParsers {
 
     /** Parses two spaces at the end of a line to a manual break (<br/>)
      */
-    val br:Parser[String] = ("  \n") ^^^ {deco.decorateBreak() + "\n"}
+    val br:Parser[String] = ("  \n") ^^^ {deco().decorateBreak() + "\n"}
 
 
     /** Parses an inline code element.
@@ -194,13 +194,13 @@ trait InlineParsers extends BaseParsers {
      */
     val code:Parser[String] = ((("``" ~> ((not("``")~> aChar)+) <~ "``")^^{_.mkString}) |
                                ('`' ~> markdownText(Set('`'), false) <~ '`') ) ^^ {
-        c => deco.decorateCode(c.mkString)
+        c => deco().decorateCode(c.mkString)
     }
 
 
     /** Parses any xml tag and escapes attribute values.
      */
-    val xmlTag:Parser[String] = if (deco.allowVerbatimXml) (xmlEndTag | xmlStartOrEmptyTag)
+    val xmlTag:Parser[String] = if (this.deco().allowVerbatimXml()) (xmlEndTag | xmlStartOrEmptyTag)
                                 else failure("Inline XML processing disabled.")
 
 
@@ -210,7 +210,7 @@ trait InlineParsers extends BaseParsers {
         if (ctx.tags.contains("a")){
             failure("Cannot nest a link in a link.")
         } else {
-            elem('<') ~> markdownText(Set('>',' ', '<', '\n'), true) <~ '>' ^^ { u => deco.decorateLink(u, u, None) }
+            elem('<') ~> markdownText(Set('>',' ', '<', '\n'), true) <~ '>' ^^ { u => deco().decorateLink(u, u, None) }
         }
 
     /** A link started by square brackets, either a reference or a a link with the full URL.
@@ -224,7 +224,7 @@ trait InlineParsers extends BaseParsers {
             failure("Cannot nest a link in a link.")
         } else {
             '[' ~> linkInline(ctx.addTag("a")) ~ ("](" ~ ows) ~ url ~ ows ~ title <~ (ows ~ ')') ^^ {
-                case txt ~ _ ~ u ~ _ ~ ttl => deco.decorateLink(txt, u, ttl)
+                case txt ~ _ ~ u ~ _ ~ ttl => deco().decorateLink(txt, u, ttl)
             }
         }
 
@@ -235,7 +235,7 @@ trait InlineParsers extends BaseParsers {
             failure("Cannot nest a link in a link.")
         } else {
             ref(ctx.addTag("a")) ^^ {
-                case (LinkDefinition(_, u, ttl), txt) => deco.decorateLink(txt, u, ttl)
+                case (LinkDefinition(_, u, ttl), txt) => deco().decorateLink(txt, u, ttl)
             }
         }
 
@@ -293,13 +293,13 @@ trait InlineParsers extends BaseParsers {
      */
     val directImg:Parser[String] =
         elem('[') ~> refText ~ ("](" ~ ows) ~ url ~ ows ~ title <~ (ows ~ ')') ^^ {
-            case altText ~ _ ~ path ~ _ ~ ttl => deco.decorateImg(altText, path, ttl)
+            case altText ~ _ ~ path ~ _ ~ ttl => deco().decorateImg(altText, path, ttl)
         }
     /**
      * Parses a referenced image.
      */
     def refImg(ctx:InlineContext):Parser[String] = ref(ctx) ^^ {
-        case (LinkDefinition(_, u, ttl), alt) => deco.decorateImg(alt, u, ttl)
+        case (LinkDefinition(_, u, ttl), alt) => deco().decorateImg(alt, u, ttl)
     }
 
     /** Parses inline in a span element like bold or emphasis or link up until the given end marker
@@ -330,7 +330,7 @@ trait InlineParsers extends BaseParsers {
         if (ctx.tags.contains("em")) {
             failure("Cannot nest emphasis.")
         } else {
-            span("*", ctx.addTag("em")) ^^ { deco.decorateEmphasis(_) }
+            span("*", ctx.addTag("em")) ^^ { deco().decorateEmphasis(_) }
         }
 
 
@@ -340,7 +340,7 @@ trait InlineParsers extends BaseParsers {
         if (ctx.tags.contains("em")) {
             failure("Cannot nest emphasis.")
         } else {
-            span("_", ctx.addTag("em")) ^^ { deco.decorateEmphasis(_) }
+            span("_", ctx.addTag("em")) ^^ { deco().decorateEmphasis(_) }
         }
 
     /**Parses strong text in asterisks: **foo**
@@ -349,7 +349,7 @@ trait InlineParsers extends BaseParsers {
         if (ctx.tags.contains("strong")) {
             failure("Cannot nest strong text.")
         } else {
-            span("**", ctx.addTag("strong")) ^^ { deco.decorateStrong(_) }
+            span("**", ctx.addTag("strong")) ^^ { deco().decorateStrong(_) }
         }
 
     /**Parses strong text in underscores: __foo__
@@ -358,14 +358,14 @@ trait InlineParsers extends BaseParsers {
         if (ctx.tags.contains("strong")) {
             failure("Cannot nest strong text.")
         } else {
-            span("__", ctx.addTag("strong")) ^^ { deco.decorateStrong(_) }
+            span("__", ctx.addTag("strong")) ^^ { deco().decorateStrong(_) }
         }
 
 
     /**
      * Runs the inline parser on the given input and returns the result
      */
-    def applyInline(s:String, m:LinkMap)  = apply(inline(m), s)
+    def applyInline(s:String, m:LinkMap)  = apply(inlineParser(m), s)
 
     /**
      * Escapes the given string so it it can be embedded in xml.
@@ -388,7 +388,7 @@ trait InlineParsers extends BaseParsers {
         result.toString
     }
 
-  private lazy val entList = List(("quot",34), ("amp",38), ("lt",60), ("gt",62), ("nbsp",160), ("iexcl",161), ("cent",162), ("pound",163), ("curren",164), ("yen",165),
+    private lazy val entList = List(("quot",34), ("amp",38), ("lt",60), ("gt",62), ("nbsp",160), ("iexcl",161), ("cent",162), ("pound",163), ("curren",164), ("yen",165),
     ("euro",8364), ("brvbar",166), ("sect",167), ("uml",168), ("copy",169), ("ordf",170), ("laquo",171), ("shy",173), ("reg",174), ("trade",8482),
     ("macr",175), ("deg",176), ("plusmn",177), ("sup2",178), ("sup3",179), ("acute",180), ("micro",181), ("para",182), ("middot",183), ("cedil",184),
     ("sup1",185), ("ordm",186), ("raquo",187), ("frac14",188), ("frac12",189), ("frac34",190), ("iquest",191), ("times",215), ("divide",247),
@@ -416,9 +416,9 @@ trait InlineParsers extends BaseParsers {
     ("xi",958), ("omicron",959), ("pi",960), ("rho",961), ("sigmaf",962), ("sigma",963), ("tau",964), ("upsilon",965), ("phi",966), ("chi",967),
     ("psi",968), ("omega",969), ("thetasym",977), ("upsih",978), ("piv",982))
 
-  private lazy val validEntitySet = Set(entList.map(_._1) :_*)
+    private lazy val validEntitySet = Set(entList.map(_._1) :_*)
 
-  private def checkForSemi(i: Int, s: CharSequence, end: Int): Boolean = {
+    private def checkForSemi(i: Int, s: CharSequence, end: Int): Boolean = {
     var pos = i + 1
     val last = i + 10
     val sb = new StringBuffer(20)

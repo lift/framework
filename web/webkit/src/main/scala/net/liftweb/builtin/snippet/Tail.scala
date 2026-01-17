@@ -60,10 +60,10 @@ object Head extends DispatchSnippet {
          case e: Elem if (null eq e.prefix) => NodeSeq.Empty
          case x => x
        }
-     
-       val xhtml = validHeadTagsOnly(_xhtml)
 
-     <head>{
+    val xhtml = validHeadTagsOnly(_xhtml)
+
+    <head>{
        if ((S.attr("withResourceId") or S.attr("withresourceid")).filter(Helpers.toBoolean).isDefined) {
          WithResourceId.render(xhtml)
        } else {

@@ -19,10 +19,11 @@ package util
 
 import scala.language.postfixOps
 import scala.language.implicitConversions
-
 import scala.util.parsing.combinator._
 import common._
+
 import java.io._
+import scala.annotation.nowarn
 
 // FIXME This needs a capitalization update, but that may be impossible to do
 // FIXME without breaking code :/
@@ -35,6 +36,7 @@ object CSSHelpers extends ControlHelpers {
    * @param rootPrefix - the prefix to be added
    * @return (Box[String], String) - returns the tuple containing the parsing output and the original input (as a String)
    */
+  @nowarn(s"msg=method .* is deprecated .* we are unifying capitalization across Lift.*")
   def fixCSS(in: Reader, rootPrefix: String): (Box[String], String) = {
       val reader = new BufferedReader(in)
       val res = new StringBuilder;

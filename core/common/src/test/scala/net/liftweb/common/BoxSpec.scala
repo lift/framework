@@ -49,13 +49,13 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
 
   "A Box" can {
     "be created from a Option. It is Empty if the option is None" in {
-      Box(None) must beEmpty
+      Box(None) must be_==(Empty)
     }
     "be created from a Option. It is Full(x) if the option is Some(x)" in {
       Box(Some(1)) must_== Full(1)
     }
     "be created from a List containing one element. It is Empty if the list is empty" in {
-      Box(Nil) must beEmpty
+      Box(Nil) must be_==(Empty)
     }
     "be created from a List containing one element. It is Full(x) if the list is List(x)" in {
       Box(List(1)) must_== Full(1)
@@ -122,7 +122,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Full(1) filter {_ > 0} must_== Full(1)
     }
     "define a 'filter' method, returning Empty if the filter is not satisfied" in {
-      Full(1) filter {_ == 0} must beEmpty
+      Full(1) filter {_ == 0} must be_==(Empty)
     }
     "define a 'filterMsg' method, returning a Failure if the filter predicate is not satisfied" in {
       Full(1).filterMsg("not equal to 0")(_ == 0) must_== Failure("not equal to 0", Empty, Empty)
@@ -136,10 +136,10 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Full(1) map { _.toString } must_== Full("1")
     }
     "define a 'flatMap' method transforming its value in another Box. If the value is transformed in a Full box, the total result is a Full box" in {
-      Full(1) flatMap { x: Int => if (x > 0) Full("full") else Empty } must_== Full("full")
+      Full(1) flatMap { (x: Int) => if (x > 0) Full("full") else Empty } must_== Full("full")
     }
     "define a 'flatMap' method transforming its value in another Box. If the value is transformed in an Empty box, the total result is an Empty box" in {
-      Full(0) flatMap { x: Int => if (x > 0) Full("full") else Empty } must beEmpty
+      Full(0) flatMap { (x: Int) => if (x > 0) Full("full") else Empty } must be_==(Empty)
     }
     "define a 'flatten' method if it contains another Box." in {
       "If the inner box is a Full box, the final result is identical to that box" in {
@@ -157,7 +157,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
         Full("Albus") collect { case "Albus" => "Dumbledore"} must_== Full("Dumbledore")
       }
       "If the partial-function is not defined for the contents of this box, returns Empty" in {
-        Full("Hermione") collect { case "Albus" => "Dumbledore"} must beEmpty
+        Full("Hermione") collect { case "Albus" => "Dumbledore"} must be_==(Empty)
       }
     }
     "define a 'transform' method that takes a PartialFunction to transform this box into another box" in {
@@ -177,7 +177,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Full(1) flip { _ => "No data found" } mustEqual Empty
     }
     "define an 'elements' method returning an iterator containing its value" in {
-      Full(1).elements.next must_== 1
+      Full(1).elements.next() must_== 1
     }
     "define a 'toList' method returning a List containing its value" in {
       Full(1).toList must_== List(1)
@@ -193,7 +193,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     }
     "define a 'pass' method passing the can to a function and returning itself (alias: $)" in {
       var empty = false
-      def emptyString(s: Box[String]) = s foreach {c: String => empty = c.isEmpty}
+      def emptyString(s: Box[String]) = s foreach {(c: String) => empty = c.isEmpty}
       Full("") $ emptyString _
       empty must beTrue
     }
@@ -290,7 +290,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     }
     "return itself if filtered with a predicate" in {
       val empty: Box[Int] = Empty
-      empty.filter {_ > 0} must beEmpty
+      empty.filter {_ > 0} must be_==(Empty)
     }
     "define an 'exists' method returning false" in {
       val empty: Box[Int] = Empty
@@ -302,7 +302,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     }
     "define a 'filter' method, returning Empty" in {
       val empty: Box[Int] = Empty
-      empty filter {_ > 0} must beEmpty
+      empty filter {_ > 0} must be_==(Empty)
     }
     "define a 'filterMsg' method, returning a Failure" in {
       Empty.filterMsg("not equal to 0")(_ == 0) must_== Failure("not equal to 0", Empty, Empty)
@@ -314,16 +314,16 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       total must_== 0
     }
     "define a 'map' method returning Empty" in {
-      Empty map {_.toString} must beEmpty
+      Empty map {_.toString} must be_==(Empty)
     }
     "define a 'flatMap' method returning Empty" in {
-      Empty flatMap {x: Int => Full("full")} must beEmpty
+      Empty flatMap {(x: Int) => Full("full")} must be_==(Empty)
     }
     "define a 'flatten' method returning Empty" in {
-      Empty.flatten must beEmpty
+      Empty.flatten must be_==(Empty)
     }
     "define a 'collect' method returning Empty" in {
-      Empty collect { case _ => "Some Value" } must beEmpty
+      Empty collect { case _ => "Some Value" } must be_==(Empty)
     }
     "define a 'transform' method that takes a PartialFunction to transform this Empty box into another box" in {
       "If the partial-function is defined for Empty, returns the result of applying the partial function to it" in {
@@ -399,7 +399,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
   "A Failure is an Empty Box which" should {
     "return itself if mapped, flatMapped or flattened" in {
       Failure("error", Empty, Empty) map {_.toString} must_== Failure("error", Empty, Empty)
-      Failure("error", Empty, Empty) flatMap {x: String => Full(x.toString)} must_== Failure("error", Empty, Empty)
+      Failure("error", Empty, Empty) flatMap {(x: String) => Full(x.toString)} must_== Failure("error", Empty, Empty)
       Failure("error", Empty, Empty).flatten must_== Failure("error", Empty, Empty)
     }
     "define a 'collect' method returning itself" in {

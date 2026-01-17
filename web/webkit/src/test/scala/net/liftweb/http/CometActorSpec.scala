@@ -69,9 +69,9 @@ class CometActorSpec extends Specification {
     }
 
     class FunctionRedirectingComet extends SpecCometActor {
-      override def lowPriority = {
+      override def lowPriority: PartialFunction[Any, Unit] = {
         case TestMessage =>
-          S.redirectTo("place", () => "do stuff")
+          S.redirectTo("place", () => /* do stuff*/ ())
       }
     }
 
@@ -103,7 +103,7 @@ class CometActorSpec extends Specification {
           case BoomSession =>
             try {
               didRun = true
-              S.session.foreach(_.destroySession)
+              S.session.foreach(_.destroySession())
             } catch {
               case e: Exception =>
                 didThrow = true

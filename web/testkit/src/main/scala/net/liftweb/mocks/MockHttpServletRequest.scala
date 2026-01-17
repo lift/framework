@@ -26,10 +26,10 @@ import java.util.Date
 import java.util.Locale
 import java.util.{Enumeration => JEnum}
 import java.util.{HashMap => JHash}
-import javax.servlet._
-import javax.servlet.http._
+import jakarta.servlet._
+import jakarta.servlet.http._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable.ListBuffer
 import scala.xml.NodeSeq
 
@@ -37,7 +37,9 @@ import scala.xml.NodeSeq
 import common.{Box,Empty}
 import util.Helpers
 
-import json.JsonAST._
+import org.json4s._
+import org.json4s.native._
+import org.json4s.JsonAST._
 
 /**
  * A Mock ServletRequest. Change its state to create the request you are
@@ -84,7 +86,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * Note that the String will be converted to bytes
    * based on the current setting of charEncoding.
    */
-  def body_= (s : String) : Unit = body_=(s, "text/plain")
+  def body_= (s : String): Unit = body_=(s, "text/plain")
 
   /**
    * Sets the body to the given string and content type.
@@ -92,7 +94,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * Note that the String will be converted to bytes
    * based on the current setting of charEncoding.
    */
-  def body_= (s : String, contentType : String) : Unit = {
+  def body_= (s : String, contentType : String): Unit = {
     body = s.getBytes(charEncoding)
     this.contentType = contentType
   }
@@ -104,7 +106,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * Note that the elements will be converted to bytes
    * based on the current setting of charEncoding.
    */
-  def body_= (nodes : NodeSeq) : Unit = body_=(nodes, "text/xml")
+  def body_= (nodes : NodeSeq): Unit = body_=(nodes, "text/xml")
 
   /**
    * Sets the body to the given elements and content type.
@@ -112,7 +114,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * Note that the elements will be converted to bytes
    * based on the current setting of charEncoding.
    */
-  def body_= (nodes : NodeSeq, contentType : String) : Unit = {
+  def body_= (nodes : NodeSeq, contentType : String): Unit = {
     body = nodes.toString.getBytes(charEncoding)
     this.contentType = contentType
   }
@@ -121,16 +123,13 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * Sets the body to the given json value. Also
    * sets the contentType to "application/json"
    */
-  def body_= (jval : JValue) : Unit = body_=(jval, "application/json")
+  def body_= (jval : JValue): Unit = body_=(jval, "application/json")
 
   /**
    * Sets the body to the given json value and content type.
    */
-  def body_= (jval : JValue, contentType : String) : Unit = {
-    import json.JsonDSL._
-    import json.JsonAST
-
-    body = JsonAST.prettyRender(jval).getBytes(charEncoding)
+  def body_= (jval : JValue, contentType : String): Unit = {
+    body = JsonMethods.pretty(JsonMethods.render(jval)).getBytes(charEncoding)
     this.contentType = contentType
   }
 
@@ -192,7 +191,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
       null
     }
 
-  def queryString_= (q : String) {
+  def queryString_= (q : String): Unit = {
     if (q != null && q.length > 0) {
       val newParams = ListBuffer[(String,String)]()
 
@@ -307,7 +306,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    *
    * @param url The URL to extract from
    */
-  def processUrl (url : String) {
+  def processUrl (url : String): Unit = {
     if (url.toLowerCase.startsWith("http")) {
       processUrl(new URL(url))
     } else if (url.startsWith("/")) {
@@ -334,7 +333,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * @param url The URL to extract from
    * @param contextPath The servlet context of the request. Defaults to ""
    */
-  def processUrl (url : URL) {
+  def processUrl (url : URL): Unit = {
     // Deconstruct the URL to set values
     url.getProtocol match {
       case "http" => scheme = "http"; secure = false
@@ -373,7 +372,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   /**
    * Adds an "Authorization" header, per RFC1945.
    */
-  def addBasicAuth (user : String, pass : String) {
+  def addBasicAuth (user : String, pass : String): Unit = {
     val hashedCredentials =
       Helpers.base64Encode((user  + ":" + pass).getBytes)
     headers += "Authorization" -> List("Basic " + hashedCredentials)
@@ -547,7 +546,7 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
    * A utility method to set the given header to an RFC1123 date
    * based on the given long value (epoch seconds).
    */
-  def setDateHeader(s: String, l: Long) {
+  def setDateHeader(s: String, l: Long): Unit = {
     headers += (s -> List(Helpers.toInternetDate(l)))
   }
 
@@ -570,10 +569,16 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
   def getServletContext(): ServletContext = null
   def isAsyncStarted(): Boolean = false
   def isAsyncSupported(): Boolean = false
-  def startAsync(request: javax.servlet.ServletRequest, response: javax.servlet.ServletResponse): AsyncContext = null
+  def startAsync(request: jakarta.servlet.ServletRequest, response: jakarta.servlet.ServletResponse): AsyncContext = null
   def startAsync(): AsyncContext = null
   def changeSessionId(): String = null
   def getContentLengthLong(): Long = body.length
 
-  def upgrade[T <: javax.servlet.http.HttpUpgradeHandler](x$1: Class[T]): T = ???
+  override def getRequestId: String = ???
+
+  override def getProtocolRequestId: String = ???
+
+  override def getServletConnection: ServletConnection = ???
+
+  def upgrade[T <: jakarta.servlet.http.HttpUpgradeHandler](x$1: Class[T]): T = ???
 }

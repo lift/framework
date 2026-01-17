@@ -18,8 +18,7 @@ package mocks
 
 import org.specs2.mutable.Specification
 
-import json.JsonDSL._
-
+import org.json4s.JsonDSL._
 
 /**
  * System under specification for MockHttpRequest.
@@ -95,7 +94,7 @@ class MockHttpRequestSpec extends Specification  {
     "properly set a default content type for JSON" in {
       val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
 
-      testRequest.body = ("name" -> "joe")
+      testRequest.body_=("name" -> "joe")
 
       testRequest.contentType must_== "application/json"
     }
@@ -111,7 +110,7 @@ class MockHttpRequestSpec extends Specification  {
     "properly set a default content type for XML" in {
       val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
 
-      testRequest.body = <test/>
+      testRequest.body_=(<test/>)
 
       testRequest.contentType must_== "text/xml"
     }
@@ -127,7 +126,7 @@ class MockHttpRequestSpec extends Specification  {
     "properly set a default content type for a String" in {
       val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
 
-      testRequest.body = "test"
+      testRequest.body_=("test")
 
       testRequest.contentType must_== "text/plain"
     }

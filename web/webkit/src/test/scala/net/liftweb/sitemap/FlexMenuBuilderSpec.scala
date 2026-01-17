@@ -41,7 +41,7 @@ object FlexMenuBuilderSpec extends WebSpec(FlexMenuBuilderSpecBoot.boot _) {
       object MenuBuilder extends FlexMenuBuilder { override def expandAll = true}
       val expandAll: NodeSeq = <ul><li><a href="/index">Home</a></li><li><span>Help</span><ul><li><a href="/index1">Home1</a></li><li><a href="/index2">Home2</a></li></ul></li><li><a href="/help2">Help2</a><ul><li><a href="/index3">Home3</a></li><li><a href="/index4">Home4</a></li></ul></li></ul>
       val actual = MenuBuilder.render
-      expandAll.toString must_== actual.toString
+      expandAll.toString === actual.toString
     }
 
     "Add css class to item in the path" withSFor(testUrlPath) in {
@@ -56,7 +56,7 @@ object FlexMenuBuilderSpec extends WebSpec(FlexMenuBuilderSpecBoot.boot _) {
       }
       val itemInPath: NodeSeq = <ul><li><a href="/index">Home</a></li><li class="active"><a href="/help">Help</a><ul><li class="active"><span>Home1</span></li><li><a href="/index2">Home2</a></li></ul></li><li><a href="/help2">Help2</a></li></ul>
       val actual = MenuBuilder.render
-      itemInPath.toString must_== actual.toString
+      itemInPath.toString === actual.toString
     }
 
     "Add css class to the current item" withSFor(testUrl) in {
@@ -71,7 +71,7 @@ object FlexMenuBuilderSpec extends WebSpec(FlexMenuBuilderSpecBoot.boot _) {
       }
       val itemInPath: NodeSeq = <ul><li><a href="/index">Home</a></li><li class="active"><span>Help</span></li><li><a href="/help2">Help2</a></li></ul>
       val actual = MenuBuilder.render
-      itemInPath.toString must_== actual.toString
+      itemInPath.toString === actual.toString
     }
   }
 
@@ -82,7 +82,7 @@ object FlexMenuBuilderSpec extends WebSpec(FlexMenuBuilderSpecBoot.boot _) {
  * you could just use "() => bootstrap.Boot.boot".
  */
 object FlexMenuBuilderSpecBoot {
-  def boot() {
+  def boot() : Unit = {
     def siteMap = SiteMap(
       Menu.i("Home") / "index",
       Menu.i("Help") / "help" submenus (

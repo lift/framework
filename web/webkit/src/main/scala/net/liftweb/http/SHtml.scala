@@ -26,7 +26,10 @@ import http.js.AjaxInfo
 import JE._
 import JsCmds._
 import scala.xml._
-import json._
+
+import org.json4s._
+import org.json4s.native._
+import org.json4s.native.JsonMethods._
 
 class SHtmlJBridge {
   def sHtml = SHtml
@@ -340,8 +343,7 @@ trait SHtml extends Loggable {
 
       def apply(ns: NodeSeq): NodeSeq =
         Helpers.findBox(ns){e => latestElem = fixElem(e);
-                            latestKids = e.child; Full(e)}.
-      map(ignore => applyAgain()).openOr(NodeSeq.Empty)
+                            latestKids = e.child; Full(e)}.map(ignore => applyAgain()).openOr(NodeSeq.Empty)
 
       def applyAgain(): NodeSeq =
         latestElem.copy(child = f(this)(latestKids))
@@ -476,7 +478,7 @@ trait SHtml extends Loggable {
     def swapJsCmd (show : String, hide : String) : JsCmd = Show(show) & Hide(hide)
 
     def setAndSwap (show : String, showContents : => NodeSeq, hide : String) : JsCmd =
-      (SHtml.ajaxCall(Str("ignore"), {ignore : String => SetHtml(show, showContents)})._2.cmd & swapJsCmd(show,hide))
+      (SHtml.ajaxCall(Str("ignore"), {(ignore : String) => SetHtml(show, showContents)})._2.cmd & swapJsCmd(show,hide))
 
     def displayMarkup : NodeSeq =
       displayContents ++ Text(" ") ++
@@ -1370,7 +1372,7 @@ trait SHtml extends Loggable {
 
   private def email_*(value: String, func: AFuncHolder, attrs: ElemAttr*): Elem =
     makeFormElement("email", func, attrs: _*) %
-  new UnprefixedAttribute("value", Text(value), Null)
+      new UnprefixedAttribute("value", Text(value), Null)
 
   /**
    * Generate an input field with type url.  At some point,
@@ -1389,7 +1391,7 @@ trait SHtml extends Loggable {
 
   private def url_*(value: String, func: AFuncHolder, attrs: ElemAttr*): Elem =
     makeFormElement("url", func, attrs: _*) %
-  new UnprefixedAttribute("value", Text(value), Null)
+      new UnprefixedAttribute("value", Text(value), Null)
 
   /**
    * Generate an input field with type number.  At some point,
@@ -2087,7 +2089,7 @@ trait SHtml extends Loggable {
             val radio =
               attrs.foldLeft(<input type="radio"
                              name={name} value={id}/>)(_ % _) %
-            checked(deflt.filter(_ == value).isDefined)
+              checked(deflt.filter(_ == value).isDefined)
 
             val elem = if (idx == 0) {
               radio ++ <input type="hidden" value={hiddenId} name={name}/>

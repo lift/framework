@@ -15,16 +15,25 @@ Because Lift applications are written in [Scala](http://www.scala-lang.org), an 
 
 ## Getting Started
 
-**Compatibility note:**
-As of Lift 3.0, you'll need to be running Java 8 to use Lift. For those using Java 6 or Java 7,
-you'll need to use Lift 2.6 until you can upgrade your Java installation.
-
 You can create a new Lift project using your favorite build system by adding Lift as a dependency.
 Below we walk through setting up Lift in sbt and Maven.
 
+### A note on Java Compatibility
+
+It's worth noting that the version of Java you're running may change what version of Lift you're
+able to run. The following represents our Java compatibility for the recent major releases.
+
+| Lift Version | Java Version |
+|--------------|--------------|
+|2.6           |Java >= 6     |
+|3.0+          |Java >= 8     |
+|4.0+          |Java >= 11    |
+
+If you do not have a compatible Java version you will get errors when you try to use the Framework.
+
 ### With sbt (new project)
 
-If you're using a recent version of sbt (e.g. 0.13.16), you can create a new Lift application using
+If you're using a recent version of sbt, you can create a new Lift application using
 our Giter8. To create a new, basic Lift application that has some example code, simply execute:
 
 ```
@@ -109,7 +118,7 @@ Add Lift to your `pom.xml` like so:
       <version>3.3.0</version>
     </dependency>
 
-Where `${scala.version}` is `2.11` or `2.12`. Individual patch releases of the Scala compiler
+Where `${scala.version}` is `2.13` for the 4.x series. Individual patch releases of the Scala compiler
 (e.g. 2.12.2) are binary compatible with everything in their release series, so you only need the
 first two version parts.
 
@@ -213,4 +222,3 @@ Lift is open source software released under the **Apache 2.0 license**.
 
 ## Continuous Integration
 
-SNAPSHOTs are built by [Travis CI](https://travis-ci.org/lift/framework)

@@ -18,14 +18,16 @@ package net.liftweb
 package common
 
 import scala.xml.{NodeSeq, Text}
-
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
+
+import scala.annotation.nowarn
 
 
 /**
  * System under specification for Conversions.
  */
+@nowarn("msg=.* NodeSeqFunc in package common.* is deprecate.*")
 class ConversionsSpec extends Specification with XmlMatchers {
 
   "A StringOrNodeSeq" should {

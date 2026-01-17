@@ -20,8 +20,8 @@ package provider
 package servlet 
 package containers 
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet._
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet._
 
 import net.liftweb.common._
 import net.liftweb.http._
@@ -43,8 +43,8 @@ object Servlet30AsyncProvider extends AsyncProviderMeta {
                     complete,
                     isSupported) = {
     try {
-      val cc = Class.forName("javax.servlet.ServletRequest")
-      val asyncClass = Class.forName("javax.servlet.AsyncContext")
+      val cc = Class.forName("jakarta.servlet.ServletRequest")
+      val asyncClass = Class.forName("jakarta.servlet.AsyncContext")
       val startAsync = cc.getMethod("startAsync")
       val getResponse = asyncClass.getMethod("getResponse")
       val complete = asyncClass.getMethod("complete")
@@ -70,8 +70,7 @@ object Servlet30AsyncProvider extends AsyncProviderMeta {
    * return a function that vends the ServletAsyncProvider
    */
   def providerFunction: Box[HTTPRequest => ServletAsyncProvider] =
-    Full(req => new Servlet30AsyncProvider(req)).
-  filter(i => suspendResumeSupport_?)
+    Full(req => new Servlet30AsyncProvider(req)).filter(i => suspendResumeSupport_?)
 
 
 }
@@ -102,7 +101,7 @@ class Servlet30AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider with
     asyncCtx = startAsync.invoke(servletReq)
     try {
     	val st = asyncCtx.asInstanceOf[SetTimeout]
-    	st.setTimeout(0l)
+    	st.setTimeout(0L)
     } catch {
     case e: Exception => logger.error("Servlet 3.0 Async: Failed to set timeout", e)
     }
@@ -112,7 +111,7 @@ class Servlet30AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider with
 
   def resume(what: (Req, LiftResponse)): Boolean = {
     logger.trace("Servlet 3.0 begin resume")
-    val httpRes = getResponse.invoke(asyncCtx).asInstanceOf[javax.servlet.http.HttpServletResponse]
+    val httpRes = getResponse.invoke(asyncCtx).asInstanceOf[jakarta.servlet.http.HttpServletResponse]
     val httpResponse = new HTTPResponseServlet(httpRes)
     val liftServlet = req.provider.liftServlet
     try {

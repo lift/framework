@@ -24,19 +24,19 @@ private[common] trait LinkedListElem[T1, T2] {
   private[common] var value2: T2 = _
 
 
-  private[common] def remove {
+  private[common] def remove: Unit = {
     _prev._next = _next
     _next._prev = _prev
   }
 
-  private[common] def addAtHead(what: LinkedListElem[T1, T2]) {
+  private[common] def addAtHead(what: LinkedListElem[T1, T2]): Unit = {
     what._next = _next
     what._prev = this
     _next._prev = what
     this._next = what
   }
 
-  private[common] def addAtTail(what: LinkedListElem[T1, T2]) {
+  private[common] def addAtTail(what: LinkedListElem[T1, T2]): Unit = {
     what._prev = _prev
     what._next = this
     _prev._next = what
@@ -73,7 +73,7 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
    * Updates the `LRUMap`'s current max size to `newMaxSize`, evicting the
    * oldest entries if the size has shrunk.
    */
-  def updateMaxSize(newMaxSize: Int) {
+  def updateMaxSize(newMaxSize: Int): Unit = {
     val oldMaxSize = _maxSize
     _maxSize = newMaxSize
 
@@ -128,12 +128,12 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
   /**
    * Alias for `[[-]]`.
    */
-  def remove(key: K) {
+  def remove(key: K): Unit = {
     localMap.get(key) match {
       case null =>
-	case v =>
-          v.remove
-      localMap.remove(key)
+      case v =>
+        v.remove
+        localMap.remove(key)
     }
   }
 
@@ -144,13 +144,13 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
    * new in the map and the map has grown beyond the specifiex `[[maxSize]]`,
    * evicts the least-recently-used entries.
    */
-  def update(key: K, value: V) {
+  def update(key: K, value: V): Unit = {
     localMap.get(key) match {
       case null =>
         val what = new LinkedListElem[K, V] {def value1 = key}
-      what.value2 = value
-      addAtHead(what)
-      localMap.put(key, what)
+        what.value2 = value
+        addAtHead(what)
+        localMap.put(key, what)
 
       doRemoveIfTooMany()
 
@@ -173,7 +173,7 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
    * A mechanism for expiring elements from cache. This method can devolve into
    * O(n ^ 2) if lots of elements can't be expired.
    */
-  private def doRemoveIfTooMany() {
+  private def doRemoveIfTooMany(): Unit = {
     while (localMap.size > maxSize) {
       var toRemove = _prev
       while (!canExpire(toRemove.value1, toRemove.value2)) {
@@ -192,7 +192,7 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
    *
    * Does nothing by default, override for custom functionality.
    */
-  protected def expired(key: K, value: V) {
+  protected def expired(key: K, value: V): Unit = {
 
   }
 
@@ -202,7 +202,7 @@ class LRUMap[K, V](initMaxSize: Int, loadFactor: Box[Float], expiredFunc: ((K, V
     val set = localMap.entrySet.iterator
     new Iterator[(K, V)] {
       def hasNext = set.hasNext
-      def next: (K, V) = {
+      def next() : (K, V) = {
         val k = set.next
         (k.getKey, k.getValue.value2)
       }

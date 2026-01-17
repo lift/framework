@@ -190,13 +190,13 @@ class LineTokenizer() extends Parsers {
     /** Parses tokens that may occur inside a block. Works like the normal token parser except that
      * it does not check for link definitions and verbatim XML.
      */
-    def innerTokens(lookup:Map[String, LinkDefinition]):Parser[MarkdownLineReader] = phrase(lineToken *) ^^ {
+    def innerTokens(lookup:Map[String, LinkDefinition]):Parser[MarkdownLineReader] = phrase(lineToken.*) ^^ {
         case ts => new MarkdownLineReader(ts, lookup)
     }
 
     /** Parses first level line tokens, i.e. Markdown lines, XML chunks and link definitions.
      */
-    def tokens:Parser[MarkdownLineReader] = phrase((preprocessToken | lineToken) *) ^^ { case ts =>
+    def tokens:Parser[MarkdownLineReader] = phrase((preprocessToken | lineToken).*) ^^ { case ts =>
         val lines = new ArrayBuffer[MarkdownLine]()
         val lookup = new HashMap[String, LinkDefinition]()
         for (t <- ts) { t match {

@@ -46,14 +46,14 @@ class ScheduleSpec extends Specification with PendingUntilFixed with PingedServi
       service.pinged must eventually(beTrue)
     }
     "honor shutdown followed by restart" in {
-      Schedule.shutdown
+      Schedule.shutdown()
       Schedule.restart
       Schedule.schedule(service, Alive, TimeSpan(10))
       service.pinged must eventually(beTrue)
     }
     "not honor multiple shutdowns" in {
-      Schedule.shutdown
-      Schedule.shutdown
+      Schedule.shutdown()
+      Schedule.shutdown()
 //      service.pinged must eventually(beFalse)
       service.pinged must throwA[ActorPingException]
     }.pendingUntilFixed

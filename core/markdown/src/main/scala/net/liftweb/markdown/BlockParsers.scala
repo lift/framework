@@ -46,14 +46,14 @@ trait BlockParsers extends Parsers {
     /**
      * returns the current indentation string repeated the given number of levels
      */
-    def indent(level:Int):String = deco.indentation * level
+    def indent(level:Int):String = deco().indentation() * level
 
     private val tokenizer = new LineTokenizer()
 
     /** A markdown block element.
      */
     sealed abstract class MarkdownBlock extends InlineParsers{
-        override def deco = BlockParsers.this.deco
+        override def deco() = BlockParsers.this.deco()
 
         /** adds the resulting xhtml snippet to the given string builder
          */
@@ -77,24 +77,24 @@ trait BlockParsers extends Parsers {
      * Represents a block of verbatim xml
      */
     class VerbatimXml(line:XmlChunk) extends MarkdownBlock {
-        def addResult(level:Int, out:StringBuilder) {out.append(line.content)}
+        def addResult(level:Int, out:StringBuilder): Unit = {out.append(line.content)}
     }
 
     /**
      * Represents a horizontal ruler
      */
     object Ruler extends MarkdownBlock {
-        def addResult(level:Int, out:StringBuilder) {out.append(indent(level)).append(deco.decorateRuler)}
+        def addResult(level:Int, out:StringBuilder): Unit = {out.append(indent(level)).append(this.deco().decorateRuler())}
     }
 
     /**
      * Represents a header
      */
     case class Header(content:String, headerLevel:Int, lookup:Map[String, LinkDefinition]) extends MarkdownBlock{
-        def addResult(level:Int, out:StringBuilder) {
-            out.append(indent(level)).append(deco.decorateHeaderOpen(headerLevel))
+        def addResult(level:Int, out:StringBuilder): Unit = {
+            out.append(indent(level)).append(this.deco().decorateHeaderOpen(headerLevel))
                .append(applyInline(content, lookup))
-               .append(indent(level)).append(deco.decorateHeaderClose(headerLevel))
+               .append(indent(level)).append(this.deco().decorateHeaderClose(headerLevel))
         }
     }
 
@@ -102,26 +102,26 @@ trait BlockParsers extends Parsers {
      * Represents a block of verbatim qouted code
      */
     class CodeBlock(lines:List[MarkdownLine]) extends MarkdownBlock{
-        def addResult(level:Int, out:StringBuilder) {
-            out.append(indent(level)).append(deco.decorateCodeBlockOpen)
+        def addResult(level:Int, out:StringBuilder): Unit = {
+            out.append(indent(level)).append(this.deco().decorateCodeBlockOpen())
             for (line <- lines) {
                 val escaped = escapeXml(line.payload)
                 out.append(escaped).append('\n')
                 //out.append(line.content)
             }
-            out.append(indent(level)).append(deco.decorateCodeBlockClose)
+            out.append(indent(level)).append(this.deco().decorateCodeBlockClose())
         }
     }
 
     class FencedCodeBlock(language:String, lines:List[MarkdownLine]) extends MarkdownBlock{
-        def addResult(level:Int, out:StringBuilder) {
-            out.append(indent(level)).append(deco.decorateCodeBlockOpen)
+        def addResult(level:Int, out:StringBuilder): Unit = {
+            out.append(indent(level)).append(this.deco().decorateCodeBlockOpen())
             for (line <- lines) {
                 val escaped = escapeXml(line.fullLine)
                 out.append(escaped).append('\n')
                 //out.append(line.content)
             }
-            out.append(indent(level)).append(deco.decorateCodeBlockClose)
+            out.append(indent(level)).append(this.deco().decorateCodeBlockClose())
         }
     }
 
@@ -131,17 +131,17 @@ trait BlockParsers extends Parsers {
     class Paragraph(lines:List[MarkdownLine], lookup:Map[String, LinkDefinition])
             extends MarkdownBlock{
 
-        def addResult(level:Int, out:StringBuilder) {
-            out.append(indent(level)).append(deco.decorateParagraphOpen)
+        def addResult(level:Int, out:StringBuilder): Unit = {
+            out.append(indent(level)).append(this.deco().decorateParagraphOpen())
             addResultPlain(level, out)
-            out.append(indent(level)).append(deco.decorateParagraphClose)
+            out.append(indent(level)).append(this.deco().decorateParagraphClose())
         }
 
         /**
          * Adds the result without any decoration, (no wrapping tags)
          * Used for building list items that don't have their content wrappend in paragraphs
          */
-        def addResultPlain(level:Int, out:StringBuilder) {
+        def addResultPlain(level:Int, out:StringBuilder): Unit = {
 
             val temp = new StringBuilder()
             lines.foreach(line => temp.append(indent(level)).append(line.payload).append('\n'))
@@ -164,16 +164,16 @@ trait BlockParsers extends Parsers {
      */
     class Blockquote(lines:List[MarkdownLine], lookup:Map[String, LinkDefinition])
             extends MarkdownBlock {
-        def addResult(level:Int, out:StringBuilder) {
+        def addResult(level:Int, out:StringBuilder):Unit = {
             //the block parser needs to recurse:
             val innerLines = lines.map(line => line.payload)
             val reader = BlockParsers.this.tokenizer.innerTokenize(innerLines, lookup)
             //now apply the normal markdown parser to the new content
             val innerBlocks = BlockParsers.this.applyBlocks(reader)
             //wrap the resulting blocks in blockquote tags
-            out.append(indent(level)).append(deco.decorateBlockQuoteOpen)
+            out.append(indent(level)).append(this.deco().decorateBlockQuoteOpen())
             innerBlocks.foreach(block => block.addResult(level+1, out))
-            out.append(indent(level)).append(deco.decorateBlockQuoteClose)
+            out.append(indent(level)).append(this.deco().decorateBlockQuoteClose())
         }
     }
 
@@ -183,12 +183,12 @@ trait BlockParsers extends Parsers {
      */
     class ListItem(val lines:List[MarkdownLine], lookup:Map[String, LinkDefinition]) extends LineParsers {
 
-        override def deco(): Decorator = BlockParsers.this.deco
+        override def deco(): Decorator = BlockParsers.this.deco()
 
         def endsWithNewline = lines.size > 1 && (lines.last.isInstanceOf[EmptyLine])
 
-        def addResult(level:Int, out:StringBuilder, paragraph_? : Boolean) {
-            out.append(indent(level)).append(deco.decorateItemOpen)
+        def addResult(level:Int, out:StringBuilder, paragraph_? : Boolean):Unit = {
+            out.append(indent(level)).append(this.deco().decorateItemOpen())
             //the block parser needs to recurse:
             val innerLines = lines.map(line => line.payload)
             val reader = BlockParsers.this.tokenizer.innerTokenize(innerLines, lookup)
@@ -198,7 +198,7 @@ trait BlockParsers extends Parsers {
                 case (p:Paragraph) :: Nil if (!paragraph_?) => p.addResultPlain(level+1, out)
                 case _                                      => innerBlocks.foreach(block => block.addResult(level+1, out))
             }
-            out.append(indent(level)).append(deco.decorateItemClose)
+            out.append(indent(level)).append(this.deco().decorateItemClose())
         }
     }
 
@@ -224,7 +224,7 @@ trait BlockParsers extends Parsers {
         /**
          * calls recursive handling of nested items
          */
-        def addResult(level:Int, out:StringBuilder) {
+        def addResult(level:Int, out:StringBuilder):Unit = {
             addResult(level, out, items.head::items)
         }
     }
@@ -233,10 +233,10 @@ trait BlockParsers extends Parsers {
      * An ordered (i.e. numbered) list of items.
      */
     class OList (items:List[ListItem]) extends ListBlock(items) {
-        override def addResult(level:Int, out:StringBuilder) {
-            out.append(indent(level)).append(deco.decorateOListOpen)
+        override def addResult(level:Int, out:StringBuilder):Unit = {
+            out.append(indent(level)).append(this.deco().decorateOListOpen())
             super.addResult(level, out)
-            out.append(indent(level)).append(deco.decorateOListClose)
+            out.append(indent(level)).append(this.deco().decorateOListClose())
         }
     }
 
@@ -244,10 +244,10 @@ trait BlockParsers extends Parsers {
      * An unordered list of items.
      */
     class UList (items:List[ListItem]) extends ListBlock(items) {
-        override def addResult(level:Int, out:StringBuilder) {
-            out.append(indent(level)).append(deco.decorateUListOpen)
+        override def addResult(level:Int, out:StringBuilder): Unit = {
+            out.append(indent(level)).append(this.deco().decorateUListOpen())
             super.addResult(level, out)
-            out.append(indent(level)).append(deco.decorateUListClose)
+            out.append(indent(level)).append(this.deco().decorateUListClose())
         }
     }
 
@@ -304,7 +304,7 @@ trait BlockParsers extends Parsers {
     ///////////////////
 
     def atxHeader:Parser[Header] = line(classOf[AtxHeaderLine]) ~ lookup ^^ {
-        case l ~ lu => new Header(l.trimHashes, l.headerLevel, lu)
+        case l ~ lu => new Header(l.trimHashes(), l.headerLevel, lu)
     }
 
     def setExtHeader:Parser[Header] =

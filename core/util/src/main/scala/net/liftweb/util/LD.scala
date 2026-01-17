@@ -50,11 +50,11 @@ object LD {
     (ly: @unchecked) match {
       case w :: Nil => (w, this(root, f(w)))
 
-        case w :: ws =>
-          val tv = this(root, f(w))
-      val rest = this(root, ws, f)
-      if (tv < rest._2) (w, tv)
-      else rest
+      case w :: ws =>
+        val tv = this(root, f(w))
+        val rest = this(root, ws, f)
+        if (tv < rest._2) (w, tv)
+        else rest
     }
 
   /**
@@ -77,10 +77,10 @@ object LD {
         case Nil => acc.toList
         case c :: cs =>
           val cost = if (c == ch) 0 else 1
-        val i = dist.head
-        val calc = min(left + cost, i + 1, top + 1)
-        acc += calc
-        column(cs, dist.tail, i, calc, ch, acc)
+          val i = dist.head
+          val calc = min(left + cost, i + 1, top + 1)
+          acc += calc
+          column(cs, dist.tail, i, calc, ch, acc)
       }
 
     def matrix(word: List[Char], pos: Int, dist: List[Int]): List[Int] =

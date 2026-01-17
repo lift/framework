@@ -274,45 +274,17 @@ trait TimeHelpers { self: ControlHelpers =>
         (total._1 / div._1, (total._1 % div._1, div._2) :: total._2)
       }._2
       def formatAmount(amountUnit: (Long, String)) = amountUnit match {
-        case (amount, unit) if (amount == 1) => amount + " " + unit
-        case (amount, unit) => amount + " " + unit + "s"
+        case (amount, unit) if (amount == 1) => s"${amount} ${unit}"
+        case (amount, unit) => s"${amount} ${unit}s"
       }
       divideInUnits(millis).filter(_._1 > 0).map(formatAmount(_)).mkString(", ")
     }
-
-    /**
-     * Convert a Date to a TimeSpan
-     */
-    @deprecated("Date to TimeSpan conversion will be removed for possibility of mistakes in on-duration operations", "3.0.0")
-    implicit def dateToTS(in: Date): TimeSpan =
-      new TimeSpan(Left(new Duration(in.getTime)))
-
 
     /**
      * Convert a Duration to a TimeSpan
      */
     implicit def durationToTS(in: Duration): TimeSpan =
       new TimeSpan(Left(in))
-
-    /**
-     * Convert a Period to a TimeSpan
-     */
-    @deprecated("Implicit conversion from Period to TimeSpan will be removed due to its unclear behavior; use new Period(timeSpan.millis) instead.", "3.0.0")
-    implicit def periodToTS(in: Period): TimeSpan =
-      new TimeSpan(Right(in))
-
-    /**
-     * Convert a TimeSpan to a Period
-     */
-    @deprecated("Implicit conversion from TimeSpan to Period will be removed due to its unclear behavior; use new TimeSpan(period.toDurationFrom(startDateTime)) instead.", "3.0.0")
-    implicit def tsToPeriod[TS <% TimeSpan](in: TS): Period = in.toPeriod
-
-    /**
-     * Convert a DateTime to a TimeSpan
-     */
-    @deprecated("Implicit conversion from DateTime to TimeSpan will be removed due to its unclear behavior; use new TimeSpan(dateTime.getMillis) instead.", "3.0.0")
-    implicit def dateTimeToTS(in: DateTime): TimeSpan =
-      new TimeSpan(Left(new Duration(in.getMillis)))
   }
 
   /** @return the current System.nanoTime() */
@@ -337,7 +309,7 @@ trait TimeHelpers { self: ControlHelpers =>
   def weeks(in: Long): Long = days(in) * 7L
 
   /** implicit def used to add the noTime method to the Date class */
-  implicit def toDateExtension(d: Date) = new DateExtension(d)
+  implicit def toDateExtension(d: Date): DateExtension = new DateExtension(d)
 
   /** This class adds a noTime method the Date class, in order to get at Date object starting at 00:00 */
   class DateExtension(date: Date) {
@@ -359,7 +331,7 @@ trait TimeHelpers { self: ControlHelpers =>
   }
 
   /** implicit def used to add the setXXX methods to the Calendar class */
-  implicit def toCalendarExtension(c: Calendar) = new CalendarExtension(c)
+  implicit def toCalendarExtension(c: Calendar): CalendarExtension = new CalendarExtension(c)
 
   /** This class adds the setXXX methods to the Calendar class. Each setter returns the updated Calendar */
   class CalendarExtension(c: Calendar) {
@@ -517,13 +489,6 @@ trait TimeHelpers { self: ControlHelpers =>
       case e: Exception => logger.debug("Error parsing date "+in, e); Failure("Bad date: "+in, Full(e), Empty)
     }
   }
-
-  implicit class PeriodExtension[P <% Period](period: P) {
-    def later: DateTime = new DateTime(millis).plus(period)
-
-    def ago: DateTime = new DateTime(millis).minus(period)
-  }
-
 }
 
 trait ConvertableToDate {

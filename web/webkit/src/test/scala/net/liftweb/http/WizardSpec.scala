@@ -34,10 +34,13 @@ class WizardSpec extends Specification  {
   class WizardForTesting extends Wizard {
     object completeInfo extends WizardVar(false)
 
-    def finish() {
+    def finish(): Unit = {
       S.notice("Thank you for registering your pet")
       completeInfo.set(true)
     }
+
+    // Public wrapper for testing
+    def testCreateSnapshot = createSnapshot
 
     class NameAndAgeScreen extends Screen {
       val name = field(S ? "First Name", "",
@@ -68,95 +71,95 @@ class WizardSpec extends Specification  {
   val MyWizard = new WizardForTesting
 
   "A Wizard can be defined" in {
-    MyWizard.nameAndAge.screenName must_== "Screen 1"
-    MyWizard.favoritePet.screenName must_== "Screen 3"
+    MyWizard.nameAndAge.screenName === "Screen 1"
+    MyWizard.favoritePet.screenName === "Screen 3"
   }
 
   "A field must have a correct Manifest" in {
-    MyWizard.nameAndAge.age.manifest.runtimeClass.getName must_== classOf[Int].getName
+    MyWizard.nameAndAge.age.manifest.runtimeClass.getName === classOf[Int].getName
   }
 
   "A wizard must transition from first screen to second screen" in {
     S.initIfUninitted(session) {
-      MyWizard.currentScreen.openOrThrowException("legacy code") must_== MyWizard.nameAndAge
+      MyWizard.currentScreen.openOrThrowException("legacy code") === MyWizard.nameAndAge
 
-      MyWizard.nextScreen
+      MyWizard.nextScreen()
 
-      MyWizard.currentScreen.openOrThrowException("legacy code") must_== MyWizard.nameAndAge
+      MyWizard.currentScreen.openOrThrowException("legacy code") === MyWizard.nameAndAge
 
       MyWizard.nameAndAge.name.set("David")
       MyWizard.nameAndAge.age.set(14)
 
-      MyWizard.nextScreen
+      MyWizard.nextScreen()
 
-      MyWizard.currentScreen.openOrThrowException("legacy code") must_== MyWizard.parentName
+      MyWizard.currentScreen.openOrThrowException("legacy code") === MyWizard.parentName
 
-      MyWizard.prevScreen
+      MyWizard.prevScreen()
 
-      MyWizard.currentScreen.openOrThrowException("legacy code") must_== MyWizard.nameAndAge
+      MyWizard.currentScreen.openOrThrowException("legacy code") === MyWizard.nameAndAge
 
       MyWizard.nameAndAge.age.set(45)
 
-      MyWizard.nextScreen
+      MyWizard.nextScreen()
 
-      MyWizard.currentScreen.openOrThrowException("legacy code") must_== MyWizard.favoritePet
+      MyWizard.currentScreen.openOrThrowException("legacy code") === MyWizard.favoritePet
 
       S.clearCurrentNotices
 
       MyWizard.favoritePet.petName.set("Elwood")
 
-      MyWizard.nextScreen
+      MyWizard.nextScreen()
 
-      MyWizard.currentScreen must_== Empty
+      MyWizard.currentScreen === Empty
 
-      MyWizard.completeInfo.is must_== true
+      MyWizard.completeInfo.is === true
     }
   }
 
   "A wizard must be able to snapshot itself" in {
     val ss = S.initIfUninitted(session) {
-      MyWizard.currentScreen.openOrThrowException("legacy code") must_== MyWizard.nameAndAge
+      MyWizard.currentScreen.openOrThrowException("legacy code") === MyWizard.nameAndAge
 
-      MyWizard.nextScreen
+      MyWizard.nextScreen()
 
-      MyWizard.currentScreen.openOrThrowException("legacy code") must_== MyWizard.nameAndAge
+      MyWizard.currentScreen.openOrThrowException("legacy code") === MyWizard.nameAndAge
 
       MyWizard.nameAndAge.name.set("David")
       MyWizard.nameAndAge.age.set(14)
 
-      MyWizard.nextScreen
+      MyWizard.nextScreen()
 
-      MyWizard.currentScreen.openOrThrowException("legacy code") must_== MyWizard.parentName
+      MyWizard.currentScreen.openOrThrowException("legacy code") === MyWizard.parentName
 
-      MyWizard.createSnapshot
+      MyWizard.testCreateSnapshot
     }
 
     S.initIfUninitted(session) {
-      MyWizard.currentScreen.openOrThrowException("legacy code") must_== MyWizard.nameAndAge
+      MyWizard.currentScreen.openOrThrowException("legacy code") === MyWizard.nameAndAge
     }
 
     S.initIfUninitted(session) {
       ss.restore()
 
-      MyWizard.prevScreen
+      MyWizard.prevScreen()
 
-      MyWizard.currentScreen.openOrThrowException("legacy code") must_== MyWizard.nameAndAge
+      MyWizard.currentScreen.openOrThrowException("legacy code") === MyWizard.nameAndAge
 
       MyWizard.nameAndAge.age.set(45)
 
-      MyWizard.nextScreen
+      MyWizard.nextScreen()
 
-      MyWizard.currentScreen.openOrThrowException("legacy code") must_== MyWizard.favoritePet
+      MyWizard.currentScreen.openOrThrowException("legacy code") === MyWizard.favoritePet
 
       S.clearCurrentNotices
 
       MyWizard.favoritePet.petName.set("Elwood")
 
-      MyWizard.nextScreen
+      MyWizard.nextScreen()
 
-      MyWizard.currentScreen must_== Empty
+      MyWizard.currentScreen === Empty
 
-      MyWizard.completeInfo.is must_== true
+      MyWizard.completeInfo.is === true
     }
   }
 }

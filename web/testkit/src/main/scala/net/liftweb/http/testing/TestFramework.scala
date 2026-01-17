@@ -22,8 +22,9 @@ import scala.language.implicitConversions
 
 import net.liftweb.util.Helpers._
 import net.liftweb.util._
-import net.liftweb.json._
-import JsonDSL._
+import org.json4s._
+import org.json4s.native._
+import org.json4s.JsonDSL._
 import net.liftweb.common._
 import scala.xml._
 import scala.xml.Utility.trim
@@ -83,14 +84,12 @@ trait ToBoxTheResponse {
       (baseUrl + fullUrl, httpClient.executeMethod(getter)) match {
         case (server, responseCode) =>
           val respHeaders = slurpApacheHeaders(getter.getResponseHeaders)
+          val body = for {
+            st <- Box !! getter.getResponseBodyAsStream
+            bytes <- tryo(readWholeStream(st))
+          } yield bytes
 
-        Full(new TheResponse(baseUrl,
-                             responseCode, getter.getStatusText,
-                             respHeaders,
-                             for {st <- Box !! getter.getResponseBodyAsStream
-                                  bytes <- tryo(readWholeStream(st))
-                                } yield bytes,
-                             httpClient))
+          Full(new TheResponse(baseUrl, responseCode, getter.getStatusText, respHeaders, body, httpClient))
       }
     } catch {
       case e: IOException => Failure(baseUrl + fullUrl, Full(e), Empty)
@@ -201,14 +200,14 @@ trait BaseGetPoster {
 
       def isRepeatable() = true
 
-      def writeRequest(out: OutputStream) {
+      def writeRequest(out: OutputStream): Unit = {
         out.write(bytes)
       }
     }
 
   implicit def jsonToRequestEntity(body: JValue): RequestEntity =
     new RequestEntity {
-      val bytes = compactRender(body).toString.getBytes("UTF-8")
+      val bytes = JsonMethods.compact(JsonMethods.render(body)).toString.getBytes("UTF-8")
 
       def getContentLength() = bytes.length
 
@@ -216,7 +215,7 @@ trait BaseGetPoster {
 
       def isRepeatable() = true
 
-      def writeRequest(out: OutputStream) {
+      def writeRequest(out: OutputStream): Unit = {
         out.write(bytes)
       }
     }
@@ -269,7 +268,7 @@ trait BaseGetPoster {
 
       def isRepeatable() = true
 
-      def writeRequest(out: OutputStream) {
+      def writeRequest(out: OutputStream): Unit = {
         out.write(bytes)
       }
     })
@@ -342,7 +341,7 @@ trait BaseGetPoster {
 
       def isRepeatable() = true
 
-      def writeRequest(out: OutputStream) {
+      def writeRequest(out: OutputStream): Unit = {
         out.write(bytes)
       }
     })
@@ -456,7 +455,7 @@ trait TestKit extends ClientBuilder with GetPoster with GetPosterHelper {
   def baseUrl: String
 
   class TestHandler(res: TestResponse) {
-    def then(f: TestResponse => TestResponse): TestResponse = f(res)
+    def `then`(f: TestResponse => TestResponse): TestResponse = f(res)
 
     def also(f: TestResponse => Any): TestResponse = {f(res); res}
   }
@@ -518,14 +517,14 @@ trait TestFramework extends TestKit {
 
   // protected lazy val httpClient = new HttpClient(new MultiThreadedHttpConnectionManager)
 
-  def fork(cnt: Int)(f: Int => Any) {
+  def fork(cnt: Int)(f: Int => Any): Unit = {
     val threads = for (t <- (1 to cnt).toList) yield {
-      val th = new Thread(new Runnable {def run {f(t)}})
+      val th = new Thread(new Runnable {def run: Unit = {f(t)}})
       th.start
       th
     }
 
-    def waitAll(in: List[Thread]) {
+    def waitAll(in: List[Thread]): Unit = {
       in match {
         case Nil =>
         case x :: xs => x.join; waitAll(xs)
@@ -612,7 +611,7 @@ object TestHelpers {
   type CRK = JavaList[String]
 
   implicit def jitToIt[T](in: JavaIterator[T]): Iterator[T] = new Iterator[T] {
-    def next: T = in.next
+    def next(): T = in.next()
 
     def hasNext = in.hasNext
   }
@@ -792,9 +791,7 @@ class HttpResponse(baseUrl: String,
                    code: Int, msg: String,
                    headers: Map[String, List[String]],
                    body: Box[Array[Byte]],
-                   theHttpClient: HttpClient) extends
-  BaseResponse(baseUrl, code, msg, headers, body, theHttpClient) with
-  ToResponse with TestResponse {
+                   theHttpClient: HttpClient) extends BaseResponse(baseUrl, code, msg, headers, body, theHttpClient) with ToResponse with TestResponse {
   }
 
 /**
@@ -805,9 +802,7 @@ class TheResponse(baseUrl: String,
                   code: Int, msg: String,
                   headers: Map[String, List[String]],
                   body: Box[Array[Byte]],
-                  theHttpClient: HttpClient) extends
-  BaseResponse(baseUrl, code, msg, headers, body, theHttpClient) with
-  ToBoxTheResponse {
+                  theHttpClient: HttpClient) extends BaseResponse(baseUrl, code, msg, headers, body, theHttpClient) with ToBoxTheResponse {
     type SelfType = TheResponse
 
   }
@@ -831,7 +826,7 @@ abstract class BaseResponse(override val baseUrl: String,
   private object FindElem {
     def unapply(in: NodeSeq): Option[Elem] = in match {
       case e: Elem => Some(e)
-      case d: Document => unapply(d.docElem)
+      case d: scala.xml.Document => unapply(d.docElem)
       case g: Group => unapply(g.nodes)
       case n: Text => None
       case sn: SpecialNode => None

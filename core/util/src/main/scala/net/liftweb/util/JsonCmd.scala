@@ -31,7 +31,8 @@ trait HasParams {
 case class JsonCmd(command: String, target: String, params: Any,
                    all: scala.collection.Map[String, Any])
 
-import net.liftweb.json.JsonAST._
+import org.json4s._
+import org.json4s.native.JsonMethods._
 
 /**
 * A helpful extractor to take the JValue sent from the client-side JSON stuff and
@@ -67,7 +68,7 @@ class ResponseInfoHolder {
 
   def docType = _docType
 
-  def docType_=(in: Box[String]) {
+  def docType_=(in: Box[String]): Unit =  {
     _docType = in
     _setDocType = true
   }

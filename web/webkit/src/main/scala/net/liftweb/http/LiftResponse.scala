@@ -23,8 +23,9 @@ import net.liftweb.util._
 import net.liftweb.http.provider._
 import js._
 import net.liftweb.util.Helpers._
-import net.liftweb.json.JsonAST
-import java.io.{OutputStream, OutputStreamWriter, Writer, ByteArrayOutputStream}
+import org.json4s._
+import org.json4s.native._
+import java.io.{InputStream, OutputStream, OutputStreamWriter, Writer, ByteArrayOutputStream}
 
 /**
  * 200 response but without body.
@@ -134,7 +135,7 @@ object Qop extends Enumeration {
  * Companion object with builder
  */
 object UnauthorizedDigestResponse {
-  def apply(realm: String, qop: Qop.Value, nonce: String, opaque: String): UnauthorizedDigestResponse = 
+  def apply(realm: String, qop: Qop.Value, nonce: String, opaque: String): UnauthorizedDigestResponse =
     new UnauthorizedDigestResponse(realm,
                                    qop,
                                    nonce,
@@ -290,13 +291,13 @@ object JsonResponse {
   def headers: List[(String, String)] = S.getResponseHeaders(Nil)
   def cookies: List[HTTPCookie] = S.responseCookies
 
-  def apply(json: JsExp): LiftResponse = 
+  def apply(json: JsExp): LiftResponse =
     new JsonResponse(json, headers, cookies, 200)
-  
-  def apply(json: JsonAST.JValue): LiftResponse = 
+
+  def apply(json: JsonAST.JValue): LiftResponse =
     apply(json, headers, cookies, 200)
 
-  def apply(json: JsonAST.JValue, code: Int): LiftResponse = 
+  def apply(json: JsonAST.JValue, code: Int): LiftResponse =
     apply(json, headers, cookies, code)
 
 
@@ -306,7 +307,7 @@ object JsonResponse {
     }, _headers, _cookies, code)
   }
 
-  lazy val jsonPrinter: JsonAST.JValue => String = 
+  lazy val jsonPrinter: JsonAST.JValue => String =
     LiftRules.jsonOutputConverter.vend
 }
 
@@ -329,8 +330,8 @@ sealed trait BasicResponse extends LiftResponse {
 
 /**
  * Wraps a LiftResponse along with a HTTP reason-phrase. The
- * reason-phrase will be set in the HTTP status line after 
- * the status code as per HTTP specifications. 
+ * reason-phrase will be set in the HTTP status line after
+ * the status code as per HTTP specifications.
  *
  * @param response - the response to be wrapped
  * @param reason - the reason-phrase
@@ -360,7 +361,7 @@ final case class InMemoryResponse(data: Array[Byte], headers: List[(String, Stri
   override def toString = "InMemoryResponse(" + (new String(data, "UTF-8")) + ", " + headers + ", " + cookies + ", " + code + ")"
 }
 
-final case class StreamingResponse(data: {def read(buf: Array[Byte]): Int}, onEnd: () => Unit, size: Long, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int) extends BasicResponse {
+final case class StreamingResponse(data: InputStream, onEnd: () => Unit, size: Long, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int) extends BasicResponse {
   def toResponse = this
 
   override def toString = "StreamingResponse( steaming_data , " + headers + ", " + cookies + ", " + code + ")"
@@ -369,16 +370,16 @@ final case class StreamingResponse(data: {def read(buf: Array[Byte]): Int}, onEn
 
 object OutputStreamResponse {
 
-  def apply(out: (OutputStream) => Unit) = 
+  def apply(out: (OutputStream) => Unit) =
     new OutputStreamResponse(out, -1, Nil, Nil, 200)
 
-  def apply(out: (OutputStream) => Unit, size: Long) = 
+  def apply(out: (OutputStream) => Unit, size: Long) =
     new OutputStreamResponse(out, size, Nil, Nil, 200)
 
-  def apply(out: (OutputStream) => Unit, headers: List[(String, String)]) = 
+  def apply(out: (OutputStream) => Unit, headers: List[(String, String)]) =
     new OutputStreamResponse(out, -1, headers, Nil, 200)
 
-  def apply(out: (OutputStream) => Unit, size: Long, headers: List[(String, String)]) = 
+  def apply(out: (OutputStream) => Unit, size: Long, headers: List[(String, String)]) =
     new OutputStreamResponse(out, size, headers, Nil, 200)
 
 }
@@ -387,10 +388,10 @@ object OutputStreamResponse {
  * Use this response to write your data directly to the response pipe. Along with StreamingResponse
  * you have an alternative to send data to the client.
  */
-case class OutputStreamResponse(out: (OutputStream) => Unit,  
-  size: Long, 
-  headers: List[(String, String)], 
-  cookies: List[HTTPCookie], 
+case class OutputStreamResponse(out: (OutputStream) => Unit,
+  size: Long,
+  headers: List[(String, String)],
+  cookies: List[HTTPCookie],
   code: Int) extends BasicResponse {
 
   def toResponse = this
@@ -419,8 +420,8 @@ object RedirectResponse {
   /**
    * Construct an instnace of RedirectResponse
    */
-  def apply(uri: String, cookies: HTTPCookie*): RedirectResponse = 
-    new RedirectResponse(uri, S.request or CurrentReq.box openOr Req.nil, 
+  def apply(uri: String, cookies: HTTPCookie*): RedirectResponse =
+    new RedirectResponse(uri, S.request or CurrentReq.box openOr Req.nil,
                          cookies :_*)
 
 }
@@ -442,8 +443,8 @@ object SeeOtherResponse {
   /**
    * Construct an instnace of SeeOtherResponse
    */
-  def apply(uri: String, cookies: HTTPCookie*): SeeOtherResponse = 
-    new SeeOtherResponse(uri, S.request or CurrentReq.box openOr Req.nil, 
+  def apply(uri: String, cookies: HTTPCookie*): SeeOtherResponse =
+    new SeeOtherResponse(uri, S.request or CurrentReq.box openOr Req.nil,
                          cookies :_*)
 }
 
@@ -484,7 +485,7 @@ object RedirectState {
 case class RedirectState(func: Box[() => Unit], msgs: (String, NoticeType.Value)*)
 
 object MessageState {
-  implicit def tuple2MessageState(msg: (String, NoticeType.Value)) = MessageState(msg)
+  implicit def tuple2MessageState(msg: (String, NoticeType.Value)): MessageState = MessageState(msg)
 
   def apply(msgs: (String, NoticeType.Value)*): MessageState =
      new MessageState(msgs :_*)
@@ -569,8 +570,8 @@ trait NodeResponse extends LiftResponse {
     }
   }
 
-  protected lazy val _encoding: String =  
-    LiftRules.calculateXmlHeader(this, out, headers.ciGet("Content-Type"))  
+  protected lazy val _encoding: String =
+    LiftRules.calculateXmlHeader(this, out, headers.ciGet("Content-Type"))
 
   def toResponse = {
     val bos = new ByteArrayOutputStream(64000)
@@ -642,7 +643,7 @@ trait XmlNodeResponse extends LiftResponse {
 }
 
 
-case class XhtmlResponse(out: Node, 
+case class XhtmlResponse(out: Node,
                          private val __docType: Box[String],
                          private val _headers: List[(String, String)],
                          cookies: List[HTTPCookie],

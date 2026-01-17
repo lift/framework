@@ -33,7 +33,7 @@ trait IoHelpers {
   def exec(cmds: String*): Box[String] = {
     try {
       class ReadItAll(in: InputStream, done: String => Unit) extends Runnable {
-        def run {
+        def run: Unit =  {
           val br = new BufferedReader(new InputStreamReader(in)) // default to platform character set
           val lines = new ListBuffer[String]
           var line = ""
@@ -71,7 +71,7 @@ trait IoHelpers {
     val bos = new StringBuilder
     val ba = new Array[Char](4096)
 
-    def readOnce {
+    def readOnce: Unit =  {
       val len = in.read(ba)
       if (len < 0) return
       if (len > 0) bos.appendAll(ba, 0, len)
@@ -100,7 +100,7 @@ trait IoHelpers {
     val bos = new ByteArrayOutputStream
     val ba = new Array[Byte](4096)
 
-    def readOnce {
+    def readOnce: Unit =  {
       val len = in.read(ba)
       if (len > 0) bos.write(ba, 0, len)
       if (len >= 0) readOnce

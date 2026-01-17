@@ -35,7 +35,7 @@ trait Html5Writer {
    * @param m the attributes
    * @param writer the place to write the attribute
    */
-  protected def writeAttributes(m: MetaData, writer: Writer) {
+  protected def writeAttributes(m: MetaData, writer: Writer): Unit =  {
     m match {
       case null =>
       case Null =>
@@ -117,7 +117,7 @@ trait Html5Writer {
    * @param str the String to escape
    * @param the place to send the escaped characters
    */
-  protected def escape(str: String, sb: Writer, reverse: Boolean) {
+  protected def escape(str: String, sb: Writer, reverse: Boolean): Unit =  {
     val len = str.length
     var pos = 0
     while (pos < len) {
@@ -234,11 +234,6 @@ trait Html5Writer {
           case seq => seq.foreach {
             case Text(str) => writer.append(str)
             case pc: PCData => {
-              val sb = new StringBuilder()
-              pc.buildString(sb)
-              writer.append(sb)
-            }
-            case pc: scala.xml.PCData => {
               val sb = new StringBuilder()
               pc.buildString(sb)
               writer.append(sb)
@@ -363,20 +358,29 @@ trait Html5Parser {
           if (capture) {
             val text = buffer.toString()
             if (text.length() > 0) {
-              hStack.push(createText(text))
+              hStack = hStack.prepended(createText(text))
             }
           }
           buffer.setLength(0)
         }
+
+        // Override endDocument to handle empty hStack case in Scala 3
+        // Scala 3's List.last throws "None.get" error on empty lists
+        override def endDocument(): Unit = {
+          if (hStack.nonEmpty) {
+            epilogue = hStack.init.reverse
+            hStack = hStack.last :: Nil
+          }
+        }
       }
 
-      saxer.scopeStack.push(TopScope)
+      saxer.scopeStack = saxer.scopeStack.prepended(TopScope)
       hp.setContentHandler(saxer)
       val is = new InputSource(in)
       is.setEncoding("UTF-8")
       hp.parse(is)
 
-      saxer.scopeStack.pop
+      saxer.scopeStack = saxer.scopeStack.drop(1)
 
       in.close()
       saxer.rootElem match {

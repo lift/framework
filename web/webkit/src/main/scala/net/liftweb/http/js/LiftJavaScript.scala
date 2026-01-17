@@ -37,15 +37,15 @@ object LiftJavaScript {
   object PageJs {
     def unapply(req: Req): Option[JavaScriptResponse] = {
       val suffixedPath = req.path.wholePath
-      val LiftPath = LiftRules.liftContextRelativePath
+      val PagePath = LiftRules.pageJsFunc()
       val renderVersion = "([^.]+)\\.js".r
 
       suffixedPath match {
-        case LiftPath :: "page" :: renderVersion(version) :: Nil =>
+        case PagePath :+ renderVersion(version) =>
           RenderVersion.doWith(version) {
             pageScript.is.toOption
           }
-        case other =>
+        case _ =>
           None
       }
     }

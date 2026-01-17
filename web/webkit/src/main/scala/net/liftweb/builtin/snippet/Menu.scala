@@ -428,8 +428,6 @@ object Menu extends DispatchSnippet {
     for {
       name <- S.attr("name").toList
     } yield {
-      type T = Q forSome { type Q }
-
       // Builds a link for the given loc
       def buildLink[T](loc : Loc[T]) = {
         Group(SiteMap.buildLink(name, text) match {
@@ -441,8 +439,8 @@ object Menu extends DispatchSnippet {
       }
 
       (S.originalRequest.flatMap(_.location), S.attr("param"), SiteMap.findAndTestLoc(name)) match {
-         case (_, Full(param), Full(loc: Loc[_] with ConvertableLoc[_])) => {
-           val typedLoc = loc.asInstanceOf[Loc[T] with ConvertableLoc[T]]
+         case (_, Full(param), Full(loc: Loc[t] with ConvertableLoc[_])) => {
+           val typedLoc = loc.asInstanceOf[Loc[t] with ConvertableLoc[t]]
 
            (for {
              pv <- typedLoc.convert(param)

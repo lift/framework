@@ -20,7 +20,7 @@ package provider
 package servlet
 package containers
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 import net.liftweb.common._
 import net.liftweb.http._
@@ -46,7 +46,7 @@ object Jetty7AsyncProvider extends AsyncProviderMeta {
                isResumed) = {
     try {
       val cc = Class.forName("org.eclipse.jetty.continuation.ContinuationSupport")
-      val meth = cc.getMethod("getContinuation", classOf[javax.servlet.ServletRequest])
+      val meth = cc.getMethod("getContinuation", classOf[jakarta.servlet.ServletRequest])
       val cci = Class.forName("org.eclipse.jetty.continuation.Continuation")
       val getAttribute = cci.getMethod("getAttribute", classOf[String])
       val setAttribute = cci.getMethod("setAttribute", classOf[String], classOf[AnyRef])
@@ -69,8 +69,7 @@ object Jetty7AsyncProvider extends AsyncProviderMeta {
    * return a function that vends the ServletAsyncProvider
    */
   def providerFunction: Box[HTTPRequest => ServletAsyncProvider] =
-    Full(req => new Jetty7AsyncProvider(req)).
-  filter(i => suspendResumeSupport_?)
+    Full(req => new Jetty7AsyncProvider(req)).filter(i => suspendResumeSupport_?)
 }
 
 /**
@@ -117,11 +116,11 @@ class Jetty7AsyncProvider(req: HTTPRequest) extends ServletAsyncProvider {
     else if (resumed)
       RetryState.RESUMED
     else {
-      setTimeout.invoke(cont, new java.lang.Long(timeout))
+      setTimeout.invoke(cont, java.lang.Long.valueOf(timeout))
       suspendMeth.invoke(cont)
       RetryState.SUSPENDED
     }
-    
+
   }
 
   def resume(what: (Req, LiftResponse)): Boolean = {

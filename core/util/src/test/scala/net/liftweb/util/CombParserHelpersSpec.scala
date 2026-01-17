@@ -125,7 +125,7 @@ class CombParserHelpersSpec extends Specification with ScalaCheck {
     }
     "provide a permuteAll parser succeeding if any permutation of the list given parsers, or a sublist of the given parsers succeeds" in {
       def permuteAllParsers(s: String) = shouldSucceed(permuteAll(parserA, parserB, parserC, parserD)(s))
-      implicit def pick3Letters = AbcdStringGen.pickN(3, List("a", "b", "c"))
+      implicit def pick3Letters: Arbitrary[String] = AbcdStringGen.pickN(3, List("a", "b", "c"))
 
       forAll { (s: String) =>
         ((new scala.collection.immutable.StringOps(s)).nonEmpty) ==> permuteAllParsers(s)
@@ -133,7 +133,7 @@ class CombParserHelpersSpec extends Specification with ScalaCheck {
     }
     "provide a repNN parser succeeding if an input can be parsed n times with a parser" in {
       def repNNParser(s: String) = shouldSucceed(repNN(3, parserA)(s))
-      implicit def pick3Letters = AbcdStringGen.pickN(3, List("a", "a", "a"))
+      implicit def pick3Letters: Arbitrary[String] = AbcdStringGen.pickN(3, List("a", "a", "a"))
 
       forAll { (s: String) =>
         ((new scala.collection.immutable.StringOps(s)).nonEmpty) ==> repNNParser(s)
@@ -144,7 +144,7 @@ class CombParserHelpersSpec extends Specification with ScalaCheck {
 
 
 object AbcdStringGen {
-  implicit def abcdString =
+  implicit def abcdString: Gen[String] =
     for (
       len <- choose(4, 4);
       string <- pick(len, List("a", "b", "c", "d"))

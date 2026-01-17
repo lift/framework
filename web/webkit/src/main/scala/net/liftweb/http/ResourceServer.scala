@@ -131,11 +131,11 @@ object ResourceServer {
 
   private def isAllowed(path: List[String]) = allowedPaths.isDefinedAt(path) && allowedPaths(path)
 
-  def allow(path: PartialFunction[List[String], Boolean]) {
+  def allow(path: PartialFunction[List[String], Boolean]): Unit = {
     allowedPaths = path orElse allowedPaths
   }
 
-  def rewrite(rw: PartialFunction[List[String], List[String]]) {
+  def rewrite(rw: PartialFunction[List[String], List[String]]): Unit = {
     pathRewriter = rw orElse pathRewriter
   }
 }

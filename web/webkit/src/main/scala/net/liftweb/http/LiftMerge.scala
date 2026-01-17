@@ -44,8 +44,8 @@ private[this] case class HtmlState(
 private[http] trait LiftMerge {
   self: LiftSession =>
 
-  private def scriptUrl(scriptFile: String) = {
-    S.encodeURL(s"${LiftRules.liftPath}/$scriptFile")
+  private def pageJsUrl = {
+    S.encodeURL(s"${S.contextPath}/${LiftRules.pageJsFunc().mkString("/")}/${RenderVersion.get}.js")
   }
 
   // Gather all page-specific JS into one JsCmd.
@@ -63,7 +63,7 @@ private[http] trait LiftMerge {
   private def pageScopedScriptFileWith(cmd: JsCmd) = {
     pageScript(Full(JavaScriptResponse(cmd, Nil, Nil, 200)))
 
-    <script type="text/javascript" src={scriptUrl(s"page/${RenderVersion.get}.js")}></script>
+    <script type="text/javascript" src={pageJsUrl}></script>
   }
 
   /**
@@ -74,10 +74,10 @@ private[http] trait LiftMerge {
     val waitUntil = millis + LiftRules.lazySnippetTimeout.vend.millis
     val stripComments: Boolean = LiftRules.stripComments.vend
 
-    def waitUntilSnippetsDone() {
+    def waitUntilSnippetsDone(): Unit ={
       val myMillis = millis
       snippetHashs.synchronized {
-        if (myMillis >= waitUntil || snippetHashs.isEmpty || !snippetHashs.values.toIterator.contains(Empty)) ()
+        if (myMillis >= waitUntil || snippetHashs.isEmpty || !snippetHashs.values.iterator.contains(Empty)) ()
         else {
           snippetHashs.wait(waitUntil - myMillis)
           waitUntilSnippetsDone()
@@ -160,59 +160,59 @@ private[http] trait LiftMerge {
                 startingState.copy(headChild = false, headInBodyChild = false, tailInBodyChild = false, bodyChild = false)
             }
 
-            val bodyHead = childInfo.headInBodyChild && ! headInBodyChild
-            val bodyTail = childInfo.tailInBodyChild && ! tailInBodyChild
+          val bodyHead = childInfo.headInBodyChild && ! headInBodyChild
+          val bodyTail = childInfo.tailInBodyChild && ! tailInBodyChild
 
-            HtmlNormalizer
-              .normalizeNode(node, contextPath, stripComments, LiftRules.extractInlineJavaScript)
-              .map {
-                case normalized @ NodeAndEventJs(normalizedElement: Elem, _) =>
-                  val normalizedChildren =
-                    normalizeMergeAndExtractEvents(normalizedElement.child, childInfo)
+          HtmlNormalizer
+            .normalizeNode(node, contextPath, stripComments, LiftRules.extractInlineJavaScript)
+            .map {
+              case normalized @ NodeAndEventJs(normalizedElement: Elem, _) =>
+                val normalizedChildren =
+                  normalizeMergeAndExtractEvents(normalizedElement.child, childInfo)
 
-                  normalized.copy(
-                    normalizedElement.copy(child = normalizedChildren.nodes),
-                    js = normalized.js & normalizedChildren.js
-                  )
+                normalized.copy(
+                  normalizedElement.copy(child = normalizedChildren.nodes),
+                  js = normalized.js & normalizedChildren.js
+                )
 
-                case other =>
-                  other
+              case other =>
+                other
+            }
+            .map { (normalizedResults: NodeAndEventJs) =>
+              node match {
+                case e: Elem if e.label == "node" &&
+                                e.prefix == "lift_deferred" =>
+                  val deferredNodes: Seq[NodesAndEventJs] = {
+                    for {
+                      idAttribute <- e.attributes("id").take(1)
+                      id = idAttribute.text
+                      nodes <- processedSnippets.get(id)
+                    } yield {
+                      normalizeMergeAndExtractEvents(nodes, startingState)
+                    }}.toSeq
+
+                  deferredNodes.foldLeft(soFar.append(normalizedResults))(_ append _)
+
+                case _ =>
+                  if (headChild) {
+                    headChildren ++= normalizedResults.node
+                  } else if (headInBodyChild) {
+                    addlHead ++= normalizedResults.node
+                  } else if (tailInBodyChild) {
+                    addlTail ++= normalizedResults.node
+                  } else if (_bodyChild && ! bodyHead && ! bodyTail) {
+                    bodyChildren ++= normalizedResults.node
+                  }
+
+                  if (bodyHead || bodyTail) {
+                    soFar.append(normalizedResults.js)
+                  } else {
+                    soFar.append(normalizedResults)
+                  }
               }
-              .map { normalizedResults: NodeAndEventJs =>
-                node match {
-                  case e: Elem if e.label == "node" &&
-                                  e.prefix == "lift_deferred" =>
-                    val deferredNodes: Seq[NodesAndEventJs] = {
-                      for {
-                        idAttribute <- e.attributes("id").take(1)
-                        id = idAttribute.text
-                        nodes <- processedSnippets.get(id)
-                      } yield {
-                        normalizeMergeAndExtractEvents(nodes, startingState)
-                      }}.toSeq
-
-                    deferredNodes.foldLeft(soFar.append(normalizedResults))(_ append _)
-
-                  case _ =>
-                    if (headChild) {
-                      headChildren ++= normalizedResults.node
-                    } else if (headInBodyChild) {
-                      addlHead ++= normalizedResults.node
-                    } else if (tailInBodyChild) {
-                      addlTail ++= normalizedResults.node
-                    } else if (_bodyChild && ! bodyHead && ! bodyTail) {
-                      bodyChildren ++= normalizedResults.node
-                    }
-
-                    if (bodyHead || bodyTail) {
-                      soFar.append(normalizedResults.js)
-                    } else {
-                      soFar.append(normalizedResults)
-                    }
-                }
-              } getOrElse {
-                soFar
-              }
+            } getOrElse {
+              soFar
+            }
         }
     }
 
@@ -248,7 +248,7 @@ private[http] trait LiftMerge {
       }
 
       // Appends ajax script to body
-      if (LiftRules.autoIncludeAjaxCalc.vend().apply(this)) {
+      if (LiftRules.autoIncludeAjaxCalc.vend()(this)) {
         bodyChildren +=
                 <script src={S.encodeURL(contextPath + "/"+LiftRules.resourceServerPath+"/lift.js")}
                 type="text/javascript"/>

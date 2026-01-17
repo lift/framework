@@ -29,6 +29,9 @@ import js._
 import provider._
 import http.rest.RestContinuation
 
+import org.json4s._
+import org.json4s.native._
+
 
 class SJBridge {
   def s = S
@@ -127,7 +130,7 @@ object S extends S {
    *  Impersonates a function that will be called when uploading files
    */
   private final class BinFuncHolder(val func: FileParamHolder => Any, val owner: Box[String]) extends AFuncHolder with Serializable{
-    def apply(in: List[String]) {logger.info("You attempted to call a 'File Upload' function with a normal parameter.  Did you forget to 'enctype' to 'multipart/form-data'?")}
+    def apply(in: List[String]): Unit = {logger.info("You attempted to call a 'File Upload' function with a normal parameter.  Did you forget to 'enctype' to 'multipart/form-data'?")}
 
     override def apply(in: FileParamHolder) = func(in)
 
@@ -416,7 +419,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * An exception was thrown during the processing of this request.
    * This is tested to see if the transaction should be rolled back
    */
-  def assertExceptionThrown() {_exceptionThrown.set(true)}
+  def assertExceptionThrown(): Unit = {_exceptionThrown.set(true)}
 
   /**
    * Was an exception thrown during the processing of the current request?
@@ -513,7 +516,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see # deleteCookie ( String )
    * @see # responseCookies
    */
-  def addCookie(cookie: HTTPCookie) {
+  def addCookie(cookie: HTTPCookie): Unit = {
     Box.legacyNullTest(_responseCookies.value).foreach(rc =>
             _responseCookies.set(rc.add(cookie))
       )
@@ -528,7 +531,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see # addCookie ( Cookie )
    * @see # deleteCookie ( String )
    */
-  def deleteCookie(cookie: HTTPCookie) {
+  def deleteCookie(cookie: HTTPCookie): Unit = {
     Box.legacyNullTest(_responseCookies.value).foreach(rc =>
             _responseCookies.set(rc.delete(cookie))
       )
@@ -543,7 +546,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see # addCookie ( Cookie )
    * @see # deleteCookie ( Cookie )
    */
-  def deleteCookie(name: String) {
+  def deleteCookie(name: String): Unit = {
     Box.legacyNullTest(_responseCookies.value).foreach(rc =>
             _responseCookies.set(rc.delete(name))
       )
@@ -697,7 +700,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see # addHighLevelSessionDispatcher
    * @see # clearHighLevelSessionDispatcher
    */
-  def clearHighLevelSessionDispatcher = session map (_.highLevelSessionDispatcher.clear)
+  def clearHighLevelSessionDispatcher = session map (_.highLevelSessionDispatcher.clear())
 
 
   /**
@@ -858,14 +861,83 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * receive updates like this using {S.addComet}.
    */
   def findOrCreateComet[T <: LiftCometActor](
-    cometName: Box[String],
-    cometHtml: NodeSeq,
-    cometAttributes: Map[String, String],
-    receiveUpdatesOnPage: Boolean
+      cometName: Box[String],
+      cometHtml: NodeSeq,
+      cometAttributes: Map[String, String],
+      receiveUpdatesOnPage: Boolean
   )(implicit cometManifest: Manifest[T]): Box[T] = {
     for {
       session <- session ?~ "Comet lookup and creation requires a session."
-      cometActor <- session.findOrCreateComet[T](cometName, cometHtml, cometAttributes)
+      cometActor <- session.findOrCreateComet[T](cometName, cometHtml, cometAttributes, (a: T) => a)
+    } yield {
+      if (receiveUpdatesOnPage)
+        addComet(cometActor)
+
+      cometActor
+    }
+  }
+
+  /**
+   * Find or build a comet actor of the given type `T` with the given
+   * configuration parameters. If a comet of that type with that name already
+   * exists, it is returned; otherwise, a new one of that type is created and
+   * set up, then returned.
+   *
+   * The `cometInitFunc` is applied to the comet actor after it is created and
+   * before it is returned.
+   *
+   * If `receiveUpdates` is `true`, updates to this comet will be pushed to
+   * the page currently being rendered or to the page that is currently
+   * invoking an AJAX callback. You can also separately register a comet to
+   * receive updates like this using {S.addComet}.
+   *
+   * @param cometName The name of the comet actor.
+   * @param cometHtml The HTML to be rendered by the comet actor.
+   * @param cometAttributes The attributes to be passed to the comet actor.
+   * @param receiveUpdatesOnPage Whether to register the comet to receive updates on the current page.
+   * @param cometInitFunc A function to initialize the comet actor after creation.
+   */
+
+  def findOrCreateCometWithInitFunc[T <: LiftCometActor](
+      cometName: Box[String],
+      cometHtml: NodeSeq,
+      cometAttributes: Map[String, String],
+      receiveUpdatesOnPage: Boolean,
+      cometInitFunc: T => T
+  )(implicit cometManifest: Manifest[T]): Box[T] = {
+    for {
+      session <- session ?~ "Comet lookup and creation requires a session."
+      cometActor <- session.findOrCreateComet[T](cometName, cometHtml, cometAttributes, cometInitFunc)
+    } yield {
+      if (receiveUpdatesOnPage)
+        addComet(cometActor)
+
+      cometActor
+    }
+  }
+
+  /**
+   * Find or build a comet actor of the given type `T` with the given
+   * configuration parameters. If a comet of that type with that name already
+   * exists, it is returned; otherwise, a new one of that type is created
+   * by `cometFactoryFunc` and
+   * set up, then returned.
+   *
+   * If `receiveUpdates` is `true`, updates to this comet will be pushed to
+   * the page currently being rendered or to the page that is currently
+   * invoking an AJAX callback. You can also separately register a comet to
+   * receive updates like this using {S.addComet}.
+   */
+  def findOrCreateCometByFactoryFunc[T <: LiftCometActor](
+      cometName: Box[String],
+      cometHtml: NodeSeq,
+      cometAttributes: Map[String, String],
+      receiveUpdatesOnPage: Boolean,
+      cometFactoryFunc: () => T
+  )(implicit cometManifest: Manifest[T]): Box[T] = {
+    for {
+      session <- session ?~ "Comet lookup and creation requires a session."
+      cometActor <- session.findOrCreateCometByFactoryFunc[T](cometName, cometHtml, cometAttributes, cometFactoryFunc)
     } yield {
       if (receiveUpdatesOnPage)
         addComet(cometActor)
@@ -979,7 +1051,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see # addSessionRewriter
    * @see # removeSessionRewriter
    */
-  def clearSessionRewriter = session map (_.sessionRewriter.clear)
+  def clearSessionRewriter = session map (_.sessionRewriter.clear())
 
   /**
    * Test the current request to see if it's a POST. This is a thin wrapper
@@ -1593,7 +1665,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    *
    * @see # getHeaders
    */
-  def setHeader(name: String, value: String) {
+  def setHeader(name: String, value: String): Unit = {
     Box.legacyNullTest(_responseHeaders.value).foreach(
       rh =>
               rh.headers = rh.headers + (name -> value)
@@ -1603,7 +1675,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * Synonym for S.setHeader. Exists to provide the converse to
    * S.getResponseHeader.
    */
-  def setResponseHeader(name: String, value: String) {
+  def setResponseHeader(name: String, value: String): Unit = {
     setHeader(name, value)
   }
 
@@ -1668,7 +1740,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @see ResponseInfo.docType
    * @see DocType
    */
-  def setDocType(what: Box[String]) {
+  def setDocType(what: Box[String]): Unit = {
     Box.legacyNullTest(_responseHeaders.value).foreach(
       rh =>
               rh.docType = what
@@ -1707,7 +1779,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    *
    * @see # skipDocType
    */
-  def skipDocType_=(skip: Boolean) {_skipDocType.set(skip)}
+  def skipDocType_=(skip: Boolean): Unit = {_skipDocType.set(skip)}
 
   /**
    * Adds a cleanup function that will be executed at the end of the request pocessing.
@@ -2418,7 +2490,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   /**
    * Clears the function map.  potentially very destuctive... use at your own risk!
    */
-  def clearFunctionMap {
+  def clearFunctionMap: Unit = {
     if (__functionMap.box.map(_.size).openOr(0) > 0) {
       // Issue #1037
       testFunctionMap {
@@ -2547,7 +2619,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * @param name The name of the snippet that you want to map (the part after "&lt;lift:").
    * @param func The snippet function to map to.
    */
-  def mapSnippet(name: String, func: NodeSeq => NodeSeq) {_snippetMap.set(_snippetMap.is.updated(name, func))}
+  def mapSnippet(name: String, func: NodeSeq => NodeSeq): Unit = {_snippetMap.set(_snippetMap.is.updated(name, func))}
 
   /**
    * The are times when it's helpful to define snippets for a certain
@@ -2559,7 +2631,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     _snippetMap.doWith(newMap)(f)
   }
 
-  private def updateFunctionMap(name: String, value: AFuncHolder) {
+  private def updateFunctionMap(name: String, value: AFuncHolder): Unit = {
     __functionMap.box match {
       case Full(old) => __functionMap.set(old + ((name, value)))
       case _ =>
@@ -2732,7 +2804,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   }
 
 
-  import json.JsonAST._
   /**
    * Build a handler for incoming JSON commands based on the new Json Parser
    *
@@ -2766,8 +2837,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   def createJsonFunc(name: Box[String], onError: Box[JsCmd], pfp: PFPromoter[JValue, JsCmd]): (JsonCall, JsCmd) = {
     functionLifespan(true) {
       val key = formFuncName
-
-      import json._
 
       def jsonCallback(in: List[String]): JsCmd = {
         val f = pfp.pff()
@@ -2865,7 +2934,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
           ret
 
           case _ =>
-            val ret = LiftSession(httpRequest.session, req.contextPath)
+          val ret = LiftSession(httpRequest.session, req.contextPath)
           ret.fixSessionTime()
           SessionMaster.addSession(ret,
                                    req,
@@ -2887,8 +2956,6 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
    * passed JSON does not parse, the function will not be invoked.
    */
   def jsonFmapFunc[T](in: JValue => JsCmd)(f: String => T)(implicit dummy: AvoidTypeErasureIssues1): T = {
-    import json._
-
     val name = formFuncName
     addFunctionMap(name, SFuncHolder((s: String) => JsonParser.parseOpt(s).map(in) getOrElse JsCmds.Noop))
     f(name)
@@ -2918,77 +2985,77 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   /**
    * Sets an ERROR notice as a plain text
    */
-  def error(n: String) {error(Text(n))}
+  def error(n: String): Unit = {error(Text(n))}
 
   /**
    * Sets an ERROR notice as an XML sequence
    */
-  def error(n: NodeSeq) {p_notice.is += ((NoticeType.Error, n, Empty))}
+  def error(n: NodeSeq): Unit = {p_notice.is += ((NoticeType.Error, n, Empty))}
 
   /**
    * Sets an ERROR notice as an XML sequence and associates it with an id
    */
-  def error(id: String, n: NodeSeq) {p_notice.is += ((NoticeType.Error, n, Full(id)))}
+  def error(id: String, n: NodeSeq): Unit = {p_notice.is += ((NoticeType.Error, n, Full(id)))}
 
   /**
    * Sets an ERROR notice as plain text and associates it with an id
    */
-  def error(id: String, n: String) {error(id, Text(n))}
+  def error(id: String, n: String): Unit = {error(id, Text(n))}
 
   /**
    * Sets a NOTICE notice as plain text
    */
-  def notice(n: String) {notice(Text(n))}
+  def notice(n: String): Unit = {notice(Text(n))}
 
   /**
    * Sets a NOTICE notice as an XML sequence
    */
-  def notice(n: NodeSeq) {p_notice.is += ((NoticeType.Notice, n, Empty))}
+  def notice(n: NodeSeq): Unit = {p_notice.is += ((NoticeType.Notice, n, Empty))}
 
   /**
    * Sets a NOTICE notice as and XML sequence and associates it with an id
    */
-  def notice(id: String, n: NodeSeq) {p_notice.is += ((NoticeType.Notice, n, Full(id)))}
+  def notice(id: String, n: NodeSeq): Unit = {p_notice.is += ((NoticeType.Notice, n, Full(id)))}
 
   /**
    * Sets a NOTICE notice as plai text and associates it with an id
    */
-  def notice(id: String, n: String) {notice(id, Text(n))}
+  def notice(id: String, n: String): Unit = {notice(id, Text(n))}
 
   /**
    * Sets a WARNING notice as plain text
    */
-  def warning(n: String) {warning(Text(n))}
+  def warning(n: String): Unit = {warning(Text(n))}
 
   /**
    * Sets a WARNING notice as an XML sequence
    */
-  def warning(n: NodeSeq) {p_notice += ((NoticeType.Warning, n, Empty))}
+  def warning(n: NodeSeq): Unit = {p_notice += ((NoticeType.Warning, n, Empty))}
 
   /**
    * Sets a WARNING notice as an XML sequence and associates it with an id
    */
-  def warning(id: String, n: NodeSeq) {p_notice += ((NoticeType.Warning, n, Full(id)))}
+  def warning(id: String, n: NodeSeq): Unit = {p_notice += ((NoticeType.Warning, n, Full(id)))}
 
   /**
    * Sets a WARNING notice as plain text and associates it with an id
    */
-  def warning(id: String, n: String) {warning(id, Text(n))}
+  def warning(id: String, n: String): Unit = {warning(id, Text(n))}
 
   /**
    * Sets an ERROR notices from a List[FieldError]
    */
-  def error(vi: List[FieldError]) {p_notice ++= vi.map {i => (NoticeType.Error, i.msg, i.field.uniqueFieldId)}}
+  def error(vi: List[FieldError]): Unit = {p_notice ++= vi.map {i => (NoticeType.Error, i.msg, i.field.uniqueFieldId)}}
 
 
-  private[http] def message(msg: String, notice: NoticeType.Value) {message(Text(msg), notice)}
+  private[http] def message(msg: String, notice: NoticeType.Value): Unit = {message(Text(msg), notice)}
 
-  private[http] def message(msg: NodeSeq, notice: NoticeType.Value) {p_notice += ((notice, msg, Empty))}
+  private[http] def message(msg: NodeSeq, notice: NoticeType.Value): Unit = {p_notice += ((notice, msg, Empty))}
 
   /**
    * Add a whole list of notices
    */
-  def appendNotices(list: Seq[(NoticeType.Value, NodeSeq, Box[String])]) {p_notice.is ++= list}
+  def appendNotices(list: Seq[(NoticeType.Value, NodeSeq, Box[String])]): Unit = {p_notice.is ++= list}
 
   /**
    * Returns the current notices
@@ -3019,7 +3086,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
   /**
    * Clears up the notices
    */
-  def clearCurrentNotices {p_notice.is.clear}
+  def clearCurrentNotices: Unit = {p_notice.is.clear()}
 
   /**
    * Returns the messages provided by list function that are associated with id
@@ -3064,7 +3131,7 @@ trait S extends HasParams with Loggable with UserAgentCalculator {
     res.toList
   }
 
-  implicit def tuple2FieldError(t: (FieldIdentifier, NodeSeq)) = FieldError(t._1, t._2)
+  implicit def tuple2FieldError(t: (FieldIdentifier, NodeSeq)) : FieldError = FieldError(t._1, t._2)
 
   /**
    * Use this in DispatchPF for processing REST requests asynchronously. Note that

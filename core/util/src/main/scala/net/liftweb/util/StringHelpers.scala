@@ -54,11 +54,11 @@ trait StringHelpers {
   def splitNameValuePairs(props: String): Map[String, String] = {
     val list = props.split(",").toList.map(in => {
       val pair = in.roboSplit("=")
-       (pair(0), unquote(pair(1)))
+      (pair(0), unquote(pair(1)))
     })
     val map: Map[String, String] = Map.empty
 
-    (map /: list)((m, next) => m + (next))
+    list.foldLeft(map) { (m, next) => m + (next) }
   }
 
   /**

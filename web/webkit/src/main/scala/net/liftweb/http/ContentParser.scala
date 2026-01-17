@@ -54,7 +54,7 @@ object ContentParser {
    * @return your parser wrapped up to handle an `InputStream`
    */
   def toInputStreamParser(simpleParser: String=>Box[NodeSeq]): InputStream=>Box[NodeSeq] = {
-    is:InputStream =>
+    (is: InputStream) =>
       for {
         bytes <- Helpers.tryo(Helpers.readWholeStream(is))
         elems <- simpleParser(new String(bytes, "UTF-8"))

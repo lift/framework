@@ -60,18 +60,18 @@ object LAScheduler extends LAScheduler with Loggable {
       import java.util.concurrent._
 
       private val es = // Executors.newFixedThreadPool(threadPoolSize)
-        new ThreadPoolExecutor(threadPoolSize, 
+        new ThreadPoolExecutor(threadPoolSize,
                                maxThreadPoolSize,
                                60,
                                TimeUnit.SECONDS,
                                blockingQueueSize match {
-                                 case Full(x) => 
+                                 case Full(x) =>
                                    new ArrayBlockingQueue(x)
                                  case _ => new LinkedBlockingQueue
                                })
 
       def execute(f: () => Unit): Unit =
-      es.execute(new Runnable{def run() {
+      es.execute(new Runnable{def run(): Unit = {
         try {
           f()
         } catch {
@@ -93,7 +93,7 @@ object LAScheduler extends LAScheduler with Loggable {
    *
    * @param f the function to execute on another thread
    */
-  def execute(f: () => Unit) {
+  def execute(f: () => Unit) : Unit = {
     synchronized {
       if (exec eq null) {
         exec = createExecutor()
@@ -102,12 +102,12 @@ object LAScheduler extends LAScheduler with Loggable {
     }
   }
 
-  def shutdown() {
+  def shutdown(): Unit = {
     synchronized {
       if (exec ne null) {
         exec.shutdown()
       }
-      
+
       exec = null
     }
   }
@@ -129,7 +129,7 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
     if (f(this)) Full(this) else next.find(f)
     */
 
-    def remove() {
+    def remove(): Unit = {
       prev.next = next
       next.prev = prev
     }
@@ -163,7 +163,7 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
       case x if f(x) => Full(x)
       case x => findMailboxItem(x.next, f)
     }
-  
+
   /**
    * Send a message to the Actor.  This call will always succeed
    * and return almost immediately.  The message will be processed
@@ -221,7 +221,7 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
     toDo()
   }
 
-  private def processMailbox(ignoreProcessing: Boolean) {
+  private def processMailbox(ignoreProcessing: Boolean): Unit = {
     around {
       proc2(ignoreProcessing)
     }
@@ -240,7 +240,7 @@ trait SpecializedLiftActor[T] extends SimpleActor[T]  {
     case Nil => f
     case xs => CommonLoanWrapper(xs)(f)
   }
-  private def proc2(ignoreProcessing: Boolean) {
+  private def proc2(ignoreProcessing: Boolean): Unit = {
     var clearProcessing = true
     baseMailbox.synchronized {
       if (!ignoreProcessing && processing) return
@@ -404,7 +404,7 @@ with ForwardableActor[Any, Any] {
 
 
 
-  protected final def forwardMessageTo(msg: Any, forwardTo: TypedActor[Any, Any]) {
+  protected final def forwardMessageTo(msg: Any, forwardTo: TypedActor[Any, Any]): Unit = {
     if (null ne responseFuture) {
       forwardTo match {
         case la: LiftActor => la ! MsgWithResp(msg, responseFuture)
@@ -437,7 +437,7 @@ with ForwardableActor[Any, Any] {
   * This method is the Java callable version of !?.
   */
   def sendAndGetReply(msg: Any): Any = this !? msg
-  
+
   /**
   * Send a message to the Actor and wait for
   * the actor to process the message and reply.
@@ -507,7 +507,7 @@ with ForwardableActor[Any, Any] {
   * The Actor should call this method with a reply
   * to the message
   */
-  protected def reply(v: Any) {
+  protected def reply(v: Any): Unit = {
     if (null ne responseFuture) {
       responseFuture.satisfy(v)
     }
@@ -524,95 +524,3 @@ with ForwardableActor[Any, Any] {
  * have been received by the actor.
 **/
 class MockLiftActor extends MockSpecializedLiftActor[Any] with LiftActor
-
-import java.lang.reflect._
-
-object LiftActorJ {
-  private var methods: Map[Class[_], DispatchVendor] = Map()
-
-  def calculateHandler(what: LiftActorJ): PartialFunction[Any, Unit] = 
-    synchronized {
-      val clz = what.getClass
-      methods.get(clz) match {
-        case Some(pf) => pf.vend(what)
-        case _ => {
-          val pf = buildPF(clz)
-          methods += clz -> pf
-          pf.vend(what)
-        }
-      }
-    }
-
-  private def getBaseClasses(clz: Class[_]): List[Class[_]] = clz match {
-    case null => Nil
-    case clz => clz :: getBaseClasses(clz.getSuperclass)
-  }
-
-  private def receiver(in: Method): Boolean = {
-    in.getParameterTypes().length == 1 &&
-    (in.getAnnotation(classOf[JavaActorBase.Receive]) != null)
-  }
-
-  private def buildPF(clz: Class[_]): DispatchVendor = {
-    val methods = getBaseClasses(clz).
-    flatMap(_.getDeclaredMethods.toList.filter(receiver))
-
-    val clzMap: Map[Class[_], Method] = 
-      Map(methods.map{m => 
-        m.setAccessible(true) // access private and protected methods
-        m.getParameterTypes().apply(0) -> m} :_*)
-
-    new DispatchVendor(clzMap)
-  }
-}
-
-private final class DispatchVendor(map: Map[Class[_], Method]) {
-  private val baseMap: Map[Class[_], Option[Method]] = 
-    Map(map.map{case (k,v) => (k, Some(v))}.toList :_*)
-
-  def vend(actor: LiftActorJ): PartialFunction[Any, Unit] =
-    new PartialFunction[Any, Unit] {
-      var theMap: Map[Class[_], Option[Method]] = baseMap
-
-      def findClass(clz: Class[_]): Option[Method] = 
-        theMap.find(_._1.isAssignableFrom(clz)).flatMap(_._2)
-
-      def isDefinedAt(v: Any): Boolean = {
-        val clz = v.asInstanceOf[Object].getClass
-        theMap.get(clz) match {
-          case Some(Some(_)) => true
-          case None => {
-            val answer = findClass(clz)
-            theMap += clz -> answer
-            answer.isDefined
-          }
-          case _ => false
-        }
-      }
-
-      def apply(v: Any): Unit = {
-        val o: Object = v.asInstanceOf[Object]
-        val meth = theMap(o.getClass).get
-        meth.invoke(actor, o) match {
-          case null => 
-          case x => actor.internalReply(x)
-        }
-      }
-    }
-}
-
-/**
- * Java versions of Actors should subclass this method.
- * Methods decorated with the @Receive annotation
- * will receive messages of that type.
- */
-class LiftActorJ extends JavaActorBase with LiftActor {
-  protected lazy val _messageHandler: PartialFunction[Any, Unit] =
-    calculateJavaMessageHandler
-
-  protected def calculateJavaMessageHandler = LiftActorJ.calculateHandler(this)
-
-  protected def messageHandler = _messageHandler
-
-  private[actor] def internalReply(v: Any) = reply(v)  
-}
