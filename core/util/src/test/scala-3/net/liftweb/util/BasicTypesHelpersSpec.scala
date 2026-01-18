@@ -40,7 +40,7 @@ class BasicTypesHelpersSpec extends Specification  with DataTables {
     }
 
     "provide a ternary operator: (condition) ? A | B" in {
-      (1 == 2) ? "a" | "b" === "b"
+      ((1 == 2) ? "a" | "b") === "b"
     }
 
     "provide a ?> operator to add an element to a list if an expression is true" in {

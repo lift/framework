@@ -66,7 +66,7 @@ class CombParserHelpersSpec extends Specification with ScalaCheck {
       import AbcdStringGen._
       val ignoreCaseStringParse: Function2[String, String, Boolean] =
         (s: String, s2: String) => acceptCI(s).apply(s2) match {
-          case Success(x, y) => s2.toUpperCase must startWith(s.toUpperCase)
+          case Success(x, y) => s2.toUpperCase.startsWith(s.toUpperCase)
           case _             => true
         }
       forAll(ignoreCaseStringParse)
@@ -75,7 +75,7 @@ class CombParserHelpersSpec extends Specification with ScalaCheck {
     "provide a digit parser - returning a String" in {
       val isDigit: String => Boolean =
         (s: String) => digit(s) match {
-          case Success(x, y) => s must beMatching ("(?s)\\p{Nd}.*")
+          case Success(x, y) => s.matches("(?s)\\p{Nd}.*")
           case _             => true
         }
       forAll(isDigit)
@@ -84,7 +84,7 @@ class CombParserHelpersSpec extends Specification with ScalaCheck {
       val number: String => Boolean =
         (s: String) => {
           aNumber(s) match {
-            case Success(x, y) => s must beMatching ("(?s)\\p{Nd}+.*")
+            case Success(x, y) => s.matches("(?s)\\p{Nd}+.*")
             case _             => true
           }
         }

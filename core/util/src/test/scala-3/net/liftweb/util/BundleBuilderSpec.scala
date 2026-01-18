@@ -39,7 +39,7 @@ class BundleBuilderSpec extends Specification with XmlMatchers {
                                     <div name="cat"><div>hi</div></div>
                                     </div>, Locale.US).openOrThrowException("Test")
 
-      b.getObject("dog") === "Dog"
+      b.getObject("dog") must beEqualTo("Dog")
       b.getObject("cat").asInstanceOf[NodeSeq] must ==/ (<div>hi</div>)
     }
 
@@ -50,7 +50,7 @@ class BundleBuilderSpec extends Specification with XmlMatchers {
                                     <div name="cat"><div>hi</div></div>
                                     </div>, Locale.US).openOrThrowException("Test")
 
-      b.getObject("dog") === "Chien"
+      b.getObject("dog") must beEqualTo("Chien")
       b.getObject("cat").asInstanceOf[NodeSeq] must ==/ (<div>hi</div>)
     }
 

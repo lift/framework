@@ -20,7 +20,7 @@ package util
 import java.io.ByteArrayInputStream
 
 import org.specs2.mutable.Specification
-import org.specs2.mutable.After
+import org.specs2.specification.After
 
 import common._
 import Props.RunModes._
@@ -61,7 +61,7 @@ class PropsSpec extends Specification {
         testProps.runModeInitialised = false
         testProps.autoDetectRunModeFn.allowModification === true
         testProps.autoDetectRunModeFn.set(() => Test) === true
-        testProps.autoDetectRunModeFn.get must_!= before
+        testProps.autoDetectRunModeFn.get must not(beEqualTo(before))
       } finally {
         testProps.autoDetectRunModeFn.set(before)
         testProps.runModeInitialised = true

@@ -20,11 +20,11 @@ package util
 import scala.concurrent.{Future, Promise}
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import org.specs2.mutable.Spec
+import org.specs2.mutable.Specification
 
 import actor.LAFuture
 
-object CanResolveAsyncSpec extends Spec {
+object CanResolveAsyncSpec extends Specification {
   "CanResolveAsync" should {
     "resolve Scala Futures" in {
       val myPromise = Promise[String]()

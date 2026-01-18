@@ -47,10 +47,10 @@ class SecurityHelpersSpec extends Specification  {
     }
 
     "provide a randomLong method returning a random Long modulo a number" in {
-      randomLong(7L) must be_<(7L)
+      randomLong(7L) must beLessThan(7L)
     }
     "provide a randomInt method returning a random Int modulo a number" in {
-      randomInt(7) must be_<(7)
+      randomInt(7) must beLessThan(7)
     }
     "provide a shouldShow function always returning true only a given percentage of time, expressed as a Int between 0 and 100" in {
       shouldShow(100) must beTrue
@@ -65,30 +65,30 @@ class SecurityHelpersSpec extends Specification  {
     "provide makeBlowfishKey, blowfishEncrypt, blowfishDecrypt functions to encrypt/decrypt Strings with Blowfish keys" in {
       val key = makeBlowfishKey
       val encrypted = blowfishEncrypt("hello world", key)
-      encrypted must_!= "hello world"
+      encrypted must not(beEqualTo("hello world"))
       blowfishDecrypt(encrypted, key) === "hello world"
     }
     */
 
     "provide a md5 function to create a md5 digest from a string" in {
       md5("hello") === "XUFAKrxLKna5cZ2REBfFkg=="
-      md5("hello") must_!= md5("hell0")
+      md5("hello") must not(beEqualTo(md5("hell0")))
     }
     "provide a hash function to create a SHA digest from a string" in {
       hash("hello") === "qvTGHdzF6KLavt4PO0gs2a6pQ00="
-      hash("hello") must_!= hash("hell0")
+      hash("hello") must not(beEqualTo(hash("hell0")))
     }
     "provide a hash256 function to create a SHA-256 digest from a string" in {
       hash256("hello") === "LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ="
-      hash256("hello") must_!= hash256("hell0")
+      hash256("hello") must not(beEqualTo(hash256("hell0")))
     }
     "provide a hex encoded SHA hash function" in {
       hexDigest("hello".getBytes) === "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d"
-      hexDigest("hello".getBytes) must_!= hexDigest("hell0".getBytes)
+      hexDigest("hello".getBytes) must not(beEqualTo(hexDigest("hell0".getBytes)))
     }
     "provide a hex encoded SHA-256 hash function" in {
       hexDigest256("hello".getBytes) === "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
-      hexDigest256("hello".getBytes) must_!= hexDigest256("hell0".getBytes)
+      hexDigest256("hello".getBytes) must not(beEqualTo(hexDigest256("hell0".getBytes)))
     }
   }
 
