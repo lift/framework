@@ -114,7 +114,7 @@ class ClassHelpersSpec extends Specification  {
 
   "The invokeControllerMethod function" should {
     "return the result of calling the method on a new instance of the class" in {
-      invokeControllerMethod(classOf[String], "length") === 0
+      invokeControllerMethod(classOf[String], "length") must beEqualTo(0)
     }
     "throw an exception when the method is not callable" in {
       invokeControllerMethod(classOf[String], "isNotEmpty") must throwA[NoSuchMethodException]

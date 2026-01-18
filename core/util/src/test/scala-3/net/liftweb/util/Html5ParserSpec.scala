@@ -55,12 +55,12 @@ class Html5ParserSpec extends Specification with PendingUntilFixed with Html5Par
 
         "parse valid page type1" in {
           val parsed = parse(page1).openOrThrowException("Test")
-          (parsed \\ "script").length must be >= 4
+          (parsed \\ "script").length must beGreaterThanOrEqualTo(4)
         }
 
         "parse valid page type2" in {
           val parsed = parse(page2).openOrThrowException("Test")
-          (parsed \\ "script").length must be >= 4
+          (parsed \\ "script").length must beGreaterThanOrEqualTo(4)
         }
 
         "fail to parse invalid page type3" in {

@@ -57,7 +57,7 @@ class XmlParserSpec extends Specification with XmlMatchers {
 
     val str = AltXML.toXML(data, false, true)
 
-    str.indexOf("<![CDATA[") must be > -1
+    str.indexOf("<![CDATA[") must beGreaterThan(-1)
   }
 
   "XML can contain Unparsed" in {
@@ -67,7 +67,7 @@ class XmlParserSpec extends Specification with XmlMatchers {
 
     val str = AltXML.toXML(data, false, true)
 
-    str.indexOf("Hello & goodbye > <yak Yak") must be > -1
+    str.indexOf("Hello & goodbye > <yak Yak") must beGreaterThan(-1)
   }
 
   "XML cannot contain Control characters" in {

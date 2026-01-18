@@ -31,7 +31,7 @@ import Helpers._
 class ScheduleSpec extends Specification with PendingUntilFixed with PingedService with BeforeEach {
   "Schedule Specification".title
 
-  def before = Schedule.restart
+  def before = step(Schedule.restart)
 
   "The Schedule object" should {
     "provide a schedule method to ping an actor regularly" in {

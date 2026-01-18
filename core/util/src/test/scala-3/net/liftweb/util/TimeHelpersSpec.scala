@@ -26,8 +26,9 @@ import org.scalacheck.Gen._
 import org.scalacheck.Prop._
 import org.specs2.ScalaCheck
 import org.specs2.execute.AsResult
-import org.specs2.matcher.MatchersImplicits
-import org.specs2.mutable.{Around, Specification}
+import org.specs2.matcher.MatcherImplicits
+import org.specs2.mutable.Specification
+import org.specs2.specification.Around
 
 /**
  * Systems under specification for TimeHelpers.
@@ -55,10 +56,10 @@ class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen 
       3.weeks === TimeSpan(3 * 7 * 24 * 60 * 60 * 1000)
     }
     "be created from a number of months" in forAllTimeZones {
-      3.months === Period.months(3)
+      3.months must beEqualTo(Period.months(3))
     }
     "be created from a number of years" in forAllTimeZones {
-      3.years === Period.years(3)
+      3.years must beEqualTo(Period.years(3))
     }
     "be converted implicitly to a date starting from the epoch time" in forAllTimeZones {
       3.seconds.after(new Date(0)) must beTrue
@@ -68,10 +69,10 @@ class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen 
     }
     "be compared to another TimeSpan" in forAllTimeZones {
       3.seconds === 3.seconds
-      3.seconds must_!= 2.seconds
+      3.seconds must not(beEqualTo(2.seconds))
     }
     "be compared to another object" in forAllTimeZones {
-      3.seconds must_!= "string"
+      3.seconds must not(beEqualTo("string"))
     }
   }
 
@@ -173,8 +174,8 @@ class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen 
     }
     "provide a toDate returning a Full(date) from many kinds of objects" in forAllTimeZones {
       val d = now
-      List(null, Nil, None, Failure("", Empty, Empty)) forall { toDate(_) must beEqualTo(Empty) }
-      List(Full(d), Some(d), List(d)) forall { toDate(_) must beEqualTo(Full(d)) }
+      List(null, Nil, None, Failure("", Empty, Empty)) forall { toDate(_) == Empty } must beTrue
+      List(Full(d), Some(d), List(d)) forall { toDate(_) == Full(d) } must beTrue
 
       toDate(internetDateFormatter.format(d)) must beLike {
         case Full(converted) =>
@@ -203,7 +204,7 @@ class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen 
 }
 
 object forAllTimeZones extends Around {
-  import MatchersImplicits._
+  import MatcherImplicits._
 
   override def around[T: AsResult](f: => T) = synchronized {
     import scala.jdk.CollectionConverters._
