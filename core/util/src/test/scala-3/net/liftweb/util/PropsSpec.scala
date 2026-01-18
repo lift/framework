@@ -48,8 +48,8 @@ class PropsSpec extends Specification {
         )
       }
 
-      testProps.getInt("jetty.port") === Empty
-      testProps.get("test.prop") === Full("value")
+      testProps.getInt("jetty.port") must beEqualTo(Empty)
+      testProps.get("test.prop") must beEqualTo(Full("value"))
       wasCalled === true
     }
 
@@ -79,15 +79,15 @@ class PropsSpec extends Specification {
     }
 
     "Parse and cast to int" in {
-      TestProps().getInt("an.int") === Full(42)
+      TestProps().getInt("an.int") must beEqualTo(Full(42))
     }
 
     "Parse and cast to long" in {
-      TestProps().getLong("a.long") === Full(9223372036854775807L)
+      TestProps().getLong("a.long") must beEqualTo(Full(9223372036854775807L))
     }
 
     "Parse and cast to boolean" in {
-      TestProps().getBool("a.boolean") === Full(true)
+      TestProps().getBool("a.boolean") must beEqualTo(Full(true))
     }
 
     "Prefer prepended properties to the test.default.props" in {
@@ -96,7 +96,7 @@ class PropsSpec extends Specification {
       testProps.prependProvider(Map("jetty.port" -> "8080"))
       val port = testProps.getInt("jetty.port")
 
-      port === Full(8080)
+      port must beEqualTo(Full(8080))
     }
 
     "Prefer prepended System.properties to the test.default.props" in {
@@ -107,7 +107,7 @@ class PropsSpec extends Specification {
       testProps.prependProvider(sys.props)
       val baseurl = testProps.get("omniauth.baseurl1")
 
-      baseurl === Full("http://google.com")
+      baseurl must beEqualTo(Full("http://google.com"))
     }
 
     "Read through to System.properties, correctly handling mutation" in {
@@ -118,7 +118,7 @@ class PropsSpec extends Specification {
       System.setProperty("omniauth.baseurl2", "http://ebay.com")
       val baseurl = testProps.get("omniauth.baseurl2")
 
-      baseurl === Full("http://ebay.com")
+      baseurl must beEqualTo(Full("http://ebay.com"))
     }
 
     "Find properties in appended maps when not defined in test.default.props" in {
@@ -127,13 +127,13 @@ class PropsSpec extends Specification {
       testProps.appendProvider(Map("new.prop" -> "new.value"))
       val prop = testProps.get("new.prop")
 
-      prop === Full("new.value")
+      prop must beEqualTo(Full("new.value"))
     }
 
     "Not interpolate values when no interpolator is given" in {
       val port = TestProps().get("jetty.port")
 
-      port === Full("${PORT}")
+      port must beEqualTo(Full("${PORT}"))
     }
 
     "Interpolate values from the given interpolator" in {
@@ -142,7 +142,7 @@ class PropsSpec extends Specification {
       testProps.appendInterpolationValues(Map("PORT" -> "8080"))
       val port = testProps.getInt("jetty.port")
 
-      port === Full(8080)
+      port must beEqualTo(Full(8080))
     }
 
     "Interpolate multiple values in a string from the given interpolator" in {
@@ -151,7 +151,7 @@ class PropsSpec extends Specification {
       testProps.appendInterpolationValues(Map("DB_HOST" -> "localhost", "DB_PORT" -> "3306"))
       val url = testProps.get("db.url")
 
-      url === Full("jdbc:mysql://localhost:3306/MYDB")
+      url must beEqualTo(Full("jdbc:mysql://localhost:3306/MYDB"))
     }
 
     "Find properties in append for require()" in {

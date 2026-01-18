@@ -96,7 +96,7 @@ class HListSpec extends Specification {
         (Full("a") ?~ "Yak" :&: Full(1) :&: Full(List(1,2,3))) ?~! "Dude"
       } yield a.length * one * lst.foldLeft(1)(_ * _)
 
-      res === Full(6)
+      res must beEqualTo(Full(6))
     }
   }
 

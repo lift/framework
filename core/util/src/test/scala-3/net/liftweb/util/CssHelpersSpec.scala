@@ -39,7 +39,7 @@ class CssHelpersSpec extends Specification {
       }
       """
 
-      CssUrlPrefixer("prefix").fixCss(baseCss) === Full(baseCss)
+      CssUrlPrefixer("prefix").fixCss(baseCss) must beEqualTo(Full(baseCss))
     }
     
     "leave relative CSS urls alone" in {
@@ -56,7 +56,7 @@ class CssHelpersSpec extends Specification {
       }
       """
 
-      CssUrlPrefixer("prefix").fixCss(baseCss) === Full(baseCss)
+      CssUrlPrefixer("prefix").fixCss(baseCss) must beEqualTo(Full(baseCss))
     }
 
     "prefix root-relative CSS urls with the specified prefix" in {

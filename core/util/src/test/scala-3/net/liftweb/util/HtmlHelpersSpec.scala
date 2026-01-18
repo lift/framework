@@ -47,7 +47,7 @@ class HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
       findBox(xml) {
         e => e.attribute("id").
         filter(_.text == "3").map(i => e)
-      } === Empty
+      } must beEqualTo(Empty)
     }
 
 
@@ -57,7 +57,7 @@ class HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
       findBox(xml) {
         e => e.attribute("id").
         filter(_.text == "3").map(i => e)
-      } === Empty
+      } must beEqualTo(Empty)
     }
   }
 
@@ -110,11 +110,11 @@ class HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
     }
 
     "find the first id in a NodeSeq when no id is requested" in {
-      findId(xml) === Full("boom")
+      findId(xml) must beEqualTo(Full("boom"))
     }
 
     "provide an Empty if no ide is foud in a NodeSeq when no id is requested" in {
-      findId(<test />) === Empty
+      findId(<test />) must beEqualTo(Empty)
     }
   }
 

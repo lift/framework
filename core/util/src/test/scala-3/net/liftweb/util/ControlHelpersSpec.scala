@@ -31,19 +31,19 @@ class ControlHelpersSpec extends Specification  {
 
   "the tryo function" should {
     "return a Full can if the tested block doesn't throw an exception" in {
-      tryo { "valid" } === Full("valid")
+      tryo { "valid" } must beEqualTo(Full("valid"))
     }
     val exception = new RuntimeException("ko")
     def failureBlock = { throw exception; () }
 
     "return a Failure if the tested block throws an exception" in {
-      tryo { failureBlock } === Failure(exception.getMessage, Full(exception), Empty)
+      tryo { failureBlock } must beEqualTo(Failure(exception.getMessage, Full(exception), Empty))
     }
     "return Empty if the tested block throws an exception whose class is in the ignore list - with one element" in {
-      tryo(classOf[RuntimeException]) { failureBlock } === Empty
+      tryo(classOf[RuntimeException]) { failureBlock } must beEqualTo(Empty)
     }
     "return Empty if the tested block throws an exception whose class is in the ignore list - with 2 elements" in {
-      tryo(List(classOf[RuntimeException], classOf[NullPointerException])) { failureBlock } === Empty
+      tryo(List(classOf[RuntimeException], classOf[NullPointerException])) { failureBlock } must beEqualTo(Empty)
     }
     "trigger a callback function with the exception if the tested block throws an exception" in {
       val callback = (e: Throwable) => { e === exception; () }

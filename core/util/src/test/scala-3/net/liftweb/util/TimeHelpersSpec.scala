@@ -173,8 +173,8 @@ class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen 
     }
     "provide a toDate returning a Full(date) from many kinds of objects" in forAllTimeZones {
       val d = now
-      List(null, Nil, None, Failure("", Empty, Empty)) forall { toDate(_) === Empty }
-      List(Full(d), Some(d), List(d)) forall { toDate(_) === Full(d) }
+      List(null, Nil, None, Failure("", Empty, Empty)) forall { toDate(_) must beEqualTo(Empty) }
+      List(Full(d), Some(d), List(d)) forall { toDate(_) must beEqualTo(Full(d)) }
 
       toDate(internetDateFormatter.format(d)) must beLike {
         case Full(converted) =>

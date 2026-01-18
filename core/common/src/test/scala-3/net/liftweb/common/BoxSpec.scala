@@ -19,6 +19,7 @@ package common
 
 import org.specs2.mutable.Specification
 import org.specs2.ScalaCheck
+import org.specs2.collection.canEqualAny
 import org.scalacheck.{Arbitrary, Gen}
 import Gen._
 
@@ -49,22 +50,22 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
 
   "A Box" can {
     "be created from a Option. It is Empty if the option is None" in {
-      Box(None) ===(Empty)
+      Box(None) must beEqualTo(Empty)
     }
     "be created from a Option. It is Full(x) if the option is Some(x)" in {
-      Box(Some(1)) === Full(1)
+      Box(Some(1)) must beEqualTo(Full(1))
     }
     "be created from a List containing one element. It is Empty if the list is empty" in {
-      Box(Nil) ===(Empty)
+      Box(Nil) must beEqualTo(Empty)
     }
     "be created from a List containing one element. It is Full(x) if the list is List(x)" in {
-      Box(List(1)) === Full(1)
+      Box(List(1)) must beEqualTo(Full(1))
     }
     "be created from a List containing more than one element. It is Full(x) if the list is x::rest" in {
-      Box(List(1, 2, 3)) === Full(1)
+      Box(List(1, 2, 3)) must beEqualTo(Full(1))
     }
     "be used as an iterable" in {
-      Full(1) reduceLeft {(x: Int, y: Int) => x + y} === 1
+      (Full(1) reduceLeft {(x: Int, y: Int) => x + y}) === 1
     }
     "be used as an Option" in {
       Full(1) orElse Some(2) must beSome(1)
@@ -74,10 +75,10 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Some(1).openOrThrowException("This is a test") === 1
     }
     "be defined from some legacy code (possibly passing null values). If the passed value is not null, a Full(value) is returned" in {
-      Box.legacyNullTest("s") === Full("s")
+      Box.legacyNullTest("s") must beEqualTo(Full("s"))
     }
     "be defined from some legacy code (possibly passing null values). If the passed value is null, an Empty is returned" in {
-      Box.legacyNullTest(null) === Empty
+      Box.legacyNullTest(null) must beEqualTo(Empty)
     }
   }
 
@@ -85,8 +86,8 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "provide a 'choice' method to either apply a function to the Box value or return another default can" in {
       def gotIt = (x: Int) => Full("got it: " + x.toString)
 
-      Full(1).choice(gotIt)(Full("nothing")) === Full("got it: 1")
-      Empty.choice(gotIt)(Full("nothing")) === Full("nothing")
+      Full(1).choice(gotIt)(Full("nothing")) must beEqualTo(Full("got it: 1"))
+      Empty.choice(gotIt)(Full("nothing")) must beEqualTo(Full("nothing"))
     }
   }
 
@@ -101,10 +102,10 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Full(1).openOrThrowException("This is a test") === 1
     }
     "return its value when opened with openOr(default value)" in {
-      Full(1) openOr 0 === 1
+      (Full(1) openOr 0) === 1
     }
     "return itself when or'ed with another Box" in {
-      Full(1) or Full(2) === Full(1)
+      (Full(1) or Full(2)) must beEqualTo(Full(1))
     }
     "define an 'exists' method returning true if the Box value satisfies the function" in {
       Full(1) exists {_ > 0} must beTrue
@@ -119,13 +120,13 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Full(0) forall {_ > 0} must beFalse
     }
     "define a 'filter' method, returning a Full Box if the filter is satisfied" in {
-      Full(1) filter {_ > 0} === Full(1)
+      (Full(1) filter {(x: Int) => x > 0}) must beEqualTo(Full(1))
     }
     "define a 'filter' method, returning Empty if the filter is not satisfied" in {
-      Full(1) filter {_ == 0} ===(Empty)
+      (Full(1) filter {(x: Int) => x == 0}) must beEqualTo(Empty)
     }
     "define a 'filterMsg' method, returning a Failure if the filter predicate is not satisfied" in {
-      Full(1).filterMsg("not equal to 0")(_ == 0) === Failure("not equal to 0", Empty, Empty)
+      Full(1).filterMsg("not equal to 0")(_ == 0) must beEqualTo(Failure("not equal to 0", Empty, Empty))
     }
     "define a 'foreach' method using its value (to display it for instance)" in {
       var total = 0
@@ -133,48 +134,48 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       total === 1
     }
     "define a 'map' method to transform its value" in {
-      Full(1) map { _.toString } === Full("1")
+      (Full(1) map { (x: Int) => x.toString }) must beEqualTo(Full("1"))
     }
     "define a 'flatMap' method transforming its value in another Box. If the value is transformed in a Full box, the total result is a Full box" in {
-      Full(1) flatMap { (x: Int) => if (x > 0) Full("full") else Empty } === Full("full")
+      (Full(1) flatMap { (x: Int) => if (x > 0) Full("full") else Empty }) must beEqualTo(Full("full"))
     }
     "define a 'flatMap' method transforming its value in another Box. If the value is transformed in an Empty box, the total result is an Empty box" in {
-      Full(0) flatMap { (x: Int) => if (x > 0) Full("full") else Empty } ===(Empty)
+      (Full(0) flatMap { (x: Int) => if (x > 0) Full("full") else Empty }) must beEqualTo(Empty)
     }
     "define a 'flatten' method if it contains another Box." in {
       "If the inner box is a Full box, the final result is identical to that box" in {
-        Full(Full(1)).flatten === Full(1)
+        Full(Full(1)).flatten must beEqualTo(Full(1))
       }
       "If the inner box is a Failure, the final result is identical to that box" in {
-        Full(Failure("error", Empty, Empty)).flatten === Failure("error", Empty, Empty)
+        Full(Failure("error", Empty, Empty)).flatten must beEqualTo(Failure("error", Empty, Empty))
       }
       "If the inner box is an Empty box, the final result is identical to that box" in {
-        Full(Empty).flatten === Empty
+        Full(Empty).flatten must beEqualTo(Empty)
       }
     }
     "define a 'collect' method that takes a PartialFunction to transform its contents" in {
       "If the partial-function is defined for the contents of this box, returns a full box containing the result of applying that partial function to this Box's contents" in {
-        Full("Albus") collect { case "Albus" => "Dumbledore"} === Full("Dumbledore")
+        (Full("Albus") collect { case "Albus" => "Dumbledore"}) must beEqualTo(Full("Dumbledore"))
       }
       "If the partial-function is not defined for the contents of this box, returns Empty" in {
-        Full("Hermione") collect { case "Albus" => "Dumbledore"} ===(Empty)
+        (Full("Hermione") collect { case "Albus" => "Dumbledore"}) must beEqualTo(Empty)
       }
     }
     "define a 'transform' method that takes a PartialFunction to transform this box into another box" in {
       "If the partial-function is defined for this box, returns the result of applying the partial function to it" in {
-        Full(404) transform {
+        (Full(404) transform {
           case Full(x: Int) if x != 200 => Failure("Server error")
-        } === Failure("Server error")
+        }) must beEqualTo(Failure("Server error"))
       }
       "If the partial-function is not defined for this box, returns itself unchanged" in {
-        Full("Intended Result") transform {
+        (Full("Intended Result") transform {
           case _: EmptyBox => Full("Alternative")
           case Full("Unexpected Result") => Full("Alternative")
-        } === Full("Intended Result")
+        }) must beEqualTo(Full("Intended Result"))
       }
     }
     "define a 'flip' method returning Empty" in {
-      Full(1) flip { _ => "No data found" } === Empty
+      (Full(1) flip { _ => "No data found" }) must beEqualTo(Empty)
     }
     "define an 'elements' method returning an iterator containing its value" in {
       Full(1).elements.next() === 1
@@ -186,10 +187,10 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Full(1).toOption must beSome(1)
     }
     "return itself if asked for its status with the operator ?~" in {
-      Full(1) ?~ "error" === Full(1)
+      Full(1) ?~ "error" must beEqualTo(Full(1))
     }
     "return itself if asked for its status with the operator ?~!" in {
-      Full(1) ?~! "error" === Full(1)
+      Full(1) ?~! "error" must beEqualTo(Full(1))
     }
     "define a 'pass' method passing the can to a function and returning itself (alias: $)" in {
       var empty = false
@@ -202,56 +203,56 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Full(1).run("string")(appendToString) === "string1"
     }
     "define a 'isA' method returning a Full(value) if the value is the instance of a given class" in {
-      Full("s").isA(classOf[String]) === Full("s")
+      Full("s").isA(classOf[String]) must beEqualTo(Full("s"))
     }
     "define a 'isA' method returning Empty if the value is not the instance of a given class" in {
-      Full("s").isA(classOf[Double]) === Empty
+      Full("s").isA(classOf[Double]) must beEqualTo(Empty)
     }
     "define a 'asA' method returning a Full(value) if the value is the instance of a given type" in {
-      Full("s").asA[String] === Full("s")
+      Full("s").asA[String] must beEqualTo(Full("s"))
     }
     "define a 'asA' method returning Empty if the value is not the instance of a given type" in {
-      Full("s").asA[Double] === Empty
+      Full("s").asA[Double] must beEqualTo(Empty)
     }
 
     "define a 'asA' method must work with Boolean" in {
-      Full(true).asA[Boolean] === Full(true)
-      Full(3).asA[Boolean] === Empty
+      Full(true).asA[Boolean] must beEqualTo(Full(true))
+      Full(3).asA[Boolean] must beEqualTo(Empty)
     }
 
     "define a 'asA' method must work with Character" in {
-      Full('a').asA[Char] === Full('a')
-      Full('a').asA[Boolean] === Empty
+      Full('a').asA[Char] must beEqualTo(Full('a'))
+      Full('a').asA[Boolean] must beEqualTo(Empty)
     }
 
     "define a 'asA' method must work with Byte" in {
-      Full(3.toByte).asA[Byte] === Full(3.toByte)
-      Full(3.toByte).asA[Boolean] === Empty
+      Full(3.toByte).asA[Byte] must beEqualTo(Full(3.toByte))
+      Full(3.toByte).asA[Boolean] must beEqualTo(Empty)
     }
 
     "define a 'asA' method must work with Double" in {
-      Full(44d).asA[Double] === Full(44D)
-      Full(44d).asA[Boolean] === Empty
+      Full(44d).asA[Double] must beEqualTo(Full(44D))
+      Full(44d).asA[Boolean] must beEqualTo(Empty)
     }
 
     "define a 'asA' method must work with Float" in {
-      Full(32f).asA[Float] === Full(32f)
-      Full(33f).asA[Boolean] === Empty
+      Full(32f).asA[Float] must beEqualTo(Full(32f))
+      Full(33f).asA[Boolean] must beEqualTo(Empty)
     }
 
     "define a 'asA' method must work with Integer" in {
-      Full(3).asA[Int] === Full(3)
-      Full(3).asA[Boolean] === Empty
+      Full(3).asA[Int] must beEqualTo(Full(3))
+      Full(3).asA[Boolean] must beEqualTo(Empty)
     }
 
     "define a 'asA' method must work with Long" in {
-      Full(32L).asA[Long] === Full(32L)
-      Full(32L).asA[Boolean] === Empty
+      Full(32L).asA[Long] must beEqualTo(Full(32L))
+      Full(32L).asA[Boolean] must beEqualTo(Empty)
     }
 
     "define a 'asA' method must work with Short" in {
-      Full(8.toShort).asA[Short] === Full(8.toShort)
-      Full(8.toShort).asA[Boolean] === Empty
+      Full(8.toShort).asA[Short] must beEqualTo(Full(8.toShort))
+      Full(8.toShort).asA[Boolean] must beEqualTo(Empty)
     }
 
     "not invoke a call-by-name parameter to openOrThrowException" in {
@@ -286,11 +287,11 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       Empty.openOr(1) === 1
     }
     "return the other Box if or'ed with another Box" in {
-      Empty.or(Full(1)) === Full(1)
+      Empty.or(Full(1)) must beEqualTo(Full(1))
     }
     "return itself if filtered with a predicate" in {
       val empty: Box[Int] = Empty
-      empty.filter {_ > 0} ===(Empty)
+      empty.filter {_ > 0} must beEqualTo(Empty)
     }
     "define an 'exists' method returning false" in {
       val empty: Box[Int] = Empty
@@ -302,10 +303,10 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     }
     "define a 'filter' method, returning Empty" in {
       val empty: Box[Int] = Empty
-      empty filter {_ > 0} ===(Empty)
+      (empty filter {(x: Int) => x > 0}) must beEqualTo(Empty)
     }
     "define a 'filterMsg' method, returning a Failure" in {
-      Empty.filterMsg("not equal to 0")(_ == 0) === Failure("not equal to 0", Empty, Empty)
+      Empty.filterMsg("not equal to 0")(_ == 0) must beEqualTo(Failure("not equal to 0", Empty, Empty))
     }
     "define a 'foreach' doing nothing" in {
       var total = 0
@@ -314,54 +315,54 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       total === 0
     }
     "define a 'map' method returning Empty" in {
-      Empty map {_.toString} ===(Empty)
+      (Empty map {(x: Any) => x.toString}) must beEqualTo(Empty)
     }
     "define a 'flatMap' method returning Empty" in {
-      Empty flatMap {(x: Int) => Full("full")} ===(Empty)
+      (Empty flatMap {(x: Int) => Full("full")}) must beEqualTo(Empty)
     }
     "define a 'flatten' method returning Empty" in {
-      Empty.flatten ===(Empty)
+      Empty.flatten must beEqualTo(Empty)
     }
     "define a 'collect' method returning Empty" in {
-      Empty collect { case _ => "Some Value" } ===(Empty)
+      (Empty collect { case _ => "Some Value" }) must beEqualTo(Empty)
     }
     "define a 'transform' method that takes a PartialFunction to transform this Empty box into another box" in {
       "If the partial-function is defined for Empty, returns the result of applying the partial function to it" in {
-        Empty transform {
+        (Empty transform {
           case Failure("error", Empty, Empty) => Full("failure-alternative")
           case Empty => Full("alternative")
-        } === Full("alternative")
+        }) must beEqualTo(Full("alternative"))
       }
       "If the partial-function is not defined for Empty, returns Empty" in {
-        Empty transform { case Failure("The Phantom Menace", Empty, Empty) => Full("Return Of The Jedi") } === Empty
+        (Empty transform { case Failure("The Phantom Menace", Empty, Empty) => Full("Return Of The Jedi") }) must beEqualTo(Empty)
       }
     }
     "define a 'flip' method returning a Full box" in {
-      Empty flip {
+      (Empty flip {
         case Empty => "flipped-empty"
         case _ => "flipped-failure"
-      } === Full("flipped-empty")
+      }) must beEqualTo(Full("flipped-empty"))
     }
     "define an 'elements' method returning an empty iterator" in {
       Empty.elements.hasNext must beFalse
     }
     "define a 'toList' method returning Nil" in {
-      Empty.toList === Nil
+      Empty.toList must beEmpty
     }
     "define a 'toOption' method returning None" in {
       Empty.toOption must beNone
     }
     "return a failure with a message if asked for its status with the operator ?~" in {
-      Empty ?~ "nothing" === Failure("nothing", Empty, Empty)
+      Empty ?~ "nothing" must beEqualTo(Failure("nothing", Empty, Empty))
     }
     "return a failure with a message if asked for its status with the operator ?~!" in {
-      Empty ?~! "nothing" === Failure("nothing", Empty, Empty)
+      Empty ?~! "nothing" must beEqualTo(Failure("nothing", Empty, Empty))
     }
     "define a 'isA' method returning Empty" in {
-      Empty.isA(classOf[Double]) === Empty
+      Empty.isA(classOf[Double]) must beEqualTo(Empty)
     }
     "define a 'asA' method returning Empty" in {
-      Empty.asA[Double] === Empty
+      Empty.asA[Double] must beEqualTo(Empty)
     }
 
     "invoke a call-by-name parameter to openOrThrowException" in {
@@ -384,53 +385,53 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
   "A Failure is an Empty Box which" can {
     "return its cause as an exception" in {
       case class LiftException(m: String) extends Exception
-      Failure("error", Full(new LiftException("broken")), Empty).exception === Full(new LiftException("broken"))
+      Failure("error", Full(new LiftException("broken")), Empty).exception must beEqualTo(Full(new LiftException("broken")))
     }
     "return a chained list of causes" in {
       Failure("error",
               Full(new Exception("broken")),
-              Full(Failure("nested cause", Empty, Empty))).chain === Full(Failure("nested cause", Empty, Empty))
+              Full(Failure("nested cause", Empty, Empty))).chain must beEqualTo(Full(Failure("nested cause", Empty, Empty)))
     }
     "be converted to a ParamFailure" in {
-      Failure("hi mom") ~> 404 === ParamFailure("hi mom", Empty, Empty, 404)
+      Failure("hi mom") ~> 404 must beEqualTo(ParamFailure("hi mom", Empty, Empty, 404))
     }
   }
 
   "A Failure is an Empty Box which" should {
     "return itself if mapped, flatMapped or flattened" in {
-      Failure("error", Empty, Empty) map {_.toString} === Failure("error", Empty, Empty)
-      Failure("error", Empty, Empty) flatMap {(x: String) => Full(x.toString)} === Failure("error", Empty, Empty)
-      Failure("error", Empty, Empty).flatten === Failure("error", Empty, Empty)
+      (Failure("error", Empty, Empty) map {(x: Any) => x.toString}) must beEqualTo(Failure("error", Empty, Empty))
+      (Failure("error", Empty, Empty) flatMap {(x: String) => Full(x.toString)}) must beEqualTo(Failure("error", Empty, Empty))
+      Failure("error", Empty, Empty).flatten must beEqualTo(Failure("error", Empty, Empty))
     }
     "define a 'collect' method returning itself" in {
-      Failure("error", Empty, Empty) collect { case _ => "Some Value" } === Failure("error", Empty, Empty)
+      (Failure("error", Empty, Empty) collect { case _ => "Some Value" }) must beEqualTo(Failure("error", Empty, Empty))
     }
     "define a 'transform' method that takes a PartialFunction to transform this Failure into another box" in {
       "If the partial-function is defined for this Failure, returns the result of applying the partial function to it" in {
-        Failure("The Phantom Menace") transform {
+        (Failure("The Phantom Menace") transform {
           case Failure("The Phantom Menace", Empty, Empty) => Full("Return Of The Jedi")
-        } === Full("Return Of The Jedi")
+        }) must beEqualTo(Full("Return Of The Jedi"))
 
-        Failure("The Phantom Menace") transform {
+        (Failure("The Phantom Menace") transform {
           case Failure("The Phantom Menace", Empty, Empty) => Failure("Clones")
           case _ => Full("Jedi")
-        } === Failure("Clones")
+        }) must beEqualTo(Failure("Clones"))
       }
       "If the partial-function is not defined for this Failure, returns itself unchanged" in {
-        Failure("Clones") transform { case Failure("The Phantom Menace", Empty, Empty) => Full("Jedi") } === Failure("Clones")
+        (Failure("Clones") transform { case Failure("The Phantom Menace", Empty, Empty) => Full("Jedi") }) must beEqualTo(Failure("Clones"))
       }
     }
     "define a 'flip' method returning a Full box" in {
-      Failure("error", Empty, Empty) flip {
+      (Failure("error", Empty, Empty) flip {
         case Empty => "flipped-empty"
         case _: Failure => "flipped-failure"
-      } === Full("flipped-failure")
+      }) must beEqualTo(Full("flipped-failure"))
     }
     "return itself when asked for its status with the operator ?~" in {
-      Failure("error", Empty, Empty) ?~ "nothing" === Failure("error", Empty, Empty)
+      Failure("error", Empty, Empty) ?~ "nothing" must beEqualTo(Failure("error", Empty, Empty))
     }
     "create a new failure with a chained message if asked for its status with the operator ?~!" in {
-      Failure("error", Empty, Empty) ?~! "error2" === Failure("error2", Empty, Full(Failure("error", Empty, Empty)))
+      Failure("error", Empty, Empty) ?~! "error2" must beEqualTo(Failure("error2", Empty, Full(Failure("error", Empty, Empty))))
     }
     "return false for exist method" in {
       Failure("error", Empty, Empty) exists {_ => true } must beFalse
@@ -442,34 +443,37 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
 
   "A ParamFailure is a failure which" should {
     "appear in the chain when ~> is invoked on it" in {
-      Failure("Apple") ~> 404 ~> "apple" ===
+      Failure("Apple") ~> 404 ~> "apple" must beEqualTo(
         ParamFailure("Apple", Empty, Full(
           ParamFailure("Apple", Empty, Empty, 404)
-        ), "apple")
+        ), "apple"))
     }
   }
 
   "A Box equals method" should {
 
     "return true with comparing two identical Box messages" in prop {
-      (c1: Box[Int], c2: Box[Int]) => (c1, c2) match {
-        case (Empty, Empty) => c1 === c2
-        case (Full(x), Full(y)) => (c1 == c2) === (x == y)
-        case (Failure(m1, e1, l1), Failure(m2, e2, l2)) => (c1 == c2) === ((m1, e1, l1) == (m2, e2, l2))
-        case _ => c1 !==(c2)
+      import org.specs2.execute.Result
+      (c1: Box[Int], c2: Box[Int]) => {
+        ((c1, c2) match {
+          case (Empty, Empty) => c1 must beEqualTo(c2)
+          case (Full(x), Full(y)) => (c1 == c2) === (x == y)
+          case (Failure(m1, e1, l1), Failure(m2, e2, l2)) => (c1 == c2) === ((m1, e1, l1) == (m2, e2, l2))
+          case _ => (c1 != c2) === true
+        }): Result
       }
     }
 
     "return false with comparing one Full and another object" in {
-      Full(1) !==("hello")
+      (Full(1) != "hello") must beTrue
     }
 
     "return false with comparing one Empty and another object" in {
-      Empty !==("hello")
+      (Empty != "hello") must beTrue
     }
 
     "return false with comparing one Failure and another object" in {
-      Failure("", Empty, Empty) !==("hello")
+      (Failure("", Empty, Empty) != "hello") must beTrue
     }
   }
 
@@ -478,14 +482,14 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
       val someBoxes: List[Box[String]] = List(Full("bacon"), Full("sammich"))
       val singleBox = someBoxes.toSingleBox("Box failed!")
 
-      singleBox === Full(List("bacon", "sammich"))
+      singleBox must beEqualTo(Full(List("bacon", "sammich")))
     }
 
     "be convertable to a Box[List[T]] when some are Full and some are Empty" in {
       val someBoxes: List[Box[String]] = List(Full("bacon"), Full("sammich"), Empty)
       val singleBox = someBoxes.toSingleBox("Box failed!")
 
-      singleBox === Full(List("bacon", "sammich"))
+      singleBox must beEqualTo(Full(List("bacon", "sammich")))
     }
 
     "be convertable to a ParamFailure[Box[List[T]]] when any are Failure" in {
@@ -510,14 +514,14 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
 
       singleBox must beLike {
         case ParamFailure(_, _, chain, _) =>
-          chain === Full(expectedChain)
+          chain must beEqualTo(Full(expectedChain))
       }
     }
   }
 
   "A Box tryo method" should {
     "return Full" in {
-      Box.tryo(1) === Full(1)
+      Box.tryo(1) must beEqualTo(Full(1))
     }
 
     "return Failure(_, Full(NPE), _) in case of NPE" in {
@@ -531,7 +535,7 @@ class BoxSpec extends Specification with ScalaCheck with BoxGenerator {
     "return Empty in case of NPE and ignore list with NPE" in {
       val ignore: List[Class[_]] = List(classOf[NullPointerException])
 
-      Box.tryo(ignore)(throw new NullPointerException) === Empty
+      Box.tryo(ignore)(throw new NullPointerException) must beEqualTo(Empty)
     }
 
     "return Failure(_, Full(NPE), _) in case of non empty ignore list without NPE" in {
