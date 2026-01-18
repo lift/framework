@@ -63,7 +63,10 @@ lazy val common =
   coreProject("common")
     .settings(
       description := "Common Libraries and Utilities",
-      libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, scala_xml, scala_parser, scalamock)
+      libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, scala_xml, scala_parser, scalamock, mockito_scalatest(scalaVersion.value)),
+      Test / unmanagedSourceDirectories += {
+        (Test / sourceDirectory).value / ("scala-" + scalaBinaryVersion.value)
+      }
     )
 
 lazy val actor =
@@ -71,7 +74,10 @@ lazy val actor =
     .dependsOn(common)
     .settings(
       description := "Simple Actor",
-      Test / parallelExecution := false
+      Test / parallelExecution := false,
+      Test / unmanagedSourceDirectories += {
+        (Test / sourceDirectory).value / ("scala-" + scalaBinaryVersion.value)
+      }
     )
 
 lazy val markdown =
@@ -102,7 +108,10 @@ lazy val util =
         htmlparser,
         xerces,
         json4s_native,
-      )
+      ),
+      Test / unmanagedSourceDirectories += {
+        (Test / sourceDirectory).value / ("scala-" + scalaBinaryVersion.value)
+      }
     )
 
 // Web Projects
@@ -115,7 +124,10 @@ lazy val testkit =
     .dependsOn(util)
     .settings(
       description := "Testkit for Webkit Library",
-      libraryDependencies ++= Seq(commons_httpclient, servlet_api, json4s_native, json4s_xml)
+      libraryDependencies ++= Seq(commons_httpclient, servlet_api, json4s_native, json4s_xml),
+      Test / unmanagedSourceDirectories += {
+        (Test / sourceDirectory).value / ("scala-" + scalaBinaryVersion.value)
+      }
     )
 
 lazy val webkit =
