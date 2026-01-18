@@ -28,7 +28,7 @@ class LAFutureSpec extends Specification {
       }
 
       transformedFuture.get(timeout)
-      notifiedAboutFailure shouldEqual true
+      notifiedAboutFailure must beTrue
     }
 
     "flatMap to failing future if transforming function throws an Exception" in {
@@ -45,7 +45,7 @@ class LAFutureSpec extends Specification {
       }
 
       transformedFuture.get(timeout)
-      notifiedAboutFailure shouldEqual true
+      notifiedAboutFailure must beTrue
     }
 
     "return original Failure after timeout" in {
@@ -58,14 +58,14 @@ class LAFutureSpec extends Specification {
 
       val result = future.get(timeout)
 
-      result shouldEqual givenFailure
+      result must beEqualTo(givenFailure)
     }
 
     "when collecting results with LAFuture.collect" in {
       "collect one future result" in {
         val givenOneResult = 123
         val one = LAFuture(() => givenOneResult)
-        LAFuture.collect(one).get(timeout) shouldEqual List(givenOneResult)
+        LAFuture.collect(one).get(timeout) must beEqualTo(List(givenOneResult))
       }
 
       "collect more future results in correct order" in {
@@ -73,13 +73,13 @@ class LAFutureSpec extends Specification {
         val givenTwoResult = 234
         val one = LAFuture(() => givenOneResult)
         val two = LAFuture(() => givenTwoResult)
-        LAFuture.collect(one, two).get(timeout) shouldEqual List(givenOneResult, givenTwoResult)
+        LAFuture.collect(one, two).get(timeout) must beEqualTo(List(givenOneResult, givenTwoResult))
       }
 
       "collect empty list immediately" in {
         val collectResult = LAFuture.collect(Nil: _*)
-        collectResult.isSatisfied shouldEqual true
-        collectResult.get(timeout) shouldEqual Nil
+        collectResult.isSatisfied must beTrue
+        collectResult.get(timeout) must beEqualTo(Nil)
       }
 
       "report a failed LAFuture as a failure for the overall future" in {
@@ -89,7 +89,7 @@ class LAFutureSpec extends Specification {
         one.fail(Failure("boom boom boom!"))
 
         val collectResult = LAFuture.collect(one, two)
-        collectResult.get(timeout) shouldEqual Failure("boom boom boom!")
+        collectResult.get(timeout) must beEqualTo(Failure("boom boom boom!"))
       }
     }
 
@@ -99,7 +99,7 @@ class LAFutureSpec extends Specification {
         val two: LAFuture[Box[Int]] = LAFuture(() => { Thread.sleep(10000); Full(1) })
 
         val collectResult = LAFuture.collectAll(one, two)
-        collectResult.get(5000) shouldEqual Failure("whoops")
+        collectResult.get(5000) must beEqualTo(Failure("whoops"))
       }
 
       "collectAll collects a set of Fulls" in {
@@ -121,13 +121,13 @@ class LAFutureSpec extends Specification {
         one.fail(Failure("boom boom boom!"))
 
         val collectResult = LAFuture.collectAll(one, two)
-        collectResult.get(timeout) shouldEqual Failure("boom boom boom!")
+        collectResult.get(timeout) must beEqualTo(Failure("boom boom boom!"))
       }
 
       "collectAll empty list immediately" in {
         val collectResult = LAFuture.collectAll(Nil : _*)
-        collectResult.isSatisfied shouldEqual true
-        collectResult.get(timeout) shouldEqual Nil
+        collectResult.isSatisfied must beTrue
+        collectResult.get(timeout) must beEqualTo(Nil)
       }
 
       "report a failed LAFuture as a failure for the overall future" in {
@@ -137,7 +137,7 @@ class LAFutureSpec extends Specification {
         one.fail(Failure("boom boom boom!"))
 
         val collectResult = LAFuture.collectAll(one, two)
-        collectResult.get(timeout) shouldEqual Failure("boom boom boom!")
+        collectResult.get(timeout) must beEqualTo(Failure("boom boom boom!"))
       }
     }
   }

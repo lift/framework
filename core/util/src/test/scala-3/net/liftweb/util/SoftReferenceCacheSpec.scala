@@ -20,7 +20,7 @@ class SoftReferenceCacheSpec extends Specification {
     }
     "Properly age out entries" in {
       cache += ("test2" -> "test2")
-      cache("test") === Empty
+      cache("test") must beEqualTo(Empty)
     }
   }
 

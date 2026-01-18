@@ -40,31 +40,34 @@ class ActorSpec extends Specification {
       val a = actor
       a ! Set(33)
       a !? Get()
-      (a.!?(50, Get())) ===(Full(Answer(33))).eventually(900, 100.milliseconds)
+      Thread.sleep(100)
+      (a.!?(50, Get())) must beEqualTo(Full(Answer(33)))
     }
 
     "allow setting and getting of a value with subclass of Get()" in {
       val a = actor
       a ! Set(33)
       a ! new FunnyGet()
-      (a.!?(50L, new FunnyGet())) ===(Full(Answer(33))).eventually(900, 100.milliseconds)
+      Thread.sleep(100)
+      (a.!?(50L, new FunnyGet())) must beEqualTo(Full(Answer(33)))
     }
 
     "allow adding of a value" in {
       val a = actor
       a ! Set(33)
-      (a !< Add(44)).get(500) ===(Full(Answer(77)))
+      (a !< Add(44)).get(500) must beEqualTo(Full(Answer(77)))
     }
 
     "allow subtracting of a value" in {
       val a = actor
       a ! Set(33)
-      (a !< Sub(11)).get(500) ===(Full(Answer(22)))
+      (a !< Sub(11)).get(500) must beEqualTo(Full(Answer(22)))
     }
 
     "properly timeout" in {
       val a = actor
-      (a !< Set(33)).get(50) ===(Empty).eventually(900, 100.milliseconds)
+      Thread.sleep(100)
+      (a !< Set(33)).get(50) must beEqualTo(Empty)
     }
   }
 

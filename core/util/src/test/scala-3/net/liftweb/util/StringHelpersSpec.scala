@@ -318,16 +318,16 @@ class StringHelpersSpec extends Specification with ScalaCheck with StringGen {
   "The emptyForBlank method" should {
     import net.liftweb.common._
     "return Empty for a given null String" in {
-      StringHelpers.emptyForBlank(null) === Empty
+      StringHelpers.emptyForBlank(null) must beEqualTo(Empty)
     }
     "return Empty for a given a blank String" in {
-      StringHelpers.emptyForBlank("") === Empty
+      StringHelpers.emptyForBlank("") must beEqualTo(Empty)
     }
     "return Empty for a String of spaces" in {
-      StringHelpers.emptyForBlank("  ") === Empty
+      StringHelpers.emptyForBlank("  ") must beEqualTo(Empty)
     }
     "return the trim'ed  String for a given not-null String" in {
-      StringHelpers.emptyForBlank(" x ") === Full("x")
+      StringHelpers.emptyForBlank(" x ") must beEqualTo(Full("x"))
     }
   }
 }

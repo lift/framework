@@ -66,41 +66,41 @@ class ListHelpersSpec extends Specification  with ListHelpers {
 
   "The ListHelpers first_? function" should {
     "return an Empty can if the list is empty" in {
-      first_?((Nil: List[Int]))((i: Int) => true) === Empty
+      first_?((Nil: List[Int]))((i: Int) => true) must beEqualTo(Empty)
     }
     "return an Empty can if no element in the list satisfies the predicate" in {
-      first_?(List(1, 2, 3))((i: Int) => i < 0) === Empty
+      first_?(List(1, 2, 3))((i: Int) => i < 0) must beEqualTo(Empty)
     }
     "return a Full can with the first element in the list satisfying the predicate" in {
-      first_?(List(1, 2, 3))((i: Int) => i > 0) === Full(1)
+      first_?(List(1, 2, 3))((i: Int) => i > 0) must beEqualTo(Full(1))
     }
   }
 
   "The ListHelpers first function" should {
     "return an Empty can if the list is empty" in {
-      first((Nil: List[Int]))((i: Int) => Full(1)) === Empty
+      first((Nil: List[Int]))((i: Int) => Full(1)) must beEqualTo(Empty)
     }
     "return an Empty can if no element in the list returns a Full can when applied a function" in {
-      first(List(1, 2, 3))((i: Int) => Empty) === Empty
+      first(List(1, 2, 3))((i: Int) => Empty) must beEqualTo(Empty)
     }
     "return the first Full can returned by a function f over the list elements" in {
       val f = (i: Int) => i >= 2 match {case true => Full(3) case false => Empty}
-      first(List(1, 2, 3))(f) === Full(3)
+      first(List(1, 2, 3))(f) must beEqualTo(Full(3))
     }
   }
 
   "The ciGet function on Lists of pairs of string" should {
     "return Empty if the list is Nil" in {
-      (Nil: List[(String, String)]).ciGet("") === Empty
+      (Nil: List[(String, String)]).ciGet("") must beEqualTo(Empty)
     }
     "return Empty if no pair has the key as its first element" in {
-      List(("one", "1"), ("two", "2")).ciGet("three") === Empty
+      List(("one", "1"), ("two", "2")).ciGet("three") must beEqualTo(Empty)
     }
     "return a Full can with the first second value of a pair matching the key" in {
-      List(("one", "1"), ("two", "2")).ciGet("one") === Full("1")
+      List(("one", "1"), ("two", "2")).ciGet("one") must beEqualTo(Full("1"))
     }
     "return a Full can with the first second value of a pair matching the key case-insensitively" in {
-      List(("one", "1"), ("two", "2"), ("two", "3")).ciGet("two") === Full("2")
+      List(("one", "1"), ("two", "2"), ("two", "3")).ciGet("two") must beEqualTo(Full("2"))
     }
   }
 
