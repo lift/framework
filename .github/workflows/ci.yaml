@@ -16,6 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         java: [11, 17, 21]
+        scala: [2.13.18, 3.3.7]
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -27,4 +28,4 @@ jobs:
         java-version: ${{ matrix.java }}
     - uses: sbt/setup-sbt@v1
     - name: Build and Test
-      run: sbt test
+      run: sbt ++${{ matrix.scala }} test
