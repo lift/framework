@@ -77,7 +77,7 @@ class HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
       findOption(xml) {
         e => e.attribute("id").
         filter(_.text == "3").map(i => e)
-      } === None
+      } must beNone
     }
 
 
@@ -87,7 +87,7 @@ class HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
       findOption(xml) {
         e => e.attribute("id").
         filter(_.text == "3").map(i => e)
-      } === None
+      } must beNone
     }
   }
 
@@ -144,18 +144,18 @@ class HtmlHelpersSpec extends Specification with HtmlHelpers with XmlMatchers {
     "remove the specified attribute from a provided MetaData list" in {
       val removed = removeAttribute("attribute", element.attributes)
 
-      (removed("attribute") === null) and
-      (removed("otherAttribute") === Text("good-bye"))
+      (removed("attribute") must beNull) and
+      (removed("otherAttribute") must beEqualTo(Text("good-bye")))
     }
   }
 
   "addCssClass" should {
     "add a new attribute if no class attribute exists" in {
-      (addCssClass("foo", <b/>) \ "@class").text === "foo"
+      (addCssClass("foo", <b/>) \ "@class").text must beEqualTo("foo")
     }
 
     "append to an existing class attribute if it already exists" in {
-      (addCssClass("foo", <b class="dog"/>) \ "@class").text === "dog foo"
+      (addCssClass("foo", <b class="dog"/>) \ "@class").text must beEqualTo("dog foo")
     }
   }
 

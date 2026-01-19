@@ -121,62 +121,62 @@ class CssSelectorSpec extends Specification with XmlMatchers {
     }
 
     "select attr/val pair" in {
-      CssSelectorParser.parse("frog=dog") ===
-      Full(AttrSelector("frog", "dog", Empty))
+      CssSelectorParser.parse("frog=dog").openOrThrowException("test") ===
+      AttrSelector("frog", "dog", Empty)
     }
 
 
     "select attr/val pair single quote" in {
-      CssSelectorParser.parse("frog='dog food' *") ===
-      Full(AttrSelector("frog", "dog food", Full(KidsSubNode())))
+      CssSelectorParser.parse("frog='dog food' *").openOrThrowException("test") ===
+      AttrSelector("frog", "dog food", Full(KidsSubNode()))
     }
 
 
     "select attr/val pair double quote" in {
-      CssSelectorParser.parse("frog=\"dog breath\"") ===
-      Full(AttrSelector("frog", "dog breath", Empty))
+      CssSelectorParser.parse("frog=\"dog breath\"").openOrThrowException("test") ===
+      AttrSelector("frog", "dog breath", Empty)
     }
 
     "select name/val pair" in {
-      CssSelectorParser.parse("name=dog") ===
-      Full(NameSelector("dog", Empty))
+      CssSelectorParser.parse("name=dog").openOrThrowException("test") ===
+      NameSelector("dog", Empty)
     }
 
     "select name/val pair" in {
-      CssSelectorParser.parse("@dog") ===
-      Full(NameSelector("dog", Empty))
+      CssSelectorParser.parse("@dog").openOrThrowException("test") ===
+      NameSelector("dog", Empty)
     }
 
     "select name/val pair" in {
-      CssSelectorParser.parse("@dog *") ===
-      Full(NameSelector("dog", Full(KidsSubNode())))
+      CssSelectorParser.parse("@dog *").openOrThrowException("test") ===
+      NameSelector("dog", Full(KidsSubNode()))
     }
 
     "select name/val pair" in {
-      CssSelectorParser.parse("@dog -*") ===
-        Full(NameSelector("dog", Full(PrependKidsSubNode())))
+      CssSelectorParser.parse("@dog -*").openOrThrowException("test") ===
+        NameSelector("dog", Full(PrependKidsSubNode()))
     }
 
     "select name/val pair surround" in {
-      CssSelectorParser.parse("@dog <*>") ===
-        Full(NameSelector("dog", Full(SurroundKids())))
+      CssSelectorParser.parse("@dog <*>").openOrThrowException("test") ===
+        NameSelector("dog", Full(SurroundKids()))
     }
 
     "select name/val pair" in {
-      CssSelectorParser.parse("@dog *+") ===
-      Full(NameSelector("dog", Full(AppendKidsSubNode())))
+      CssSelectorParser.parse("@dog *+").openOrThrowException("test") ===
+      NameSelector("dog", Full(AppendKidsSubNode()))
     }
 
 
     "select name/val pair single quote" in {
-      CssSelectorParser.parse("name='dog food' *") ===
-      Full(NameSelector("dog food", Full(KidsSubNode())))
+      CssSelectorParser.parse("name='dog food' *").openOrThrowException("test") ===
+      NameSelector("dog food", Full(KidsSubNode()))
     }
 
 
     "select name/val pair double quote" in {
-      CssSelectorParser.parse("name=\"dog breath\"") ===
-      Full(NameSelector("dog breath", Empty))
+      CssSelectorParser.parse("name=\"dog breath\"").openOrThrowException("test") ===
+      NameSelector("dog breath", Empty)
     }
 
     "select a class" in {

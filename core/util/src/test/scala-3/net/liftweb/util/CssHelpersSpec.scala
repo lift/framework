@@ -60,7 +60,7 @@ class CssHelpersSpec extends Specification {
     }
 
     "prefix root-relative CSS urls with the specified prefix" in {
-      val baseCss = 
+      val baseCss =
       """
       |#booyan {
       |  background: url(/boom);
@@ -68,15 +68,13 @@ class CssHelpersSpec extends Specification {
       |  image-set: url("/boom.com/magic?bam,'sloop#bam%21bap")
       |}""".stripMargin('|')
 
-      CssUrlPrefixer("prefix").fixCss(baseCss) ===
-        Full(
+      CssUrlPrefixer("prefix").fixCss(baseCss).openOrThrowException("test") ===
           """
           |#booyan {
           |  background: url(prefix/boom);
           |  background-image: url('prefix/boom?bam,"sloop#shap%20bap');
           |  image-set: url("prefix/boom.com/magic?bam,'sloop#bam%21bap")
           |}""".stripMargin('|')
-        )
     }
 
     "fail on mismatched quotes or parens and report where it failed" in {
