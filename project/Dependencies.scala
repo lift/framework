@@ -22,7 +22,7 @@ object Dependencies {
   type ModuleMap = String => ModuleID
 
   lazy val slf4jVersion = "2.0.17"
-  lazy val json4sVersion = "4.0.7"
+  lazy val json4sVersion = "4.2.0-M3"
 
   // Compile scope:
   // Scope available in all classpath, transitive by default.
@@ -31,9 +31,9 @@ object Dependencies {
   lazy val commons_httpclient     = "commons-httpclient"         % "commons-httpclient" % "3.1"
   lazy val joda_time              = "joda-time"                  % "joda-time"          % "2.14.0"
   lazy val joda_convert           = "org.joda"                   % "joda-convert"       % "3.0.1"
-  lazy val json4s_ext             = "org.json4s"                %% "json4s-ext"         % json4sVersion
-  lazy val json4s_native          = "org.json4s"                %% "json4s-native"      % json4sVersion
-  lazy val json4s_xml             = "org.json4s"                %% "json4s-xml"         % json4sVersion
+  lazy val json4s_ext             = "io.github.json4s"                %% "json4s-ext"         % json4sVersion
+  lazy val json4s_native          = "io.github.json4s"                %% "json4s-native"      % json4sVersion
+  lazy val json4s_xml             = "io.github.json4s"                %% "json4s-xml"         % json4sVersion
   lazy val htmlparser             = "nu.validator"               % "htmlparser"         % "1.4.16"
   lazy val mongo_java_driver      = "org.mongodb"                % "mongodb-driver"     % "3.12.7"
   lazy val mongo_java_driver_async  = "org.mongodb"              % "mongodb-driver-async" % "3.12.7"
