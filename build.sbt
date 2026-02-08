@@ -2,7 +2,7 @@ import Dependencies._
 import LiftSbtHelpers._
 
 ThisBuild / organization         := "net.liftweb"
-ThisBuild / version              := "4.0.0-SNAPSHOT"
+ThisBuild / version              := "4.0.0-M4"
 ThisBuild / homepage             := Some(url("https://www.liftweb.net"))
 ThisBuild / licenses             += ("Apache License, Version 2.0", url("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 ThisBuild / startYear            := Some(2006)
