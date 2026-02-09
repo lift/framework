@@ -6,7 +6,7 @@ ThisBuild / version              := "4.0.0-SNAPSHOT"
 ThisBuild / homepage             := Some(url("https://www.liftweb.net"))
 ThisBuild / licenses             += ("Apache License, Version 2.0", url("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 ThisBuild / startYear            := Some(2006)
-ThisBuild / organizationName     := "WorldWide Conferencing, LLC"
+ThisBuild / organizationName     := "Lift Committers and Contributors"
 
 val scala213Version = "2.13.18"
 val scala3LTSVersion = "3.3.7"
