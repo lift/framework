@@ -19,7 +19,6 @@ package util
 
 import common._
 
-import scala.xml.dtd._
 import scala.xml._
 import java.io.{ InputStream, StringReader }
 import javax.xml.parsers.SAXParserFactory
@@ -66,9 +65,6 @@ object HtmlEntities {
 
   val revMap: Map[Char, String] = Map(entList.map{ case (name, value) => (value.toChar, name)} :_*)
 
-  val entities = entList.map{case (name, value) => (name, new ParsedEntityDecl(name, new IntDef(value.toChar.toString)))}
-
-  def apply() = entities
 }
 
 object PCDataXmlParser {
