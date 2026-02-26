@@ -17,7 +17,7 @@
 package net.liftweb
 package util
 
-import scala.xml.Elem
+import scala.xml.{ Comment, Elem }
 
 import org.specs2.mutable.Specification
 import org.specs2.execute.PendingUntilFixed
@@ -32,13 +32,46 @@ import Helpers._
 class Html5ParserSpec extends Specification with PendingUntilFixed with Html5Parser with Html5Writer {
   "Html5Parser Specification".title
 
-  "Htm5 Writer" should {
+  "Html5 Writer" should {
     "Write &" in {
       toString(<foo baz="&amp;dog"/>) === """<foo baz="&dog"></foo>"""
     }
 
     "ignore attributes that are null" in {
       toString(<foo id={None}/>) === """<foo></foo>"""
+    }
+
+    "render void tags without a closing tag" in {
+      toString(<br/>) === "<br>"
+    }
+
+    "render void tags with attributes" in {
+      toString(<img src="x" alt="y"/>) === """<img src="x" alt="y">"""
+    }
+
+    "render non-void empty tags with a closing tag" in {
+      toString(<div/>) === "<div></div>"
+    }
+
+    "not escape content inside script tags" in {
+      toString(<script>{"var x = 1 < 2 && true;"}</script>) === "<script>var x = 1 < 2 && true;</script>"
+    }
+
+    "not escape content inside style tags" in {
+      toString(<style>{"p > span { color: red; }"}</style>) === "<style>p > span { color: red; }</style>"
+    }
+
+    "write PCData as CDATA section" in {
+      toString(<div>{PCData("x < y & z")}</div>) === "<div><![CDATA[x < y & z]]></div>"
+    }
+
+    "write Comment nodes" in {
+      toString(<div>{Comment("a comment")}</div>) === "<div><!--a comment--></div>"
+    }
+
+    "preserve namespace prefix on elements" in {
+      toString(<lift:surround with="default" at="content"><div/></lift:surround>) ===
+        """<lift:surround with="default" at="content"><div></div></lift:surround>"""
     }
   }
 
@@ -93,6 +126,57 @@ class Html5ParserSpec extends Specification with PendingUntilFixed with Html5Par
       val e = parsed.openOrThrowException("Test").asInstanceOf[Elem]
       e.label === "div"
       (parsed.openOrThrowException("Test") \ "@with").text === "dog"
+    }
+
+    "unwrap a single fragment element via AutoInsertedBody" in {
+      val result = parse("<div>hello</div>").openOrThrowException("Test")
+      result.label === "div"
+      result.text === "hello"
+    }
+
+    "not unwrap a full html document" in {
+      val result = parse("<html><head><title>T</title></head><body><p>X</p></body></html>")
+        .openOrThrowException("Test")
+      result.label === "html"
+    }
+
+    "unwrap a single self-closing fragment element" in {
+      val result = parse("<span/>").openOrThrowException("Test")
+      result.label === "span"
+    }
+
+    "resolve standard HTML entities to their character values" in {
+      val result = parse("<p>&nbsp;</p>").openOrThrowException("Test")
+      result.text === "\u00A0"
+    }
+
+    "preserve script tag content verbatim (in head)" in {
+      // nu.validator places bare <script> in <head>; AutoInsertedBody does not unwrap since head is non-empty
+      val result = parse("<script>var x = 1 < 2 && true;</script>").openOrThrowException("Test")
+      result.label === "html"
+      (result \\ "script").text === "var x = 1 < 2 && true;"
+    }
+
+    "preserve style tag content verbatim (in head)" in {
+      // nu.validator places bare <style> in <head>; AutoInsertedBody does not unwrap since head is non-empty
+      val result = parse("<style>p > span { color: red; }</style>").openOrThrowException("Test")
+      result.label === "html"
+      (result \\ "style").text === "p > span { color: red; }"
+    }
+
+    "preserve data-* attributes" in {
+      val result = parse("""<div data-foo="bar" data-baz="qux">x</div>""").openOrThrowException("Test")
+      (result \ "@data-foo").text === "bar"
+      (result \ "@data-baz").text === "qux"
+    }
+
+    "preserve Unicode content" in {
+      val result = parse("<p>café naïve 日本語</p>").openOrThrowException("Test")
+      result.text === "café naïve 日本語"
+    }
+
+    "return a Full result for empty string input" in {
+      parse("") must beAnInstanceOf[Full[Elem]]
     }
   }
 
