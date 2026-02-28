@@ -21,6 +21,7 @@ ThisBuild / libraryDependencies ++= Seq(
   scalactic,
   scalatest
 )
+ThisBuild / libraryDependencies ++= specs2XmlDeps(scalaVersion.value)
 
 ThisBuild / scalacOptions       ++= Seq("-deprecation")
 

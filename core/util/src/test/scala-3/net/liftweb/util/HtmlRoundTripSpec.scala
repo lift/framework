@@ -84,8 +84,8 @@ class HtmlRoundTripSpec extends Specification with Html5Parser with Html5Writer 
       val output = toString(result)
       output must contain("<br>")
       output must contain("<img ")
-      output must not contain "</br>"
-      output must not contain "</img>"
+      output must not(contain("</br>"))
+      output must not(contain("</img>"))
     }
   }
 

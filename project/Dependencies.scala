@@ -93,6 +93,14 @@ object Dependencies {
   lazy val specs2Prov: ModuleMap = (version: String) => "org.specs2" %% "specs2-core" % specs2Version(version) % Provided
   lazy val specs2Matchers: ModuleMap = (version: String) => "org.specs2" %% "specs2-matcher-extra" % specs2Version(version) % Test
   lazy val specs2MatchersProv: ModuleMap = (version: String) => "org.specs2" %% "specs2-matcher-extra" % specs2Version(version) % Provided
+  def specs2XmlDeps(version: String): Seq[ModuleID] =
+    CrossVersion.partialVersion(version) match {
+      case Some((3, _)) =>
+        Seq("org.specs2" %% "specs2-xml" % specs2Version(version) % Test)
+      case _ =>
+        Seq.empty
+    }
+
   lazy val specs2Mock: ModuleMap = (version: String) => {
     CrossVersion.partialVersion(version) match {
       case Some((2, 13)) => "org.specs2" %% "specs2-mock" % specs2Version(version) % Test
