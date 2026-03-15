@@ -345,11 +345,14 @@ trait Html5Parser {
       hp.setNamePolicy(common.XmlViolationPolicy.ALLOW)
       val is = new InputSource(in)
       is.setEncoding("UTF-8")
-      val elem = scala.xml.XML.withXMLReader(hp).load(is)
-      in.close()
-      AutoInsertedBody.unapply(elem) match {
-        case Some(x) => Full(x)
-        case _ => Full(elem)
+      try {
+        val elem = scala.xml.XML.withXMLReader(hp).load(is)
+        AutoInsertedBody.unapply(elem) match {
+          case Some(x) => Full(x)
+          case _ => Full(elem)
+        }
+      } finally {
+        in.close()
       }
     }.flatMap(a => a)
   }
