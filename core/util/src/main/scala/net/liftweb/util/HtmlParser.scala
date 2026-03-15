@@ -19,7 +19,6 @@ package util
 
 import net.liftweb.common._
 import scala.xml._
-import parsing._
 import java.io._
 
 import nu.validator.htmlparser._
@@ -344,53 +343,16 @@ trait Html5Parser {
       hp.setContentNonXmlCharPolicy(common.XmlViolationPolicy.ALLOW)
       hp.setContentSpacePolicy(common.XmlViolationPolicy.FATAL)
       hp.setNamePolicy(common.XmlViolationPolicy.ALLOW)
-      val saxer = new NoBindingFactoryAdapter {
-        /*
-        override def createNode (pre: String, label: String, attrs: MetaData, scope: NamespaceBinding, children: List[Node]) : Elem = {
-          if (pre == "lift" && label == "head") {
-            super.createNode(null, label, attrs, scope, children)
-          } else {
-            super.createNode(pre, label, attrs, scope, children)
-          }
-        }*/
-
-        override def captureText(): Unit = {
-          if (capture) {
-            val text = buffer.toString()
-            if (text.length() > 0) {
-              hStack = hStack.prepended(createText(text))
-            }
-          }
-          buffer.setLength(0)
-        }
-
-        // Override endDocument to handle empty hStack case in Scala 3
-        // Scala 3's List.last throws "None.get" error on empty lists
-        override def endDocument(): Unit = {
-          if (hStack.nonEmpty) {
-            epilogue = hStack.init.reverse
-            hStack = hStack.last :: Nil
-          }
-        }
-      }
-
-      saxer.scopeStack = saxer.scopeStack.prepended(TopScope)
-      hp.setContentHandler(saxer)
       val is = new InputSource(in)
       is.setEncoding("UTF-8")
-      hp.parse(is)
-
-      saxer.scopeStack = saxer.scopeStack.drop(1)
-
-      in.close()
-      saxer.rootElem match {
-        case null => Empty
-        case e: Elem =>
-          AutoInsertedBody.unapply(e) match {
-            case Some(x) => Full(x)
-            case _ => Full(e)
-          }
-        case _ => Empty
+      try {
+        val elem = scala.xml.XML.withXMLReader(hp).load(is)
+        AutoInsertedBody.unapply(elem) match {
+          case Some(x) => Full(x)
+          case _ => Full(elem)
+        }
+      } finally {
+        in.close()
       }
     }.flatMap(a => a)
   }

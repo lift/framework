@@ -17,7 +17,7 @@
 package net.liftweb
 package util
 
-import scala.xml.Elem
+import scala.xml.{ Comment, Elem }
 
 import org.specs2.mutable.Specification
 import org.specs2.execute.PendingUntilFixed
@@ -32,13 +32,46 @@ import Helpers._
 class Html5ParserSpec extends Specification with PendingUntilFixed with Html5Parser with Html5Writer {
   "Html5Parser Specification".title
 
-  "Htm5 Writer" should {
+  "Html5 Writer" should {
     "Write &" in {
       toString(<foo baz="&amp;dog"/>) must_== """<foo baz="&dog"></foo>"""
     }
 
     "ignore attributes that are null" in {
       toString(<foo id={None}/>) must_== """<foo></foo>"""
+    }
+
+    "render void tags without a closing tag" in {
+      toString(<br/>) must_== "<br>"
+    }
+
+    "render void tags with attributes" in {
+      toString(<img src="x" alt="y"/>) must_== """<img src="x" alt="y">"""
+    }
+
+    "render non-void empty tags with a closing tag" in {
+      toString(<div/>) must_== "<div></div>"
+    }
+
+    "not escape content inside script tags" in {
+      toString(<script>{"var x = 1 < 2 && true;"}</script>) must_== "<script>var x = 1 < 2 && true;</script>"
+    }
+
+    "not escape content inside style tags" in {
+      toString(<style>{"p > span { color: red; }"}</style>) must_== "<style>p > span { color: red; }</style>"
+    }
+
+    "write PCData as CDATA section" in {
+      toString(<div>{PCData("x < y & z")}</div>) must_== "<div><![CDATA[x < y & z]]></div>"
+    }
+
+    "write Comment nodes" in {
+      toString(<div>{Comment("a comment")}</div>) must_== "<div><!--a comment--></div>"
+    }
+
+    "preserve namespace prefix on elements" in {
+      toString(<lift:surround with="default" at="content"><div/></lift:surround>) must_==
+        """<lift:surround with="default" at="content"><div></div></lift:surround>"""
     }
   }
 
@@ -94,7 +127,57 @@ class Html5ParserSpec extends Specification with PendingUntilFixed with Html5Par
       e.label must_== "div"
       (parsed.openOrThrowException("Test") \ "@with").text must_== "dog"
     }
+
+    "unwrap a single fragment element via AutoInsertedBody" in {
+      val result = parse("<div>hello</div>").openOrThrowException("Test")
+      result.label must_== "div"
+      result.text must_== "hello"
+    }
+
+    "not unwrap a full html document" in {
+      val result = parse("<html><head><title>T</title></head><body><p>X</p></body></html>")
+        .openOrThrowException("Test")
+      result.label must_== "html"
+    }
+
+    "unwrap a single self-closing fragment element" in {
+      val result = parse("<span/>").openOrThrowException("Test")
+      result.label must_== "span"
+    }
+
+    "resolve standard HTML entities to their character values" in {
+      val result = parse("<p>&nbsp;</p>").openOrThrowException("Test")
+      result.text must_== "\u00A0"
+    }
+
+    "preserve script tag content verbatim (in head)" in {
+      // nu.validator places bare <script> in <head>; AutoInsertedBody does not unwrap since head is non-empty
+      val result = parse("<script>var x = 1 < 2 && true;</script>").openOrThrowException("Test")
+      result.label must_== "html"
+      (result \\ "script").text must_== "var x = 1 < 2 && true;"
+    }
+
+    "preserve style tag content verbatim (in head)" in {
+      // nu.validator places bare <style> in <head>; AutoInsertedBody does not unwrap since head is non-empty
+      val result = parse("<style>p > span { color: red; }</style>").openOrThrowException("Test")
+      result.label must_== "html"
+      (result \\ "style").text must_== "p > span { color: red; }"
+    }
+
+    "preserve data-* attributes" in {
+      val result = parse("""<div data-foo="bar" data-baz="qux">x</div>""").openOrThrowException("Test")
+      (result \ "@data-foo").text must_== "bar"
+      (result \ "@data-baz").text must_== "qux"
+    }
+
+    "preserve Unicode content" in {
+      val result = parse("<p>café naïve 日本語</p>").openOrThrowException("Test")
+      result.text must_== "café naïve 日本語"
+    }
+
+    "return a Full result for empty string input" in {
+      parse("") must beAnInstanceOf[Full[Elem]]
+    }
   }
 
 }
-

@@ -19,11 +19,12 @@ package util
 
 import common._
 
-import scala.xml.parsing.{ MarkupParser, MarkupHandler, FatalError, ConstructingHandler, ExternalSources }
-import scala.xml.dtd._
 import scala.xml._
-import java.io.InputStream
-import scala.io.{ Codec, Source }
+import java.io.{ InputStream, StringReader }
+import javax.xml.parsers.SAXParserFactory
+import org.xml.sax.{ Attributes, InputSource, SAXParseException }
+import org.xml.sax.ext.LexicalHandler
+import org.xml.sax.helpers.DefaultHandler
 
 /**
  * Utilities for simplifying use of named HTML symbols.
@@ -64,150 +65,22 @@ object HtmlEntities {
 
   val revMap: Map[Char, String] = Map(entList.map{ case (name, value) => (value.toChar, name)} :_*)
 
-  val entities = entList.map{case (name, value) => (name, new ParsedEntityDecl(name, new IntDef(value.toChar.toString)))}
-
-  def apply() = entities
-}
-
-/**
- * Extends the Markup Parser to do the right thing (tm) with PCData blocks
- */
-trait PCDataMarkupParser[PCM <: MarkupParser with MarkupHandler] extends MarkupParser { self: PCM =>
-  /** '&lt;! CharData ::= [CDATA[ ( {char} - {char}"]]&gt;"{char} ) ']]&gt;'
-   *
-   * see [15]
-   */
-  override def xCharData: NodeSeq = {
-    xToken("[CDATA[")
-    val pos1 = pos
-    val sb: StringBuilder = new StringBuilder()
-    while (true) {
-      if (ch==']'  &&
-          { sb.append(ch); nextch(); ch == ']' } &&
-          { sb.append(ch); nextch(); ch == '>' } ) {
-        sb.setLength(sb.length - 2);
-        nextch();
-        return PCData(sb.toString)
-      } else sb.append( ch );
-      nextch();
-    }
-    throw FatalError("this cannot happen");
-  }
-}
-
-class PCDataXmlParser(val input: Source) extends ConstructingHandler with PCDataMarkupParser[PCDataXmlParser] with ExternalSources  {
-  val preserveWS = true
-  ent ++= HtmlEntities()
-  import scala.xml._
-
-  /** Public accessor for curInput.hasNext to work around Scala 3 protected access restrictions */
-  def hasMoreInput: Boolean = curInput.hasNext
-  /** parse attribute and create namespace scope, metadata
-   *  [41] Attributes    ::= { S Name Eq AttValue }
-   */
-  override def xAttributes(pscope:NamespaceBinding): (MetaData,NamespaceBinding) = {
-    var scope: NamespaceBinding = pscope
-    var aMap: MetaData = Null
-    while (isNameStart(ch)) {
-      val pos = this.pos
-
-      val qname = xName
-      val _     = xEQ()
-      val value = xAttributeValue()
-
-      Utility.prefix(qname) match {
-        case Some("xmlns") =>
-          val prefix = qname.substring(6 /* xmlns: */ , qname.length);
-          scope = new NamespaceBinding(prefix, value, scope);
-
-        case Some(prefix)       =>
-          val key = qname.substring(prefix.length+1, qname.length);
-          aMap = new PrefixedAttribute(prefix, key, Text(value), aMap);
-
-        case _             =>
-          if( qname == "xmlns" )
-          scope = new NamespaceBinding(null, value, scope);
-          else
-          aMap = new UnprefixedAttribute(qname, Text(value), aMap);
-      }
-
-      if ((ch != '/') && (ch != '>') && ('?' != ch))
-      xSpace();
-    }
-
-    def findIt(base: MetaData, what: MetaData): MetaData = (base, what) match {
-      case (_, Null) => Null
-      case (upb: UnprefixedAttribute, upn: UnprefixedAttribute) if upb.key == upn.key => upn
-      case (pb: PrefixedAttribute, pn: PrefixedAttribute) if pb.key == pn.key && pb.pre == pn.key => pn
-      case _ => findIt(base, what.next)
-    }
-
-    if(!aMap.wellformed(scope)) {
-      if (findIt(aMap, aMap.next) != Null) {
-        reportSyntaxError( "double attribute")
-      }
-    }
-
-    (aMap,scope)
-  }
-
-  /**
-   * report a syntax error
-   */
-  override def reportSyntaxError(pos: Int, msg: String): Unit =  {
-
-    //error("MarkupParser::synerr") // DEBUG
-    import scala.io._
-
-
-    val line = ScalaPosition.line(pos)
-    val col = ScalaPosition.column(pos)
-    val report = curInput.descr + ":" + line + ":" + col + ": " + msg
-    System.err.println(report)
-    try {
-      System.err.println(curInput.getLines().toIndexedSeq(line))
-    } catch {
-      case e: Exception => // ignore
-    }
-    var i = 1
-    while (i < col) {
-      System.err.print(' ')
-      i += 1
-    }
-    System.err.println('^')
-    throw new ValidationException(report)
-  }
-
 }
 
 object PCDataXmlParser {
   import Helpers._
 
-  def apply(in: InputStream): Box[NodeSeq] = {
+  def apply(in: InputStream): Box[NodeSeq] =
     for {
-      ba <- tryo(Helpers.readWholeStream(in))
+      ba  <- tryo(Helpers.readWholeStream(in))
       ret <- apply(new String(ba, "UTF-8"))
     } yield ret
-  }
-
-  private def apply(source: Source): Box[NodeSeq] = {
-    for {
-      p <- tryo{new PCDataXmlParser(source)}
-      _ = while (p.ch != '<' && p.hasMoreInput) p.nextch() // side effects, baby
-      bd <- tryo(p.document())
-      doc <- Box !! bd
-    } yield (doc.children: NodeSeq)
-
-  }
 
   def apply(in: String): Box[NodeSeq] = {
     var pos = 0
     val len = in.length
-    def moveToLT(): Unit =  {
-      while (pos < len && in.charAt(pos) != '<') {
-        pos += 1
-      }
-    }
+    def moveToLT(): Unit =
+      while (pos < len && in.charAt(pos) != '<') pos += 1
 
     moveToLT()
 
@@ -223,7 +96,169 @@ object PCDataXmlParser {
       moveToLT()
     }
 
-    apply(Source.fromString(in.substring(pos)))
+    parseXml(preprocessEntities(in.substring(pos)))
+  }
+
+  private def parseXml(content: String): Box[NodeSeq] =
+    tryo {
+      // namespace-aware=false: undeclared prefixes (e.g. lift:) are allowed; xmlns
+      // attributes are surfaced as regular attributes so we can build NamespaceBinding
+      // manually, matching the behaviour of the previous MarkupParser-based impl.
+      val spf = SAXParserFactory.newInstance()
+      spf.setNamespaceAware(false)
+      val saxParser = spf.newSAXParser()
+      val xmlReader = saxParser.getXMLReader
+      val builder   = new LiftSaxTreeBuilder
+      xmlReader.setContentHandler(builder)
+      xmlReader.setErrorHandler(builder)
+      xmlReader.setProperty("http://xml.org/sax/properties/lexical-handler", builder)
+      xmlReader.parse(new InputSource(new StringReader(content)))
+      NodeSeq.fromSeq(Seq(builder.result))
+    }
+
+  /**
+   * Replace named HTML entity references with numeric character references so
+   * that standard XML parsers can handle them without a DTD.  CDATA sections
+   * are passed through verbatim since `&` inside them is not an entity ref.
+   */
+  private def preprocessEntities(s: String): String = {
+    val sb  = new java.lang.StringBuilder(s.length)
+    var i   = 0
+    val len = s.length
+    while (i < len) {
+      val c = s.charAt(i)
+      if (c == '<' && i + 8 < len &&
+          s.charAt(i+1) == '!' && s.charAt(i+2) == '[' &&
+          s.charAt(i+3) == 'C' && s.charAt(i+4) == 'D' &&
+          s.charAt(i+5) == 'A' && s.charAt(i+6) == 'T' &&
+          s.charAt(i+7) == 'A' && s.charAt(i+8) == '[') {
+        // copy CDATA section verbatim
+        val end = s.indexOf("]]>", i + 9)
+        if (end >= 0) { sb.append(s, i, end + 3); i = end + 3 }
+        else          { sb.append(c); i += 1 }
+      } else if (c == '&' && i + 1 < len && s.charAt(i + 1) != '#') {
+        val semi = s.indexOf(';', i + 1)
+        if (semi > i && semi - i <= 12) {
+          val name = s.substring(i + 1, semi)
+          if (name.nonEmpty && name.forall(c => c.isLetter || c.isDigit)) {
+            HtmlEntities.entMap.get(name) match {
+              case Some(chr) =>
+                sb.append("&#"); sb.append(chr.toInt); sb.append(';')
+                i = semi + 1
+              case None =>
+                sb.append(c); i += 1
+            }
+          } else { sb.append(c); i += 1 }
+        } else { sb.append(c); i += 1 }
+      } else { sb.append(c); i += 1 }
+    }
+    sb.toString
+  }
+
+  /**
+   * SAX ContentHandler + LexicalHandler that builds a scala-xml node tree.
+   * CDATA sections become Lift [[PCData]] nodes instead of text nodes.
+   *
+   * Requires namespace-aware=false on the factory so that undeclared namespace
+   * prefixes (e.g. `lift:`) are accepted and `xmlns:*` attributes are surfaced
+   * in the attribute list for manual NamespaceBinding construction.
+   */
+  private class LiftSaxTreeBuilder extends DefaultHandler with LexicalHandler {
+    // (prefix, label, attributes, scope, children-accumulated-in-reverse)
+    private var stack: List[(String, String, MetaData, NamespaceBinding, List[Node])] = Nil
+    private val textBuf  = new java.lang.StringBuilder
+    private var inCDATA  = false
+    private val cdataBuf = new java.lang.StringBuilder
+
+    var result: Node = _
+
+    private def flushText(): Unit =
+      if (textBuf.length > 0) {
+        val t = Text(textBuf.toString)
+        textBuf.setLength(0)
+        pushChild(t)
+      }
+
+    private def pushChild(n: Node): Unit =
+      stack match {
+        case (pre, lbl, attrs, scope, children) :: rest =>
+          stack = (pre, lbl, attrs, scope, n :: children) :: rest
+        case Nil =>
+      }
+
+    override def startElement(uri: String, localName: String, qName: String,
+                              attrs: Attributes): Unit = {
+      flushText()
+
+      // Start from the parent's scope and extend with this element's xmlns declarations.
+      var scope: NamespaceBinding = stack.headOption.map(_._4).getOrElse(TopScope)
+      var metadata: MetaData      = Null
+
+      for (i <- (attrs.getLength - 1) to 0 by -1) {
+        val aqn = attrs.getQName(i)
+        val v   = attrs.getValue(i)
+        if (aqn == "xmlns") {
+          scope = new NamespaceBinding(null, v, scope)
+        } else if (aqn.startsWith("xmlns:")) {
+          scope = new NamespaceBinding(aqn.substring(6), v, scope)
+        } else {
+          val ai = aqn.indexOf(':')
+          metadata =
+            if (ai > 0)
+              new PrefixedAttribute(aqn.substring(0, ai), aqn.substring(ai + 1), Text(v), metadata)
+            else
+              new UnprefixedAttribute(aqn, Text(v), metadata)
+        }
+      }
+
+      val ci = qName.indexOf(':')
+      val (pre, label) =
+        if (ci > 0) (qName.substring(0, ci), qName.substring(ci + 1))
+        else        (null, qName)
+
+      stack = (pre, label, metadata, scope, Nil) :: stack
+    }
+
+    override def endElement(uri: String, localName: String, qName: String): Unit = {
+      flushText()
+      stack match {
+        case (pre, label, metadata, scope, children) :: rest =>
+          stack = rest
+          val elem = Elem(pre, label, metadata, scope, minimizeEmpty = true, children.reverse: _*)
+          rest match {
+            case Nil =>
+              result = elem
+            case (pp, pl, pm, ps, pc) :: rr =>
+              stack = (pp, pl, pm, ps, elem :: pc) :: rr
+          }
+        case Nil =>
+      }
+    }
+
+    override def characters(ch: Array[Char], start: Int, length: Int): Unit =
+      if (inCDATA) cdataBuf.append(ch, start, length)
+      else         textBuf.append(ch, start, length)
+
+    override def startCDATA(): Unit = {
+      flushText()
+      inCDATA = true
+      cdataBuf.setLength(0)
+    }
+
+    override def endCDATA(): Unit = {
+      inCDATA = false
+      pushChild(PCData(cdataBuf.toString))
+      cdataBuf.setLength(0)
+    }
+
+    override def fatalError(e: SAXParseException): Unit = throw e
+
+    // LexicalHandler no-ops
+    override def startDTD(name: String, publicId: String, systemId: String): Unit = {}
+    override def endDTD(): Unit = {}
+    override def startEntity(name: String): Unit = {}
+    override def endEntity(name: String): Unit = {}
+    override def comment(ch: Array[Char], start: Int, length: Int): Unit = {}
   }
 }
 
@@ -462,4 +497,3 @@ object AltXML {
   }
 
 }
-

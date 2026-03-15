@@ -17,8 +17,14 @@
 package net.liftweb
 package util
 
+import java.io.ByteArrayInputStream
+
+import scala.xml.Elem
+
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
+
+import net.liftweb.common.{ Failure, Full }
 
 
 /**
@@ -26,7 +32,8 @@ import org.specs2.mutable.Specification
  */
 class PCDataXmlParserSpec extends Specification with XmlMatchers {
   "PCDataXmlParser Specification".title
-val data1 = """
+
+  val data1 = """
 
 
 <html>dude</html>
@@ -34,7 +41,8 @@ val data1 = """
 
 """
 
-val data2 = """
+  val data2 = """
+
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>dude</html>
@@ -42,7 +50,7 @@ val data2 = """
 
 """
 
-val data3 = """<?xml version="1.0" encoding="UTF-8"?>
+  val data3 = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
@@ -63,21 +71,86 @@ val data3 = """<?xml version="1.0" encoding="UTF-8"?>
 </body>
 </html>"""
 
+  "PCDataMarkupParser" should {
+    "Parse a document with whitespace" in {
+      PCDataXmlParser(data1).openOrThrowException("Test") must ==/ (<html>dude</html>)
+    }
 
-   "PCDataMarkupParser" should {
-     "Parse a document with whitespace" in {
-       PCDataXmlParser(data1).openOrThrowException("Test") must ==/ (<html>dude</html>)
-     }
+    "Parse a document with doctype" in {
+      PCDataXmlParser(data2).openOrThrowException("Test") must ==/ (<html>dude</html>)
+    }
 
-     "Parse a document with doctype" in {
-       PCDataXmlParser(data2).openOrThrowException("Test") must ==/ (<html>dude</html>)
-     }
+    "Parse a document with xml and doctype" in {
+      PCDataXmlParser(data3).openOrThrowException("Test").apply(0).label must_== "html"
+    }
 
-     "Parse a document with xml and doctype" in {
-       PCDataXmlParser(data3).openOrThrowException("Test").apply(0).label must_== "html"
-     }
+    "resolve named HTML entities to their character values" in {
+      val result = PCDataXmlParser("<p>&nbsp;&copy;&euro;</p>").openOrThrowException("Test")
+      val text = result.apply(0).text
+      text must contain("\u00A0")   // nbsp
+      text must contain("\u00A9")   // copy
+      text must contain("\u20AC")   // euro
+    }
 
-   }
+    "parse numeric character references" in {
+      val result = PCDataXmlParser("<p>&#160;&#x20AC;</p>").openOrThrowException("Test")
+      val text = result.apply(0).text
+      text must contain("\u00A0")   // &#160; = nbsp
+      text must contain("\u20AC")   // &#x20AC; = euro
+    }
+
+    "parse CDATA sections as Lift PCData nodes" in {
+      val result = PCDataXmlParser("<div><![CDATA[x < y & z]]></div>").openOrThrowException("Test")
+      val elem = result.apply(0).asInstanceOf[Elem]
+      elem.child must haveSize(1)
+      val child = elem.child.head
+      child must beAnInstanceOf[PCData]
+      child.asInstanceOf[PCData].data must_== "x < y & z"
+    }
+
+    "parse namespace-prefixed elements" in {
+      val result = PCDataXmlParser("""<lift:surround with="default"><div/></lift:surround>""")
+        .openOrThrowException("Test")
+      val elem = result.apply(0).asInstanceOf[Elem]
+      elem.prefix must_== "lift"
+      elem.label must_== "surround"
+      (result.apply(0) \ "@with").text must_== "default"
+    }
+
+    "parse xmlns declarations and produce namespace bindings" in {
+      val result = PCDataXmlParser("""<html xmlns="http://www.w3.org/1999/xhtml"><body/></html>""")
+        .openOrThrowException("Test")
+      val elem = result.apply(0).asInstanceOf[Elem]
+      elem.label must_== "html"
+      elem.scope.uri must_== "http://www.w3.org/1999/xhtml"
+    }
+
+    "return Failure for malformed XML" in {
+      PCDataXmlParser("<div><span></div>") must beAnInstanceOf[Failure]
+    }
+
+    "return Failure for empty string" in {
+      PCDataXmlParser("") must beAnInstanceOf[Failure]
+    }
+
+    "parse self-closing tags as elements with empty children" in {
+      val result = PCDataXmlParser("<br/>").openOrThrowException("Test")
+      val elem = result.apply(0).asInstanceOf[Elem]
+      elem.label must_== "br"
+      elem.child must beEmpty
+    }
+
+    "parse attributes containing encoded ampersands" in {
+      val result = PCDataXmlParser("""<a href="foo&amp;bar">x</a>""").openOrThrowException("Test")
+      val elem = result.apply(0).asInstanceOf[Elem]
+      (elem \ "@href").text must_== "foo&bar"
+    }
+
+    "parse via InputStream" in {
+      val bytes = "<p>hello</p>".getBytes("UTF-8")
+      val result = PCDataXmlParser(new ByteArrayInputStream(bytes)).openOrThrowException("Test")
+      result.apply(0).label must_== "p"
+    }
+  }
 
 }
-

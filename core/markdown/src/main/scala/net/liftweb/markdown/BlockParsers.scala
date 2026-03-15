@@ -24,7 +24,6 @@ import scala.language.postfixOps
 import collection.immutable.StringOps
 import collection.mutable.ListBuffer
 import scala.xml.{Group, Node, Text, NodeSeq, Elem => XmlElem, TopScope, XML}
-import scala.xml.parsing.XhtmlParser
 import util.parsing.combinator.{Parsers, RegexParsers}
 
 /**

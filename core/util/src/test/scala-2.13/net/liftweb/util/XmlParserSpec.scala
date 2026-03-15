@@ -19,7 +19,7 @@ package util
 
 import java.io.ByteArrayInputStream
 
-import scala.xml.{Text, Unparsed}
+import scala.xml.{ EntityRef, Text, Unparsed }
 
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
@@ -71,7 +71,7 @@ class XmlParserSpec extends Specification with XmlMatchers {
   }
 
   "XML cannot contain Control characters" in {
-     val data = 
+     val data =
      <foo>
       {
         '\u0085'
@@ -99,5 +99,45 @@ class XmlParserSpec extends Specification with XmlMatchers {
     str.toList.foldLeft(0)((a, b) => a + cntIllegal(b)) must_== 0
   }
 
-}
+  "AltXML" should {
+    "render empty elements with self-close syntax" in {
+      AltXML.toXML(<br/>, false, true) must contain("/>")
+    }
 
+    "render non-empty elements with open and close tags" in {
+      val result = AltXML.toXML(<div>x</div>, false, true)
+      result must contain("<div>")
+      result must contain("</div>")
+    }
+
+    "preserve EntityRef nodes when convertAmp is false" in {
+      val data = <p>{EntityRef("nbsp")}</p>
+      val result = AltXML.toXML(data, false, false)
+      result must contain("&nbsp;")
+    }
+
+    "convert high-codepoint EntityRef to character when convertAmp is true" in {
+      // nbsp = 160, which is >= 128, so it converts to the actual char
+      val data = <p>{EntityRef("nbsp")}</p>
+      val result = AltXML.toXML(data, false, true)
+      result must contain("\u00A0")
+    }
+
+    "preserve low-codepoint EntityRef as entity when convertAmp is true" in {
+      // amp = 38, which is < 128, so it stays as &amp;
+      val data = <p>{EntityRef("amp")}</p>
+      val result = AltXML.toXML(data, false, true)
+      result must contain("&amp;")
+    }
+
+    "apply legacy IE compatibility mode to br tags" in {
+      // legacy mode: br gets />, no space
+      val withLegacy = AltXML.toXML(<br/>, false, true, legacyIeCompatibilityMode = true)
+      withLegacy must contain("/>")
+      // without legacy mode: br is in inlineTags, gets " />"
+      val withoutLegacy = AltXML.toXML(<br/>, false, true, legacyIeCompatibilityMode = false)
+      withoutLegacy must contain(" />")
+    }
+  }
+
+}
