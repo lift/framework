@@ -17,6 +17,9 @@ jobs:
       matrix:
         java: [11, 17, 21]
         scala: [3.3.7, 3.8.3]
+        exclude:
+          - java: 11
+            scala: 3.8.3
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
