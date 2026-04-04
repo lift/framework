@@ -8,11 +8,11 @@ ThisBuild / licenses             += ("Apache License, Version 2.0", url("https:/
 ThisBuild / startYear            := Some(2006)
 ThisBuild / organizationName     := "Lift Committers and Contributors"
 
-val scala213Version = "2.13.18"
 val scala3LTSVersion = "3.3.7"
+val scala3LatestVersion = "3.8.3"
 
-ThisBuild / scalaVersion         := scala213Version
-ThisBuild / crossScalaVersions   := Seq(scala213Version, scala3LTSVersion)
+ThisBuild / scalaVersion         := scala3LTSVersion
+ThisBuild / crossScalaVersions   := Seq(scala3LTSVersion, scala3LatestVersion)
 
 ThisBuild / libraryDependencies ++= Seq(
   specs2(scalaVersion.value),
@@ -21,7 +21,7 @@ ThisBuild / libraryDependencies ++= Seq(
   scalactic,
   scalatest
 )
-ThisBuild / libraryDependencies ++= specs2XmlDeps(scalaVersion.value)
+ThisBuild / libraryDependencies += specs2Xml
 
 ThisBuild / scalacOptions       ++= Seq("-deprecation")
 
@@ -64,10 +64,7 @@ lazy val common =
   coreProject("common")
     .settings(
       description := "Common Libraries and Utilities",
-      libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, scala_xml, scala_parser, scalamock, mockito_scalatest(scalaVersion.value)),
-      Test / unmanagedSourceDirectories += {
-        (Test / sourceDirectory).value / ("scala-" + scalaBinaryVersion.value)
-      }
+      libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, scala_xml, scala_parser, scalamock, mockito_scalatest(scalaVersion.value))
     )
 
 lazy val actor =
@@ -75,10 +72,7 @@ lazy val actor =
     .dependsOn(common)
     .settings(
       description := "Simple Actor",
-      Test / parallelExecution := false,
-      Test / unmanagedSourceDirectories += {
-        (Test / sourceDirectory).value / ("scala-" + scalaBinaryVersion.value)
-      }
+      Test / parallelExecution := false
     )
 
 lazy val markdown =
@@ -109,10 +103,7 @@ lazy val util =
         htmlparser,
         xerces,
         json4s_native,
-      ),
-      Test / unmanagedSourceDirectories += {
-        (Test / sourceDirectory).value / ("scala-" + scalaBinaryVersion.value)
-      }
+      )
     )
 
 // Web Projects
@@ -125,10 +116,7 @@ lazy val testkit =
     .dependsOn(util)
     .settings(
       description := "Testkit for Webkit Library",
-      libraryDependencies ++= Seq(commons_httpclient, servlet_api, json4s_native, json4s_xml),
-      Test / unmanagedSourceDirectories += {
-        (Test / sourceDirectory).value / ("scala-" + scalaBinaryVersion.value)
-      }
+      libraryDependencies ++= Seq(commons_httpclient, servlet_api, json4s_native, json4s_xml)
     )
 
 lazy val webkit =
@@ -150,25 +138,13 @@ lazy val webkit =
         jquery,
         jasmineCore,
         jasmineAjax,
-        specs2Mock(scalaVersion.value)
+        specs2Mock
       ),
-      libraryDependencies ++= {
-        CrossVersion.partialVersion(scalaVersion.value) match {
-          case Some((2, scalaMajor)) if scalaMajor >= 13 => Seq(scala_parallel_collections)
-          case _ => Seq.empty
-        }
-      },
       Test / initialize := {
         System.setProperty(
           "net.liftweb.webapptest.src.test.webapp",
           ((Test / sourceDirectory).value / "webapp").absString
         )
-      },
-      Compile / unmanagedSourceDirectories += {
-        (Compile / sourceDirectory).value / ("scala_" + scalaBinaryVersion.value)
-      },
-      Test / unmanagedSourceDirectories += {
-        (Test / sourceDirectory).value / ("scala_" + scalaBinaryVersion.value)
       },
       Compile / compile := (Compile / compile).dependsOn(WebKeys.assets).value,
       /**

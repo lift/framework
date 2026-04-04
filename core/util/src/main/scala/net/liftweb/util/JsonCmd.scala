@@ -39,21 +39,16 @@ import org.json4s.native.JsonMethods._
 * make some sense of it.
 */
 object JsonCommand {
-  import scala.language.implicitConversions
-
-  implicit def iterableToOption[X](in: Iterable[X]): Option[X] = in.toSeq.headOption
-
-  def unapply(in: JValue): Option[(String, Option[String], JValue)] =
-  for {
-    JString(command) <- in \ "command"
-    params <- in \ "params"
-    if params != JNothing
-  } yield {
-    val target = (in \ "target") match {
-      case JString(t) => Some(t)
-      case _ => None
+  def unapply(in: JValue): Option[(String, Option[String], JValue)] = {
+    val command = (in \ "command") match { case JString(c) => Some(c); case _ => None }
+    val params = in \ "params"
+    for {
+      c <- command
+      if params != JNothing
+    } yield {
+      val target = (in \ "target") match { case JString(t) => Some(t); case _ => None }
+      (c, target, params)
     }
-    (command, target, params)
   }
   // Some((in.command, in.target, in.params, in.all))
 }

@@ -118,9 +118,7 @@ Add Lift to your `pom.xml` like so:
       <version>3.3.0</version>
     </dependency>
 
-Where `${scala.version}` is `2.13` for the 4.x series. Individual patch releases of the Scala compiler
-(e.g. 2.12.2) are binary compatible with everything in their release series, so you only need the
-first two version parts.
+Where `${scala.version}` is `3` for the 5.x series.
 
 You can learn more about Maven integration [on the wiki](http://www.assembla.com/wiki/show/liftweb/Using_Maven).
 
