@@ -2858,8 +2858,8 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
         LAScheduler.execute(() => {
           executeInScope(currentReq, renderVersion)(
             for {
-              JString(guid) <- in \ "guid"
-              JString(name) <- in \ "name"
+              guid <- (in \ "guid") match { case JString(g) => Some(g); case _ => None }
+              name <- (in \ "name") match { case JString(n) => Some(n); case _ => None }
               func <- map.get(name)
               payload = in \ "payload"
               reified <- if (func.manifest == jvmanifest) Some(payload) else {
