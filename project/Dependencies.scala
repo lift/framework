@@ -42,17 +42,12 @@ object Dependencies {
   lazy val scalaz7_core           = "org.scalaz"                %% "scalaz-core"        % "7.3.8"
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
   lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "2.4.0"
-  lazy val scala_parallel_collections =  "org.scala-lang.modules" %% "scala-parallel-collections" % "1.2.0"
   lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.9.0"
   lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "2.4.0"
   lazy val xerces                 = "xerces" % "xercesImpl" % "2.12.2"
 
   lazy val scala_compiler: ModuleMap = (version: String) => {
-    if (version.startsWith("2")) {
-      "org.scala-lang"         % "scala-compiler"    % version
-    } else {
-      "org.scala-lang"         % "scala3-compiler_3" % version
-    }
+    "org.scala-lang"         % "scala3-compiler_3" % version
   }
 
   // Aliases
@@ -79,45 +74,21 @@ object Dependencies {
   lazy val derby       = "org.apache.derby"         % "derby"                    % "10.7.1.1" % Test
   lazy val h2database  = "com.h2database"           % "h2"                       % "1.2.147"  % Test
 
-  // Specs2 versions differ between Scala 2 and Scala 3
-  def specs2Version(scalaVersion: String): String = {
-    CrossVersion.partialVersion(scalaVersion) match {
-      case Some((2, 13)) => "4.23.0"
-      case Some((3, _))  => "5.6.4"
-      case _             => "4.21.0"
-    }
-  }
+  lazy val specs2Version = "5.6.4"
 
-  lazy val specs2: ModuleMap = (version: String) => "org.specs2" %% "specs2-core" % specs2Version(version) % Test
-  lazy val scalacheck: ModuleMap = (version: String) => "org.specs2" %% "specs2-scalacheck" % specs2Version(version) % Test
-  lazy val specs2Prov: ModuleMap = (version: String) => "org.specs2" %% "specs2-core" % specs2Version(version) % Provided
-  lazy val specs2Matchers: ModuleMap = (version: String) => "org.specs2" %% "specs2-matcher-extra" % specs2Version(version) % Test
-  lazy val specs2MatchersProv: ModuleMap = (version: String) => "org.specs2" %% "specs2-matcher-extra" % specs2Version(version) % Provided
-  def specs2XmlDeps(version: String): Seq[ModuleID] =
-    CrossVersion.partialVersion(version) match {
-      case Some((3, _)) =>
-        Seq("org.specs2" %% "specs2-xml" % specs2Version(version) % Test)
-      case _ =>
-        Seq.empty
-    }
-
-  lazy val specs2Mock: ModuleMap = (version: String) => {
-    CrossVersion.partialVersion(version) match {
-      case Some((2, 13)) => "org.specs2" %% "specs2-mock" % specs2Version(version) % Test
-      case Some((3, _))  => "org.scalatestplus" %% "mockito-5-18" % "3.2.19.0" % Test
-      case _             => "org.specs2" %% "specs2-mock" % specs2Version(version) % Test
-    }
-  }
+  lazy val specs2: ModuleMap = (_: String) => "org.specs2" %% "specs2-core" % specs2Version % Test
+  lazy val scalacheck: ModuleMap = (_: String) => "org.specs2" %% "specs2-scalacheck" % specs2Version % Test
+  lazy val specs2Prov: ModuleMap = (_: String) => "org.specs2" %% "specs2-core" % specs2Version % Provided
+  lazy val specs2Matchers: ModuleMap = (_: String) => "org.specs2" %% "specs2-matcher-extra" % specs2Version % Test
+  lazy val specs2MatchersProv: ModuleMap = (_: String) => "org.specs2" %% "specs2-matcher-extra" % specs2Version % Provided
+  lazy val specs2Xml = "org.specs2" %% "specs2-xml" % specs2Version % Test
+  lazy val specs2Mock = "org.scalatestplus" %% "mockito-5-18" % "3.2.19.0" % Test
 
   lazy val scalactic       = "org.scalactic"     %% "scalactic"  % "3.2.20"   % Test
   lazy val scalatest       = "org.scalatest"     %% "scalatest"  % "3.2.20"   % Test
   lazy val scalatest_junit = "org.scalatestplus" %% "junit-4-12" % "3.1.2.0" % Test
-  lazy val mockito_scalatest: ModuleMap = (version: String) => {
-    CrossVersion.partialVersion(version) match {
-      case Some((2, 13)) => "org.mockito" %% "mockito-scala-scalatest" % "1.14.3" % Test
-      case Some((3, _))  => "org.scalatestplus" %% "mockito-5-18" % "3.2.19.0" % Test
-      case _             => "org.mockito" %% "mockito-scala-scalatest" % "1.14.3" % Test
-    }
+  lazy val mockito_scalatest: ModuleMap = (_: String) => {
+    "org.scalatestplus" %% "mockito-5-18" % "3.2.19.0" % Test
   }
 
   lazy val scalamock = "org.scalamock" %% "scalamock" % "7.5.5" % Test
