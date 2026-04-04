@@ -1759,7 +1759,7 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
         val css = LiftRules.loadResourceAsString(cssPath);
 
         () => {
-          css.map(str => CSSHelpers.fixCSS(new BufferedReader(
+          css.map(str => CssHelpers.fixCSS(new BufferedReader(
             new StringReader(str)), prefix openOr (S.contextPath)) match {
             case (Full(c), _) => CSSResponse(c)
             case (x, input) => {
