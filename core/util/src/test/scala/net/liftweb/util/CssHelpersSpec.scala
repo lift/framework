@@ -24,7 +24,7 @@ import org.specs2.mutable.Specification
 import common._
 
 class CssHelpersSpec extends Specification {
-  import CSSHelpers._
+  import CssHelpers._
 
   "CSSParser" should {
     "leave most CSS alone" in {

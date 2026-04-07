@@ -1356,15 +1356,13 @@ trait SHtml extends Loggable {
     text_*(settable.get, SFuncHolder(s => settable.set(s)), attrs: _*)
 
   /**
-   * Generate an input field with type email.  At some point,
-   * there will be graceful fallback for non-HTML5 browsers.  FIXME
+   * Generate an input field with type email.
    */
   def email(value: String, func: String => Any, attrs: ElemAttr*): Elem =
     email_*(value, SFuncHolder(func), attrs: _*)
 
   /**
-   * Generate an email input element for the Settable. At some point
-   * there will be graceful fallback for non-HTML5 browsers. FIXME
+   * Generate an email input element for the Settable.
    */
   def email(settable: Settable{type ValueType = String},
             attrs: ElemAttr*): Elem =
@@ -1375,15 +1373,13 @@ trait SHtml extends Loggable {
       new UnprefixedAttribute("value", Text(value), Null)
 
   /**
-   * Generate an input field with type url.  At some point,
-   * there will be graceful fallback for non-HTML5 browsers.  FIXME
+   * Generate an input field with type url.
    */
   def url(value: String, func: String => Any, attrs: ElemAttr*): Elem =
     url_*(value, SFuncHolder(func), attrs: _*)
 
   /**
-   * Generate a url input element for the Settable. At some point
-   * there will be graceful fallback for non-HTML5 browsers. FIXME
+   * Generate a url input element for the Settable.
    */
   def url(settable: Settable{type ValueType = String},
           attrs: ElemAttr*): Elem =
@@ -1394,8 +1390,7 @@ trait SHtml extends Loggable {
       new UnprefixedAttribute("value", Text(value), Null)
 
   /**
-   * Generate an input field with type number.  At some point,
-   * there will be graceful fallback for non-HTML5 browsers.  FIXME
+   * Generate an input field with type number.
    */
   def number(value: Int, func: Int => Any,
              min: Int, max: Int, attrs: ElemAttr*): Elem =
@@ -1404,8 +1399,7 @@ trait SHtml extends Loggable {
              SFuncHolder(s => Helpers.asInt(s).map(func)), attrs: _*)
 
   /**
-   * Generate a number input element for the Settable. At some point
-   * there will be graceful fallback for non-HTML5 browsers. FIXME
+   * Generate a number input element for the Settable.
    */
   def number(settable: Settable{type ValueType = Int},
              min: Int, max: Int,
@@ -1431,8 +1425,6 @@ trait SHtml extends Loggable {
   /**
    * Generate an input field with type number. It allows for Double if your step is
    * for example: 0.1
-   * At some point,
-   * there will be graceful fallback for non-HTML5 browsers.  FIXME
    */
   def number(value: Double, func: Double => Any,
              min: Double, max: Double,  step: Double ,
@@ -1444,8 +1436,6 @@ trait SHtml extends Loggable {
   /**
    * Generate a number input element for the Settable. It allows for Double if your step is
    * for example: 0.1
-   * At some point
-   * there will be graceful fallback for non-HTML5 browsers. FIXME
    */
   def number(settable: Settable{type ValueType = Double},
              min: Double, max: Double, step: Double,
@@ -1471,8 +1461,7 @@ trait SHtml extends Loggable {
   }
 
   /**
-   * Generate an input field with type range.  At some point,
-   * there will be graceful fallback for non-HTML5 browsers.  FIXME
+   * Generate an input field with type range.
    */
   def range(value: Int, func: Int => Any,
              min: Int, max: Int, attrs: ElemAttr*): Elem =
@@ -1481,8 +1470,7 @@ trait SHtml extends Loggable {
             SFuncHolder(s => Helpers.asInt(s).map(func)), attrs: _*)
 
   /**
-   * Generate a range input element for the Settable. At some point
-   * there will be graceful fallback for non-HTML5 browsers. FIXME
+   * Generate a range input element for the Settable.
    */
   def range(settable: Settable{type ValueType = Int},
             min: Int, max: Int,
@@ -2341,7 +2329,6 @@ object Html5ElemAttr {
    * The autofocus attribute
    */
   final case object Autofocus extends SHtml.ElemAttr {
-    // FIXME detect HTML5 browser and do the right thing
     def apply(in: Elem): Elem = in % ("autofocus" -> "true")
   }
 
@@ -2349,7 +2336,6 @@ object Html5ElemAttr {
    * The required attribute
    */
   final case object Required extends SHtml.ElemAttr {
-    // FIXME detect HTML5 browser and do the right thing
     def apply(in: Elem): Elem = in % ("required" -> "true")
   }
 
@@ -2360,7 +2346,6 @@ object Html5ElemAttr {
    * placeholder property in the attribute
    */
   final case class Placeholder(text: StringFunc) extends SHtml.ElemAttr {
-    // FIXME detect HTML5 browser and do the right thing
     def apply(in: Elem): Elem = in % ("placeholder" -> text.func())
   }
 }

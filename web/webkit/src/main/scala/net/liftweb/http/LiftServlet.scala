@@ -115,20 +115,13 @@ class LiftServlet extends Loggable {
     }
 
     if (reqOrg.request.suspendResumeSupport_?) {
-      try {
-        reqOrg.request.suspend(cometTimeout)
-      } finally {
-        // FIXME This should be removed from the finally block in the next major
-        // FIXME Lift version; it is currently here to ensure code continues to
-        // FIXME work as-is during the 3.x series even if it depends on response
-        // FIXME handlers running when request suspension fails.
-        runFunction(liftResponse => {
-          // do the actual write on a separate thread
-          Schedule.schedule(() => {
-            reqOrg.request.resume(reqOrg, liftResponse)
-          }, 0.seconds)
-        })
-      }
+      reqOrg.request.suspend(cometTimeout)
+      runFunction(liftResponse => {
+        // do the actual write on a separate thread
+        Schedule.schedule(() => {
+          reqOrg.request.resume(reqOrg, liftResponse)
+        }, 0.seconds)
+      })
 
       false
     } else {
