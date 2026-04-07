@@ -57,7 +57,7 @@ object Dependencies {
 
   // Provided scope:
   // Scope provided by container, available only in compile and test classpath, non-transitive by default.
-  lazy val logback         = "ch.qos.logback"    % "logback-classic"       % "1.2.13"       % Provided
+  lazy val logback         = "ch.qos.logback"    % "logback-classic"       % "1.5.32"       % Provided
   lazy val log4j           = "log4j"             % "log4j"                 % "1.2.17"       % Provided
   lazy val slf4j_log4j12   = "org.slf4j"         % "slf4j-log4j12"         % slf4jVersion   % Provided
   lazy val servlet_api     = "jakarta.servlet"   % "jakarta.servlet-api"   % "6.1.0"        % Provided
@@ -84,14 +84,14 @@ object Dependencies {
   lazy val specs2Xml = "org.specs2" %% "specs2-xml" % specs2Version % Test
   lazy val specs2Mock = "org.scalatestplus" %% "mockito-5-18" % "3.2.19.0" % Test
 
-  lazy val scalactic       = "org.scalactic"     %% "scalactic"  % "3.2.19"   % Test
-  lazy val scalatest       = "org.scalatest"     %% "scalatest"  % "3.2.19"   % Test
+  lazy val scalactic       = "org.scalactic"     %% "scalactic"  % "3.2.20"   % Test
+  lazy val scalatest       = "org.scalatest"     %% "scalatest"  % "3.2.20"   % Test
   lazy val scalatest_junit = "org.scalatestplus" %% "junit-4-12" % "3.1.2.0" % Test
   lazy val mockito_scalatest: ModuleMap = (_: String) => {
     "org.scalatestplus" %% "mockito-5-18" % "3.2.19.0" % Test
   }
 
-  lazy val scalamock = "org.scalamock" %% "scalamock" % "7.4.1" % Test
+  lazy val scalamock = "org.scalamock" %% "scalamock" % "7.5.5" % Test
 
   // Aliases
   lazy val h2 = h2database
