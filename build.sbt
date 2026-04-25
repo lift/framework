@@ -138,6 +138,7 @@ lazy val webkit =
       Test / parallelExecution := false,
       libraryDependencies ++= Seq(
         commons_fileupload,
+        rhino,
         servlet_api,
         specs2Prov(scalaVersion.value),
         specs2MatchersProv(scalaVersion.value),
