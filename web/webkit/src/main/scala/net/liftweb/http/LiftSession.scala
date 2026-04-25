@@ -32,8 +32,6 @@ import Helpers._
 import builtin.snippet._
 import js._
 import provider._
-import org.mozilla.javascript.Scriptable
-import org.mozilla.javascript.UniqueTag
 import scala.xml.Group
 
 import org.json4s._
@@ -1231,15 +1229,6 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
       case b: Option[_] => runSourceContext(b.toList, xform, ns)
       case fut: LAFuture[_] => runSourceContext(fut.get(5.seconds).openOr(Empty), xform, ns)
       case node: scala.xml.Node => currentSourceContext.doWith(node)(processSurroundAndInclude("Source", xform(ns)))
-      case na: org.mozilla.javascript.NativeArray =>
-        val len = na.getLength.toInt
-        val ar = new Array[Object](len)
-        var pos = 0
-        while (pos < len) {
-          ar(pos) = na.get(pos, na)
-          pos += 1
-        }
-        runSourceContext(ar.toList, xform, ns)
       case n: java.lang.Iterable[_] => runSourceContext(n.iterator(), xform, ns)
       case n: java.util.Iterator[_] =>
         for {i <- n.asScala.toSeq; nodes <- currentSourceContext.doWith(i)(processSurroundAndInclude("Source", xform(ns)))} yield nodes
@@ -1292,25 +1281,15 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
     retFunc _
   }
 
-  private def fixScriptableObject(in: Any): Any = in match {
-    case UniqueTag.NOT_FOUND => Empty
-    case UniqueTag.NULL_VALUE => Empty
-    case x => x
-  }
-
   def findField(name: List[String], cur: Any): Any =
     name.foldLeft(cur) {
       case (null, _) => Empty
-      case (so: Scriptable, name) =>
-        fixScriptableObject(so.get(name, so))
       case (m: java.util.Map[_, _], name) => m.get(name)
       case (m: PartialFunction[_, _] /* expect String,Any */, name) =>
         (m.asInstanceOf[PartialFunction[String, Any]]).applyOrElse(name, null)
-      case (Full(so: Scriptable), name) => fixScriptableObject(so.get(name, so))
       case (Full(m: java.util.Map[_, _]), name) => m.get(name)
       case (Full(m: PartialFunction[_, _] /* expect String,Any */), name) =>
         (m.asInstanceOf[PartialFunction[String, Any]]).applyOrElse(name, null)
-      case (Some(so: Scriptable), name) => fixScriptableObject(so.get(name, so))
       case (Some(m: java.util.Map[_, _]), name) => m.get(name)
       case (Some(m: PartialFunction[_, _] /* expect String,Any */), name) =>
         (m.asInstanceOf[PartialFunction[String, Any]]).applyOrElse(name, null)

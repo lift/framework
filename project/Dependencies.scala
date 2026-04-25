@@ -43,17 +43,8 @@ object Dependencies {
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
   lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "2.4.0"
   lazy val scala_parallel_collections =  "org.scala-lang.modules" %% "scala-parallel-collections" % "1.2.0"
-  lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.9.0"
   lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "2.4.0"
   lazy val xerces                 = "xerces" % "xercesImpl" % "2.12.2"
-
-  lazy val scala_compiler: ModuleMap = (version: String) => {
-    if (version.startsWith("2")) {
-      "org.scala-lang"         % "scala-compiler"    % version
-    } else {
-      "org.scala-lang"         % "scala3-compiler_3" % version
-    }
-  }
 
   // Aliases
   lazy val mongo_driver = mongo_java_driver
