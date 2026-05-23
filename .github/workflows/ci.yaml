@@ -15,20 +15,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [11, 17, 21]
+        java: [17, 21, 25]
         scala: [3.3.7, 3.8.3]
         exclude:
           - java: 11
             scala: 3.8.3
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Setup JDK
-      uses: actions/setup-java@v3
-      with:
-        distribution: temurin
-        java-version: ${{ matrix.java }}
-    - uses: sbt/setup-sbt@v1
-    - name: Build and Test
-      run: sbt ++${{ matrix.scala }} test
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - uses: sbt/setup-sbt@v1
+      - name: Build and Test
+        run: sbt ++${{ matrix.scala }} test
