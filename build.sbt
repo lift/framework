@@ -95,7 +95,6 @@ lazy val util =
       description := "Utilities Library",
       Test / parallelExecution := false,
       libraryDependencies ++= Seq(
-        scala_compiler(scalaVersion.value),
         joda_time,
         joda_convert,
         commons_codec,

@@ -134,8 +134,8 @@ class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val 
       def update(a: Long, b: Long, c: Int): Unit = {progList(a, b, c)}
     })
 
-    mimeUpload.setSizeMax(LiftRules.maxMimeSize)
-    mimeUpload.setFileSizeMax(LiftRules.maxMimeFileSize)
+    mimeUpload.setMaxSize(LiftRules.maxMimeSize)
+    mimeUpload.setMaxFileSize(LiftRules.maxMimeFileSize)
     val what = mimeUpload.getItemIterator(req)
 
     def hasNext = what.hasNext

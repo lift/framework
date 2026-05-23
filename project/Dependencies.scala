@@ -27,7 +27,7 @@ object Dependencies {
   // Compile scope:
   // Scope available in all classpath, transitive by default.
   lazy val commons_codec          = "commons-codec"              % "commons-codec"      % "1.20.0"
-  lazy val commons_fileupload     = "org.apache.commons"         % "commons-fileupload2-jakarta-servlet6" % "2.0.0-M4"
+  lazy val commons_fileupload     = "org.apache.commons"         % "commons-fileupload2-jakarta-servlet6" % "2.0.0-M5"
   lazy val commons_httpclient     = "commons-httpclient"         % "commons-httpclient" % "3.1"
   lazy val joda_time              = "joda-time"                  % "joda-time"          % "2.14.0"
   lazy val joda_convert           = "org.joda"                   % "joda-convert"       % "3.0.1"
@@ -45,10 +45,6 @@ object Dependencies {
   lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.9.0"
   lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "2.4.0"
   lazy val xerces                 = "xerces" % "xercesImpl" % "2.12.2"
-
-  lazy val scala_compiler: ModuleMap = (version: String) => {
-    "org.scala-lang"         % "scala3-compiler_3" % version
-  }
 
   // Aliases
   lazy val mongo_driver = mongo_java_driver
