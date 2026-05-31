@@ -45,11 +45,19 @@ trait SecurityHelpers {
   private def withRandom[T](f: SecureRandom => T): T =
     _random.synchronized(f(_random))
 
+  /**
+   * Reduce a (possibly negative) value into the range `[0, mod)`. Unlike
+   * `math.abs(value) % mod`, this is safe when `value` is `MinValue`, where
+   * `math.abs` overflows back to a negative number.
+   */
+  private[util] def nonNegativeMod(value: Long, mod: Long): Long = math.floorMod(value, mod)
+  private[util] def nonNegativeMod(value: Int, mod: Int): Int = math.floorMod(value, mod)
+
   /** return a random Long modulo a number */
-  def randomLong(mod: Long): Long = withRandom(random => math.abs(random.nextLong) % mod)
+  def randomLong(mod: Long): Long = withRandom(random => nonNegativeMod(random.nextLong, mod))
 
   /** return a random int modulo a number */
-  def randomInt(mod: Int): Int = withRandom(random => math.abs(random.nextInt) % mod)
+  def randomInt(mod: Int): Int = withRandom(random => nonNegativeMod(random.nextInt, mod))
 
   /**
    * return true only 'percent' times when asked repeatedly.

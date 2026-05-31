@@ -142,9 +142,20 @@ abstract class CurrencyZone {
         def get(numberOfFractionDigits: Int): String = {
             val nf = NumberFormat.getNumberInstance(_locale)
             val df = nf.asInstanceOf[DecimalFormat]
-            val groupingSeparator = df.getDecimalFormatSymbols.getGroupingSeparator
+            val symbols = df.getDecimalFormatSymbols
+            val groupingSeparator = symbols.getGroupingSeparator
+            val decimalSeparator = symbols.getDecimalSeparator
 
-            format("", numberOfFractionDigits).replaceAll(groupingSeparator.toString+"", "")
+            // Strip the grouping separator (as a literal, not a regex),
+            // normalise the locale-specific decimal separator to '.', and drop
+            // any remaining non-numeric characters (e.g. the non-breaking space
+            // German currency formatting leaves behind), so the result is always
+            // a valid BigDecimal string -- even for locales such as
+            // Locale.GERMANY where the separators are '.' and ','.
+            format("", numberOfFractionDigits)
+              .replace(groupingSeparator.toString, "")
+              .replace(decimalSeparator.toString, ".")
+              .replaceAll("[^0-9.+-]", "")
         }
 
     }

@@ -261,7 +261,7 @@ trait TimeHelpers { self: ControlHelpers =>
    */
   object TimeSpan {
     /** time units and values used when converting a total number of millis to those units (see the format function)  */
-    val scales = List((1000L, "milli"), (60L, "second"), (60L, "minute"), (24L, "hour"), (7L, "day"), (10000L, "week"))
+    val scales = List((1000L, "milli"), (60L, "second"), (60L, "minute"), (24L, "hour"), (7L, "day"), (Long.MaxValue, "week"))
 
     /** explicit constructor for a TimeSpan  */
     def apply(in: Long) = new TimeSpan(in)
