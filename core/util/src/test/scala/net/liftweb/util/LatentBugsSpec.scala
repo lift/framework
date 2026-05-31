@@ -27,19 +27,18 @@ class LatentBugsSpec extends Specification {
   "Latent bug validation".title
 
   "Bug 1: SecurityHelpers.randomLong / randomInt" should {
-    // SecurityHelpers.scala:49,52 compute `math.abs(random.nextLong) % mod`.
-    // SecureRandom.nextLong can return Long.MinValue, and math.abs(Long.MinValue)
-    // overflows back to Long.MinValue (still negative), so the result of the
-    // modulo can be negative -- violating the documented "modulo a number"
-    // contract. Reproduced deterministically with the worst-case RNG output,
-    // which is exactly the value the production expression mishandles.
+    // randomLong / randomInt reduce the raw RNG output into [0, mod) via
+    // Helpers.nonNegativeMod, the exact reduction those methods apply.
+    // SecureRandom.nextLong can return Long.MinValue, and the old
+    // `math.abs(value) % mod` overflowed (math.abs(Long.MinValue) is still
+    // negative), yielding a negative result and violating the documented
+    // "modulo a number" contract. Exercised deterministically with the
+    // worst-case RNG output.
     "never yield a negative value, even when the RNG returns Long.MinValue" in {
-      val worstCaseNextLong: Long = Long.MinValue
-      (math.abs(worstCaseNextLong) % 7L) must be_>=(0L)
+      Helpers.nonNegativeMod(Long.MinValue, 7L) must be_>=(0L)
     }
     "never yield a negative value, even when the RNG returns Int.MinValue" in {
-      val worstCaseNextInt: Int = Int.MinValue
-      (math.abs(worstCaseNextInt) % 7) must be_>=(0)
+      Helpers.nonNegativeMod(Int.MinValue, 7) must be_>=(0)
     }
   }
 
@@ -62,7 +61,7 @@ class LatentBugsSpec extends Specification {
     // TimeHelpers.scala:264 caps the final "week" unit with a divisor of 10000,
     // so weeks are reported modulo 10000 and whole 10000-week blocks disappear.
     "report all weeks for a duration of exactly 10000 weeks" in {
-      TimeSpan.format(weeks(10000L)) must_== "10000 weeks"
+      TimeSpan.format(weeks(10000L)) must beEqualTo("10000 weeks")
     }
   }
 

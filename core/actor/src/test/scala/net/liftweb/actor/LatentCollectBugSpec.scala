@@ -51,7 +51,7 @@ class LatentCollectBugSpec extends Specification {
       f1.satisfy("a")
       f3.satisfy("c")
 
-      collected.get(5000L) must_== Full(List("a", "b", "c"))
+      collected.get(5000L) must beEqualTo(Full(List("a", "b", "c")))
     }
   }
 }

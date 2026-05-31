@@ -52,9 +52,12 @@ trait StringHelpers {
    * The result is a Map[String, String]
    */
   def splitNameValuePairs(props: String): Map[String, String] = {
-    val list = props.split(",").toList.map(in => {
-      val pair = in.roboSplit("=")
-      (pair(0), unquote(pair(1)))
+    val list = props.split(",").toList.flatMap(in => {
+      in.roboSplit("=") match {
+        case name :: value :: _ => Some((name, unquote(value)))
+        case name :: Nil if name.nonEmpty => Some((name, ""))
+        case _ => None
+      }
     })
     val map: Map[String, String] = Map.empty
 
