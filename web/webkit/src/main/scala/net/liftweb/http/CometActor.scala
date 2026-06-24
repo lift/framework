@@ -29,6 +29,7 @@ import net.liftweb.http.js._
 import JsCmds._
 import JE._
 import java.util.Locale
+import scala.concurrent.duration.FiniteDuration
 
 /**
 * A case class that contains the information necessary to set up a CometActor
@@ -562,7 +563,7 @@ trait BaseCometActor extends LiftActor with LiftCometActor with CssBindImplicits
    * isn't visible on any page for some period after its lifespan
    * the CometActor will be shut down.
    */
-  def lifespan: Box[TimeSpan] = Empty
+  def lifespan: Box[FiniteDuration] = Empty
 
   private var _running = true
 
@@ -934,7 +935,7 @@ trait BaseCometActor extends LiftActor with LiftCometActor with CssBindImplicits
 
     case ShutdownIfPastLifespan =>
       for {
-        ls <- lifespan if listeners.isEmpty && (lastListenerTime + ls.millis + 1000L) < millis
+        ls <- lifespan if listeners.isEmpty && (lastListenerTime + ls.toMillis + 1000L) < millis
       } {
         this ! ShutDown
       }

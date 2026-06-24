@@ -19,6 +19,7 @@ package http
 
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
+import scala.concurrent.duration.FiniteDuration
 
 import scala.collection.mutable.{HashMap, ListBuffer}
 import collection.mutable.{HashMap, ListBuffer}
@@ -458,7 +459,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
   @volatile
   private[http] var inactivityLength: Long =
-    LiftRules.sessionInactivityTimeout.vend openOr ((30.minutes): Long)
+    LiftRules.sessionInactivityTimeout.vend openOr minutes(30)
 
   private[http] var highLevelSessionDispatcher = new HashMap[String, LiftRules.DispatchPF]()
   private[http] var sessionRewriter = new HashMap[String, LiftRules.RewritePF]()
@@ -1229,7 +1230,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
       case _: EmptyBox => NodeSeq.Empty
       case b: Box[_] => runSourceContext(b.toList, xform, ns)
       case b: Option[_] => runSourceContext(b.toList, xform, ns)
-      case fut: LAFuture[_] => runSourceContext(fut.get(5.seconds).openOr(Empty), xform, ns)
+      case fut: LAFuture[_] => runSourceContext(fut.get(seconds(5)).openOr(Empty), xform, ns)
       case node: scala.xml.Node => currentSourceContext.doWith(node)(processSurroundAndInclude("Source", xform(ns)))
       case na: org.mozilla.javascript.NativeArray =>
         val len = na.getLength.toInt
@@ -1277,7 +1278,7 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           case b: Boolean => xformRule #> b
           case b: Box[_] => runSourceContext(b.toList, retFunc _, _)
           case b: Option[_] => runSourceContext(b.toList, retFunc _, _)
-          case fut: LAFuture[_] => runSourceContext(fut.get(5.seconds).openOr(Empty), retFunc _, _)
+          case fut: LAFuture[_] => runSourceContext(fut.get(seconds(5)).openOr(Empty), retFunc _, _)
           case n: java.lang.Iterable[_] => runSourceContext(n.iterator(), retFunc _, _)
           case n: java.util.Iterator[_] => runSourceContext(n, retFunc _, _)
           case en: java.util.Enumeration[_] => runSourceContext(en, retFunc _, _)
@@ -2191,7 +2192,11 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
           Helpers.tryo(shutdownFunc.foreach(_(this)))
         }
 
-        override def lifespan: Full[TimeSpan] = Full(TimeSpan(LiftRules.clientActorLifespan.vend.apply(this)))
+        override def lifespan: Box[FiniteDuration] = {
+          import scala.concurrent.duration._
+          import java.util.concurrent.TimeUnit
+          Full(Duration(LiftRules.clientActorLifespan.vend.apply(this), TimeUnit.MILLISECONDS))
+        }
 
         override def hasOuter = false
 
@@ -2804,7 +2809,11 @@ class LiftSession(private[http] val _contextPath: String, val underlyingId: Stri
 
 
 
-        override def lifespan = Full(TimeSpan(LiftRules.clientActorLifespan.vend.apply(this)))
+        override def lifespan: Box[FiniteDuration] = {
+          import scala.concurrent.duration._
+          import java.util.concurrent.TimeUnit
+          Full(Duration(LiftRules.clientActorLifespan.vend.apply(this), TimeUnit.MILLISECONDS))
+        }
 
         override def hasOuter = false
 
