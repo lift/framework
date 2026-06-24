@@ -24,6 +24,7 @@ import net.liftweb.util.Helpers
 import net.liftweb.util.TimeHelpers
 import net.liftweb.common._
 import net.liftweb.util._
+import scala.concurrent.duration._
 
 import net.liftweb.http.js.{JsExp, JE}
 import JE._
@@ -510,7 +511,7 @@ object JqJsCmds {
      * @param uid the element id
      * @param time the duration of the effect.
      */
-    def apply(uid: String, time: TimeSpan) = new Show(uid, Full(time))
+    def apply(uid: String, time: FiniteDuration) = new Show(uid, Full(time))
   }
 
   /**
@@ -519,7 +520,7 @@ object JqJsCmds {
    * @param uid the element id
    * @param time the duration of the effect.
    */
-  class Show(val uid: String, val time: Box[TimeSpan]) extends JsCmd with HasTime {
+  class Show(val uid: String, val time: Box[FiniteDuration]) extends JsCmd with HasTime {
     def toJsCmd = "try{jQuery(" + ("#" + uid).encJs + ").show(" + timeStr + ");} catch (e) {}"
   }
 
@@ -540,20 +541,20 @@ object JqJsCmds {
      * @param uid the element id
      * @param time the duration of the effect.
      */
-    def apply(uid: String, time: TimeSpan) = new Hide(uid, Full(time))
+    def apply(uid: String, time: FiniteDuration) = new Hide(uid, Full(time))
   }
 
   /**
    * Hide an element identified by uid and the animation will last @time
    */
-  class Hide(val uid: String, val time: Box[TimeSpan]) extends JsCmd with HasTime {
+  class Hide(val uid: String, val time: Box[FiniteDuration]) extends JsCmd with HasTime {
     def toJsCmd = "try{jQuery(" + ("#" + uid).encJs + ").hide(" + timeStr + ");} catch (e) {}"
   }
 
   /**
    * Show a message msg in the element with id where for duration milliseconds and fade out in fadeout milliseconds
    */
-  case class DisplayMessage(where: String, msg: NodeSeq, duration: TimeSpan, fadeTime: TimeSpan) extends JsCmd {
+  case class DisplayMessage(where: String, msg: NodeSeq, duration: FiniteDuration, fadeTime: FiniteDuration) extends JsCmd {
     def toJsCmd = (Show(where) & JqSetHtml(where, msg) & After(duration, Hide(where, fadeTime))).toJsCmd
   }
 
@@ -571,8 +572,8 @@ object JqJsCmds {
    * Fades out the element having the provided id, by waiting
    * for the given duration and fading out during fadeTime
    */
-  case class FadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) extends JsCmd {
-    def toJsCmd = (After(duration, JqJE.JqId(id) ~> (new JsRaw("fadeOut(" + fadeTime.millis + ")") with JsMember))).toJsCmd
+  case class FadeOut(id: String, duration: FiniteDuration, fadeTime: FiniteDuration) extends JsCmd {
+    def toJsCmd = (After(duration, JqJE.JqId(id) ~> (new JsRaw("fadeOut(" + fadeTime.toMillis + ")") with JsMember))).toJsCmd
   }
 
   /**
@@ -590,8 +591,8 @@ object JqJsCmds {
    * for the given duration and fading in during fadeTime
    * and use @fadeTime
    */
-  case class FadeIn(id: String, duration: TimeSpan, fadeTime: TimeSpan) extends JsCmd {
-    def toJsCmd = (After(duration, JqJE.JqId(id) ~> (new JsRaw("fadeIn(" + fadeTime.millis + ")") with JsMember))).toJsCmd
+  case class FadeIn(id: String, duration: FiniteDuration, fadeTime: FiniteDuration) extends JsCmd {
+    def toJsCmd = (After(duration, JqJE.JqId(id) ~> (new JsRaw("fadeIn(" + fadeTime.toMillis + ")") with JsMember))).toJsCmd
   }
 
   /**

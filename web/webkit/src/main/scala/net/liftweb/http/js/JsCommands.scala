@@ -25,6 +25,7 @@ import scala.xml.Node
 
 import org.json4s._
 import org.json4s.native._
+import scala.concurrent.duration._
 
 object JsCommands {
   def create = new JsCommands(Nil)
@@ -836,13 +837,13 @@ object JsCmds {
   }
 
   trait HasTime {
-    def time: Box[TimeSpan]
+    def time: Box[FiniteDuration]
 
-    def timeStr = time.map(_.millis.toString) openOr ""
+    def timeStr = time.map(_.toMillis.toString) openOr ""
   }
 
-  case class After(time: TimeSpan, toDo: JsCmd) extends JsCmd {
-    def toJsCmd = "setTimeout(function() {" + toDo.toJsCmd + "}, " + time.millis + ");"
+  case class After(time: FiniteDuration, toDo: JsCmd) extends JsCmd {
+    def toJsCmd = "setTimeout(function() {" + toDo.toJsCmd + "}, " + time.toMillis + ");"
   }
 
   case class Alert(text: String) extends JsCmd {
@@ -1000,13 +1001,13 @@ object JsRules {
   * messages.
   */
   //@deprecated
-  @volatile var prefadeDuration: Helpers.TimeSpan = 5.seconds
+  @volatile var prefadeDuration: FiniteDuration = 5.seconds
 
   /**
   * The default fade time for fading FadeOut and FadeIn
   * messages.
   */
   //@deprecated
-  @volatile var fadeTime: Helpers.TimeSpan = 1.second
+  @volatile var fadeTime: FiniteDuration = 1.second
 }
 
