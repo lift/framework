@@ -130,7 +130,7 @@ sealed trait Schedule extends Loggable {
    * @return a <code>ScheduledFuture</code> which executes the function f
    * immediately on a worker thread
    */
-  def apply(f: () => Unit): ScheduledFuture[Unit] = schedule(f, Duration.Zero)
+  def apply(f: () => Unit): ScheduledFuture[Unit] = schedule(f, 0.millis)
 
   /**
    * Schedules the application of a function
