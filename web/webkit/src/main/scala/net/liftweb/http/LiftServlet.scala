@@ -27,6 +27,9 @@ import js._
 import auth._
 import provider._
 
+import scala.concurrent.duration._
+import java.util.concurrent.TimeUnit
+
 import org.json4s._
 
 /**
@@ -110,7 +113,7 @@ class LiftServlet extends Loggable {
 
         func(answerFunc)
 
-      }, TimeSpan(5))
+      }, Duration(5, TimeUnit.MILLISECONDS))
 
     }
 
@@ -825,7 +828,7 @@ class LiftServlet extends Loggable {
     try {
       session.enterComet(cont -> request)
 
-      LAPinger.schedule(cont, BreakOut(), TimeSpan(cometTimeout))
+      LAPinger.schedule(cont, BreakOut(), cometTimeout)
 
       request.request.suspend(cometTimeout + 2000L)
     } finally {
@@ -901,7 +904,7 @@ class LiftServlet extends Loggable {
 
       session.enterComet(cont -> request)
 
-      LAPinger.schedule(cont, BreakOut(), TimeSpan(cometTimeout))
+      LAPinger.schedule(cont, BreakOut(), cometTimeout)
 
       val ret2 = f.get(cometTimeout) openOr Nil
 
