@@ -21,8 +21,7 @@ import java.util.{Calendar, Date, TimeZone}
 
 import net.liftweb.common._
 import net.liftweb.util.TimeHelpers._
-import org.joda.time.{Period, DateTimeZone, DateTime}
-import org.scalacheck.Gen._
+import org.joda.time.DateTimeZone
 import org.scalacheck.Prop._
 import org.specs2.ScalaCheck
 import org.specs2.execute.AsResult
@@ -33,78 +32,43 @@ import org.specs2.specification.Around
 /**
  * Systems under specification for TimeHelpers.
  */
-class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen {
+class TimeHelpersSpec extends Specification with ScalaCheck {
   "TimeHelpers Specification".title
 
-  "A TimeSpan" can {
-    "be created from a number of milliseconds" in forAllTimeZones {
-      TimeSpan(3000) === TimeSpan(3 * 1000)
-    }
-    "be created from a number of seconds" in forAllTimeZones {
-      3.seconds === TimeSpan(3 * 1000)
-    }
-    "be created from a number of minutes" in forAllTimeZones {
-      3.minutes === TimeSpan(3 * 60 * 1000)
-    }
-    "be created from a number of hours" in forAllTimeZones {
-      3.hours === TimeSpan(3 * 60 * 60 * 1000)
-    }
-    "be created from a number of days" in forAllTimeZones {
-      3.days === TimeSpan(3 * 24 * 60 * 60 * 1000)
-    }
-    "be created from a number of weeks" in forAllTimeZones {
-      3.weeks === TimeSpan(3 * 7 * 24 * 60 * 60 * 1000)
-    }
-    "be created from a number of months" in forAllTimeZones {
-      3.months must beEqualTo(Period.months(3))
-    }
-    "be created from a number of years" in forAllTimeZones {
-      3.years must beEqualTo(Period.years(3))
-    }
-    "be converted implicitly to a date starting from the epoch time" in forAllTimeZones {
-      3.seconds.after(new Date(0)) must beTrue
-    }
-    "be converted to a date starting from the epoch time, using the date method" in forAllTimeZones {
-      3.seconds.after(new Date(0)) must beTrue
-    }
-    "be compared to another TimeSpan" in forAllTimeZones {
-      3.seconds === 3.seconds
-      3.seconds must not(beEqualTo(2.seconds))
-    }
-    "be compared to another object" in forAllTimeZones {
-      3.seconds must not(beEqualTo("string"))
-    }
-  }
-
-  "A TimeSpan" should {
-    "return a new TimeSpan representing the sum of the 2 times when added with another TimeSpan" in forAllTimeZones {
-      3.seconds + 3.seconds === 6.seconds
-    }
-    "return a new TimeSpan representing the difference of the 2 times when substracted with another TimeSpan" in forAllTimeZones {
-      3.seconds - 4.seconds === (-1).seconds
-    }
-    "have a toString method returning the relevant number of weeks, days, hours, minutes, seconds, millis" in forAllTimeZones {
-      val conversionIsOk = forAll(timeAmounts)((t: TimeAmounts) => { val (timeSpanToString, timeSpanAmounts) = t
-        timeSpanAmounts forall { case (amount, unit) =>
-          amount >= 1  &&
-          timeSpanToString.contains(amount.toString) || true }
-      })
-      val timeSpanStringIsPluralized = forAll(timeAmounts)((t: TimeAmounts) => { val (timeSpanToString, timeSpanAmounts) = t
-        timeSpanAmounts forall { case (amount, unit) =>
-               amount > 1  && timeSpanToString.contains(unit + "s") ||
-               amount == 1 && timeSpanToString.contains(unit) ||
-               amount == 0 && !timeSpanToString.contains(unit)
-        }
-      })
-      conversionIsOk && timeSpanStringIsPluralized
-    }
-  }
-
-  "Duration builders" should {
-    "return FiniteDuration, not TimeSpan, from N.seconds" in {
+  "Duration builder syntax" should {
+    "produce FiniteDuration from N.seconds" in {
       import scala.concurrent.duration._
-      val d: FiniteDuration = 3.seconds
-      d.toMillis must beEqualTo(3000L)
+      3.seconds must beEqualTo(FiniteDuration(3, SECONDS))
+    }
+    "produce FiniteDuration from N.minutes" in {
+      import scala.concurrent.duration._
+      3.minutes must beEqualTo(FiniteDuration(3, MINUTES))
+    }
+    "produce FiniteDuration from N.hours" in {
+      import scala.concurrent.duration._
+      3.hours must beEqualTo(FiniteDuration(3, HOURS))
+    }
+    "produce FiniteDuration from N.days" in {
+      import scala.concurrent.duration._
+      3.days must beEqualTo(FiniteDuration(3, DAYS))
+    }
+    "produce FiniteDuration from 21 days" in {
+      import scala.concurrent.duration._
+      21.days must beEqualTo(FiniteDuration(21, DAYS))
+    }
+  }
+
+  "formatDuration" should {
+    "format milliseconds as a human-readable string" in {
+      formatDuration(3000L) must beEqualTo("3 seconds")
+    }
+    "pluralize correctly for single units" in {
+      formatDuration(1000L) must beEqualTo("1 second")
+    }
+    "combine multiple units" in {
+      val result = formatDuration(90000L)
+      result must contain("1 minute")
+      result must contain("30 seconds")
     }
   }
 
@@ -234,24 +198,4 @@ object forAllTimeZones extends Around {
       DateTimeZone.setDefault(dtzBefore)
     }
   }
-}
-
-
-trait TimeAmountsGen {
-
-  type TimeAmounts = (String, List[(Int, String)])
-
-  val timeAmounts =
-    for {
-      w <- choose(0, 2)
-      d <- choose(0, 6)
-      h <- choose(0, 23)
-      m <- choose(0, 59)
-      s <- choose(0, 59)
-      ml <- choose(0, 999)
-    }
-    yield (
-      TimeSpan(weeks(w) + days(d) + hours(h) + minutes(m) + seconds(s) + ml).toString,
-      (w, "week") :: (d, "day") :: (h, "hour") :: (m, "minute") :: (s, "second") :: (ml, "milli") :: Nil
-    )
 }
