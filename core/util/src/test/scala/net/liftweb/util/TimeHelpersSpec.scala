@@ -100,6 +100,14 @@ class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen 
     }
   }
 
+  "Duration builders" should {
+    "return FiniteDuration, not TimeSpan, from N.seconds" in {
+      import scala.concurrent.duration._
+      val d: FiniteDuration = 3.seconds
+      d.toMillis must beEqualTo(3000L)
+    }
+  }
+
   "the TimeHelpers" should {
     "provide a 'seconds' function transforming a number of seconds into millis" in forAllTimeZones {
       seconds(3) === 3 * 1000
