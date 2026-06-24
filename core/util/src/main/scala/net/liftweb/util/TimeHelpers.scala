@@ -32,8 +32,8 @@ import common._
 object TimeHelpers extends TimeHelpers with ControlHelpers with ClassHelpers
 
 /**
- * The TimeHelpers trait provide functions to create TimeSpans (an object representing duration in milliseconds),
- * to manage date formats or general utility functions (get the date for today, get year/month/day number,...)
+ * The TimeHelpers trait provides date and time utilities: duration formatting, date parsing,
+ * calendar manipulation, and format helpers.
  */
 trait TimeHelpers { self: ControlHelpers =>
   // Logger must be lazy, since we cannot instantiate until after boot is complete
@@ -242,14 +242,14 @@ trait TimeHelpers { self: ControlHelpers =>
     }
   }
 
-  private val durationScales = List(
-    (1000L, "milli"), (60L, "second"), (60L, "minute"),
-    (24L, "hour"), (7L, "day"), (10000L, "week")
-  )
-
+  /** Formats a number of milliseconds as a human-readable duration string (e.g., "1 minute, 30 seconds"). */
   def formatDuration(millis: Long): String = {
+    val scales = List(
+      (1000L, "milli"), (60L, "second"), (60L, "minute"),
+      (24L, "hour"), (7L, "day"), (10000L, "week")
+    )
     def divideInUnits(ms: Long) =
-      durationScales.foldLeft[(Long, List[(Long, String)])]((ms, Nil)) { (total, div) =>
+      scales.foldLeft[(Long, List[(Long, String)])]((ms, Nil)) { (total, div) =>
         (total._1 / div._1, (total._1 % div._1, div._2) :: total._2)
       }._2
     def fmt(pair: (Long, String)) = if (pair._1 == 1) s"${pair._1} ${pair._2}" else s"${pair._1} ${pair._2}s"
