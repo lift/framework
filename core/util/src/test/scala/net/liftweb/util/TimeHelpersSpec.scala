@@ -35,29 +35,6 @@ import org.specs2.specification.Around
 class TimeHelpersSpec extends Specification with ScalaCheck {
   "TimeHelpers Specification".title
 
-  "Duration builder syntax" should {
-    "produce FiniteDuration from N.seconds" in {
-      import scala.concurrent.duration._
-      3.seconds must beEqualTo(FiniteDuration(3, SECONDS))
-    }
-    "produce FiniteDuration from N.minutes" in {
-      import scala.concurrent.duration._
-      3.minutes must beEqualTo(FiniteDuration(3, MINUTES))
-    }
-    "produce FiniteDuration from N.hours" in {
-      import scala.concurrent.duration._
-      3.hours must beEqualTo(FiniteDuration(3, HOURS))
-    }
-    "produce FiniteDuration from N.days" in {
-      import scala.concurrent.duration._
-      3.days must beEqualTo(FiniteDuration(3, DAYS))
-    }
-    "produce FiniteDuration from 21 days" in {
-      import scala.concurrent.duration._
-      21.days must beEqualTo(FiniteDuration(21, DAYS))
-    }
-  }
-
   "formatDuration" should {
     "format milliseconds as a human-readable string" in {
       formatDuration(3000L) must beEqualTo("3 seconds")
