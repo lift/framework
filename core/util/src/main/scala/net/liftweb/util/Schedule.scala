@@ -100,7 +100,7 @@ sealed trait Schedule extends Loggable {
    * Schedules the sending of a message to occur after the specified delay.
    *
    * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
-   * the <code>to<code> Actor after the specified FiniteDuration <code>delay</code>.
+   * the <code>to</code> Actor after the specified FiniteDuration <code>delay</code>.
    */
   def schedule[T](to: SimpleActor[T], msg: T, delay: FiniteDuration): ScheduledFuture[Unit] =
     this.schedule(() => Helpers.tryo(to ! msg), delay)
@@ -109,7 +109,7 @@ sealed trait Schedule extends Loggable {
    * Schedules the sending of a message to occur after the specified delay.
    *
    * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
-   * the <code>to<code> Actor after the specified FiniteDuration <code>delay</code>.
+   * the <code>to</code> Actor after the specified FiniteDuration <code>delay</code>.
    */
   def perform[T](to: SimpleActor[T], msg: T, delay: Long): ScheduledFuture[Unit] =
     this.schedule(() => Helpers.tryo(to ! msg), Duration(delay, TimeUnit.MILLISECONDS))
@@ -204,4 +204,3 @@ private object TF extends ThreadFactory {
     d
   }
 }
-
