@@ -1,6 +1,6 @@
 # The Lift Web Framework
 
-[![Build Status](https://travis-ci.org/lift/framework.svg?branch=master)](https://travis-ci.org/lift/framework)
+[![Build Status](https://github.com/lift/framework/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/lift/framework/actions/workflows/ci.yaml)
 
 Lift is the most powerful, most secure web framework available today. There are [Seven Things](http://seventhings.liftweb.net/) that distinguish Lift from other web frameworks.
 
@@ -93,7 +93,7 @@ Logback if you don't already have another SLF4J logging library in place. For ex
 
 ```scala
 libraryDependencies ++= {
-  val liftVersion = "3.3.0"
+  val liftVersion = "4.0.0"
   Seq(
     "net.liftweb"       %% "lift-webkit" % liftVersion % "compile",
     "ch.qos.logback" % "logback-classic" % "1.2.3"
@@ -115,12 +115,13 @@ Add Lift to your `pom.xml` like so:
     <dependency>
       <groupId>net.liftweb</groupId>
       <artifactId>lift-webkit_${scala.version}</artifactId>
-      <version>3.3.0</version>
+      <version>4.0.0</version>
     </dependency>
 
-Where `${scala.version}` is `2.13` for the 4.x series. Individual patch releases of the Scala compiler
-(e.g. 2.12.2) are binary compatible with everything in their release series, so you only need the
-first two version parts.
+Where `${scala.version}` is `2.13` or `3` for the 4.x series, which cross-builds against both Scala
+2.13 and Scala 3. Individual patch releases of the Scala compiler (e.g. 2.13.18) are binary compatible
+with everything in their release series, so you only need the first version part for Scala 3, or the
+first two version parts for Scala 2.13.
 
 You can learn more about Maven integration [on the wiki](http://www.assembla.com/wiki/show/liftweb/Using_Maven).
 
@@ -147,9 +148,9 @@ We will accept issues and pull requests into the Lift codebase if the pull reque
 * The request adheres to our [contributing guidelines][contribfile], including having been discussed
   on the Mailing List if its from a non-committer.
 
-[supfile]: https://github.com/lift/framework/blob/master/SUPPORT.md
-[contribfile]: https://github.com/lift/framework/blob/master/CONTRIBUTING.md
-[sigfile]: https://github.com/lift/framework/blob/master/contributors.md
+[supfile]: https://github.com/lift/framework/blob/main/SUPPORT.md
+[contribfile]: https://github.com/lift/framework/blob/main/CONTRIBUTING.md
+[sigfile]: https://github.com/lift/framework/blob/main/contributors.md
 
 ## Project Organization
 
@@ -165,10 +166,10 @@ likely require one or more of Lift's other components.
 * **web:** This component includes all of Lift's core HTTP and web handling. Including `lift-webkit`
 in your build process should be sufficient for basic applications and will include `lift-core` as a
 transitive dependency.
-* **persistence:** This component includes Mapper and Record, Lift's two ORMs. While you needn't use
-either and can use the ORM of your choice, Mapper and Record integrate nicely with Lift's idioms.
-Mapper is an ORM for relational databases, while Record is a broader ORM with support for both SQL
-databases and NoSQL datastores.
+
+As of Lift 4.0, the persistence components (Mapper and Record) have been removed from this
+repository. If your project relies on them, pin to a 3.x release, or use another ORM of your choice
+with Lift 4.0+.
 
 ### Other Repostories
 
@@ -190,13 +191,19 @@ The [examples](https://github.com/lift/examples) repository contains the source 
 
 If you simply want to use Lift in your project, add Lift as a dependency to your build system or [download the JAR files directly](https://www.liftweb.net/download).
 
-If you wish to build Lift from source, check out this repository and use the included `liftsh` script to build some or all of the components you want.
+If you wish to build Lift from source, check out this repository and build it with [sbt](https://www.scala-sbt.org/).
+Lift no longer bundles a `liftsh` wrapper script, so you'll need `sbt` installed locally (the
+version this repository builds against is pinned in `project/build.properties`).
 
     git clone https://github.com/lift/framework.git
     cd framework
-    ./liftsh +update +publish
+    sbt test
+    sbt publishLocal
 
-There is [additional documentation on the wiki](http://www.assembla.com/spaces/liftweb/wiki/Building_Lift).
+`sbt test` compiles and runs the test suite for every module, cross-built for both Scala 2.13 and
+Scala 3 as configured in `build.sbt`. `sbt publishLocal` publishes snapshot artifacts to your local
+Ivy repository (`~/.ivy2`) so other local projects can depend on them. To build or publish a single
+module, prefix the command with its project name, e.g. `sbt webkit/publishLocal`.
 
 ## Additional Resources
 
@@ -221,4 +228,11 @@ The ScalaDocs for each release of Lift, in additional to the actual JARs, are av
 Lift is open source software released under the **Apache 2.0 license**.
 
 ## Continuous Integration
+
+Lift is built and tested on [GitHub Actions](https://github.com/lift/framework/actions/workflows/ci.yaml)
+against a matrix of supported Java (11, 17, 21) and Scala (2.13, 3) versions on every pull request and
+push to `main` and the active release branches. See [`.github/workflows/ci.yaml`][ciyaml] for the
+current configuration.
+
+[ciyaml]: https://github.com/lift/framework/blob/main/.github/workflows/ci.yaml
 
