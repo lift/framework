@@ -171,7 +171,7 @@ As of Lift 4.0, the persistence components (Mapper and Record) have been removed
 repository. If your project relies on them, pin to a 3.x release, or use another ORM of your choice
 with Lift 4.0+.
 
-### Other Repostories
+### Other Repositories
 
 There are a variety of other repositories available on the Lift GitHub page. While many are concerned with building Lift or are build program archetypes, there are two you will probably encounter fairly frequently as a Lift user:
 
@@ -197,13 +197,16 @@ version this repository builds against is pinned in `project/build.properties`).
 
     git clone https://github.com/lift/framework.git
     cd framework
-    sbt test
-    sbt publishLocal
+    sbt +test
+    sbt +publishLocal
 
-`sbt test` compiles and runs the test suite for every module, cross-built for both Scala 2.13 and
-Scala 3 as configured in `build.sbt`. `sbt publishLocal` publishes snapshot artifacts to your local
-Ivy repository (`~/.ivy2`) so other local projects can depend on them. To build or publish a single
-module, prefix the command with its project name, e.g. `sbt webkit/publishLocal`.
+The leading `+` runs the command once per entry in `crossScalaVersions`, so `sbt +test` compiles and
+runs the test suite for every module against both Scala 2.13 and Scala 3 as configured in `build.sbt`
+(a plain `sbt test`, without the `+`, only runs against the default Scala version). Likewise, `sbt
++publishLocal` publishes snapshot artifacts for both Scala versions to your local Ivy repository
+(`~/.ivy2`) so other local projects can depend on them. To build or publish a single module, prefix
+the command with its project name, e.g. `sbt webkit/publishLocal` or `sbt +webkit/publishLocal` for
+both Scala versions.
 
 ## Additional Resources
 
