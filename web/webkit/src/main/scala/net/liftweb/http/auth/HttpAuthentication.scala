@@ -25,6 +25,7 @@ import net.liftweb.util.Helpers._
 import net.liftweb.http._
 import org.apache.commons.codec.binary._
 import scala.collection.mutable.{HashMap}
+import scala.concurrent.duration._
 
 /**
  * All http authentication methods must implement these methods.
@@ -140,7 +141,7 @@ case class HttpDigestAuthentication(realmName: String)(func: PartialFunction[(St
    * The default value returned is 30 seconds.
    *
    */
-  def nonceValidityPeriod: Long = 30.seconds
+  def nonceValidityPeriod: Long = 30.seconds.toMillis
 
   override def realm = realmName
 

@@ -18,7 +18,8 @@ package net.liftweb
 package http
 
 import util.Helpers._
-import common.{Loggable, Full}
+import common.{Loggable, Full, Box}
+import scala.concurrent.duration._
 
 
 trait NamedCometActorTrait extends BaseCometActor with Loggable {
@@ -45,6 +46,6 @@ trait NamedCometActorTrait extends BaseCometActor with Loggable {
   }
 
   // time out the comet actor if it hasn't been on a page for 2 minutes
-  override def lifespan = Full(120.seconds)
+  override def lifespan: Box[FiniteDuration] = Full(120.seconds)
 
 }

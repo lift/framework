@@ -21,6 +21,7 @@ package js
 import net.liftweb.common.{Box, Full, Empty}
 import scala.xml.NodeSeq
 import net.liftweb.util.Helpers._
+import scala.concurrent.duration.FiniteDuration
 
 /**
  * Abstracted JavaScript artifacts used by lift core.
@@ -73,7 +74,7 @@ trait JSArtifacts {
    * Fades out the element denominated by id, by waiting
    * for duration milliseconds and fading out for fadeTime milliseconds
    */
-  def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan): JsCmd
+  def fadeOut(id: String, duration: FiniteDuration, fadeTime: FiniteDuration): JsCmd
 
   /**
    * Transforms a JSON object into its string representation

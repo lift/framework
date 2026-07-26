@@ -71,7 +71,7 @@ private[http] trait LiftMerge {
    */
   def merge(xhtml: NodeSeq, req: Req): Node = {
     val snippetHashs: HashMap[String, Box[NodeSeq]] = this.deferredSnippets.is
-    val waitUntil = millis + LiftRules.lazySnippetTimeout.vend.millis
+    val waitUntil = millis + LiftRules.lazySnippetTimeout.vend.toMillis
     val stripComments: Boolean = LiftRules.stripComments.vend
 
     def waitUntilSnippetsDone(): Unit ={

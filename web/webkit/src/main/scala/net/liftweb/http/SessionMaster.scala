@@ -17,6 +17,7 @@ package net.liftweb
 package http
 
 import java.util.concurrent.ConcurrentHashMap
+import scala.concurrent.duration._
 
 import common._
 import actor._
@@ -229,7 +230,7 @@ object SessionMaster extends LiftActor with Loggable {
       import scala.jdk.CollectionConverters._
 
     /* remove dead sessions that are more than 45 minutes old */
-    val now = Helpers.millis - 45.minutes
+    val now = Helpers.millis - 45.minutes.toMillis
 
     val removeKeys: Iterable[String] = killedSessions.asScala.filter(_._2 < now).map(_._1)
     removeKeys.foreach(s => killedSessions.remove(s))

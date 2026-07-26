@@ -21,8 +21,8 @@ import java.util.concurrent._
 
 import actor.ThreadPoolRules
 import common._
+import scala.concurrent.duration._
 import util.Helpers
-import util.Helpers.TimeSpan
 
 class ScheduleJBridge {
   def schedule: Schedule = Schedule
@@ -100,28 +100,28 @@ sealed trait Schedule extends Loggable {
    * Schedules the sending of a message to occur after the specified delay.
    *
    * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
-   * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
+   * the <code>to</code> Actor after the specified FiniteDuration <code>delay</code>.
    */
-  def schedule[T](to: SimpleActor[T], msg: T, delay: TimeSpan): ScheduledFuture[Unit] =
-  this.schedule(() => Helpers.tryo( to ! msg ), delay)
+  def schedule[T](to: SimpleActor[T], msg: T, delay: FiniteDuration): ScheduledFuture[Unit] =
+    this.schedule(() => Helpers.tryo(to ! msg), delay)
 
   /**
    * Schedules the sending of a message to occur after the specified delay.
    *
    * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
-   * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
+   * the <code>to</code> Actor after the specified FiniteDuration <code>delay</code>.
    */
   def perform[T](to: SimpleActor[T], msg: T, delay: Long): ScheduledFuture[Unit] =
-  this.schedule(() => Helpers.tryo( to ! msg ), TimeSpan(delay))
+    this.schedule(() => Helpers.tryo(to ! msg), Duration(delay, TimeUnit.MILLISECONDS))
 
-   /**
+  /**
    * Schedules the sending of a message to occur after the specified delay.
    *
    * @return a <code>ScheduledFuture</code> which applies the function f
    * after delay
    */
   def perform(f: () => Unit, delay: Long): ScheduledFuture[Unit] =
-    schedule(f, TimeSpan(delay))
+    schedule(f, Duration(delay, TimeUnit.MILLISECONDS))
 
 
   /**
@@ -130,35 +130,32 @@ sealed trait Schedule extends Loggable {
    * @return a <code>ScheduledFuture</code> which executes the function f
    * immediately on a worker thread
    */
-  def apply(f: () => Unit): ScheduledFuture[Unit] = schedule(f, TimeSpan(0))
-  
+  def apply(f: () => Unit): ScheduledFuture[Unit] = schedule(f, 0.millis)
+
   /**
    * Schedules the application of a function
    *
    * @return a <code>ScheduledFuture</code> which executes the function f
    * after the delay
    */
-  def apply(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] = 
+  def apply(f: () => Unit, delay: FiniteDuration): ScheduledFuture[Unit] =
     schedule(f, delay)
-  
+
   /**
    * Schedules the application of a function
    *
    * @return a <code>ScheduledFuture</code> which executes the function f
    * after the delay
    */
-  def schedule(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] = 
+  def schedule(f: () => Unit, delay: FiniteDuration): ScheduledFuture[Unit] =
     synchronized {
       val r = new Runnable {
-        def run(): Unit =  { 
-          try {
-            f.apply()
-          } catch {
-            case e: Exception => logger.error(e.getMessage, e)
-          }
+        def run(): Unit = {
+          try { f.apply() }
+          catch { case e: Exception => logger.error(e.getMessage, e) }
         }
       }
-      
+
       val fast = new java.util.concurrent.Callable[Unit] {
         def call(): Unit = {
           try {
@@ -169,10 +166,10 @@ sealed trait Schedule extends Loggable {
           }
         }
       }
-      
+
       try {
         this.restart
-        service.schedule(fast, delay.millis, TimeUnit.MILLISECONDS)
+        service.schedule(fast, delay.toMillis, TimeUnit.MILLISECONDS)
       } catch {
         case e: RejectedExecutionException => throw ActorPingException("ping could not be scheduled", e)
       }

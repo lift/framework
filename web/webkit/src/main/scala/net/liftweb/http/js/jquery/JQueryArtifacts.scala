@@ -20,6 +20,7 @@ package js
 package jquery
 
 import scala.xml.{Elem, NodeSeq}
+import scala.concurrent.duration.FiniteDuration
 
 import net.liftweb.http.S
 import net.liftweb.http.js.JE
@@ -87,7 +88,7 @@ trait JQueryArtifacts extends JSArtifacts {
    * Fades out the element having the provided id, by waiting
    * for the given duration and fades out during fadeTime
    */
-  def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) =
+  def fadeOut(id: String, duration: FiniteDuration, fadeTime: FiniteDuration) =
     FadeOut(id, duration, fadeTime)
 
   /**
