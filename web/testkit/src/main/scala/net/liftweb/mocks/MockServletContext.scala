@@ -34,8 +34,8 @@ import java.util.Arrays
 import java.util.Date
 import java.util.Locale
 import java.util.Vector
-import javax.servlet._
-import javax.servlet.http._
+import jakarta.servlet._
+import jakarta.servlet.http._
 
 /**
  * An example of how to use these mock classes in your unit tests:
@@ -67,6 +67,14 @@ import javax.servlet.http._
  * @author Steve Jenson (stevej@pobox.com)
  */
 class MockServletContext(var target: String) extends ServletContext {
+  def addJspFile(servletName: String, jspFile: String): jakarta.servlet.ServletRegistration.Dynamic = null
+  def getRequestCharacterEncoding(): String = null
+  def getResponseCharacterEncoding(): String = null
+  def getSessionTimeout(): Int = 0
+  def setRequestCharacterEncoding(encoding: String): Unit = {}
+  def setResponseCharacterEncoding(encoding: String): Unit = {}
+  def setSessionTimeout(timeout: Int): Unit = {}
+
   def getInitParameter(f: String): String = null
   def getInitParameterNames(): java.util.Enumeration[String] = new Vector[String]().elements
   def getAttribute(f: String): Object = null
@@ -107,22 +115,22 @@ class MockServletContext(var target: String) extends ServletContext {
   def log(msg: String) = println("MockServletContext.log: " + msg)
   def getContextPath(): String = null
 
-  def addFilter(x$1: String,x$2: Class[_ <: javax.servlet.Filter]): FilterRegistration.Dynamic = null
-  def addFilter(x$1: String,x$2: javax.servlet.Filter): FilterRegistration.Dynamic = null
+  def addFilter(x$1: String,x$2: Class[_ <: jakarta.servlet.Filter]): FilterRegistration.Dynamic = null
+  def addFilter(x$1: String,x$2: jakarta.servlet.Filter): FilterRegistration.Dynamic = null
   def addFilter(x$1: String,x$2: String): FilterRegistration.Dynamic = null
 
   def addListener(listenerClass: Class[_ <: java.util.EventListener]): Unit = ()
   def addListener[T <: java.util.EventListener](listener: T): Unit = ()
   def addListener(listenerClass: String): Unit = ()
 
-  def addServlet(servletNAme: String, servletClass: Class[_ <: javax.servlet.Servlet]): ServletRegistration.Dynamic = null
-  def addServlet(servletName: String, servlet: javax.servlet.Servlet): ServletRegistration.Dynamic = null
+  def addServlet(servletNAme: String, servletClass: Class[_ <: jakarta.servlet.Servlet]): ServletRegistration.Dynamic = null
+  def addServlet(servletName: String, servlet: jakarta.servlet.Servlet): ServletRegistration.Dynamic = null
   def addServlet(servletName: String, servletClass: String): ServletRegistration.Dynamic = null
 
   // This remains unimplemented since we can't provide a Null here due to type restrictions.
-  def createFilter[T <: javax.servlet.Filter](filter: Class[T]): T = ???
+  def createFilter[T <: jakarta.servlet.Filter](filter: Class[T]): T = ???
   def createListener[T <: java.util.EventListener](listener: Class[T]): T = ???
-  def createServlet[T <: javax.servlet.Servlet](servletClass: Class[T]): T = ???
+  def createServlet[T <: jakarta.servlet.Servlet](servletClass: Class[T]): T = ???
 
   def getDefaultSessionTrackingModes(): java.util.Set[SessionTrackingMode] = Set.empty[SessionTrackingMode].asJava
 
@@ -130,15 +138,15 @@ class MockServletContext(var target: String) extends ServletContext {
   def getClassLoader(): ClassLoader = getClass.getClassLoader
   def getEffectiveMajorVersion(): Int = 0
   def getEffectiveMinorVersion(): Int = 0
-  def getEffectiveSessionTrackingModes(): java.util.Set[javax.servlet.SessionTrackingMode] = null
-  def getFilterRegistration(x$1: String): javax.servlet.FilterRegistration = null
-  def getFilterRegistrations(): java.util.Map[String, _ <: javax.servlet.FilterRegistration] = null
-  def getJspConfigDescriptor(): javax.servlet.descriptor.JspConfigDescriptor = null
-  def getServletRegistration(x$1: String): javax.servlet.ServletRegistration = null
-  def getServletRegistrations(): java.util.Map[String, _ <: javax.servlet.ServletRegistration] = null
-  def getSessionCookieConfig(): javax.servlet.SessionCookieConfig = null
+  def getEffectiveSessionTrackingModes(): java.util.Set[jakarta.servlet.SessionTrackingMode] = null
+  def getFilterRegistration(x$1: String): jakarta.servlet.FilterRegistration = null
+  def getFilterRegistrations(): java.util.Map[String, _ <: jakarta.servlet.FilterRegistration] = null
+  def getJspConfigDescriptor(): jakarta.servlet.descriptor.JspConfigDescriptor = null
+  def getServletRegistration(x$1: String): jakarta.servlet.ServletRegistration = null
+  def getServletRegistrations(): java.util.Map[String, _ <: jakarta.servlet.ServletRegistration] = null
+  def getSessionCookieConfig(): jakarta.servlet.SessionCookieConfig = null
   def setInitParameter(key: String,value: String): Boolean = true
-  def setSessionTrackingModes(trackingModes: java.util.Set[javax.servlet.SessionTrackingMode]): Unit = ()
+  def setSessionTrackingModes(trackingModes: java.util.Set[jakarta.servlet.SessionTrackingMode]): Unit = ()
   def getVirtualServerName(): String = null
 }
 
@@ -172,7 +180,7 @@ class MockServletInputStream(is: InputStream) extends ServletInputStream {
   def read() = is.read()
   def isFinished(): Boolean = is.available() > 0
   def isReady(): Boolean = true
-  def setReadListener(x$1: javax.servlet.ReadListener): Unit = ()
+  def setReadListener(x$1: jakarta.servlet.ReadListener): Unit = ()
 }
 
 /**
@@ -186,7 +194,7 @@ class MockServletOutputStream(os: ByteArrayOutputStream) extends ServletOutputSt
   }
 
   def isReady(): Boolean = true
-  def setWriteListener(x$1: javax.servlet.WriteListener): Unit = ()
+  def setWriteListener(x$1: jakarta.servlet.WriteListener): Unit = ()
 }
 
 /**
@@ -220,7 +228,6 @@ class MockHttpSession extends HttpSession {
     def hasMoreElements() = keys.hasNext
     def nextElement(): String = keys.next
   }
-  def getSessionContext(): HttpSessionContext = null
   def getMaxInactiveInterval(): Int = maxii
   def setMaxInactiveInterval(i: Int): Unit = maxii = i
   def getServletContext(): ServletContext = null

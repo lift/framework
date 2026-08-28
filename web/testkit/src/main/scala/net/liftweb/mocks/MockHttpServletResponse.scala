@@ -32,8 +32,8 @@ import java.util.Arrays
 import java.util.Date
 import java.util.Locale
 import java.util.Vector
-import javax.servlet._
-import javax.servlet.http._
+import jakarta.servlet._
+import jakarta.servlet.http._
 
 /**
  * A Mock HttpServletResponse. Take a peek at it's writer or
@@ -96,7 +96,10 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
     setHeader(s, (new Date(l)).toString)
   }
 
-  def sendRedirect(uri: String) {
+  override def sendRedirect(uri: String, sc: Int, clearBuffer: Boolean): Unit =
+    sendRedirect(uri)
+
+  override def sendRedirect(uri: String) {
     // Send back a 301 to the URL mentioned
     statusCode = 301
     addHeader("Location", uri)

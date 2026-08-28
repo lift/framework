@@ -2037,11 +2037,11 @@ class LiftRules() extends Factory with FormVendor with LazyLoggable {
     asyncProviderMeta.flatMap(_.providerFunction)
 
   private var asyncMetaList: List[AsyncProviderMeta] =
-    List(Servlet30AsyncProvider, Jetty6AsyncProvider, Jetty7AsyncProvider)
+    List(Servlet30AsyncProvider)
 
   /**
    * Register an AsyncMeta provider in addition to the default
-   * Jetty6, Jetty7, and Servlet 3.0 providers
+   * Servlet 3.0 provider
    */
   def addSyncProvider(asyncMeta: AsyncProviderMeta) {
     if (doneBoot) throw new IllegalStateException("Cannot modify after boot.")

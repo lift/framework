@@ -26,8 +26,8 @@ import java.util.Date
 import java.util.Locale
 import java.util.{Enumeration => JEnum}
 import java.util.{HashMap => JHash}
-import javax.servlet._
-import javax.servlet.http._
+import jakarta.servlet._
+import jakarta.servlet.http._
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
@@ -567,13 +567,17 @@ class MockHttpServletRequest(val url : String = null, var contextPath : String =
 
   def getAsyncContext(): AsyncContext = null
   def getDispatcherType(): DispatcherType = null
+  def getProtocolRequestId(): String = null
+  def getRequestId(): String = null
+  def getServletConnection(): jakarta.servlet.ServletConnection = null
+
   def getServletContext(): ServletContext = null
   def isAsyncStarted(): Boolean = false
   def isAsyncSupported(): Boolean = false
-  def startAsync(request: javax.servlet.ServletRequest, response: javax.servlet.ServletResponse): AsyncContext = null
+  def startAsync(request: jakarta.servlet.ServletRequest, response: jakarta.servlet.ServletResponse): AsyncContext = null
   def startAsync(): AsyncContext = null
   def changeSessionId(): String = null
   def getContentLengthLong(): Long = body.length
 
-  def upgrade[T <: javax.servlet.http.HttpUpgradeHandler](x$1: Class[T]): T = ???
+  def upgrade[T <: jakarta.servlet.http.HttpUpgradeHandler](x$1: Class[T]): T = ???
 }

@@ -2,7 +2,7 @@ import Dependencies._
 import LiftSbtHelpers._
 
 organization in ThisBuild          := "net.liftweb"
-version in ThisBuild               := "3.5.0"
+version in ThisBuild               := "3.5.0-jakarta"
 homepage in ThisBuild              := Some(url("http://www.liftweb.net"))
 licenses in ThisBuild              += ("Apache License, Version 2.0", url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
 startYear in ThisBuild             := Some(2006)
@@ -162,7 +162,8 @@ lazy val webkit =
         servlet_api,
         specs2Prov,
         specs2MatchersProv,
-        jetty6,
+        jetty11,
+        jettywebapp,
         jwebunit,
         mockito_scalatest,
         jquery,
