@@ -3,6 +3,12 @@ import LiftSbtHelpers._
 
 organization in ThisBuild          := "net.liftweb"
 version in ThisBuild               := "3.5.0-jakarta"
+
+// Pin scala-xml to 1.3.x for ALL cross-builds: newer transitive resolutions
+// (2.1.0 under the 2.12 graph) changed NoBindingFactoryAdapter.hStack to a
+// List and broke HtmlParser's .push usage. 1.3.0 is what Lift 3.5.0 was
+// built against (the app pins 1.3.1 for the same reason).
+dependencyOverrides in ThisBuild += "org.scala-lang.modules" %% "scala-xml" % "1.3.0"
 homepage in ThisBuild              := Some(url("http://www.liftweb.net"))
 licenses in ThisBuild              += ("Apache License, Version 2.0", url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
 startYear in ThisBuild             := Some(2006)
@@ -10,13 +16,15 @@ organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
 
 val scala211Version = "2.11.12"
 val scala212Version = "2.12.12"
-val scala213Version = "2.13.2"
+val scala213Version = "2.13.18"
 
 val crossUpTo212 = Seq(scala212Version, scala211Version)
 val crossUpTo213 = scala213Version +: crossUpTo212
 
-scalaVersion in ThisBuild          := scala212Version
-crossScalaVersions in ThisBuild    := crossUpTo212 // default everyone to 2.12 for now
+// Pure Scala 2.13 build for this fork (jakarta branch): the 2.12
+// cross-build is dropped — the 3.5.0 sources are 2.13-flavored and the
+// 2.12 line is unmaintained. scalaVersion must match the app (2.13.18).
+scalaVersion in ThisBuild          := scala213Version
 
 libraryDependencies in ThisBuild ++= Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalactic, scalatest)
 
@@ -63,7 +71,6 @@ lazy val common =
       description := "Common Libraties and Utilities",
       libraryDependencies ++= Seq(slf4j_api, logback, slf4j_log4j12, scala_xml, scala_parser)
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val actor =
   coreProject("actor")
@@ -72,7 +79,6 @@ lazy val actor =
       description := "Simple Actor",
       parallelExecution in Test := false
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val markdown =
   coreProject("markdown")
@@ -81,7 +87,6 @@ lazy val markdown =
       parallelExecution in Test := false,
       libraryDependencies ++= Seq(scalatest, scalatest_junit, scala_xml, scala_parser)
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val json =
   coreProject("json")
@@ -90,13 +95,11 @@ lazy val json =
       parallelExecution in Test := false,
       libraryDependencies ++= Seq(scalap(scalaVersion.value), paranamer,  scala_xml)
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val documentationHelpers =
   coreProject("documentation-helpers")
     .settings(description := "Documentation Helpers")
     .dependsOn(util)
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val json_scalaz7 =
   coreProject("json-scalaz7")
@@ -105,7 +108,6 @@ lazy val json_scalaz7 =
       description := "JSON Library based on Scalaz 7",
       libraryDependencies ++= Seq(scalaz7)
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val json_ext =
   coreProject("json-ext")
@@ -114,7 +116,6 @@ lazy val json_ext =
       description := "Extentions to JSON Library",
       libraryDependencies ++= Seq(commons_codec, joda_time, joda_convert)
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val util =
   coreProject("util")
@@ -134,7 +135,6 @@ lazy val util =
         jbcrypt
       )
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 // Web Projects
 // ------------
@@ -148,7 +148,6 @@ lazy val testkit =
       description := "Testkit for Webkit Library",
       libraryDependencies ++= Seq(commons_httpclient, servlet_api)
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val webkit =
   webProject("webkit")
@@ -211,23 +210,22 @@ lazy val webkit =
 
     )
     .enablePlugins(SbtWeb)
-    .settings(crossScalaVersions := crossUpTo213)
 
 // Persistence Projects
 // --------------------
+// record, squeryl_record, mongodb, mongodb_record are 2.12-only and are
+// dropped from this pure-2.13 fork.
 lazy val persistence: Seq[ProjectReference] =
-  Seq(db, proto, mapper, record, squeryl_record, mongodb, mongodb_record)
+  Seq(db, proto, mapper)
 
 lazy val db =
   persistenceProject("db")
     .dependsOn(util, webkit)
     .settings(libraryDependencies += mockito_scalatest)
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val proto =
   persistenceProject("proto")
     .dependsOn(webkit)
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val mapper =
   persistenceProject("mapper")
@@ -243,13 +241,11 @@ lazy val mapper =
         )
       }
     )
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val record =
   persistenceProject("record")
     .dependsOn(proto)
     .settings(libraryDependencies ++= Seq(jbcrypt))
-    .settings(crossScalaVersions := crossUpTo213)
 
 lazy val squeryl_record =
   persistenceProject("squeryl-record")
@@ -260,7 +256,6 @@ lazy val mongodb =
   persistenceProject("mongodb")
     .dependsOn(json_ext, util)
     .settings(
-      crossScalaVersions := crossUpTo213,
       parallelExecution in Test := false,
       libraryDependencies ++= Seq(mongo_java_driver, mongo_java_driver_async),
       initialize in Test := {
@@ -275,6 +270,5 @@ lazy val mongodb_record =
   persistenceProject("mongodb-record")
     .dependsOn(record, mongodb)
     .settings(
-      crossScalaVersions := crossUpTo213,
       parallelExecution in Test := false
     )

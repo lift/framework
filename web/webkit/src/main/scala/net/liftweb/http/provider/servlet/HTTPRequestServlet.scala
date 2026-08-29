@@ -140,7 +140,7 @@ class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val 
 
     def hasNext = what.hasNext
 
-    import scala.jdk.CollectionConverters._
+    import scala.collection.JavaConverters._
 
     def next() = what.next match {
       case f if (f.isFormField) => NormalParamHolder(f.getFieldName, new String(readWholeStream(f.getInputStream), "UTF-8"))
