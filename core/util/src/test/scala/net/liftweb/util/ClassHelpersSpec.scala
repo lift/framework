@@ -167,6 +167,13 @@ class ClassHelpersSpec extends Specification  {
     "return a failure if a class can not be instantiated with a new instance" in {
       instantiate(classOf[java.util.Calendar]) must beLike { case Failure(_, _, _) => 1 must_== 1 }
     }
+    "return a failure (not an exception) for a class with a private no-arg constructor" in {
+      class PrivateCtor private ()
+      // Pins the JDK-21 reflection behavior: getDeclaredConstructor().newInstance()
+      // must not bypass access checks; the failure must surface as a Box
+      // Failure, not an escaping exception.
+      instantiate(classOf[PrivateCtor]) must beLike { case Failure(_, _, _) => 1 must_== 1 }
+    }
   }
 
   "The createInvoker function" should {
@@ -177,7 +184,7 @@ class ClassHelpersSpec extends Specification  {
       createInvoker("length", "").openOrThrowException("Test").apply() must_== Full(0)
     }
     "The invoker function will throw the cause exception if the method can't be called" in {
-      (() => createInvoker("get", "").openOrThrowException("Test").apply)() must throwA[Exception]
+      (() => createInvoker("get", "").openOrThrowException("Test").apply())() must throwA[Exception]
     }
   }
 

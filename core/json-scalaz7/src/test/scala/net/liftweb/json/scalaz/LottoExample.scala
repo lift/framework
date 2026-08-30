@@ -18,7 +18,7 @@ object LottoExample extends Specification {
 
   // Lotto line must have exactly 6 numbers
   def len(x: Int) = (xs: List[Int]) => 
-    if (xs.length != x) Fail("len", xs.length + " != " + x) else xs.success
+    if (xs.length != x) Fail("len", xs.length.toString + " != " + x) else xs.success
 
   implicit def winnerJSON: JSONR[Winner] = {
     val numbersResult = (jValue: JValue) => (for {

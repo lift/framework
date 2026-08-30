@@ -49,7 +49,7 @@ class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
       url
     }
 
-  def addHeaders(headers: List[HTTPParam]) {
+  def addHeaders(headers: List[HTTPParam]): Unit = {
     val appearOnce = Set(LiftRules.overwrittenReponseHeaders.vend.map(_.toLowerCase): _*)
     for (h <- headers;
          value <- h.values) {

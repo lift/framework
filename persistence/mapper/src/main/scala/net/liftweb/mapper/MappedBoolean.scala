@@ -105,9 +105,9 @@ abstract class MappedBoolean[T<:Mapper[T]](val fieldOwner: T) extends MappedFiel
 
   def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JBool(get))
 
-  def real_convertToJDBCFriendly(value: Boolean): Object = new java.lang.Integer(if (value) 1 else 0)
+  def real_convertToJDBCFriendly(value: Boolean): Object = java.lang.Integer.valueOf(if (value) 1 else 0)
 
-  def jdbcFriendly(field : String) = data.map(v => new java.lang.Integer(if(v) 1 else 0)) openOr null
+  def jdbcFriendly(field : String) = data.map(v => java.lang.Integer.valueOf(if(v) 1 else 0)) openOr null
 
   def asJsExp: JsExp = if (get) JE.JsTrue else JE.JsFalse
 

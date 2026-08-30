@@ -80,7 +80,7 @@ trait Types {
 
   def validate[A: JSONR](name: String): Kleisli[Result, JValue, A] = Kleisli(field[A](name))
 
-  def makeObj(fields: Traversable[(String, JValue)]): JObject =
+  def makeObj(fields: Iterable[(String, JValue)]): JObject =
     JObject(fields.toList.map { case (n, v) => JField(n, v) })
 }
 

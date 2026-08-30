@@ -40,7 +40,7 @@ class AsyncRenderComet extends MessageCometActor {
   override def lifespan: Box[TimeSpan] = Full(90.seconds)
 
   // make this method visible so that we can initialize the actor
-  override def initCometActor(creationInfo: CometCreationInfo) {
+  override def initCometActor(creationInfo: CometCreationInfo): Unit = {
     super.initCometActor(creationInfo)
   }
 

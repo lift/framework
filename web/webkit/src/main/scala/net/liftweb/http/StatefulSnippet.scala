@@ -64,7 +64,7 @@ import scala.xml.{NodeSeq, Elem}
  */
 trait StatefulSnippet extends DispatchSnippet {
   private[this] var _names: Set[String] = Set()
-  def addName(name: String) {
+  def addName(name: String): Unit = {
     synchronized {
       _names = _names + name
     }

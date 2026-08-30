@@ -299,7 +299,7 @@ object WiringUI {
    * @param f the function that takes the cell's value and a flag indicating
    * if this is the first time 
    */
-  def addJsFunc[T](cell: Cell[T], f: (T, Boolean) => JsCmd) {
+  def addJsFunc[T](cell: Cell[T], f: (T, Boolean) => JsCmd): Unit = {
     for {
       cometActor <- S.currentCometActor
     } cell.addDependent(cometActor)
@@ -330,7 +330,7 @@ object WiringUI {
    * @param f the function that takes the cell's value and a flag indicating
    * if this is the first time 
    */
-  def addHistJsFunc[T](cell: Cell[T], f: (Box[T], T) => JsCmd) {
+  def addHistJsFunc[T](cell: Cell[T], f: (Box[T], T) => JsCmd): Unit = {
     for {
       cometActor <- S.currentCometActor
     } cell.addDependent(cometActor)

@@ -118,7 +118,7 @@ class ReqSpec extends Specification with XmlMatchers with Mockito {
           Req.NilPath, "/", GetRequest,
           Full(contentType),
           mockHttpRequest,
-          0l, 1l, true,
+          0L, 1L, true,
           () => paramCalcInfo,
           Map.empty
         )

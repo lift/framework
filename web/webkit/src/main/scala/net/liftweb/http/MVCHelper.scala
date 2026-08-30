@@ -46,7 +46,7 @@ trait MVCHelper extends LiftRules.DispatchPF {
   /**
    * Serve an MVC page based on matching the path
    */
-  protected def serve(pf: MVCMatch) {_dispatch ::= pf}
+  protected def serve(pf: MVCMatch): Unit = {_dispatch ::= pf}
 
   @volatile private var _dispatch: List[MVCMatch] = Nil
   

@@ -4,7 +4,7 @@ package util
 import common._
 import scala.xml._
 import java.util.{List => JavaList}
-// import scala.collection.JavaConverters._
+// import scala.jdk.CollectionConverters._
 
 /**
  * A trait that has some helpful implicit conversions from
@@ -14,7 +14,7 @@ trait IterableConst {
   def constList(nodeSeq: NodeSeq): Seq[NodeSeq]
 }
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * The implementation for a NodeSeq Iterable Const
@@ -140,5 +140,5 @@ object IterableConst {
   implicit def optionBindablePromotable(it: Option[Bindable]): IterableConst =
     SeqBindableIterableConst(it.toList)
 
-  implicit def optionStringPromotable[T](o: Option[T])(implicit view:T=>StringPromotable) = optionString(o.map(view(_).toString))
+  implicit def optionStringPromotable[T](o: Option[T])(implicit view: T => StringPromotable): IterableConst = optionString(o.map(view(_).toString))
 }

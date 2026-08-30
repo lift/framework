@@ -21,7 +21,7 @@ import net.liftweb.common._
 import net.liftweb.util._
 import scala.collection.mutable.ListBuffer
 import java.util.concurrent.{ConcurrentHashMap, Callable}
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /**
  * The bridge between Scala *Vars implementations and

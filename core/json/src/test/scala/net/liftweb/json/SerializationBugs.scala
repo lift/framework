@@ -23,7 +23,7 @@ import java.util.UUID
 object SerializationBugs extends Specification {
   import Serialization.{read, write => swrite}
 
-  implicit val formats = Serialization.formats(NoTypeHints)
+  implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
   "plan1.Plan can be serialized (issue 341)" in {
     import plan1._

@@ -8,3 +8,6 @@ lazy val buildPlugin         = RootProject(uri("https://github.com/lift/sbt-lift
 lazy val root = (project in file(".")).dependsOn(buildPlugin)
 
 addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.2")
+
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.5")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.4")

@@ -35,10 +35,10 @@ import js._
  *
  * See https://issues.scala-lang.org/browse/SI-3687 for details
  */ 
-abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, val enum: ENUM)(implicit val manifest: TypeTag[ENUM#Value]) extends MappedField[ENUM#Value, T] {
+abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, val `enum`: ENUM)(implicit val manifest: TypeTag[ENUM#Value]) extends MappedField[ENUM#Value, T] {
   private var data: ENUM#Value = defaultValue
   private var orgData: ENUM#Value = defaultValue
-  def defaultValue: ENUM#Value = enum.values.iterator.next
+  def defaultValue: ENUM#Value = enum.values.iterator.next()
   def dbFieldClass: Class[ENUM#Value] = classOf[ENUM#Value]
 
   /**
@@ -107,13 +107,13 @@ abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, 
   override def readPermission_? = true
   override def writePermission_? = true
 
-  def real_convertToJDBCFriendly(value: ENUM#Value): Object = new java.lang.Integer(value.id)
+  def real_convertToJDBCFriendly(value: ENUM#Value): Object = java.lang.Integer.valueOf(value.id)
 
   def toInt = get.id
   def fromInt(in: Int): ENUM#Value = enum(in)
 
-  def jdbcFriendly(field: String) = new java.lang.Integer(toInt)
-  override def jdbcFriendly = new java.lang.Integer(toInt)
+  def jdbcFriendly(field: String) = java.lang.Integer.valueOf(toInt)
+  override def jdbcFriendly = java.lang.Integer.valueOf(toInt)
 
   def asJsExp: JsExp = JE.Num(get.id)
 
@@ -207,7 +207,7 @@ abstract class MappedIntIndex[T<:Mapper[T]](owner : T) extends MappedInt[T](owne
 
   override def dbIndexFieldIndicatesSaved_? = {i_is_! != defaultValue}
 
-  def makeKeyJDBCFriendly(in : Int) = new java.lang.Integer(in)
+  def makeKeyJDBCFriendly(in : Int) = java.lang.Integer.valueOf(in)
 
   def convertKey(in : String): Box[Int] = {
     if (in eq null) Empty
@@ -326,9 +326,9 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
 
   def +(in: Int): Int = get + in
 
-  def real_convertToJDBCFriendly(value: Int): Object = new java.lang.Integer(value)
+  def real_convertToJDBCFriendly(value: Int): Object = java.lang.Integer.valueOf(value)
 
-  def jdbcFriendly(field : String) = new java.lang.Integer(get)
+  def jdbcFriendly(field : String) = java.lang.Integer.valueOf(get)
 
   override def setFromAny(in: Any): Int = {
     in match {

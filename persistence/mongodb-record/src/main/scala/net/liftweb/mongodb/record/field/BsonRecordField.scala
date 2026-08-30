@@ -128,7 +128,7 @@ class BsonRecordListField[OwnerType <: BsonRecord[OwnerType], SubRecordType <: B
   (@deprecatedName('rec) owner: OwnerType, val valueMeta: BsonMetaRecord[SubRecordType])(implicit mf: Manifest[SubRecordType])
   extends MongoListField[OwnerType, SubRecordType](owner: OwnerType) {
 
-  import scala.collection.JavaConverters._
+  import scala.jdk.CollectionConverters._
 
   override def validations = ((elems: ValueType) => elems.flatMap(_.validate)) :: super.validations
 

@@ -101,7 +101,7 @@ abstract class CurrencyZone {
         def -(that: Int): Currency = this - make(that)
 
         def /(that: Currency): Currency =
-        make(new BigDecimal(this.amount.bigDecimal.divide(that.amount.bigDecimal, scale, java.math.BigDecimal.ROUND_HALF_UP)) )
+        make(new BigDecimal(this.amount.bigDecimal.divide(that.amount.bigDecimal, scale, java.math.RoundingMode.HALF_UP)) )
         def /(that: Int): Currency = this / make(that)
 
         def compare(that: Currency) = this.amount compare that.amount
@@ -142,7 +142,7 @@ abstract class CurrencyZone {
             val df = nf.asInstanceOf[DecimalFormat]
             val groupingSeparator = df.getDecimalFormatSymbols.getGroupingSeparator
 
-            format("", numberOfFractionDigits).replaceAll(groupingSeparator+"", "");
+            format("", numberOfFractionDigits).replaceAll(groupingSeparator.toString, "");
         }
 
     }

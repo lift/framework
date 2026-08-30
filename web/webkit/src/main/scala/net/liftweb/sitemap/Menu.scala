@@ -582,7 +582,7 @@ case class Menu(loc: Loc[_], private val convertableKids: ConvertableToMenu*) ex
   private[sitemap] var _parent: Box[HasKids] = Empty
   private[sitemap] var siteMap: SiteMap = _
 
-  private[sitemap] def init(siteMap: SiteMap) {
+  private[sitemap] def init(siteMap: SiteMap): Unit = {
     this.siteMap = siteMap
     kids.foreach(_._parent = Full(this))
     kids.foreach(_.init(siteMap))
@@ -595,7 +595,7 @@ case class Menu(loc: Loc[_], private val convertableKids: ConvertableToMenu*) ex
    */
   def rebuild(f: List[Menu] => List[Menu]): Menu = Menu(loc, f(kids.toList) :_*)
 
-  private[sitemap] def validate {
+  private[sitemap] def validate: Unit = {
     _parent.foreach(p => if (p.isRoot_?) throw new SiteMapException("Menu items with root location (\"/\") cannot have children"))
     kids.foreach(_.validate)
   }
@@ -681,7 +681,7 @@ final class ParamLocLink[T](path: List[LocPath], headMatch: Boolean, backToList:
     val ret = new ListBuffer[String]()
     
     @tailrec
-    def merge(path: List[LocPath], params: List[String]) {
+    def merge(path: List[LocPath], params: List[String]): Unit = {
       (path, params) match {
         case (Nil, p) => ret ++= p
         case (* :: ps, Nil) => ret += "?" ; merge(ps, Nil)

@@ -23,7 +23,7 @@ import org.specs2.mutable.Specification
 object LottoExample extends Specification {
   import JsonDSL._
 
-  implicit val formats = DefaultFormats
+  implicit val formats: DefaultFormats.type = DefaultFormats
 
   case class Winner(`winner-id`: Long, numbers: List[Int])
   case class Lotto(id: Long, `winning-numbers`: List[Int], winners: List[Winner], 

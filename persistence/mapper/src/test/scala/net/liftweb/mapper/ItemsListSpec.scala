@@ -44,30 +44,30 @@ class ItemsListSpec extends Specification  {
   "ItemsList" should {
     "buffer items to save" in {
       val il = init
-      il.add
-      il.add
-      il.add
+      il.add()
+      il.add()
+      il.add()
       il.current.length must_== 0
       il.added.length must_== 3
 
-      il.save
+      il.save()
       SampleItem.count must_== 3
       il.current.length must_== 3
     }
 
     "correctly handle removing an unsaved item" in {
       val il = init
-      il.add
-      il.add
-      il.add
-      il.save
+      il.add()
+      il.add()
+      il.add()
+      il.save()
 
-      il.add
-      il.add
-      il.add
+      il.add()
+      il.add()
+      il.add()
       il.remove(il.added(1))
       il.remove(il.added(0))
-      il.save
+      il.save()
       SampleItem.count must_== 4
       il.added.length must_== 0
       il.removed.length must_== 0

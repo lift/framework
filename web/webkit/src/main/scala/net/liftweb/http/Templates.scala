@@ -190,10 +190,10 @@ object Templates {
             var ret: NodeSeq = null
 
             while (!found && se.hasNext) {
-              val (suffix, parser) = se.next
+              val (suffix, parser) = se.next()
               val le = sl.iterator
               while (!found && le.hasNext) {
-                val p = le.next
+                val p = le.next()
                 val name = pls + p + (if (suffix.length > 0) "." + suffix else "")
                 import scala.xml.dtd.ValidationException
                 val xmlb = try {
@@ -255,7 +255,7 @@ object Templates {
               try {
                 tryo(List(classOf[ClassNotFoundException]), Empty)(Class.forName(clsName).asInstanceOf[Class[AnyRef]]).flatMap {
                   c =>
-                          (c.newInstance match {
+                          (c.getDeclaredConstructor().newInstance() match {
                             case inst: InsecureLiftView => c.getMethod(action).invoke(inst)
                             case inst: LiftView if inst.dispatch.isDefinedAt(action) => inst.dispatch(action)()
                             case _ => Empty

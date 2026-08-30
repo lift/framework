@@ -22,7 +22,7 @@ import org.specs2.mutable.Specification
 object ExtractionBugs extends Specification {
   "Extraction bugs Specification".title
 
-  implicit val formats = DefaultFormats
+  implicit val formats: DefaultFormats.type = DefaultFormats
 
   case class Response(data: List[Map[String, Int]])
 

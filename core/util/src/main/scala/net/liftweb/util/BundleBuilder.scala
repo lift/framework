@@ -103,7 +103,7 @@ object BundleBuilder {
               val it = res.keys.iterator
               new Enumeration[String] {
                 def hasMoreElements() = it.hasNext
-                def nextElement() = it.next
+                def nextElement() = it.next()
               }
             }
             

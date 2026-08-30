@@ -47,7 +47,7 @@ case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocPa
   kids.foreach(_.init(this))
   kids.foreach(_.validate)
 
-  private[sitemap] def addLoc(in: Loc[_]) {
+  private[sitemap] def addLoc(in: Loc[_]): Unit = {
     val name = in.name
     if (locs.isDefinedAt(name))
     throw new SiteMapException("Location "+name+" defined twice "+
@@ -243,7 +243,7 @@ sealed class SiteMapSingleton {
    * A Java-callable method that builds a SiteMap
    */
   def build(kids: Array[ConvertableToMenu]): SiteMap = 
-    this.apply(kids :_*)
+    this.apply(kids.toList: _*)
 
   def apply(kids: ConvertableToMenu *) = new SiteMap(Nil, kids :_*)
 

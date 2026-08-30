@@ -23,7 +23,7 @@ package util
 object MonadicConversions {
   import scala.language.implicitConversions
 
-  implicit def bool2Monadic(cond: Boolean) = cond match {
+  implicit def bool2Monadic(cond: Boolean): Product with MonadicCondition with java.io.Serializable = cond match {
     case true => True
     case _ => False(Nil)
   }

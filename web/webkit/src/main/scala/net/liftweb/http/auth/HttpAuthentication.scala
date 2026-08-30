@@ -42,7 +42,7 @@ trait HttpAuthentication {
 
   def unauthorizedResponse: UnauthorizedResponse = UnauthorizedResponse(realm)
 
-  def shutDown {}
+  def shutDown: Unit = {}
 
 }
 
@@ -108,7 +108,7 @@ case class HttpDigestAuthentication(realmName: String)(func: PartialFunction[(St
       }
 
 
-    private[auth] def doPing() {
+    private[auth] def doPing(): Unit = {
       try {
         Schedule.schedule(this, CheckAndPurge, 5.seconds)
       } catch {

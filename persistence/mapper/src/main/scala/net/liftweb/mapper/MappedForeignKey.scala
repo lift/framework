@@ -222,8 +222,8 @@ extends MappedLong[T](theOwner) with MappedForeignKey[Long,T,O] with BaseForeign
   type KeyedForeignType = O
   type OwnerType = T
 
-  override def jdbcFriendly(field : String) = if (defined_?) new java.lang.Long(i_is_!) else null
-  override def jdbcFriendly = if (defined_?) new java.lang.Long(i_is_!) else null
+  override def jdbcFriendly(field : String) = if (defined_?) java.lang.Long.valueOf(i_is_!) else null
+  override def jdbcFriendly = if (defined_?) java.lang.Long.valueOf(i_is_!) else null
 
   lazy val dbKeyToTable: KeyedMetaMapper[Long, O] = foreignMeta
 

@@ -32,7 +32,7 @@ import json.Serialization.{read, write => swrite}
 class JodaTimeSerializerSpec extends Specification  {
   "JodaTimeSerializer Specification".title
 
-  implicit val formats = Serialization.formats(NoTypeHints) ++ JodaTimeSerializers.all
+  implicit val formats: Formats = Serialization.formats(NoTypeHints) ++ JodaTimeSerializers.all
 
   "Serialize joda time types" in {
     val x = JodaTypes(new Duration(10*1000), new Instant(System.currentTimeMillis),

@@ -29,7 +29,7 @@ private [json] trait MergeDep[A <: JValue, B <: JValue, R <: JValue] {
 }
 
 private [json] trait LowPriorityMergeDep {
-  implicit def jjj[A <: JValue, B <: JValue] = new MergeDep[A, B, JValue] {
+  implicit def jjj[A <: JValue, B <: JValue]: MergeDep[A, B, JValue] = new MergeDep[A, B, JValue] {
     def apply(val1: A, val2: B): JValue = merge(val1, val2)
 
     private def merge(val1: JValue, val2: JValue): JValue = (val1, val2) match {

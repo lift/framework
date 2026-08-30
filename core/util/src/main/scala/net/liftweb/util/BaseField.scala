@@ -31,7 +31,7 @@ trait FieldIdentifier {
  * Associate a FieldIdentifier with a NodeSeq
  */
 case class FieldError(field: FieldIdentifier, msg: NodeSeq) {
-  override def toString = field.uniqueFieldId + " : " + msg
+  override def toString = String.valueOf(field.uniqueFieldId) + " : " + msg
 }
 
 object FieldError {

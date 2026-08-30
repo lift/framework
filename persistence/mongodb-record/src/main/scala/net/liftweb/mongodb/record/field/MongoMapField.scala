@@ -20,7 +20,7 @@ package record
 package field
 
 import scala.collection.mutable
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.xml.NodeSeq
 
 import net.liftweb.common.{Box, Empty, Failure, Full}

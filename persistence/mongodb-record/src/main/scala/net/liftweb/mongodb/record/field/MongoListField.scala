@@ -34,7 +34,7 @@ import org.bson.codecs.{BsonDocumentCodec, BsonTypeCodecMap, Codec, DecoderConte
 import org.bson.codecs.configuration.CodecRegistry
 
 import scala.collection.mutable
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.xml.NodeSeq
 
 object BsonBinary {

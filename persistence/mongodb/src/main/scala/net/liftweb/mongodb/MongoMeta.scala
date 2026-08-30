@@ -20,7 +20,7 @@ import net.liftweb.json.JsonAST.JObject
 import net.liftweb.util.ConnectionIdentifier
 import net.liftweb.util.Helpers.tryo
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import com.mongodb.{BasicDBObject, DB, DBCollection, DBObject, MongoClientSettings, WriteConcern}
 import com.mongodb.client.{FindIterable, MongoCollection, MongoDatabase}

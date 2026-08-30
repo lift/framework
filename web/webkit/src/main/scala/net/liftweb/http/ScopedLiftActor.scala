@@ -121,7 +121,7 @@ trait ScopedLiftActor extends LiftActor with LazyLoggable {
   /**
    * How to report an error that occurs during message dispatch
    */
-  protected def reportError(msg: String, exception: Exception) {
+  protected def reportError(msg: String, exception: Exception): Unit = {
     logger.error(msg, exception)
   }
 }

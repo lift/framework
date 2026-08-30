@@ -25,7 +25,7 @@ import net.liftweb.record.RecordHelpers.jvalueToJsExp
 import net.liftweb.record.field._
 import net.liftweb.util.Helpers
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.reflect.Manifest
 import scala.xml.{Text, NodeSeq}
 

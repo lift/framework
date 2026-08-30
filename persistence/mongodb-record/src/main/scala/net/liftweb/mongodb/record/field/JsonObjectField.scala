@@ -29,7 +29,7 @@ import org.bson.codecs.configuration.CodecRegistry
 
 import com.mongodb.{BasicDBList, DBObject}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 abstract class JsonObjectTypedField[OwnerType <: BsonRecord[OwnerType], JObjectType <: JsonObject[JObjectType]]
 (val owner: OwnerType, valueMeta: JsonObjectMeta[JObjectType])

@@ -22,7 +22,7 @@ import net.liftweb.json._
 import net.liftweb.util.{ConnectionIdentifier, DefaultConnectionIdentifier}
 import net.liftweb.util.Helpers.tryo
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import java.util.UUID
 

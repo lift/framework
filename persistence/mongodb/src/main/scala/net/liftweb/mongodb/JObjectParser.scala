@@ -17,7 +17,7 @@
 package net.liftweb
 package mongodb
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import java.util.{Date, UUID}
 import java.util.regex.Pattern

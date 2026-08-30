@@ -21,7 +21,7 @@ import java.util.{Date, TimeZone}
 import java.util.concurrent.ConcurrentHashMap
 
 import scala.collection.concurrent.{Map=>ConcurrentScalaMap}
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Formats to use when converting JSON.
  * Formats are usually configured by using an implicit parameter:
@@ -80,7 +80,7 @@ trait Formats { self: Formats =>
   /**
    * Adds the specified custom serializers to this formats.
    */
-  def ++ (newSerializers: Traversable[Serializer[_]]): Formats =
+  def ++ (newSerializers: Iterable[Serializer[_]]): Formats =
     newSerializers.foldLeft(this)(_ + _)
 
   /**

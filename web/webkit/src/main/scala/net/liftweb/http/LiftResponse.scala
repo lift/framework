@@ -484,7 +484,7 @@ object RedirectState {
 case class RedirectState(func: Box[() => Unit], msgs: (String, NoticeType.Value)*)
 
 object MessageState {
-  implicit def tuple2MessageState(msg: (String, NoticeType.Value)) = MessageState(msg)
+  implicit def tuple2MessageState(msg: (String, NoticeType.Value)): MessageState = MessageState(msg)
 
   def apply(msgs: (String, NoticeType.Value)*): MessageState =
      new MessageState(msgs :_*)

@@ -140,13 +140,13 @@ abstract class MappedDouble[T<:Mapper[T]](val fieldOwner: T) extends MappedField
 		}
 	}
 
-	def real_convertToJDBCFriendly(value: Double): Object = new java.lang.Double(value)
+	def real_convertToJDBCFriendly(value: Double): Object = java.lang.Double.valueOf(value)
 
 	/**
 	* Get the JDBC SQL Type for this field
 	*/
 	def targetSQLType: Int = Types.DOUBLE
-	def jdbcFriendly(field : String) = new java.lang.Double(i_is_!)
+	def jdbcFriendly(field : String) = java.lang.Double.valueOf(i_is_!)
 	def buildSetBooleanValue(accessor : Method, columnName : String) : (T, Boolean, Boolean) => Unit = null
 	def buildSetDateValue(accessor : Method, columnName : String) : (T, Date) => Unit =
 		(inst, v) => doField(inst, accessor, {case f: MappedDouble[T] => f.st(if (v == null) defaultValue else v.getTime.toDouble)})

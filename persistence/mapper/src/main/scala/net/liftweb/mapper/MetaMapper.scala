@@ -687,7 +687,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
       } {
         val f = ??(meth, ret)
         f.setFromAny(field.value)
-        if (!markFieldsAsDirty) f.resetDirty
+        if (!markFieldsAsDirty) f.resetDirty()
       }
     }
 
@@ -937,8 +937,8 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
           for (col <- mappedColumns) {
             val colVal = ??(col._2, toSave)
             if (!columnPrimaryKey_?(col._1) && colVal.dirty_?) {
-              colVal.resetDirty
-              colVal.doneWithSave
+              colVal.resetDirty()
+              colVal.doneWithSave()
             }
           }
 
@@ -1110,7 +1110,7 @@ trait MetaMapper[A<:Mapper[A]] extends BaseMetaMapper with Mapper[A] {
     case (actual, fieldName) if _mappedFields.contains(fieldName) => fieldByName[Any](fieldName, actual).openOrThrowException("we know this is defined")
   }
 
-  def createInstance: A = rootClass.newInstance.asInstanceOf[A]
+  def createInstance: A = rootClass.getDeclaredConstructor().newInstance().asInstanceOf[A]
 
   def fieldOrder: List[BaseOwnedMappedField[A]] = Nil
 

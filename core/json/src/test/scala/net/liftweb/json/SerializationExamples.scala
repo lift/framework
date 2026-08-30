@@ -23,7 +23,7 @@ import org.specs2.mutable.Specification
 object SerializationExamples extends Specification {
   import Serialization.{read, write => swrite}
 
-  implicit val formats = Serialization.formats(NoTypeHints)
+  implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
   val project = Project("test", new Date, Some(Language("Scala", 2.75)), List(
     Team("QA", List(Employee("John Doe", 5), Employee("Mike", 3))),
@@ -54,7 +54,7 @@ object SerializationExamples extends Specification {
   }
 
   "Primitive-wrapping case class serialization example" in {
-    val primitives = Primitives(124, 123L, 126.5, 127.5.floatValue, "128", 's, 125, 129.byteValue, true)
+    val primitives = Primitives(124, 123L, 126.5, 127.5.floatValue, "128", Symbol("s"), 125, 129.byteValue, true)
     val ser = swrite(primitives)
     read[Primitives](ser) mustEqual primitives
   }
@@ -93,7 +93,7 @@ object SerializationExamples extends Specification {
   }
 
   "Symbol serialization" in {
-    read[Symbol](swrite('j)) mustEqual 'j
+    read[Symbol](swrite(Symbol("j"))) mustEqual Symbol("j")
   }
 
   "Multidimensional list example" in {
@@ -174,7 +174,7 @@ object SerializationExamples extends Specification {
 }
 
 object ShortTypeHintExamples extends TypeHintExamples {
-  implicit val formats = Serialization.formats(ShortTypeHints(classOf[Fish] :: classOf[Dog] :: Nil))
+  implicit val formats: Formats = Serialization.formats(ShortTypeHints(classOf[Fish] :: classOf[Dog] :: Nil))
 
   "Deserialization succeeds even if jsonClass is not the first field" in {
     val ser = """{"animals":[],"pet":{"name":"pluto","jsonClass":"Dog"}}"""
@@ -185,7 +185,7 @@ object ShortTypeHintExamples extends TypeHintExamples {
 object FullTypeHintExamples extends TypeHintExamples {
   import Serialization.{read, write => swrite}
 
-  implicit val formats = Serialization.formats(FullTypeHints(List[Class[_]](classOf[Animal], classOf[True], classOf[False], classOf[Falcon], classOf[Chicken])))
+  implicit val formats: Formats = Serialization.formats(FullTypeHints(List[Class[_]](classOf[Animal], classOf[True], classOf[False], classOf[Falcon], classOf[Chicken])))
 
   "Ambiguous field decomposition example" in {
     val a = Ambiguous(False())
@@ -219,7 +219,7 @@ object FullTypeHintExamples extends TypeHintExamples {
 object CustomTypeHintFieldNameExample extends TypeHintExamples {
   import Serialization.{read, write => swrite}
 
-  implicit val formats = new Formats {
+  implicit val formats: Formats = new Formats {
     val dateFormat = DefaultFormats.lossless.dateFormat
     override val typeHints = ShortTypeHints(classOf[Fish] :: classOf[Dog] :: Nil)
     override val typeHintFieldName = "$type$"
@@ -315,7 +315,7 @@ object CustomSerializerExamples extends Specification {
     }
   }
 
-  implicit val formats =  Serialization.formats(NoTypeHints) +
+  implicit val formats: Formats =  Serialization.formats(NoTypeHints) +
     new IntervalSerializer + new PatternSerializer + new DateSerializer + new IndexedSeqSerializer
 
   "Interval serialization example" in {
@@ -369,7 +369,7 @@ object CustomClassWithTypeHintsExamples extends Specification {
       case ("DateTime", JObject(JField("t", JInt(t)) :: Nil)) => new DateTime(t.longValue)
     }
   }
-  implicit val formats = Serialization.formats(hints)
+  implicit val formats: Formats = Serialization.formats(hints)
 
   "Custom class serialization using provided serialization and deserialization functions" in {
     val m = Meeting("The place", new DateTime(1256681210802L))

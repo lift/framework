@@ -110,7 +110,7 @@ class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val 
   /**
    * Destroy the underlying servlet session
    */
-  def destroyServletSession() {
+  def destroyServletSession(): Unit = {
     for{
       httpSession <- Box !! req.getSession(false)
     } yield httpSession.invalidate()
@@ -140,7 +140,7 @@ class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val 
 
     def hasNext = what.hasNext
 
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
 
     def next() = what.next match {
       case f if (f.isFormField) => NormalParamHolder(f.getFieldName, new String(readWholeStream(f.getInputStream), "UTF-8"))

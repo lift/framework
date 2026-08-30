@@ -28,6 +28,9 @@ import http.{S, SHtml}
 
 object Countries extends Enumeration(1) {
 
+  // hand-formatted country table: excluded from scalafmt via
+  // project.excludePaths in .scalafmt.conf
+  // format: off
   val C1,  C2,  C3,  C4,  C5,  C6,  C7,  C8,  C9,  C10,
     C11,  C12,  C13,  C14,  C15,  C16,  C17,  C18,  C19,  C20,
     C21,  C22,  C23,  C24,  C25,  C26,  C27,  C28,  C29,  C30,
@@ -56,6 +59,7 @@ object Countries extends Enumeration(1) {
     C251,  C252,  C253,  C254,  C255,  C256,  C257,  C258,  C259,  C260,
     C261,  C262,  C263,  C264,  C265,  C266,  C267,  C268,  C269,  C270,
     C271,  C272 = I18NCountry
+  // format: on
 
   val USA = C1
   val Australia = C10
