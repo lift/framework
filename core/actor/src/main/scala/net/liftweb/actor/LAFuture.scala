@@ -21,12 +21,12 @@ import scala.collection.mutable.ArrayBuffer
 
 import common._
 
-
 /**
- * A container that contains a calculated value
- * or may contain one in the future
+ * A container that contains a calculated value or may contain one in the future
  */
-class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFuture.Context] = Empty) {
+class LAFuture[T](
+    val scheduler: LAScheduler = LAScheduler,
+    context: Box[LAFuture.Context] = Empty) {
   private var item: T = _
   private var failure: Box[Nothing] = Empty
   private var satisfied = false
@@ -38,8 +38,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
   LAFuture.notifyObservers(this)
 
   /**
-   * Satify the future... perform the calculation
-   * the results in setting a value for the future
+   * Satify the future... perform the calculation the results in setting a value for the future
    */
   def satisfy(value: T): Unit = {
     val funcs = synchronized {
@@ -66,10 +65,10 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
    * @param value
    */
   def complete(value: Box[T]): Unit = {
-      value match {
-        case Full(v) => satisfy(v)
-        case x: EmptyBox => fail(x)
-      }
+    value match {
+      case Full(v) => satisfy(v)
+      case x: EmptyBox => fail(x)
+    }
   }
 
   /**
@@ -88,8 +87,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
   }
 
   /**
-   * Execute the function with the value. If the
-   * value has not been satisfied, execute the function
+   * Execute the function with the value. If the value has not been satisfied, execute the function
    * when the value is satified
    */
   def foreach(f: T => Unit): Unit = {
@@ -98,9 +96,12 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
 
   /**
    * Map the future over a function
-   * @param f the function to apply to the future
-   * @tparam A the type that the function returns
-   * @return a Future that represents the function applied to the value of the future
+   * @param f
+   *   the function to apply to the future
+   * @tparam A
+   *   the type that the function returns
+   * @return
+   *   a Future that represents the function applied to the value of the future
    */
   def map[A](f: T => A): LAFuture[A] = {
     val result = new LAFuture[A](scheduler, context)
@@ -112,17 +113,18 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
   def flatMap[A](f: T => LAFuture[A]): LAFuture[A] = {
     val result = new LAFuture[A](scheduler, context)
     val contextFn = LAFuture.inContext(f, context)
-    onComplete(v => v match {
-      case Full(v) =>
-        Box.tryo(contextFn(v)) match {
-          case Full(successfullyComputedFuture) =>
-            successfullyComputedFuture.onComplete(v2 => result.complete(v2))
-          case e: EmptyBox =>
-            result.complete(e)
-        }
-      case e: EmptyBox =>
-        result.complete(e)
-    })
+    onComplete(v =>
+      v match {
+        case Full(v) =>
+          Box.tryo(contextFn(v)) match {
+            case Full(successfullyComputedFuture) =>
+              successfullyComputedFuture.onComplete(v2 => result.complete(v2))
+            case e: EmptyBox =>
+              result.complete(e)
+          }
+        case e: EmptyBox =>
+          result.complete(e)
+      })
     result
   }
 
@@ -135,9 +137,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
   def withFilter(f: T => Boolean): LAFuture[T] = filter(f)
 
   /**
-   * Get the future value or if the value is not
-   * satisfied after the timeout period, return an
-   * Empty
+   * Get the future value or if the value is not satisfied after the timeout period, return an Empty
    */
   def get(timeout: Long): Box[T] = synchronized {
     if (satisfied) Full(item)
@@ -162,7 +162,8 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
   /**
    * Has the future been satisfied
    */
-  def satisfied_? = synchronized {satisfied}
+  def satisfied_? = synchronized { satisfied }
+
   /**
    * Java-friendly alias for aborted_?.
    */
@@ -171,12 +172,13 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
   /**
    * Has the future been aborted
    */
-  def aborted_? = synchronized {aborted}
+  def aborted_? = synchronized { aborted }
 
   /**
    * Java-friendly alias for completed_?.
    */
   def isCompleted: Boolean = completed_?
+
   /**
    * Has the future completed?
    */
@@ -186,7 +188,7 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
   def complete_? : Boolean = completed_?
 
   /**
-   * Abort the future.  It can never be satified
+   * Abort the future. It can never be satified
    */
   def abort(): Unit = {
     fail(Empty)
@@ -195,13 +197,14 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
   /**
    * Execute the function on success of the future
    *
-   * @param f the function to execute on success.
+   * @param f
+   *   the function to execute on success.
    */
   def onSuccess(f: T => Unit): Unit = {
     val contextFn = LAFuture.inContext(f, context)
     synchronized {
-      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => contextFn(item))} else
-      if (!aborted) {
+      if (satisfied) { LAFuture.executeWithObservers(scheduler, () => contextFn(item)) }
+      else if (!aborted) {
         toDo ::= contextFn
       }
     }
@@ -210,13 +213,15 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
   /**
    * Execute a function on failure
    *
-   * @param f the function to execute. Will receive a Box[Nothing] which may be a Failure if there's exception data
+   * @param f
+   *   the function to execute. Will receive a Box[Nothing] which may be a Failure if there's
+   *   exception data
    */
   def onFail(f: Box[Nothing] => Unit): Unit = {
     val contextFn = LAFuture.inContext(f, context)
     synchronized {
-      if (aborted) LAFuture.executeWithObservers(scheduler, () => contextFn(failure)) else
-      if (!satisfied) {
+      if (aborted) LAFuture.executeWithObservers(scheduler, () => contextFn(failure))
+      else if (!satisfied) {
         onFailure ::= contextFn
       }
     }
@@ -225,14 +230,16 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
   /**
    * A function to execute on completion of the Future, success or failure
    *
-   * @param f the function to execute on completion of the Future
+   * @param f
+   *   the function to execute on completion of the Future
    */
   def onComplete(f: Box[T] => Unit): Unit = {
     val contextFn = LAFuture.inContext(f, context)
     synchronized {
-      if (satisfied) {LAFuture.executeWithObservers(scheduler, () => contextFn(Full(item)))} else
-      if (aborted) {LAFuture.executeWithObservers(scheduler, () => contextFn(failure))} else
-      onComplete ::= contextFn
+      if (satisfied) { LAFuture.executeWithObservers(scheduler, () => contextFn(Full(item))) }
+      else if (aborted) { LAFuture.executeWithObservers(scheduler, () => contextFn(failure)) }
+      else
+        onComplete ::= contextFn
     }
   }
 
@@ -271,17 +278,22 @@ class LAFuture[T](val scheduler: LAScheduler = LAScheduler, context: Box[LAFutur
 final class AbortedFutureException(why: Box[Nothing]) extends Exception("Aborted Future")
 
 object LAFuture {
+
   /**
-   * Create an LAFuture from a function that
-   * will be applied on a separate thread. The LAFuture
-   * is returned immediately and the value may be obtained
-   * by calling `get`
+   * Create an LAFuture from a function that will be applied on a separate thread. The LAFuture is
+   * returned immediately and the value may be obtained by calling `get`
    *
-   * @param f the function that computes the value of the future
-   * @tparam T the type
-   * @return an LAFuture that will yield its value when the value has been computed
+   * @param f
+   *   the function that computes the value of the future
+   * @tparam T
+   *   the type
+   * @return
+   *   an LAFuture that will yield its value when the value has been computed
    */
-  def apply[T](f: () => T, scheduler: LAScheduler = LAScheduler, context: Box[Context] = Empty): LAFuture[T] = {
+  def apply[T](
+      f: () => T,
+      scheduler: LAScheduler = LAScheduler,
+      context: Box[Context] = Empty): LAFuture[T] = {
     val result = new LAFuture[T](scheduler, context)
     val contextFn = inContext(f, context)
     scheduler.execute(() => {
@@ -296,11 +308,16 @@ object LAFuture {
 
   /**
    * Build a new future with a call-by-name value that returns a type T
-   * @param f the call-by-name code the defines the future
-   * @tparam T the type that
+   * @param f
+   *   the call-by-name code the defines the future
+   * @tparam T
+   *   the type that
    * @return
    */
-  def build[T](f: => T, scheduler: LAScheduler = LAScheduler, context: Box[Context] = Empty): LAFuture[T] = {
+  def build[T](
+      f: => T,
+      scheduler: LAScheduler = LAScheduler,
+      context: Box[Context] = Empty): LAFuture[T] = {
     this.apply(() => f, scheduler, context)
   }
 
@@ -313,7 +330,8 @@ object LAFuture {
    */
   private def notifyObservers(future: LAFuture[_]): Unit = {
     val observers = threadInfo.get()
-    if (null eq observers) {} else {
+    if (null eq observers) {}
+    else {
       observers.foreach(_(future))
     }
   }
@@ -332,14 +350,17 @@ object LAFuture {
   }
 
   /**
-   * Do something when a future is created on this thread. This can be used
-   * to see if there's any Future activity on a thread and if there is,
-   * we can do smart things on an observing thread.
+   * Do something when a future is created on this thread. This can be used to see if there's any
+   * Future activity on a thread and if there is, we can do smart things on an observing thread.
    *
-   * @param observation the function to execute on Future creation
-   * @param toDo the action call-by-name code to execute whi
-   * @tparam T the type of the value returned by toDo
-   * @return the value computed by toDo
+   * @param observation
+   *   the function to execute on Future creation
+   * @param toDo
+   *   the action call-by-name code to execute whi
+   * @tparam T
+   *   the type of the value returned by toDo
+   * @return
+   *   the value computed by toDo
    */
   def observeCreation[T](observation: LAFuture[_] => Unit)(toDo: => T): T = {
     val old = threadInfo.get()
@@ -352,23 +373,22 @@ object LAFuture {
   }
 
   /**
-   * Given handlers for a value's success and failure and a set of futures, runs
-   * the futures simultaneously and invokes either success or failure callbacks
-   * as each future completes. When all futures are complete, if the handlers
-   * have not either satisfied or failed the overall result, `onAllFuturesCompleted`
-   * is called to complete it. If it *still* isn't complete, the overall result
-   * is failed with an error.
+   * Given handlers for a value's success and failure and a set of futures, runs the futures
+   * simultaneously and invokes either success or failure callbacks as each future completes. When
+   * all futures are complete, if the handlers have not either satisfied or failed the overall
+   * result, `onAllFuturesCompleted` is called to complete it. If it *still* isn't complete, the
+   * overall result is failed with an error.
    *
-   * Note that the success and failure functions are guaranteed to be run in a
-   * thread-safe manner. Each is passed the value, the result future, the
-   * accumulating `ArrayBuffer`, and the index of the future that has been
-   * completed. For the failure handler, the value is the `Box` of the failure.
+   * Note that the success and failure functions are guaranteed to be run in a thread-safe manner.
+   * Each is passed the value, the result future, the accumulating `ArrayBuffer`, and the index of
+   * the future that has been completed. For the failure handler, the value is the `Box` of the
+   * failure.
    */
   def collect[T, A](
-    onFutureSucceeded: (T, LAFuture[A], ArrayBuffer[Box[T]], Int)=>Unit,
-    onFutureFailed: (Box[Nothing], LAFuture[A], ArrayBuffer[Box[T]], Int)=>Unit,
-    onAllFuturesCompleted: (LAFuture[A], ArrayBuffer[Box[T]])=>Unit,
-    futures: LAFuture[T]*
+      onFutureSucceeded: (T, LAFuture[A], ArrayBuffer[Box[T]], Int) => Unit,
+      onFutureFailed: (Box[Nothing], LAFuture[A], ArrayBuffer[Box[T]], Int) => Unit,
+      onAllFuturesCompleted: (LAFuture[A], ArrayBuffer[Box[T]]) => Unit,
+      futures: LAFuture[T]*
   ): LAFuture[A] = {
     val result = new LAFuture[A]
 
@@ -378,39 +398,41 @@ object LAFuture {
       val sync = new Object
       val len = futures.length
       val accumulator = new ArrayBuffer[Box[T]](len)
-       // pad array so inserts at random places are possible
+      // pad array so inserts at random places are possible
       for (i <- 0 to len) { accumulator.insert(i, Empty) }
       var gotCnt = 0
 
       futures.toList.zipWithIndex.foreach {
         case (future, index) =>
           future.onSuccess {
-            value => sync.synchronized {
-              gotCnt += 1
-              onFutureSucceeded(value, result, accumulator, index)
+            value =>
+              sync.synchronized {
+                gotCnt += 1
+                onFutureSucceeded(value, result, accumulator, index)
 
-              if (gotCnt >= len && ! result.completed_?) {
-                onAllFuturesCompleted(result, accumulator)
+                if (gotCnt >= len && !result.completed_?) {
+                  onAllFuturesCompleted(result, accumulator)
 
-                if (! result.completed_?) {
-                  result.fail(Failure("collect invoker did not complete result"))
+                  if (!result.completed_?) {
+                    result.fail(Failure("collect invoker did not complete result"))
+                  }
                 }
               }
-            }
           }
           future.onFail {
-            failureBox => sync.synchronized {
-              gotCnt += 1
-              onFutureFailed(failureBox, result, accumulator, index)
+            failureBox =>
+              sync.synchronized {
+                gotCnt += 1
+                onFutureFailed(failureBox, result, accumulator, index)
 
-              if (gotCnt >= len && ! result.completed_?) {
-                onAllFuturesCompleted(result, accumulator)
+                if (gotCnt >= len && !result.completed_?) {
+                  onAllFuturesCompleted(result, accumulator)
 
-                if (! result.completed_?) {
-                  result.fail(Failure("collect invoker did not complete result"))
+                  if (!result.completed_?) {
+                    result.fail(Failure("collect invoker did not complete result"))
+                  }
                 }
               }
-            }
           }
       }
     }
@@ -418,11 +440,9 @@ object LAFuture {
     result
   }
 
-
   /**
-   * Collect all the future values into the aggregate future
-   * The returned future will be satisfied when all the
-   * collected futures are satisfied
+   * Collect all the future values into the aggregate future The returned future will be satisfied
+   * when all the collected futures are satisfied
    */
   def collect[T](future: LAFuture[T]*): LAFuture[List[T]] = {
     collect[T, List[T]](
@@ -436,11 +456,9 @@ object LAFuture {
   }
 
   /**
-   * Collect all the future values into the aggregate future
-   * The returned future will be satisfied when all the
-   * collected futures are satisfied or if any of the
-   * futures is Empty, then immediately satisfy the
-   * returned future with an Empty
+   * Collect all the future values into the aggregate future The returned future will be satisfied
+   * when all the collected futures are satisfied or if any of the futures is Empty, then
+   * immediately satisfy the returned future with an Empty
    */
   def collectAll[T](future: LAFuture[Box[T]]*): LAFuture[Box[List[T]]] = {
     collect[Box[T], Box[List[T]]](
@@ -453,8 +471,9 @@ object LAFuture {
         }
       },
       onFutureFailed = { (valueBox, result, values, index) => result.fail(valueBox) },
-      onAllFuturesCompleted = { (result: LAFuture[Box[List[T]]], values: ArrayBuffer[Box[Box[T]]]) =>
-        result.satisfy(Full(values.toList.flatten.flatten))
+      onAllFuturesCompleted = {
+        (result: LAFuture[Box[List[T]]], values: ArrayBuffer[Box[Box[T]]]) =>
+          result.satisfy(Full(values.toList.flatten.flatten))
       },
       future: _*
     )
@@ -469,16 +488,15 @@ object LAFuture {
   }
 
   /**
-    * Allows to wrap function in another function providing some additional functionality.
-    * It may choose to execute or not execute that functionality, but should not interpret
-    * or change the returned value; instead, it should perform orthogonal actions that
-    * need to occur around the given functionality. Typical example is setting up DB
-    * transaction.
-    *
-    * This is similar to [[net.liftweb.common.CommonLoanWrapper]], however, it decorates the
-    * function eagerly. This way, you can access current thread's state which is essential
-    * to do things like set up a HTTP session wrapper
-    */
+   * Allows to wrap function in another function providing some additional functionality. It may
+   * choose to execute or not execute that functionality, but should not interpret or change the
+   * returned value; instead, it should perform orthogonal actions that need to occur around the
+   * given functionality. Typical example is setting up DB transaction.
+   *
+   * This is similar to [[net.liftweb.common.CommonLoanWrapper]], however, it decorates the function
+   * eagerly. This way, you can access current thread's state which is essential to do things like
+   * set up a HTTP session wrapper
+   */
   trait Context {
     def around[T](fn: () => T): () => T
     def around[A, T](fn: (A) => T): (A) => T

@@ -18,7 +18,7 @@ package net.liftweb
 package util
 
 import common._
-import Helpers.{asInt, tryo}
+import Helpers.tryo
 
 import java.util.Date
 
@@ -45,7 +45,7 @@ trait JodaHelpers {
         case o => toDateTime(o.toString)
       }
     } catch {
-      case e: Exception => Failure("Bad date: "+in, Full(e), Empty)
+      case e: Exception => Failure("Bad date: " + in, Full(e), Empty)
     }
   }
 }

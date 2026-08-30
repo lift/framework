@@ -18,12 +18,13 @@ package net.liftweb
 package json
 
 import org.scalacheck._
-  import rng.Seed
+import rng.Seed
 import Gen._
 import Arbitrary.arbitrary
 
 trait JValueGen {
-  def genJValue: Gen[JValue] = frequency((5, genSimple), (1, delay(genArray)), (1, delay(genObject)))
+  def genJValue: Gen[JValue] =
+    frequency((5, genSimple), (1, delay(genArray)), (1, delay(genObject)))
   def genSimple: Gen[JValue] = oneOf(
     const(JNull),
     arbitrary[Int].map(JInt(_)),
@@ -52,22 +53,30 @@ trait JValueGen {
       Cogen.perturbPair(seed, (field.name -> field.value))
     })
 
-  val genJValueFn: Gen[JValue=>JValue] = function1(genJValue)
+  val genJValueFn: Gen[JValue => JValue] = function1(genJValue)
 
   def genList = Gen.containerOfN[List, JValue](listSize, genJValue)
   def genFieldList = Gen.containerOfN[List, JField](listSize, genField)
-  def genField = for (name <- identifier; value <- genJValue; id <- choose(0, 1000000)) yield JField(name+id, value)
+  def genField = for (name <- identifier; value <- genJValue; id <- choose(0, 1000000))
+    yield JField(name + id, value)
 
   def genJValueClass: Gen[Class[_ <: JValue]] = oneOf(
-    JNull.getClass.asInstanceOf[Class[JValue]], JNothing.getClass.asInstanceOf[Class[JValue]], classOf[JInt],
-    classOf[JDouble], classOf[JBool], classOf[JString], classOf[JArray], classOf[JObject])
+    JNull.getClass.asInstanceOf[Class[JValue]],
+    JNothing.getClass.asInstanceOf[Class[JValue]],
+    classOf[JInt],
+    classOf[JDouble],
+    classOf[JBool],
+    classOf[JString],
+    classOf[JArray],
+    classOf[JObject]
+  )
 
   def listSize = choose(0, 5).sample.get
 }
 
 trait NodeGen {
   import Xml.{XmlNode, XmlElem}
-  import scala.xml.{Node, NodeSeq, Text}
+  import scala.xml.Node
 
   def genXml: Gen[Node] = frequency((2, delay(genNode)), (3, genElem))
 

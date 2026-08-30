@@ -8,16 +8,16 @@ import net.liftweb.http.provider._
 import net.liftweb.http.{LiftResponse, ParamHolder, Req}
 import net.liftweb.util.Helpers
 
-private [servlet] class OfflineRequestSnapshot(req: HTTPRequest, val provider: HTTPProvider) extends HTTPRequest {
+private[servlet] class OfflineRequestSnapshot(req: HTTPRequest, val provider: HTTPProvider)
+    extends HTTPRequest {
 
-  private[this] val _cookies = List(req.cookies :_*)
+  private[this] val _cookies = List(req.cookies: _*)
 
-  private[this] val _headers = List(req.headers :_*)
+  private[this] val _headers = List(req.headers: _*)
 
-  private[this] val _params = List(req.params :_*)
+  private[this] val _params = List(req.params: _*)
 
   private[this] val _serverPort = req.serverPort
-
 
   def cookies: List[HTTPCookie] = _cookies
 
@@ -89,7 +89,7 @@ private [servlet] class OfflineRequestSnapshot(req: HTTPRequest, val provider: H
 
   val method: String = req.method
 
-  val resumeInfo : Option[(Req, LiftResponse)] = req.resumeInfo
+  val resumeInfo: Option[(Req, LiftResponse)] = req.resumeInfo
 
   def suspend(timeout: Long): RetryState.Value =
     throw new UnsupportedOperationException("Cannot suspend a snapshot")
@@ -117,6 +117,7 @@ private [servlet] class OfflineRequestSnapshot(req: HTTPRequest, val provider: H
   /**
    * The User-Agent of the request
    */
-  lazy val userAgent: Box[String] =  headers find (_.name equalsIgnoreCase "user-agent") flatMap (_.values.headOption)
+  lazy val userAgent: Box[String] =
+    headers find (_.name equalsIgnoreCase "user-agent") flatMap (_.values.headOption)
 
 }

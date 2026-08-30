@@ -22,11 +22,10 @@ import org.specs2.mutable.Specification
 import common._
 import ControlHelpers._
 
-
 /**
  * Systems under specification for ControlHelpers.
  */
-class ControlHelpersSpec extends Specification  {
+class ControlHelpersSpec extends Specification {
   "ControlHelpers Specification".title
 
   "the tryo function" should {
@@ -43,7 +42,9 @@ class ControlHelpersSpec extends Specification  {
       tryo(classOf[RuntimeException]) { failureBlock } must_== Empty
     }
     "return Empty if the tested block throws an exception whose class is in the ignore list - with 2 elements" in {
-      tryo(List(classOf[RuntimeException], classOf[NullPointerException])) { failureBlock } must_== Empty
+      tryo(List(classOf[RuntimeException], classOf[NullPointerException])) {
+        failureBlock
+      } must_== Empty
     }
     "trigger a callback function with the exception if the tested block throws an exception" in {
       val callback = (e: Throwable) => { e must_== exception; () }
@@ -69,4 +70,3 @@ class ControlHelpersSpec extends Specification  {
     }
   }
 }
-

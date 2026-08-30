@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 /**
- * This trait defines the principle contract for function objects that
- * wrap the processing of HTTP requests by Lift while utilizing the preestablished
- * request-local scope.
+ * This trait defines the principle contract for function objects that wrap the processing of HTTP
+ * requests by Lift while utilizing the preestablished request-local scope.
  */
 trait LoanWrapper extends net.liftweb.common.CommonLoanWrapper
-

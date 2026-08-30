@@ -24,13 +24,14 @@ class FieldFinder[T: ClassTag](metaMapper: AnyRef, logger: common.Logger) {
 
   logger.debug("Created FieldFinder for " + classTag[T].runtimeClass)
 
-  def isMagicObject(m: Method): Boolean = m.getReturnType.getName.endsWith("$"+m.getName+"$") && m.getParameterTypes.length == 0
+  def isMagicObject(m: Method): Boolean =
+    m.getReturnType.getName.endsWith("$" + m.getName + "$") && m.getParameterTypes.length == 0
 
-  def typeFilter: Class[_]=>Boolean = classTag[T].runtimeClass.isAssignableFrom
+  def typeFilter: Class[_] => Boolean = classTag[T].runtimeClass.isAssignableFrom
 
   /**
-    * Find the magic mapper fields on the superclass
-    */
+   * Find the magic mapper fields on the superclass
+   */
   def findMagicFields(onMagic: AnyRef, startingClass: Class[_]): List[Method] = {
     // If a class name ends in $module, it's a subclass created for scala object instances
     def deMod(in: String): String =
@@ -44,12 +45,12 @@ class FieldFinder[T: ClassTag](metaMapper: AnyRef, logger: common.Logger) {
         // get the names of fields that represent the type we want
 
         val fields = Map.from(c.getDeclaredFields
-                               .filter{f =>
-                                 val ret = typeFilter(f.getType)
-                                 logger.trace("typeFilter(" + f.getType + "); T=" + classTag[T].runtimeClass)
-                                 ret
-                               }
-                               .map(f => (deMod(f.getName), f)))
+          .filter { f =>
+            val ret = typeFilter(f.getType)
+            logger.trace("typeFilter(" + f.getType + "); T=" + classTag[T].runtimeClass)
+            ret
+          }
+          .map(f => (deMod(f.getName), f)))
 
         logger.trace("fields: " + fields)
 
@@ -58,7 +59,7 @@ class FieldFinder[T: ClassTag](metaMapper: AnyRef, logger: common.Logger) {
           case null => Nil
           case c =>
             c :: c.getInterfaces.toList.flatMap(getAllSupers) :::
-            getAllSupers(c.getSuperclass)
+              getAllSupers(c.getSuperclass)
         }
 
         // does the method return an actual instance of an actual class that's
@@ -83,7 +84,9 @@ class FieldFinder[T: ClassTag](metaMapper: AnyRef, logger: common.Logger) {
 
           } catch {
             case e: Exception =>
-              logger.debug("Not a valid mapped field: %s, got exception: %s".format(meth.getName, e))
+              logger.debug("Not a valid mapped field: %s, got exception: %s".format(
+                meth.getName,
+                e))
               false
           }
         }
@@ -92,8 +95,9 @@ class FieldFinder[T: ClassTag](metaMapper: AnyRef, logger: common.Logger) {
         val meths = c.getDeclaredMethods.toList.
         filter(_.getParameterTypes.length == 0). // that take no parameters
         filter(m => Modifier.isPublic(m.getModifiers)). // that are public
-        filter(m => fields.contains(m.getName) && // that are associated with private fields
-                fields(m.getName).getType == m.getReturnType).
+        filter(m =>
+          fields.contains(m.getName) && // that are associated with private fields
+            fields(m.getName).getType == m.getReturnType).
         filter(validActualType) // and have a validated type
 
         meths ::: findForClass(clz.getSuperclass)

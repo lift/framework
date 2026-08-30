@@ -7,17 +7,12 @@ import collection.mutable.ListBuffer
 import scala.annotation.implicitNotFound
 
 /**
- * Created with IntelliJ IDEA.
- * User: dpp
- * Date: 6/25/12
- * Time: 3:34 PM
- *
+ * Created with IntelliJ IDEA. User: dpp Date: 6/25/12 Time: 3:34 PM
  */
 
 /**
- * This trait is both a NodeSeq => NodeSeq and has the ability
- * to chain CssSel instances so that they can be applied
- * en masse to incoming NodeSeq and do the transformation.
+ * This trait is both a NodeSeq => NodeSeq and has the ability to chain CssSel instances so that
+ * they can be applied en masse to incoming NodeSeq and do the transformation.
  */
 trait CssSel extends Function1[NodeSeq, NodeSeq] {
   def &(other: CssSel): CssSel = (this, other) match {
@@ -39,22 +34,22 @@ trait CssSel extends Function1[NodeSeq, NodeSeq] {
 /**
  * A passthrough function that does not change the nodes
  *
- * @tag CssFunction
+ * @tag
+ *   CssFunction
  */
 object PassThru extends Function1[NodeSeq, NodeSeq] {
   def apply(in: NodeSeq): NodeSeq = in
 }
 
 /**
- * Replaces the nodes with an Empty NodeSeq.  Useful
- * for removing unused nodes
+ * Replaces the nodes with an Empty NodeSeq. Useful for removing unused nodes
  *
- * @tag CssFunction
+ * @tag
+ *   CssFunction
  */
 object ClearNodes extends Function1[NodeSeq, NodeSeq] {
   def apply(in: NodeSeq): NodeSeq = NodeSeq.Empty
 }
-
 
 private final case class AggregatedCssBindFunc(binds: List[CssBind]) extends CssSel {
   private lazy val (good, bad) = binds.partition {
@@ -69,19 +64,18 @@ private final case class AggregatedCssBindFunc(binds: List[CssBind]) extends Css
 }
 
 /**
- * This CssBind will clear all nodes marked with the class
- * clearable.  Designers can mark extra nodes in markup with
- * class="clearable" and this Bind will make them go away
+ * This CssBind will clear all nodes marked with the class clearable. Designers can mark extra nodes
+ * in markup with class="clearable" and this Bind will make them go away
  */
-class ClearClearable extends CssBindImpl(Full(".clearable"), CssSelectorParser.parse(".clearable")) {
+class ClearClearable
+    extends CssBindImpl(Full(".clearable"), CssSelectorParser.parse(".clearable")) {
 
   def calculate(in: NodeSeq): Seq[NodeSeq] = Nil
 }
 
 /**
- * This CssBind will clear all nodes marked with the class
- * clearable.  Designers can mark extra nodes in markup with
- * class="clearable" and this Bind will make them go away
+ * This CssBind will clear all nodes marked with the class clearable. Designers can mark extra nodes
+ * in markup with class="clearable" and this Bind will make them go away
  */
 object ClearClearable extends ClearClearable
 
@@ -105,8 +99,14 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     }
   }
 
-  private val (idMap, nameMap, clzMap, attrMap, elemMap,
-  starFunc, selectThis: Box[CssBind]) = {
+  private val (
+    idMap,
+    nameMap,
+    clzMap,
+    attrMap,
+    elemMap,
+    starFunc,
+    selectThis: Box[CssBind]) = {
     var idMap: Map[String, List[CssBind]] = Map()
     var nameMap: Map[String, List[CssBind]] = Map()
     var clzMap: Map[String, List[CssBind]] = Map()
@@ -123,22 +123,21 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
     }.headOption
 
     binds.foreach {
-      case i@CssBind(IdSelector(id, _)) =>
+      case i @ CssBind(IdSelector(id, _)) =>
         idMap += (id -> sortBinds(i :: idMap.getOrElse(id, Nil)))
 
-      case i@CssBind(ElemSelector(id, _)) =>
+      case i @ CssBind(ElemSelector(id, _)) =>
         elemMap += (id -> sortBinds(i :: elemMap.getOrElse(id, Nil)))
 
+      case i @ CssBind(StarSelector(_, _)) => starFunc = Full(sortBinds(i :: starFunc.openOr(Nil)))
 
-      case i@CssBind(StarSelector(_, _)) => starFunc = Full(sortBinds(i :: starFunc.openOr(Nil)))
-
-      case i@CssBind(NameSelector(name, _)) =>
+      case i @ CssBind(NameSelector(name, _)) =>
         nameMap += (name -> sortBinds(i :: nameMap.getOrElse(name, Nil)))
 
-      case i@CssBind(ClassSelector(clz, _)) =>
+      case i @ CssBind(ClassSelector(clz, _)) =>
         clzMap += (clz -> sortBinds(i :: clzMap.getOrElse(clz, Nil)))
 
-      case i@CssBind(AttrSelector(name, value, _)) => {
+      case i @ CssBind(AttrSelector(name, value, _)) => {
         val oldMap = attrMap.getOrElse(name, Map())
         attrMap += (name -> (oldMap + (value -> sortBinds(i :: oldMap.getOrElse(value, Nil)))))
       }
@@ -169,14 +168,18 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
         case _ => false
       }
 
-    final def applyRule(bindList: List[CssBind], realE: Elem, onlySelThis: Boolean, depth: Int): NodeSeq =
+    final def applyRule(
+        bindList: List[CssBind],
+        realE: Elem,
+        onlySelThis: Boolean,
+        depth: Int): NodeSeq =
       bindList match {
         case Nil => realE
 
         // ignore selectThis commands outside the
         // select context
         case bind :: xs
-          if onlySelThis && isSelThis(bind) => applyRule(xs, realE, onlySelThis, depth)
+            if onlySelThis && isSelThis(bind) => applyRule(xs, realE, onlySelThis, depth)
 
         case bind :: xs => {
           applyRule(bind, realE, depth) flatMap {
@@ -187,9 +190,12 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       }
 
     final def applyAttributeRules(bindList: List[CssBind], elem: Elem): Elem = {
-      bindList.map(b => (b, b.css.openOrThrowException("Guarded with test before calling this method").
-        subNodes.openOrThrowException("Guarded with test before calling this method"))).
-        foldLeft(elem) {
+      bindList.map(b =>
+        (
+          b,
+          b.css.openOrThrowException("Guarded with test before calling this method").
+          subNodes.openOrThrowException("Guarded with test before calling this method"))).
+      foldLeft(elem) {
         case (elem, (bind, AttrSubNode(attr))) => {
           val calced = bind.calculate(elem).map(findElemIfThereIsOne _)
           val filtered = elem.attributes.filter {
@@ -210,7 +216,6 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
         case (elem, (bind, AttrAppendSubNode(attr))) => {
           val org: NodeSeq = elem.attribute(attr).getOrElse(NodeSeq.Empty)
           val calced = bind.calculate(elem).toList.map(findElemIfThereIsOne _)
-
 
           if (calced.isEmpty) {
             elem
@@ -235,9 +240,13 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
 
             val newAttr = new UnprefixedAttribute(attr, flat, filtered)
 
-            new Elem(elem.prefix,
-              elem.label, newAttr,
-              elem.scope, elem.minimizeEmpty, elem.child: _*)
+            new Elem(
+              elem.prefix,
+              elem.label,
+              newAttr,
+              elem.scope,
+              elem.minimizeEmpty,
+              elem.child: _*)
 
           }
         }
@@ -258,7 +267,7 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
             val flat: Box[NodeSeq] = if (attr == "class") {
               val set = Set(calced.map(_.text): _*)
               SuperString(org.text).charSplit(' ').toList.
-                filter(_.length > 0).filter(s => !set.contains(s)) match {
+              filter(_.length > 0).filter(s => !set.contains(s)) match {
                 case Nil => Empty
                 case xs => Full(Text(xs.mkString(" ")))
               }
@@ -271,15 +280,18 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
               case _ => filtered
             }
 
-            new Elem(elem.prefix,
-              elem.label, newAttr,
-              elem.scope, elem.minimizeEmpty, elem.child: _*)
+            new Elem(
+              elem.prefix,
+              elem.label,
+              newAttr,
+              elem.scope,
+              elem.minimizeEmpty,
+              elem.child: _*)
 
           }
         }
       }
     }
-
 
     // This is where the rules are applied
     final def applyRule(bind: CssBind, realE: Elem, depth: Int): NodeSeq = {
@@ -315,8 +327,10 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
               oldAttrs.get("class") match {
                 case Some(ca) if !skipClassMerge => {
                   oldAttrs -= "class"
-                  builtMeta = new UnprefixedAttribute("class",
-                    uniqueClasses(up.value.
+                  builtMeta = new UnprefixedAttribute(
+                    "class",
+                    uniqueClasses(
+                      up.value.
                       text,
                       ca),
                     builtMeta)
@@ -368,34 +382,57 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
         case Full(todo: WithKids) => {
           val calced = bind.calculate(realE.child)
           calced.length match {
-            case 0 => new Elem(realE.prefix, realE.label, realE.attributes, realE.scope, realE.minimizeEmpty)
-            case 1 => new Elem(realE.prefix, realE.label,
-              realE.attributes, realE.scope, realE.minimizeEmpty,
-              todo.transform(realE.child, calced.head): _*)
+            case 0 => new Elem(
+                realE.prefix,
+                realE.label,
+                realE.attributes,
+                realE.scope,
+                realE.minimizeEmpty)
+            case 1 => new Elem(
+                realE.prefix,
+                realE.label,
+                realE.attributes,
+                realE.scope,
+                realE.minimizeEmpty,
+                todo.transform(realE.child, calced.head): _*)
             case _ if id.isEmpty =>
-              calced.map(kids => new Elem(realE.prefix, realE.label,
-                realE.attributes, realE.scope, realE.minimizeEmpty,
-                todo.transform(realE.child, kids): _*))
+              calced.map(kids =>
+                new Elem(
+                  realE.prefix,
+                  realE.label,
+                  realE.attributes,
+                  realE.scope,
+                  realE.minimizeEmpty,
+                  todo.transform(realE.child, kids): _*))
 
             case _ => {
               val noId = removeId(realE.attributes)
               calced.toList.zipWithIndex.map {
                 case (kids, 0) =>
-                  new Elem(realE.prefix, realE.label,
-                    realE.attributes, realE.scope, realE.minimizeEmpty,
+                  new Elem(
+                    realE.prefix,
+                    realE.label,
+                    realE.attributes,
+                    realE.scope,
+                    realE.minimizeEmpty,
                     todo.transform(realE.child, kids): _*)
                 case (kids, _) =>
-                  new Elem(realE.prefix, realE.label,
-                    noId, realE.scope, realE.minimizeEmpty,
+                  new Elem(
+                    realE.prefix,
+                    realE.label,
+                    noId,
+                    realE.scope,
+                    realE.minimizeEmpty,
                     todo.transform(realE.child, kids): _*)
               }
             }
           }
         }
 
-        case x if x.isInstanceOf[EmptyBox] ||
-          x == Full(DontMergeClass) ||
-          x == Full(DontMergeAttributes) => {
+        case x
+            if x.isInstanceOf[EmptyBox] ||
+              x == Full(DontMergeClass) ||
+              x == Full(DontMergeAttributes) => {
           val calced = bind.calculate(realE).map(findElemIfThereIsOne _)
           val skipClassMerge = x == Full(DontMergeClass) || x == Full(DontMergeAttributes)
 
@@ -404,9 +441,13 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
             case 1 => {
               calced.head match {
                 case Group(g) => g
-                case e: Elem => new Elem(e.prefix,
-                  e.label, mergeAll(e.attributes, false, skipClassMerge),
-                  e.scope, e.minimizeEmpty, e.child: _*)
+                case e: Elem => new Elem(
+                    e.prefix,
+                    e.label,
+                    mergeAll(e.attributes, false, skipClassMerge),
+                    e.scope,
+                    e.minimizeEmpty,
+                    e.child: _*)
                 case x => x
               }
             }
@@ -428,7 +469,13 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
                         id => ids.contains(id)
                       } getOrElse (false)
                       val newIds = targetId filter (_ => keepId) map (i => ids - i) getOrElse (ids)
-                      val newElem = new Elem(e.prefix, e.label, mergeAll(e.attributes, !keepId, skipClassMerge), e.scope, e.minimizeEmpty, e.child: _*)
+                      val newElem = new Elem(
+                        e.prefix,
+                        e.label,
+                        mergeAll(e.attributes, !keepId, skipClassMerge),
+                        e.scope,
+                        e.minimizeEmpty,
+                        e.child: _*)
                       (newIds, newElem :: result)
                     }
                     case x => (ids, x :: result)
@@ -440,7 +487,6 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
         }
       }
     }
-
 
     final def forId(in: Elem, buff: ListBuffer[CssBind]): Unit = {
       for {
@@ -459,9 +505,9 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       for {
         binds <- starFunc
         bind <- binds if (bind match {
-        case CssBind(StarSelector(_, topOnly)) => !topOnly || (depth == 0)
-        case _ => true
-      })
+          case CssBind(StarSelector(_, topOnly)) => !topOnly || (depth == 0)
+          case _ => true
+        })
       } buff += bind
     }
 
@@ -566,22 +612,34 @@ private class SelectorMap(binds: List[CssBind]) extends Function1[NodeSeq, NodeS
       }
     } else {
       lb.toList.filterNot(_.selectThis_?) match {
-        case Nil => new Elem(e.prefix, e.label,
-          e.attributes, e.scope, e.minimizeEmpty, run(e.child, onlySel, depth + 1): _*)
+        case Nil => new Elem(
+            e.prefix,
+            e.label,
+            e.attributes,
+            e.scope,
+            e.minimizeEmpty,
+            run(e.child, onlySel, depth + 1): _*)
         case csb =>
           // do attributes first, then the body
           csb.partition(_.attrSel_?) match {
             case (Nil, rules) => slurp.applyRule(rules, e, onlySel, depth)
             case (attrs, Nil) => {
               val elem = slurp.applyAttributeRules(attrs, e)
-              new Elem(elem.prefix, elem.label,
-                elem.attributes, elem.scope, e.minimizeEmpty, run(elem.child, onlySel, depth + 1): _*)
+              new Elem(
+                elem.prefix,
+                elem.label,
+                elem.attributes,
+                elem.scope,
+                e.minimizeEmpty,
+                run(elem.child, onlySel, depth + 1): _*)
             }
 
             case (attrs, rules) => {
-              slurp.applyRule(rules,
+              slurp.applyRule(
+                rules,
                 slurp.applyAttributeRules(attrs, e),
-                onlySel, depth)
+                onlySel,
+                depth)
             }
           }
         // slurp.applyRule(csb, e, onlySel)
@@ -614,14 +672,19 @@ private case class RetryWithException(e: NodeSeq) extends Exception()
 
 trait CssBindImplicits {
   class CssBindPromoter(stringSelector: Box[String], cssSelector: Box[CssSelector]) {
+
     /**
      * Transform a DOM (NodeSeq) based on rules
      *
-     * @param it the thing to use in the replacement rules
-     * @param converter the implicit parameter that transforms T into a
-     *        NodeSeq=>NodeSeq that will update things matched by the selector
-     * @tparam T the type of it
-     * @return the function that will transform an incoming DOM based on the transform rules
+     * @param it
+     *   the thing to use in the replacement rules
+     * @param converter
+     *   the implicit parameter that transforms T into a NodeSeq=>NodeSeq that will update things
+     *   matched by the selector
+     * @tparam T
+     *   the type of it
+     * @return
+     *   the function that will transform an incoming DOM based on the transform rules
      */
     def #>[T](replacement: => T)(implicit converter: CanBind[T]): CssSel = {
       cssSelector.collect {
@@ -639,17 +702,23 @@ trait CssBindImplicits {
     /**
      * Transform a DOM (NodeSeq) based on rules
      *
-     * @param it the thing to use in the replacement rules
-     * @param computer the implicit parameter that transforms T into something that will make the correct changes
-     * @tparam T the type of it
-     * @return the function that will transform an incoming DOM based on the transform rules
+     * @param it
+     *   the thing to use in the replacement rules
+     * @param computer
+     *   the implicit parameter that transforms T into something that will make the correct changes
+     * @tparam T
+     *   the type of it
+     * @return
+     *   the function that will transform an incoming DOM based on the transform rules
      */
     def replaceWith[T](it: => T)(implicit computer: CanBind[T]): CssSel = {
       this.#>(it)(computer)
     }
   }
-  implicit class StringToCssBindPromoter(stringSelector: String) extends CssBindPromoter(Full(stringSelector), CssSelectorParser.parse(stringSelector))
-  implicit class CssSelectorToCssBindPromoter(cssSelector: CssSelector) extends CssBindPromoter(Empty, Full(cssSelector))
+  implicit class StringToCssBindPromoter(stringSelector: String)
+      extends CssBindPromoter(Full(stringSelector), CssSelectorParser.parse(stringSelector))
+  implicit class CssSelectorToCssBindPromoter(cssSelector: CssSelector)
+      extends CssBindPromoter(Empty, Full(cssSelector))
 }
 
 object CssBind {
@@ -667,7 +736,7 @@ trait CssBind extends CssSel {
   def apply(in: NodeSeq): NodeSeq = css match {
     case Full(c) => selectorMap(in)
     case _ => Helpers.errorDiv(
-      <div>
+        <div>
         Syntax error in CSS selector definition:
         {stringSelector openOr "N/A"}
         .
@@ -720,10 +789,11 @@ trait CssBind extends CssSel {
 }
 
 /**
- * An abstract implementation of CssBind.  You can instantiate
- * this class and create a custom calculate method
+ * An abstract implementation of CssBind. You can instantiate this class and create a custom
+ * calculate method
  */
-abstract class CssBindImpl(val stringSelector: Box[String], val css: Box[CssSelector]) extends CssBind {
+abstract class CssBindImpl(val stringSelector: Box[String], val css: Box[CssSelector])
+    extends CssBind {
   def calculate(in: NodeSeq): Seq[NodeSeq]
 }
 
@@ -776,7 +846,6 @@ object CanBind extends CssBindImplicits {
     def apply(str: => Bindable)(ns: NodeSeq): Seq[NodeSeq] = List(str.asHtml)
   }
 
-
   implicit def numberTransform[T <: java.lang.Number]: CanBind[T] = new CanBind[java.lang.Number] {
     def apply(str: => java.lang.Number)(ns: NodeSeq): Seq[NodeSeq] = {
       val num = str
@@ -791,7 +860,6 @@ object CanBind extends CssBindImplicits {
   implicit def jsCmdTransform: CanBind[ToJsCmd] = new CanBind[ToJsCmd] {
     def apply(str: => ToJsCmd)(ns: NodeSeq): Seq[NodeSeq] = List(Text(str.toJsCmd))
   }
-
 
   implicit def jsCmdPairTransform: CanBind[(_, ToJsCmd)] = new CanBind[(_, ToJsCmd)] {
     def apply(str: => (_, ToJsCmd))(ns: NodeSeq): Seq[NodeSeq] = List(Text(str._2.toJsCmd))
@@ -820,25 +888,27 @@ object CanBind extends CssBindImplicits {
   class CanBindNodeSeqTransform[T](f: T => NodeSeq) extends CanBind[T] {
     def apply(param: => T)(ns: NodeSeq): Seq[NodeSeq] = List(f(param))
   }
-  implicit def toNodeSeqTransform[T](implicit f: T => NodeSeq): CanBind[T] = new CanBindNodeSeqTransform[T](f)
+  implicit def toNodeSeqTransform[T](implicit f: T => NodeSeq): CanBind[T] =
+    new CanBindNodeSeqTransform[T](f)
 
-  implicit def nodeSeqFuncTransform[A](implicit view: A => NodeSeq => NodeSeq): CanBind[A] = new CanBind[A] {
-    def apply(func: =>A)(ns: NodeSeq): Seq[NodeSeq] = List(view(func)(ns))
-  }
+  implicit def nodeSeqFuncTransform[A](implicit view: A => NodeSeq => NodeSeq): CanBind[A] =
+    new CanBind[A] {
+      def apply(func: => A)(ns: NodeSeq): Seq[NodeSeq] = List(view(func)(ns))
+    }
 
-  implicit def nodeSeqSeqFuncTransform: CanBind[NodeSeq => Seq[Node]] = new CanBind[NodeSeq => Seq[Node]] {
-    def apply(func: => NodeSeq => Seq[Node])(ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(List(func(ns)))
-  }
+  implicit def nodeSeqSeqFuncTransform: CanBind[NodeSeq => Seq[Node]] =
+    new CanBind[NodeSeq => Seq[Node]] {
+      def apply(func: => NodeSeq => Seq[Node])(ns: NodeSeq): Seq[NodeSeq] =
+        Helpers.ensureUniqueId(List(func(ns)))
+    }
 
   implicit def nodeFuncTransform: CanBind[NodeSeq => Node] = new CanBind[NodeSeq => Node] {
     def apply(func: => NodeSeq => Node)(ns: NodeSeq): Seq[NodeSeq] = List(func(ns))
   }
 
-
   implicit def iterableNodeTransform[NST](implicit f2: NST => NodeSeq): CanBind[Iterable[NST]] =
     new CanBind[Iterable[NST]] {
-      def apply(info: => Iterable[NST])(ns: NodeSeq): Seq[NodeSeq] =
-      {
+      def apply(info: => Iterable[NST])(ns: NodeSeq): Seq[NodeSeq] = {
         val i = info
         i match {
           case ns: NodeSeq => List(ns)
@@ -857,43 +927,53 @@ object CanBind extends CssBindImplicits {
       def apply(info: => Option[NST])(ns: NodeSeq): Seq[NodeSeq] = info.toList.map(f2)
     }
 
-  implicit def iterableStringTransform[T[_]](implicit f: T[String] => Iterable[String]): CanBind[T[String]] =
+  implicit def iterableStringTransform[T[_]](implicit
+      f: T[String] => Iterable[String]): CanBind[T[String]] =
     new CanBind[T[String]] {
       def apply(info: => T[String])(ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.map(a => Text(a))
     }
 
-  implicit def iterableNumberTransform[T[_], N <: java.lang.Number](implicit f: T[N] => Iterable[N]): CanBind[T[N]] =
+  implicit def iterableNumberTransform[T[_], N <: java.lang.Number](implicit
+      f: T[N] => Iterable[N]): CanBind[T[N]] =
     new CanBind[T[N]] {
       def apply(info: => T[N])(ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.flatMap(a =>
         if (a eq null) Nil else List(Text(a.toString)))
     }
 
-  implicit def iterableDouble[T[Double]](implicit f: T[Double] => Iterable[Double]): CanBind[T[Double]] =
+  implicit def iterableDouble[T[Double]](implicit
+      f: T[Double] => Iterable[Double]): CanBind[T[Double]] =
     new CanBind[T[Double]] {
       def apply(info: => T[Double])(ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.flatMap(a =>
         if (a equals null) Nil else List(Text(a.toString)))
     }
 
-  implicit def iterableBindableTransform[T[_]](implicit f: T[Bindable] => Iterable[Bindable]): CanBind[T[Bindable]] =
+  implicit def iterableBindableTransform[T[_]](implicit
+      f: T[Bindable] => Iterable[Bindable]): CanBind[T[Bindable]] =
     new CanBind[T[Bindable]] {
-      def apply(info: => T[Bindable])(ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(f(info).toSeq.map(_.asHtml))
+      def apply(info: => T[Bindable])(ns: NodeSeq): Seq[NodeSeq] =
+        Helpers.ensureUniqueId(f(info).toSeq.map(_.asHtml))
     }
 
-
-  implicit def iterableStringPromotableTransform[T[_], PM](implicit f: T[PM] => Iterable[PM],
-                                                           prom: PM => StringPromotable): CanBind[T[PM]] =
+  implicit def iterableStringPromotableTransform[T[_], PM](implicit
+      f: T[PM] => Iterable[PM],
+      prom: PM => StringPromotable): CanBind[T[PM]] =
     new CanBind[T[PM]] {
-      def apply(info: => T[PM])(ns: NodeSeq): Seq[NodeSeq] = f(info).toSeq.map(a => Text(prom(a).toString))
+      def apply(info: => T[PM])(ns: NodeSeq): Seq[NodeSeq] =
+        f(info).toSeq.map(a => Text(prom(a).toString))
     }
 
-  implicit def iterableNodeFuncTransform[T[_], F <: NodeSeq => NodeSeq](implicit f: T[F] => Iterable[F]): CanBind[T[F]] =
+  implicit def iterableNodeFuncTransform[T[_], F <: NodeSeq => NodeSeq](implicit
+      f: T[F] => Iterable[F]): CanBind[T[F]] =
     new CanBind[T[F]] {
-      def apply(info: => T[F])(ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(f(info).toSeq.map(_.apply(ns)))
+      def apply(info: => T[F])(ns: NodeSeq): Seq[NodeSeq] =
+        Helpers.ensureUniqueId(f(info).toSeq.map(_.apply(ns)))
     }
 
-  implicit def funcIterableTransform[T[_], F <: NodeSeq](implicit f: T[F] => Iterable[F]): CanBind[NodeSeq => T[F]] =
+  implicit def funcIterableTransform[T[_], F <: NodeSeq](implicit
+      f: T[F] => Iterable[F]): CanBind[NodeSeq => T[F]] =
     new CanBind[NodeSeq => T[F]] {
-      def apply(info: => NodeSeq => T[F])(ns: NodeSeq): Seq[NodeSeq] = Helpers.ensureUniqueId(f(info(ns)).toSeq)
+      def apply(info: => NodeSeq => T[F])(ns: NodeSeq): Seq[NodeSeq] =
+        Helpers.ensureUniqueId(f(info(ns)).toSeq)
     }
 
   implicit def stringFuncTransform: CanBind[NodeSeq => String] =
@@ -901,11 +981,12 @@ object CanBind extends CssBindImplicits {
       def apply(info: => NodeSeq => String)(ns: NodeSeq): Seq[NodeSeq] = List(Text(info(ns)))
     }
 
-  implicit def stringIterFuncTransform[T[_]](implicit f: T[String] => Iterable[String]): CanBind[NodeSeq => T[String]] =
+  implicit def stringIterFuncTransform[T[_]](implicit
+      f: T[String] => Iterable[String]): CanBind[NodeSeq => T[String]] =
     new CanBind[NodeSeq => T[String]] {
-      def apply(info: => NodeSeq => T[String])(ns: NodeSeq): Seq[NodeSeq] = f(info(ns)).toSeq.map(Text(_))
+      def apply(info: => NodeSeq => T[String])(ns: NodeSeq): Seq[NodeSeq] =
+        f(info(ns)).toSeq.map(Text(_))
     }
-
 
   implicit def iterableConstFuncTransform: CanBind[IterableConst] =
     new CanBind[IterableConst] {

@@ -27,7 +27,6 @@ import junit.framework.AssertionFailedError
 
 import common.Box
 
-
 final class JettyTestServer(baseUrlBox: Box[URL]) {
 
   def baseUrl = baseUrlBox getOrElse new URL("http://127.0.0.1:8080")
@@ -39,8 +38,8 @@ final class JettyTestServer(baseUrlBox: Box[URL]) {
     context.setContextPath("/")
     val dir = System.getProperty("net.liftweb.webapptest.src.test.webapp", "src/test/webapp")
     context.setWar(dir)
-    //val context = new Context(_server, "/", Context.SESSIONS)
-    //context.addFilter(new FilterHolder(new LiftFilter()), "/");
+    // val context = new Context(_server, "/", Context.SESSIONS)
+    // context.addFilter(new FilterHolder(new LiftFilter()), "/");
     server.setHandler(context)
     server.setStopTimeout(100)
     server.setStopAtShutdown(true)
@@ -61,7 +60,7 @@ final class JettyTestServer(baseUrlBox: Box[URL]) {
 
   def running = server_.isRunning
 
-  def browse[A](startPath: String, f:(WebTester) => A): A = {
+  def browse[A](startPath: String, f: (WebTester) => A): A = {
     val wc = new WebTester()
     try {
       wc.setScriptingEnabled(false)
@@ -78,4 +77,3 @@ final class JettyTestServer(baseUrlBox: Box[URL]) {
   }
 
 }
-

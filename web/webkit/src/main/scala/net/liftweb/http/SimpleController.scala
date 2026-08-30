@@ -17,16 +17,13 @@
 package net.liftweb
 package http
 
-import scala.collection.immutable.TreeMap
 import net.liftweb.common._
-import net.liftweb.util._
 import provider._
 
 /**
  * The base trait of Controllers that handle pre-view requests
  */
-trait SimpleController
- {
+trait SimpleController {
   def request: Req
 
   def httpRequest: HTTPRequest
@@ -35,9 +32,9 @@ trait SimpleController
     request.params.get(name) match {
       case None => Empty
       case Some(nl) => nl.take(1) match {
-        case Nil => Empty
-        case l => Full(l.head)
-      }
+          case Nil => Empty
+          case l => Full(l.head)
+        }
     }
   }
 
@@ -58,4 +55,3 @@ trait SimpleController
     httpRequest.session.removeAttribute(name)
   }
 }
-

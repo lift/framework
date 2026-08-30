@@ -32,14 +32,14 @@ object JsCommands {
 }
 
 /**
- * A container for accumulating `[[JsCmd]]`s that need to be sent to the client.
- * When `[[toResponse]]` is called to finalize the response, in addition to the
- * JS passed directly to this instance, the commands in `[[S.jsToAppend]]` are
- * also read and included in the response. Also in this process, all of the
- * `JsCmd` instances have their `toJsCmd` methods called to convert them to a
- * string.
+ * A container for accumulating `[[JsCmd]]`s that need to be sent to the client. When
+ * `[[toResponse]]` is called to finalize the response, in addition to the JS passed directly to
+ * this instance, the commands in `[[S.jsToAppend]]` are also read and included in the response.
+ * Also in this process, all of the `JsCmd` instances have their `toJsCmd` methods called to convert
+ * them to a string.
  *
- * @note The contents of `jsToAppend` are cleared in this process!
+ * @note
+ *   The contents of `jsToAppend` are cleared in this process!
  */
 class JsCommands(val reverseList: List[JsCmd]) {
   def &(in: JsCmd) = new JsCommands(in :: reverseList)
@@ -54,7 +54,13 @@ class JsCommands(val reverseList: List[JsCmd]) {
 
     val data = (containedJs ++ toAppend).mkString("\n").getBytes("UTF-8")
 
-    InMemoryResponse(data, List("Content-Length" -> data.length.toString, "Content-Type" -> "text/javascript; charset=utf-8"), S.responseCookies, 200)
+    InMemoryResponse(
+      data,
+      List(
+        "Content-Length" -> data.length.toString,
+        "Content-Type" -> "text/javascript; charset=utf-8"),
+      S.responseCookies,
+      200)
   }
 }
 
@@ -64,36 +70,34 @@ case class JsonCall(funcId: String) {
   def apply(command: String): JsCmd = apply(JE.Str(command))
 
   def apply(command: JsExp): JsCmd =
-  JsCmds.Run(funcId + "({'command': " + command.toJsCmd + ", 'params': false});")
+    JsCmds.Run(funcId + "({'command': " + command.toJsCmd + ", 'params': false});")
 
   def apply(command: String, params: JsExp) =
-  JsCmds.Run(funcId + "({'command': " + command.encJs + ", 'params':" +
-             params.toJsCmd + "});")
+    JsCmds.Run(funcId + "({'command': " + command.encJs + ", 'params':" +
+      params.toJsCmd + "});")
 
   def apply(command: String, target: String, params: JsExp) =
-  JsCmds.Run(funcId + "({'command': " + command.encJs + ", 'target': " +
-             target.encJs +
-             ", 'params':" +
-             params.toJsCmd + "});")
-
+    JsCmds.Run(funcId + "({'command': " + command.encJs + ", 'target': " +
+      target.encJs +
+      ", 'params':" +
+      params.toJsCmd + "});")
 
   def apply(command: JsExp, params: JsExp) =
-  JsCmds.Run(funcId + "({'command': " + command.toJsCmd + ", 'params':" +
-             params.toJsCmd + "});")
+    JsCmds.Run(funcId + "({'command': " + command.toJsCmd + ", 'params':" +
+      params.toJsCmd + "});")
 
   def apply(command: JsExp, target: JsExp, params: JsExp) =
-  JsCmds.Run(funcId + "({'command': " + command.toJsCmd + ", 'target': " +
-             target.toJsCmd +
-             ", 'params':" +
-             params.toJsCmd + "});")
+    JsCmds.Run(funcId + "({'command': " + command.toJsCmd + ", 'target': " +
+      target.toJsCmd +
+      ", 'params':" +
+      params.toJsCmd + "});")
 
 }
-
 
 trait JsObj extends JsExp {
   def props: List[(String, JsExp)]
 
-  def toJsCmd = props.map {case (n, v) => n.encJs + ": " + v.toJsCmd}.mkString("{", ", ", "}")
+  def toJsCmd = props.map { case (n, v) => n.encJs + ": " + v.toJsCmd }.mkString("{", ", ", "}")
 
   override def toString(): String = toJsCmd
 
@@ -115,7 +119,7 @@ trait JsObj extends JsExp {
           }
         }
 
-        test(Map(props :_*), jsObj.props)
+        test(Map(props: _*), jsObj.props)
       }
 
       case x => super.equals(x)
@@ -130,11 +134,13 @@ trait JsObj extends JsExp {
   }
 
   /**
-    * Overwrites any existing keys and adds the rest.
-    */
+   * Overwrites any existing keys and adds the rest.
+   */
   def extend(other: JsObj) = {
     // existing, non-existing props
-    val (ep, nep) = other.props.partition { case (key, exp) => props.exists { case (k, e) => k == key }}
+    val (ep, nep) = other.props.partition { case (key, exp) =>
+      props.exists { case (k, e) => k == key }
+    }
     // replaced props
     val rp = props.map { case (key, exp) =>
       ep.find { case (k, e) => k == key }.getOrElse(key -> exp)
@@ -147,8 +153,7 @@ trait JsObj extends JsExp {
 }
 
 /**
- * The companion object to JsExp that has some
- * helpful conversions to/from Lift's JSON library
+ * The companion object to JsExp that has some helpful conversions to/from Lift's JSON library
  */
 object JsExp {
   import json._
@@ -189,14 +194,14 @@ trait JsExp extends HtmlFixer with ToJsCmd {
     }
   }
 
-  override def toString = "JsExp("+toJsCmd+")"
+  override def toString = "JsExp(" + toJsCmd + ")"
 
   def appendToParent(parentName: String): JsCmd = {
     val ran = "v" + Helpers.nextFuncName
     JsCmds.JsCrVar(ran, this) &
-    JE.JsRaw("if (" + ran + ".parentNode) " + ran + " = " + ran + ".cloneNode(true)").cmd &
-    JE.JsRaw("if (" + ran + ".nodeType) {" + parentName + ".appendChild(" + ran + ");} else {" +
-             parentName + ".appendChild(document.createTextNode(" + ran + "));}").cmd
+      JE.JsRaw("if (" + ran + ".parentNode) " + ran + " = " + ran + ".cloneNode(true)").cmd &
+      JE.JsRaw("if (" + ran + ".nodeType) {" + parentName + ".appendChild(" + ran + ");} else {" +
+        parentName + ".appendChild(document.createTextNode(" + ran + "));}").cmd
   }
 
   /**
@@ -206,11 +211,9 @@ trait JsExp extends HtmlFixer with ToJsCmd {
     def toJsCmd = JsExp.this.toJsCmd + "." + right.toJsCmd
   }
 
-
   def ~>(right: Box[JsMember]): JsExp = right.dmap(this)(r => ~>(r))
 
   def cmd: JsCmd = JsCmds.Run(toJsCmd + ";")
-
 
   def +(right: JsExp): JsExp = new JsExp {
     def toJsCmd = JsExp.this.toJsCmd + " + " + right.toJsCmd
@@ -227,15 +230,13 @@ trait JsMember {
 }
 
 /**
- * JavaScript Expressions. To see these in action, check out
- * sites/example/src/webapp/json.html
+ * JavaScript Expressions. To see these in action, check out sites/example/src/webapp/json.html
  */
 object JE {
   def boolToJsExp(in: Boolean): JsExp = if (in) JsTrue else JsFalse
 
   /**
-   * The companion object to Num which has some helpful
-   * constructors
+   * The companion object to Num which has some helpful constructors
    */
   object Num {
     def apply(i: Int): Num = new Num(i)
@@ -257,7 +258,7 @@ object JE {
       def toJsCmd = in.map(_.toJsCmd).mkString("[", ", ", "]\n")
     }.toJsCmd
 
-    def this(in: List[JsExp]) = this (in: _*)
+    def this(in: List[JsExp]) = this(in: _*)
   }
 
   object JsArray {
@@ -265,14 +266,16 @@ object JE {
   }
 
   case class ValById(id: String) extends JsExp {
-    def toJsCmd = "(function() {if (document.getElementById(" + id.encJs + ")) {return document.getElementById(" + id.encJs + ").value;} else {return null;}})()"
+    def toJsCmd =
+      "(function() {if (document.getElementById(" + id.encJs + ")) {return document.getElementById(" + id.encJs + ").value;} else {return null;}})()"
   }
 
   /**
    * Given the id of a checkbox, see if it's checked
    */
   case class CheckedById(id: String) extends JsExp {
-    def toJsCmd = "(function() {if (document.getElementById(" + id.encJs + ")) {return document.getElementById(" + id.encJs + ").checked} else {return false;}})()"
+    def toJsCmd =
+      "(function() {if (document.getElementById(" + id.encJs + ")) {return document.getElementById(" + id.encJs + ").checked} else {return false;}})()"
   }
 
   /**
@@ -299,8 +302,8 @@ object JE {
         def child = Nil
 
         def appendToParent(name: String): JsCmd =
-        JsRaw(name + ".appendChild(lift$.swappable(" + visible.toJsCmd
-              + ", " + hidden.toJsCmd + "))").cmd
+          JsRaw(name + ".appendChild(lift$.swappable(" + visible.toJsCmd
+            + ", " + hidden.toJsCmd + "))").cmd
       }
     }
 
@@ -309,33 +312,39 @@ object JE {
         def child = Nil
 
         def appendToParent(name: String): JsCmd =
-        JsRaw(name + ".appendChild(lift$.swappable(" + AnonFunc(
+          JsRaw(name + ".appendChild(lift$.swappable(" + AnonFunc(
             JsCmds.JsCrVar("df", JsRaw("document.createDocumentFragment()")) &
-            addToDocFrag("df", visible.toList) &
-            JE.JsRaw("return df").cmd
+              addToDocFrag("df", visible.toList) &
+              JE.JsRaw("return df").cmd
           ).toJsCmd
-              + "(), " + AnonFunc(JsCmds.JsCrVar("df", JsRaw("document.createDocumentFragment()")) &
-                                  addToDocFrag("df", hidden.toList) &
-                                  JE.JsRaw("return df").cmd).toJsCmd + "()))").cmd
+            + "(), " + AnonFunc(JsCmds.JsCrVar("df", JsRaw("document.createDocumentFragment()")) &
+              addToDocFrag("df", hidden.toList) &
+              JE.JsRaw("return df").cmd).toJsCmd + "()))").cmd
       }
     }
   }
 
   object LjBuildIndex {
-    def apply(obj: String,
-              indexName: String, tables: (String, String)*): JsExp = new JsExp {
+    def apply(
+        obj: String,
+        indexName: String,
+        tables: (String, String)*): JsExp = new JsExp {
       def toJsCmd = "lift$.buildIndex(" + obj + ", " + indexName.encJs +
-      (if (tables.isEmpty) "" else ", " +
-       tables.map {case (l, r) => "[" + l.encJs + ", " + r.encJs + "]"}.mkString(", ")) +
-      ")"
+        (if (tables.isEmpty) ""
+         else ", " +
+           tables.map { case (l, r) => "[" + l.encJs + ", " + r.encJs + "]" }.mkString(", ")) +
+        ")"
     }
 
-    def apply(obj: JsExp,
-              indexName: String, tables: (String, String)*): JsExp = new JsExp {
+    def apply(
+        obj: JsExp,
+        indexName: String,
+        tables: (String, String)*): JsExp = new JsExp {
       def toJsCmd = "lift$.buildIndex(" + obj.toJsCmd + ", " + indexName.encJs +
-      (if (tables.isEmpty) "" else ", " +
-       tables.map {case (l, r) => "[" + l.encJs + ", " + r.encJs + "]"}.mkString(", ")) +
-      ")"
+        (if (tables.isEmpty) ""
+         else ", " +
+           tables.map { case (l, r) => "[" + l.encJs + ", " + r.encJs + "]" }.mkString(", ")) +
+        ")"
     }
   }
 
@@ -367,11 +376,13 @@ object JE {
 
   object LjMagicUpdate {
     def apply(obj: String, field: String, idField: String, toUpdate: JsExp): JsExp = new JsExp {
-      def toJsCmd = "lift$.magicUpdate(" + obj + ", " + field.encJs + ", " + idField.encJs + ", " + toUpdate.toJsCmd + ")"
+      def toJsCmd =
+        "lift$.magicUpdate(" + obj + ", " + field.encJs + ", " + idField.encJs + ", " + toUpdate.toJsCmd + ")"
     }
 
     def apply(obj: JsExp, field: String, idField: String, toUpdate: JsExp): JsExp = new JsExp {
-      def toJsCmd = "lift$.magicUpdate(" + obj.toJsCmd + ", " + field.encJs + ", " + idField.encJs + ", " + toUpdate.toJsCmd + ")"
+      def toJsCmd =
+        "lift$.magicUpdate(" + obj.toJsCmd + ", " + field.encJs + ", " + idField.encJs + ", " + toUpdate.toJsCmd + ")"
     }
   }
 
@@ -430,7 +441,8 @@ object JE {
    * A JavaScript method that takes parameters
    *
    * JsFunc is very similar to Call but only the latter will be implicitly converted to a JsCmd.
-   * @see Call
+   * @see
+   *   Call
    */
   case class JsFunc(method: String, params: JsExp*) extends JsMember {
     def toJsCmd = params.map(_.toJsCmd).mkString(method + "(", ", ", ")")
@@ -439,8 +451,7 @@ object JE {
   }
 
   /**
-   * Put any JavaScript expression you want in here and the result will be
-   * evaluated.
+   * Put any JavaScript expression you want in here and the result will be evaluated.
    */
   case class JsRaw(rawJsCmd: String) extends JsExp {
     def toJsCmd = rawJsCmd
@@ -490,7 +501,8 @@ object JE {
    * A JavaScript method that takes parameters
    *
    * Call is very similar to JsFunc but only the former will be implicitly converted to a JsCmd.
-   * @see JsFunc
+   * @see
+   *   JsFunc
    */
   case class Call(function: String, params: JsExp*) extends JsExp {
     def toJsCmd = function + "(" + params.map(_.toJsCmd).mkString(",") + ")"
@@ -503,7 +515,7 @@ object JE {
 
     def applied(params: JsExp*): JsExp = new JsExp {
       def toJsCmd = "(" + AnonFunc.this.toJsCmd + ")" +
-      params.map(_.toJsCmd).mkString("(", ",", ")")
+        params.map(_.toJsCmd).mkString("(", ",", ")")
     }
 
   }
@@ -520,9 +532,9 @@ object JE {
 
   object JsObj {
     def apply(members: (String, JsExp)*): JsObj =
-    new JsObj {
-      def props = members.toList
-    }
+      new JsObj {
+        def props = members.toList
+      }
   }
 
   case class JsLt(left: JsExp, right: JsExp) extends JsExp {
@@ -561,51 +573,47 @@ object JE {
     def toJsCmd = "!" + exp.toJsCmd
   }
 
-
 }
 
 trait HtmlFixer {
 
   /**
-   * Calls fixHtmlAndJs and if there's embedded script tags,
-   * construct a function that executes the contents of the scripts
-   * then evaluations to Expression.  For use when converting
-   * a JsExp that contains HTML.
+   * Calls fixHtmlAndJs and if there's embedded script tags, construct a function that executes the
+   * contents of the scripts then evaluations to Expression. For use when converting a JsExp that
+   * contains HTML.
    *
-   *
-   * @note Currently, `fixHtmlFunc` does '''not''' do event extraction, even when
-   *       `LiftRules.extractInlineJavaScript` is `true`, due to poor interactions
-   *       with `JsExp` usage. This will be fixed in a future Lift release; see
-   *       https://github.com/lift/framework/issues/1801 .
+   * @note
+   *   Currently, `fixHtmlFunc` does '''not''' do event extraction, even when
+   *   `LiftRules.extractInlineJavaScript` is `true`, due to poor interactions with `JsExp` usage.
+   *   This will be fixed in a future Lift release; see
+   *   https://github.com/lift/framework/issues/1801 .
    */
   def fixHtmlFunc(uid: String, content: NodeSeq)(f: String => String) =
     fixHtmlAndJs(uid, content, forceExtractInlineJavaScript = Some(false)) match {
       case (str, Nil) => f(str)
-      case (str, cmds) => "((function() {"+cmds.reduceLeft{_ & _}.toJsCmd+" return "+f(str)+";})())"
+      case (str, cmds) =>
+        "((function() {" + cmds.reduceLeft { _ & _ }.toJsCmd + " return " + f(str) + ";})())"
     }
 
   /**
-   * Calls fixHtmlAndJs and if there's embedded script tags,
-   * append the JsCmds to the String returned from applying
-   * the function to the enclosed HTML.
-   * For use when converting
-   * a JsCmd that contains HTML.
+   * Calls fixHtmlAndJs and if there's embedded script tags, append the JsCmds to the String
+   * returned from applying the function to the enclosed HTML. For use when converting a JsCmd that
+   * contains HTML.
    */
   def fixHtmlCmdFunc(uid: String, content: NodeSeq)(f: String => String) =
     fixHtmlAndJs(uid, content) match {
       case (str, Nil) => f(str)
-      case (str, cmds) => f(str)+"; "+cmds.reduceLeft(_ & _).toJsCmd
+      case (str, cmds) => f(str) + "; " + cmds.reduceLeft(_ & _).toJsCmd
     }
 
   /**
-   * Super important... call fixHtml at instance creation time and only once
-   * This method must be run in the context of the thing creating the XHTML
-   * to capture the bound functions
+   * Super important... call fixHtml at instance creation time and only once This method must be run
+   * in the context of the thing creating the XHTML to capture the bound functions
    */
   protected def fixHtmlAndJs(
-    uid: String,
-    content: NodeSeq,
-    forceExtractInlineJavaScript: Option[Boolean] = None
+      uid: String,
+      content: NodeSeq,
+      forceExtractInlineJavaScript: Option[Boolean] = None
   ): (String, List[JsCmd]) = {
     import Helpers._
 
@@ -672,10 +680,11 @@ trait JsCmd extends HtmlFixer with ToJsCmd {
 
   def toJsCmd: String
 
-  override def toString() = "JsCmd("+toJsCmd+")"
+  override def toString() = "JsCmd(" + toJsCmd + ")"
 }
 
 object JsCmd {
+
   /**
    * If you've got Unit and need a JsCmd, return a Noop
    */
@@ -686,14 +695,16 @@ object JsCmds {
   implicit def seqJsToJs(in: Seq[JsCmd]): JsCmd = in.foldLeft[JsCmd](Noop)(_ & _)
 
   object Script {
-    def apply(script: JsCmd): Node = <script type="text/javascript">{Unparsed("""
+    def apply(script: JsCmd): Node = <script type="text/javascript">{
+      Unparsed("""
 // <![CDATA[
 """ + fixEndScriptTag(script.toJsCmd) + """
 // ]]>
-""")}</script>
+""")
+    }</script>
 
     private def fixEndScriptTag(in: String): String =
-    """\<\/script\>""".r.replaceAllIn(in, """<\\/script>""")
+      """\<\/script\>""".r.replaceAllIn(in, """<\\/script>""")
   }
 
   def JsHideId(what: String): JsCmd = LiftRules.jsArtifacts.hide(what).cmd
@@ -726,15 +737,18 @@ object JsCmds {
   /**
    * Makes the parameter the selected HTML element on load of the page
    *
-   * @param in the element that should have focus
+   * @param in
+   *   the element that should have focus
    *
-   * @return the element and a script that will give the element focus
+   * @return
+   *   the element and a script that will give the element focus
    */
-  @deprecated("Use S.appendJs(Focus(id))","3.0.0")
+  @deprecated("Use S.appendJs(Focus(id))", "3.0.0")
   object FocusOnLoad {
     def apply(in: Elem): NodeSeq = {
       val (elem, id) = findOrAddId(in)
-      elem ++ Script(LiftRules.jsArtifacts.onLoad(Run("if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").focus();};")))
+      elem ++ Script(LiftRules.jsArtifacts.onLoad(Run(
+        "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").focus();};")))
     }
   }
 
@@ -742,32 +756,32 @@ object JsCmds {
    * Sets the value of an element and sets the focus
    */
   case class SetValueAndFocus(id: String, value: String) extends JsCmd {
-    def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").value = " +
-            value.encJs +
-            "; document.getElementById(" + id.encJs + ").focus();};"
+    def toJsCmd =
+      "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").value = " +
+        value.encJs +
+        "; document.getElementById(" + id.encJs + ").focus();};"
   }
 
   /**
    * Sets the focus on the element denominated by the id
    */
   case class Focus(id: String) extends JsCmd {
-    def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").focus();};"
+    def toJsCmd =
+      "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").focus();};"
   }
 
-
   /**
-   * Creates a JavaScript function with a name, a parameters list and
-   * a function body
+   * Creates a JavaScript function with a name, a parameters list and a function body
    */
   object Function {
     def apply(name: String, params: List[String], body: JsCmd): JsCmd =
-    new JsCmd {
-      def toJsCmd = "function " + name + "(" +
-      params.mkString(", ") + """) {
+      new JsCmd {
+        def toJsCmd = "function " + name + "(" +
+          params.mkString(", ") + """) {
     """ + body.toJsCmd + """
     }
 """
-    }
+      }
   }
 
   /**
@@ -778,38 +792,38 @@ object JsCmds {
   }
 
   /**
-   * Sets the value to the element having the 'id' attribute with
-   * the result of the 'right' expression
+   * Sets the value to the element having the 'id' attribute with the result of the 'right'
+   * expression
    */
   case class SetValById(id: String, right: JsExp) extends JsCmd {
-    def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").value = " +
-    right.toJsCmd + ";};"
+    def toJsCmd =
+      "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ").value = " +
+        right.toJsCmd + ";};"
   }
 
   /**
-   * Assigns the value computed by the 'right' expression to the
-   * 'left' expression.
+   * Assigns the value computed by the 'right' expression to the 'left' expression.
    */
   case class SetExp(left: JsExp, right: JsExp) extends JsCmd {
     def toJsCmd = left.toJsCmd + " = " + right.toJsCmd + ";"
   }
 
   /**
-   * Creates a JavaScript var named by 'name' and assigns it the
-   * value of 'right' expression.
+   * Creates a JavaScript var named by 'name' and assigns it the value of 'right' expression.
    */
   case class JsCrVar(name: String, right: JsExp) extends JsCmd {
     def toJsCmd = "var " + name + " = " + right.toJsCmd + ";"
   }
 
   /**
-   * Assigns the value of 'right' to the members of the element
-   * having this 'id', chained by 'then' sequences
+   * Assigns the value of 'right' to the members of the element having this 'id', chained by 'then'
+   * sequences
    */
   case class SetElemById(id: String, right: JsExp, thenStr: String*) extends JsCmd {
-    def toJsCmd = "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ")" + (
-      if (thenStr.isEmpty) "" else thenStr.mkString(".", ".", "")
-    ) + " = " + right.toJsCmd + ";};"
+    def toJsCmd =
+      "if (document.getElementById(" + id.encJs + ")) {document.getElementById(" + id.encJs + ")" + (
+        if (thenStr.isEmpty) "" else thenStr.mkString(".", ".", "")
+      ) + " = " + right.toJsCmd + ";};"
   }
 
   implicit def jsExpToJsCmd(in: JsExp): JsCmd = in.cmd
@@ -869,12 +883,14 @@ object JsCmds {
   def Noop: JsCmd = _Noop
 
   case class JsTry(what: JsCmd, alert: Boolean) extends JsCmd {
-    def toJsCmd = "try { " + what.toJsCmd + " } catch (e) {" + (if (alert) "alert(e);" else "") + "}"
+    def toJsCmd =
+      "try { " + what.toJsCmd + " } catch (e) {" + (if (alert) "alert(e);" else "") + "}"
   }
 
   /**
    * JsSchedule the execution of the JsCmd using setTimeout()
-   * @param what the code to execute
+   * @param what
+   *   the code to execute
    */
   case class JsSchedule(what: JsCmd) extends JsCmd {
     def toJsCmd = s"""setTimeout(function()
@@ -887,27 +903,27 @@ object JsCmds {
    * A companion object with a helpful alternative constructor
    */
   object RedirectTo {
+
     /**
-     * Redirect to a page and execute the function
-     * when the page is loaded (only if the page is on the
-     * same server, not going to some other server on the internet)
+     * Redirect to a page and execute the function when the page is loaded (only if the page is on
+     * the same server, not going to some other server on the internet)
      */
     def apply(where: String, func: () => Unit): RedirectTo =
-    S.session match {
-      case Full(liftSession) =>
-        new RedirectTo(liftSession.attachRedirectFunc(where, Full(func)))
-      case _ => new RedirectTo(where)
-    }
+      S.session match {
+        case Full(liftSession) =>
+          new RedirectTo(liftSession.attachRedirectFunc(where, Full(func)))
+        case _ => new RedirectTo(where)
+      }
   }
 
   case class RedirectTo(where: String) extends JsCmd {
     private val where2 = // issue 176
-    if (where.startsWith("/") &&
-        !LiftRules.excludePathFromContextPathRewriting.vend(where)) (S.contextPath + where) else where
+      if (where.startsWith("/") &&
+        !LiftRules.excludePathFromContextPathRewriting.vend(where)) (S.contextPath + where)
+      else where
 
     def toJsCmd = "window.location = " + S.encodeURL(where2).encJs + ";"
   }
-
 
   /**
    * Reload the current page
@@ -916,36 +932,40 @@ object JsCmds {
     def toJsCmd = "window.location.reload();"
   }
 
-
   /**
    * Update a Select with new Options
    */
-  case class ReplaceOptions(select: String, opts: List[(String, String)], dflt: Box[String]) extends JsCmd {
+  case class ReplaceOptions(select: String, opts: List[(String, String)], dflt: Box[String])
+      extends JsCmd {
     def toJsCmd = """var x=document.getElementById(""" + select.encJs + """);
     if (x) {
     while (x.length > 0) {x.remove(0);}
     var y = null;
     """ +
-    opts.map {
-      case (value, text) =>
-        "y=document.createElement('option'); " +
-        "y.text = " + text.encJs + "; " +
-        "y.value = " + value.encJs + "; " +
-        (if (Full(value) == dflt) "y.selected = true; " else "") +
-        " try {x.add(y, null);} catch(e) {if (typeof(e) == 'object' && typeof(e.number) == 'number' && (e.number & 0xFFFF) == 5){ x.add(y,x.options.length); } } "
-    }.mkString("\n")+"};"
+      opts.map {
+        case (value, text) =>
+          "y=document.createElement('option'); " +
+            "y.text = " + text.encJs + "; " +
+            "y.value = " + value.encJs + "; " +
+            (if (Full(value) == dflt) "y.selected = true; " else "") +
+            " try {x.add(y, null);} catch(e) {if (typeof(e) == 'object' && typeof(e.number) == 'number' && (e.number & 0xFFFF) == 5){ x.add(y,x.options.length); } } "
+      }.mkString("\n") + "};"
   }
 
   case object JsIf {
-    def apply(condition: JsExp, body: JsCmd): JsCmd = JE.JsRaw("if ( " + condition.toJsCmd + " ) { " + body.toJsCmd + " }")
+    def apply(condition: JsExp, body: JsCmd): JsCmd =
+      JE.JsRaw("if ( " + condition.toJsCmd + " ) { " + body.toJsCmd + " }")
 
     def apply(condition: JsExp, bodyTrue: JsCmd, bodyFalse: JsCmd): JsCmd =
-    JE.JsRaw("if ( " + condition.toJsCmd + " ) { " + bodyTrue.toJsCmd + " } else { " + bodyFalse.toJsCmd + " }")
+      JE.JsRaw(
+        "if ( " + condition.toJsCmd + " ) { " + bodyTrue.toJsCmd + " } else { " + bodyFalse.toJsCmd + " }")
 
-    def apply(condition: JsExp, body: JsExp): JsCmd = JE.JsRaw("if ( " + condition.toJsCmd + " ) { " + body.toJsCmd + " }")
+    def apply(condition: JsExp, body: JsExp): JsCmd =
+      JE.JsRaw("if ( " + condition.toJsCmd + " ) { " + body.toJsCmd + " }")
 
     def apply(condition: JsExp, bodyTrue: JsExp, bodyFalse: JsExp): JsCmd =
-    JE.JsRaw("if ( " + condition.toJsCmd + " ) { " + bodyTrue.toJsCmd + " } else { " + bodyFalse.toJsCmd + " }")
+      JE.JsRaw(
+        "if ( " + condition.toJsCmd + " ) { " + bodyTrue.toJsCmd + " } else { " + bodyFalse.toJsCmd + " }")
   }
 
   case class JsWhile(condition: JsExp, body: JsExp) extends JsCmd {
@@ -960,10 +980,11 @@ object JsCmds {
     def toJsCmd = "do { " + body.toJsCmd + " } while ( " + condition.toJsCmd + " )"
   }
 
-  case class JsFor(initialExp: JsExp, condition: JsExp, incrementExp: JsExp, body: JsExp) extends JsCmd {
+  case class JsFor(initialExp: JsExp, condition: JsExp, incrementExp: JsExp, body: JsExp)
+      extends JsCmd {
     def toJsCmd = "for ( " + initialExp.toJsCmd + "; " +
-    condition.toJsCmd + "; " +
-    incrementExp.toJsCmd + " ) { " + body.toJsCmd + " }"
+      condition.toJsCmd + "; " +
+      incrementExp.toJsCmd + " ) { " + body.toJsCmd + " }"
   }
 
   case class JsForIn(initialExp: JsExp, reference: String, body: JsCmd) extends JsCmd {
@@ -991,21 +1012,19 @@ object JsCmds {
 }
 
 /**
-* A collection of defaults for JavaScript related stuff
-*/
+ * A collection of defaults for JavaScript related stuff
+ */
 object JsRules {
+
   /**
-  * The default duration for displaying FadeOut and FadeIn
-  * messages.
-  */
-  //@deprecated
+   * The default duration for displaying FadeOut and FadeIn messages.
+   */
+  // @deprecated
   @volatile var prefadeDuration: Helpers.TimeSpan = 5.seconds
 
   /**
-  * The default fade time for fading FadeOut and FadeIn
-  * messages.
-  */
-  //@deprecated
+   * The default fade time for fading FadeOut and FadeIn messages.
+   */
+  // @deprecated
   @volatile var fadeTime: Helpers.TimeSpan = 1.second
 }
-

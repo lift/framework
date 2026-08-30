@@ -21,20 +21,19 @@ package encoder
 
 import java.util._
 import net.liftweb.http.provider.{HTTPCookie, SameSite}
-import net.liftweb.common.{Full}
 
 /**
-  * Converts an HTTPCookie into a string to used as header cookie value.
-  * 
-  * The string representation follows the <a href="https://tools.ietf.org/html/rfc6265">RFC6265</a>
-  * standard with the added field of SameSite to support secure browsers as explained at
-  * <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite">MDN SameSite Cookies</a>
-  *
-  * This code is based on the Netty's HTTP cookie encoder.
-  *
-  * Multiple cookies are supported just sending separate "Set-Cookie" headers for each cookie.
-  *
-  */
+ * Converts an HTTPCookie into a string to used as header cookie value.
+ *
+ * The string representation follows the <a href="https://tools.ietf.org/html/rfc6265">RFC6265</a>
+ * standard with the added field of SameSite to support secure browsers as explained at <a
+ * href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite">MDN SameSite
+ * Cookies</a>
+ *
+ * This code is based on the Netty's HTTP cookie encoder.
+ *
+ * Multiple cookies are supported just sending separate "Set-Cookie" headers for each cookie.
+ */
 object CookieEncoder {
 
   private val VALID_COOKIE_NAME_OCTETS = validCookieNameOctets();
@@ -59,8 +58,19 @@ object CookieEncoder {
 
   private val DAY_OF_WEEK_TO_SHORT_NAME = Array("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
 
-  private val CALENDAR_MONTH_TO_SHORT_NAME = Array("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug",
-                                                   "Sep", "Oct", "Nov", "Dec")
+  private val CALENDAR_MONTH_TO_SHORT_NAME = Array(
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec")
 
   def encode(cookie: HTTPCookie): String = {
     val name = cookie.name
@@ -107,28 +117,30 @@ object CookieEncoder {
     val posFirstInvalidCookieNameOctet = firstInvalidCookieNameOctet(name)
     if (posFirstInvalidCookieNameOctet >= 0) {
       throw new IllegalArgumentException("Cookie name contains an invalid char: " +
-                                          name.charAt(posFirstInvalidCookieNameOctet))
+        name.charAt(posFirstInvalidCookieNameOctet))
     }
     val unwrappedValue = unwrapValue(value);
     if (unwrappedValue == null) {
       throw new IllegalArgumentException("Cookie value wrapping quotes are not balanced: " +
-                                          value);
+        value);
     }
     val postFirstInvalidCookieValueOctet = firstInvalidCookieValueOctet(unwrappedValue)
     if (postFirstInvalidCookieValueOctet >= 0) {
       throw new IllegalArgumentException("Cookie value contains an invalid char: " +
-                                          unwrappedValue.charAt(postFirstInvalidCookieValueOctet));
+        unwrappedValue.charAt(postFirstInvalidCookieValueOctet));
     }
   }
 
   /**
-    * Checks if the cookie is set with an old version 0.
-    * 
-    * More info about the cookie version at https://javadoc.io/static/jakarta.servlet/jakarta.servlet-api/5.0.0/jakarta/servlet/http/Cookie.html#setVersion-int-
-    *
-    * @param cookie
-    * @return true if the cookie version is 0, false if it has no value or a different value than 0
-    */
+   * Checks if the cookie is set with an old version 0.
+   *
+   * More info about the cookie version at
+   * https://javadoc.io/static/jakarta.servlet/jakarta.servlet-api/5.0.0/jakarta/servlet/http/Cookie.html#setVersion-int-
+   *
+   * @param cookie
+   * @return
+   *   true if the cookie version is 0, false if it has no value or a different value than 0
+   */
   private def isOldVersionCookie(cookie: HTTPCookie): Boolean = {
     cookie.version map (_ == 0) getOrElse false
   }
@@ -155,8 +167,9 @@ object CookieEncoder {
   private def validCookieNameOctets() = {
     val bits = new BitSet()
     (32 until 127) foreach bits.set
-    val separators = Array('(', ')', '<', '>', '@', ',', ';', ':', '\\', '"', '/', '[', ']', '?', '=', '{',
-                           '}', ' ', '\t' )
+    val separators =
+      Array('(', ')', '<', '>', '@', ',', ';', ':', '\\', '"', '/', '[', ']', '?', '=', '{',
+        '}', ' ', '\t')
     separators.foreach(separator => bits.set(separator, false))
     bits
   }
@@ -164,10 +177,10 @@ object CookieEncoder {
   private def validCookieValueOctets() = {
     val bits = new BitSet()
     bits.set(0x21);
-    (0x23 to 0x2B) foreach bits.set
-    (0x2D to 0x3A) foreach bits.set
-    (0x3C to 0x5B) foreach bits.set
-    (0x5D to 0x7E) foreach bits.set
+    (0x23 to 0x2b) foreach bits.set
+    (0x2d to 0x3a) foreach bits.set
+    (0x3c to 0x5b) foreach bits.set
+    (0x5d to 0x7e) foreach bits.set
     bits
   }
 
@@ -219,7 +232,7 @@ object CookieEncoder {
     (0 until cs.length()).foreach { i =>
       val c = cs.charAt(i)
       if (!bits.get(c)) {
-      return i;
+        return i;
       }
     }
     -1;

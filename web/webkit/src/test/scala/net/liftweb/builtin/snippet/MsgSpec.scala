@@ -31,7 +31,7 @@ import util.Helpers.secureXML
 class MsgSpec extends Specification with XmlMatchers {
   "Msg Specification".title
 
-  def withSession[T](f: => T) : T =
+  def withSession[T](f: => T): T =
     S.initIfUninitted(new LiftSession("test", "", Empty))(f)
 
   "The built-in Msg snippet" should {
@@ -43,7 +43,10 @@ class MsgSpec extends Specification with XmlMatchers {
         S.notice("foo", "Notice")
 
         // We reparse due to inconsistencies with UnparsedAttributes
-        val result = S.withAttrs(new UnprefixedAttribute("id", Text("foo"), new UnprefixedAttribute("noticeClass", Text("funky"), Null))) {
+        val result = S.withAttrs(new UnprefixedAttribute(
+          "id",
+          Text("foo"),
+          new UnprefixedAttribute("noticeClass", Text("funky"), Null))) {
           secureXML.loadString(Msg.render(<div/>).toString)
         }
 
@@ -52,14 +55,17 @@ class MsgSpec extends Specification with XmlMatchers {
     }
 
     "Properly render AJAX content for a given id" in {
-       withSession {
+      withSession {
         // Set some notices
         S.error("foo", "Error")
         S.warning("bar", "Warning")
         S.notice("foo", "Notice")
 
         // We reparse due to inconsistencies with UnparsedAttributes
-        val result = S.withAttrs(new UnprefixedAttribute("id", Text("foo"), new UnprefixedAttribute("noticeClass", Text("funky"), Null))) {
+        val result = S.withAttrs(new UnprefixedAttribute(
+          "id",
+          Text("foo"),
+          new UnprefixedAttribute("noticeClass", Text("funky"), Null))) {
           Msg.render(<div/>).toString // render this first so attrs get captured
           LiftRules.noticesToJsCmd().toString.replace("\n", "")
         }
@@ -69,4 +75,3 @@ class MsgSpec extends Specification with XmlMatchers {
     }
   }
 }
-

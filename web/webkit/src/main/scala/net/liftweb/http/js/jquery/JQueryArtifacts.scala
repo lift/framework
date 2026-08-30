@@ -19,18 +19,14 @@ package http
 package js
 package jquery
 
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.NodeSeq
 
-import net.liftweb.http.S
-import net.liftweb.http.js.JE
-import net.liftweb.http.js.JsCmds
-import JE._
 import JqJE._
 import JqJsCmds._
 import util.Helpers._
-import util.Props
 
 trait JQueryArtifacts extends JSArtifacts {
+
   /**
    * Toggles between current JS object and the object denominated by id
    */
@@ -56,12 +52,13 @@ trait JQueryArtifacts extends JSArtifacts {
    * Shows the element denominated by id and puts the focus on it
    */
   def showAndFocus(id: String) = JqId(id) ~> new JsMember {
-    def toJsCmd = "show().each(function(i) {var t = this; setTimeout(function() { t.focus(); }, 200);})"
+    def toJsCmd =
+      "show().each(function(i) {var t = this; setTimeout(function() { t.focus(); }, 200);})"
   }
 
   /**
-   * Serializes a form denominated by the id. It returns a query string
-   * containing the fields that are to be submitted
+   * Serializes a form denominated by the id. It returns a query string containing the fields that
+   * are to be submitted
    */
   def serialize(id: String) = JqId(id) ~> new JsMember {
     def toJsCmd = "serialize()"
@@ -78,14 +75,13 @@ trait JQueryArtifacts extends JSArtifacts {
   def setHtml(id: String, content: NodeSeq): JsCmd = JqJsCmds.JqSetHtml(id, content)
 
   /**
-   * Sets the JavScript that will be executed when document is ready
-   * for processing
+   * Sets the JavScript that will be executed when document is ready for processing
    */
   def onLoad(cmd: JsCmd): JsCmd = JqJsCmds.JqOnLoad(cmd)
 
   /**
-   * Fades out the element having the provided id, by waiting
-   * for the given duration and fades out during fadeTime
+   * Fades out the element having the provided id, by waiting for the given duration and fades out
+   * during fadeTime
    */
   def fadeOut(id: String, duration: TimeSpan, fadeTime: TimeSpan) =
     FadeOut(id, duration, fadeTime)
@@ -106,13 +102,13 @@ trait JQueryArtifacts extends JSArtifacts {
 
   private def toJson(info: AjaxInfo, server: String, path: String => JsExp): String =
     (("url : " + path(server).toJsCmd) ::
-            "data : " + info.data.toJsCmd ::
-            ("type : " + info.action.encJs) ::
-            ("dataType : " + info.dataType.encJs) ::
-            "timeout : " + info.timeout ::
-            "cache : " + info.cache :: Nil) ++
-            info.successFunc.map("success : " + _).toList ++
-            info.failFunc.map("error : " + _).toList mkString ("{ ", ", ", " }")
+      "data : " + info.data.toJsCmd ::
+      ("type : " + info.action.encJs) ::
+      ("dataType : " + info.dataType.encJs) ::
+      "timeout : " + info.timeout ::
+      "cache : " + info.cache :: Nil) ++
+      info.successFunc.map("success : " + _).toList ++
+      info.failFunc.map("error : " + _).toList mkString ("{ ", ", ", " }")
 }
 
 case object JQueryArtifacts extends JQueryArtifacts

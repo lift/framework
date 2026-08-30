@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
+package net.liftweb
+package http
 
 import provider._
 
-abstract class RequestType extends Serializable{
+abstract class RequestType extends Serializable {
   def post_? : Boolean = false
 
   def get_? : Boolean = false
@@ -53,7 +53,7 @@ case object PutRequest extends RequestType {
   override def put_? = true
   val method = "PUT"
 }
-case object PatchRequest extends RequestType{
+case object PatchRequest extends RequestType {
   override def patch_? : Boolean = true
   val method: String = "PATCH"
 }
@@ -81,4 +81,3 @@ object RequestType {
     }
   }
 }
-

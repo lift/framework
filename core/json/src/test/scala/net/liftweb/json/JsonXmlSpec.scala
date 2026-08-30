@@ -22,11 +22,10 @@ import org.specs2.ScalaCheck
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.forAll
 
-
 /**
  * System under specification for JSON XML.
  */
-class JsonXmlSpec extends Specification  with NodeGen with JValueGen with ScalaCheck {
+class JsonXmlSpec extends Specification with NodeGen with JValueGen with ScalaCheck {
   "JSON XML Specification".title
 
   import Xml._

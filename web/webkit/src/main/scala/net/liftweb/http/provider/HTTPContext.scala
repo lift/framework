@@ -21,7 +21,6 @@ package provider
 import java.io.{InputStream}
 import java.net.{URL}
 import net.liftweb.common._
-import net.liftweb.util._
 
 /**
  * Represents the service context information. Similar with servlet context.
@@ -29,8 +28,9 @@ import net.liftweb.util._
 trait HTTPContext {
 
   /**
-   * @return the context path. It always comes first in a request URI. It is
-   *         the URI part that represent to context of the request.
+   * @return
+   *   the context path. It always comes first in a request URI. It is the URI part that represent
+   *   to context of the request.
    */
   def path: String
 
@@ -52,27 +52,31 @@ trait HTTPContext {
 
   /**
    * @param path
-   * @return the mime type mapped to resource determined by this path.
+   * @return
+   *   the mime type mapped to resource determined by this path.
    */
   def mimeType(path: String): Box[String]
 
   /**
    * @param name
-   * @return the value of the init parameter identified by then provided name. Note
-   *         that this is not typesfe and you need to explicitely do the casting
-   *         when reading this attribute. Returns Empty if this parameter does not exist.
+   * @return
+   *   the value of the init parameter identified by then provided name. Note that this is not
+   *   typesfe and you need to explicitely do the casting when reading this attribute. Returns Empty
+   *   if this parameter does not exist.
    */
   def initParam(name: String): Box[String]
 
   /**
-   * @return a List of Tuple2 consisting of name and value pair of the init parameters
+   * @return
+   *   a List of Tuple2 consisting of name and value pair of the init parameters
    */
   def initParams: List[(String, String)]
 
   /**
    * @param name
-   * @return the value of the context attribute identified by then provided name.
-   *         Returns Empty if this parameter does not exist.
+   * @return
+   *   the value of the context attribute identified by then provided name. Returns Empty if this
+   *   parameter does not exist.
    */
   def attribute(name: String): Box[Any]
 
@@ -82,14 +86,15 @@ trait HTTPContext {
   def attributes: List[(String, Any)]
 
   /**
-   * @param value. Any reference. Note that this is not typesfe and you need to
-   *        explicitely cast when reading this attribute.
+   * @param value.
+   *   Any reference. Note that this is not typesfe and you need to explicitely cast when reading
+   *   this attribute.
    */
   def setAttribute(name: String, value: Any): Unit
 
   /**
-   * @param name. The name ofthe parameter that needs to be removed.
+   * @param name.
+   *   The name ofthe parameter that needs to be removed.
    */
   def removeAttribute(name: String): Unit
 }
-

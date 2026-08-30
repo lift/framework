@@ -21,7 +21,6 @@ import net.liftweb.mockweb.WebSpec
 import org.mockito.Mockito._
 import org.specs2.mock.Mockito
 
-
 object OfflineRequestSnapshotSpec extends WebSpec with Mockito {
 
   private[this] val X_SSL = "X-SSL"
@@ -47,7 +46,9 @@ object OfflineRequestSnapshotSpec extends WebSpec with Mockito {
         }
 
         s"the '$X_SSL' header is not set to the string 'true' (case-insensitive)" in {
-          val falseSSLHeaderReq = getRequestSnapshot(originalPort = 90, headers =  HTTPParam(X_SSL, List("anything")) :: Nil)
+          val falseSSLHeaderReq = getRequestSnapshot(
+            originalPort = 90,
+            headers = HTTPParam(X_SSL, List("anything")) :: Nil)
           falseSSLHeaderReq.serverPort shouldEqual 90
         }
 
@@ -70,8 +71,10 @@ object OfflineRequestSnapshotSpec extends WebSpec with Mockito {
     }
   }
 
-
-  private[this] def getRequestSnapshot(originalPort: Int, headers: List[HTTPParam] = Nil, params: List[HTTPParam] = Nil) = {
+  private[this] def getRequestSnapshot(
+      originalPort: Int,
+      headers: List[HTTPParam] = Nil,
+      params: List[HTTPParam] = Nil) = {
     val mockHttpRequest = mock[HTTPRequest]
     val httpProvider = new HTTPProvider {
       override protected def context: HTTPContext = null

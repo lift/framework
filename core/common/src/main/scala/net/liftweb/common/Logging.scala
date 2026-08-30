@@ -16,7 +16,7 @@
 
 package net.liftweb
 package common
-  
+
 import org.slf4j.{MDC => SLF4JMDC, Marker, Logger => SLF4JLogger, LoggerFactory}
 
 /**
@@ -56,78 +56,80 @@ object Logger {
     setup.foreach { _() }
     true
   }
-  
+
   /**
    * This function, if set, will be called before any loggers are created.
-   * 
+   *
    * Useful for initializing the logging backend with a non-default configuration.
-   * 
+   *
    * Helpers exists for [[Log4j log4j]] and [[Logback logback]]:
-   * 
+   *
    * {{{
    * Logger.setup = Full(Log4j.withFile(url)
    * }}}
-   * 
+   *
    * or
    *
    * {{{
    * Logger.setup = Full(Logback.withFile(url))
    * }}}
-   * 
    */
   var setup: Box[() => Unit] = Empty
-  
+
   def loggerNameFor(cls: Class[_]) = {
     val className = cls.getName
-    if (className endsWith "$") 
+    if (className endsWith "$")
       className.substring(0, className.length - 1)
-    else 
+    else
       className
   }
 
-  def apply(cls: Class[_]): Logger = if (ranSetup) new WrappedLogger(LoggerFactory.getLogger(loggerNameFor(cls))) else null
-  def apply(name: String): Logger = if (ranSetup) new WrappedLogger(LoggerFactory.getLogger(name)) else null
-  
- /**
-   * Set the [[http://www.slf4j.org/manual.html#mdc Mapped Diagnostic Context]]
-   * for the thread and execute the block `f`.
+  def apply(cls: Class[_]): Logger =
+    if (ranSetup) new WrappedLogger(LoggerFactory.getLogger(loggerNameFor(cls))) else null
+  def apply(name: String): Logger =
+    if (ranSetup) new WrappedLogger(LoggerFactory.getLogger(name)) else null
+
+  /**
+   * Set the [[http://www.slf4j.org/manual.html#mdc Mapped Diagnostic Context]] for the thread and
+   * execute the block `f`.
    *
-   * Upon return, the MDC is cleared of the values passed (any MDC values that
-   * existed prior to this call remains).
+   * Upon return, the MDC is cleared of the values passed (any MDC values that existed prior to this
+   * call remains).
    */
-  def logWith[F](mdcValues: (String,Any)*)(f: => F): F = {
+  def logWith[F](mdcValues: (String, Any)*)(f: => F): F = {
     val old = SLF4JMDC.getCopyOfContextMap
-    MDC.put(mdcValues:_*)
+    MDC.put(mdcValues: _*)
     try {
       f
     } finally {
-      if (old eq null) 
+      if (old eq null)
         MDC.clear()
-      else  
+      else
         SLF4JMDC.setContextMap(old)
     }
   }
 }
 
 /**
- * The Mapped Diagnostics Context can hold values per thread and output them
- * with each logged output.
+ * The Mapped Diagnostics Context can hold values per thread and output them with each logged
+ * output.
  *
  * The logging backend needs to be configured to log these values.
  */
 object MDC {
+
   /**
    * Put a (key,value) pair into the Mapped Diagnostic Context
    */
-  def put(kvs: (String,Any)*) = {
-    kvs foreach {v => SLF4JMDC.put(v._1, v._2.toString)}
+  def put(kvs: (String, Any)*) = {
+    kvs foreach { v => SLF4JMDC.put(v._1, v._2.toString) }
   }
 
   /**
    * Clear key from the Mapped Diagnostic Context
    */
   def remove(keys: String*) = {
-    keys foreach {k => SLF4JMDC.remove(k)}
+    keys foreach { k => SLF4JMDC.remove(k) }
   }
 
   /**
@@ -140,143 +142,167 @@ object MDC {
  * `Logger` is a thin wrapper on top of an SLF4J Logger.
  *
  * The main purpose is to utilize Scala features for logging.
- * 
+ *
  * Note that the dynamic type of "this" is used when this trait is mixed in.
- * 
- * This may not always be what you want. If you need the static type, you have
- * to declare your own `Logger`:
- * 
+ *
+ * This may not always be what you want. If you need the static type, you have to declare your own
+ * `Logger`:
+ *
  * {{{
  * class MyClass {
  *   val logger = Logger(classOf[MyClass])
  * }
  * }}}
  */
-trait Logger  {
+trait Logger {
   private lazy val logger: SLF4JLogger = _logger
 
-  protected def _logger = if (Logger.ranSetup) LoggerFactory.getLogger(Logger.loggerNameFor(this.getClass)) else null
-  
+  protected def _logger =
+    if (Logger.ranSetup) LoggerFactory.getLogger(Logger.loggerNameFor(this.getClass)) else null
+
   def assertLog(assertion: Boolean, msg: => String) = if (assertion) info(msg)
 
   /**
    * Log the value of v with trace and return v. Useful for tracing values in expressions
    */
   def trace[T](msg: String, v: T): T = {
-    logger.trace(msg+": "+v.toString)
+    logger.trace(msg + ": " + v.toString)
     v
   }
- 
+
   /**
-   * Trace a `[[Failure]]`.  If the log level is trace and the `[[Box]]` is a
-   * `Failure`, trace the message concatenated with the `Failure`'s message. If
-   * the `Failure` contains an `Exception`, trace that as well.
+   * Trace a `[[Failure]]`. If the log level is trace and the `[[Box]]` is a `Failure`, trace the
+   * message concatenated with the `Failure`'s message. If the `Failure` contains an `Exception`,
+   * trace that as well.
    */
   def trace(msg: => AnyRef, box: Box[_]): Unit = {
     if (logger.isTraceEnabled) {
       box match {
-        case Failure(fmsg, Full(e), _) => trace(String.valueOf(msg)+": "+
-                                                fmsg: AnyRef, e: Throwable)
-        case Failure(fmsg, _, _) => trace(String.valueOf(msg)+": "+fmsg)
+        case Failure(fmsg, Full(e), _) => trace(
+            String.valueOf(msg) + ": " +
+              fmsg: AnyRef,
+            e: Throwable)
+        case Failure(fmsg, _, _) => trace(String.valueOf(msg) + ": " + fmsg)
         case _ =>
       }
     }
   }
 
-
   def trace(msg: => AnyRef) = if (logger.isTraceEnabled) logger.trace(String.valueOf(msg))
-  def trace(msg: => AnyRef, t: Throwable) = if (logger.isTraceEnabled) logger.trace(String.valueOf(msg), t)
-  def trace(msg: => AnyRef, marker:  Marker) = if (logger.isTraceEnabled) logger.trace(marker,String.valueOf(msg))
-  def trace(msg: => AnyRef, t: Throwable, marker: => Marker) = if (logger.isTraceEnabled) logger.trace(marker,String.valueOf(msg), t)
+  def trace(msg: => AnyRef, t: Throwable) =
+    if (logger.isTraceEnabled) logger.trace(String.valueOf(msg), t)
+  def trace(msg: => AnyRef, marker: Marker) =
+    if (logger.isTraceEnabled) logger.trace(marker, String.valueOf(msg))
+  def trace(msg: => AnyRef, t: Throwable, marker: => Marker) =
+    if (logger.isTraceEnabled) logger.trace(marker, String.valueOf(msg), t)
   def isTraceEnabled = logger.isTraceEnabled
 
   /**
-   * Debug a `Failure`.  If the log level is debug and the `Box` is a
-   * `Failure`, debug the message concatenated with the `Failure`'s message.  If
-   * the `Failure` contains an `Exception`, debug that as well.
+   * Debug a `Failure`. If the log level is debug and the `Box` is a `Failure`, debug the message
+   * concatenated with the `Failure`'s message. If the `Failure` contains an `Exception`, debug that
+   * as well.
    */
   def debug(msg: => AnyRef, box: Box[_]): Unit = {
     if (logger.isDebugEnabled) {
       box match {
-        case Failure(fmsg, Full(e), _) => debug(String.valueOf(msg)+": "+
-                                                fmsg, e)
-        case Failure(fmsg, _, _) => debug(String.valueOf(msg)+": "+fmsg)
+        case Failure(fmsg, Full(e), _) => debug(
+            String.valueOf(msg) + ": " +
+              fmsg,
+            e)
+        case Failure(fmsg, _, _) => debug(String.valueOf(msg) + ": " + fmsg)
         case _ =>
       }
     }
   }
- 
-  
+
   def debug(msg: => AnyRef) = if (logger.isDebugEnabled) logger.debug(String.valueOf(msg))
-  def debug(msg: => AnyRef, t:  Throwable) = if (logger.isDebugEnabled) logger.debug(String.valueOf(msg), t)
-  def debug(msg: => AnyRef, marker: Marker) = if (logger.isDebugEnabled) logger.debug(marker, String.valueOf(msg))
-  def debug(msg: => AnyRef, t: Throwable, marker: Marker) = if (logger.isDebugEnabled) logger.debug(marker, String.valueOf(msg), t)
+  def debug(msg: => AnyRef, t: Throwable) =
+    if (logger.isDebugEnabled) logger.debug(String.valueOf(msg), t)
+  def debug(msg: => AnyRef, marker: Marker) =
+    if (logger.isDebugEnabled) logger.debug(marker, String.valueOf(msg))
+  def debug(msg: => AnyRef, t: Throwable, marker: Marker) =
+    if (logger.isDebugEnabled) logger.debug(marker, String.valueOf(msg), t)
   def isDebugEnabled = logger.isDebugEnabled
-  
+
   /**
-   * Info a `Failure`.  If the log level is info and the `Box` is a `Failure`,
-   * info the message concatenated with the `Failure`'s message.  If the
-   * `Failure` contains an `Exception`, info that as well.
+   * Info a `Failure`. If the log level is info and the `Box` is a `Failure`, info the message
+   * concatenated with the `Failure`'s message. If the `Failure` contains an `Exception`, info that
+   * as well.
    */
   def info(msg: => AnyRef, box: Box[_]): Unit = {
     if (logger.isInfoEnabled) {
       box match {
-        case Failure(fmsg, Full(e), _) => info(String.valueOf(msg)+": "+
-                                                fmsg, e)
-        case Failure(fmsg, _, _) => info(String.valueOf(msg)+": "+fmsg)
+        case Failure(fmsg, Full(e), _) => info(
+            String.valueOf(msg) + ": " +
+              fmsg,
+            e)
+        case Failure(fmsg, _, _) => info(String.valueOf(msg) + ": " + fmsg)
         case _ =>
       }
     }
   }
   def info(msg: => AnyRef) = if (logger.isInfoEnabled) logger.info(String.valueOf(msg))
-  def info(msg: => AnyRef, t: => Throwable) = if (logger.isInfoEnabled) logger.info(String.valueOf(msg), t)
-  def info(msg: => AnyRef, marker: Marker) = if (logger.isInfoEnabled) logger.info(marker,String.valueOf(msg))
-  def info(msg: => AnyRef, t: Throwable, marker: Marker) = if (logger.isInfoEnabled) logger.info(marker,String.valueOf(msg), t)
+  def info(msg: => AnyRef, t: => Throwable) =
+    if (logger.isInfoEnabled) logger.info(String.valueOf(msg), t)
+  def info(msg: => AnyRef, marker: Marker) =
+    if (logger.isInfoEnabled) logger.info(marker, String.valueOf(msg))
+  def info(msg: => AnyRef, t: Throwable, marker: Marker) =
+    if (logger.isInfoEnabled) logger.info(marker, String.valueOf(msg), t)
   def isInfoEnabled = logger.isInfoEnabled
-  
+
   /**
-   * Warn a `Failure`.  If the log level is warn and the `Box` is a `Failure`,
-   * warn the message concatenated with the `Failure`'s message.  If the
-   * `Failure` contains an `Exception`, warn that as well.
+   * Warn a `Failure`. If the log level is warn and the `Box` is a `Failure`, warn the message
+   * concatenated with the `Failure`'s message. If the `Failure` contains an `Exception`, warn that
+   * as well.
    */
   def warn(msg: => AnyRef, box: Box[_]): Unit = {
     if (logger.isWarnEnabled) {
       box match {
-        case Failure(fmsg, Full(e), _) => warn(String.valueOf(msg)+": "+
-                                                fmsg, e)
-        case Failure(fmsg, _, _) => warn(String.valueOf(msg)+": "+fmsg)
+        case Failure(fmsg, Full(e), _) => warn(
+            String.valueOf(msg) + ": " +
+              fmsg,
+            e)
+        case Failure(fmsg, _, _) => warn(String.valueOf(msg) + ": " + fmsg)
         case _ =>
       }
     }
   }
   def warn(msg: => AnyRef) = if (logger.isWarnEnabled) logger.warn(String.valueOf(msg))
-  def warn(msg: => AnyRef, t: Throwable) = if (logger.isWarnEnabled) logger.warn(String.valueOf(msg), t)
-  def warn(msg: => AnyRef, marker: Marker) = if (logger.isWarnEnabled) logger.warn(marker,String.valueOf(msg))
-  def warn(msg: => AnyRef, t: Throwable, marker: Marker) = if (logger.isWarnEnabled) logger.warn(marker,String.valueOf(msg), t)
+  def warn(msg: => AnyRef, t: Throwable) =
+    if (logger.isWarnEnabled) logger.warn(String.valueOf(msg), t)
+  def warn(msg: => AnyRef, marker: Marker) =
+    if (logger.isWarnEnabled) logger.warn(marker, String.valueOf(msg))
+  def warn(msg: => AnyRef, t: Throwable, marker: Marker) =
+    if (logger.isWarnEnabled) logger.warn(marker, String.valueOf(msg), t)
   def isWarnEnabled = logger.isWarnEnabled
-  
+
   /**
-   * Error a `Failure`.  If the log level is error and the `Box` is a `Failure`,
-   * error the message concatenated with the `Failure`'s message.  If the
-   * `Failure` contains an `Exception`, error that as well.
+   * Error a `Failure`. If the log level is error and the `Box` is a `Failure`, error the message
+   * concatenated with the `Failure`'s message. If the `Failure` contains an `Exception`, error that
+   * as well.
    */
   def error(msg: => AnyRef, box: Box[_]): Unit = {
     if (logger.isErrorEnabled) {
       box match {
-        case Failure(fmsg, Full(e), _) => error(String.valueOf(msg)+": "+
-                                                fmsg, e)
-        case Failure(fmsg, _, _) => error(String.valueOf(msg)+": "+fmsg)
+        case Failure(fmsg, Full(e), _) => error(
+            String.valueOf(msg) + ": " +
+              fmsg,
+            e)
+        case Failure(fmsg, _, _) => error(String.valueOf(msg) + ": " + fmsg)
         case _ =>
       }
     }
   }
 
   def error(msg: => AnyRef) = if (logger.isErrorEnabled) logger.error(String.valueOf(msg))
-  def error(msg: => AnyRef, t: Throwable) = if (logger.isErrorEnabled) logger.error(String.valueOf(msg), t)
-  def error(msg: => AnyRef, marker: Marker) = if (logger.isErrorEnabled) logger.error(marker,String.valueOf(msg))
-  def error(msg: => AnyRef, t: Throwable, marker: Marker) = if (logger.isErrorEnabled) logger.error(marker,String.valueOf(msg), t)
+  def error(msg: => AnyRef, t: Throwable) =
+    if (logger.isErrorEnabled) logger.error(String.valueOf(msg), t)
+  def error(msg: => AnyRef, marker: Marker) =
+    if (logger.isErrorEnabled) logger.error(marker, String.valueOf(msg))
+  def error(msg: => AnyRef, t: Throwable, marker: Marker) =
+    if (logger.isErrorEnabled) logger.error(marker, String.valueOf(msg), t)
   def isErrorEnabled = logger.isErrorEnabled
-  
+
 }
 
 /**
@@ -287,19 +313,19 @@ class WrappedLogger(l: SLF4JLogger) extends Logger {
 }
 
 /**
- * If you mix this into your class, you will get a protected `logger` instance
- * `val` that will be a `[[Logger]]` instance.
+ * If you mix this into your class, you will get a protected `logger` instance `val` that will be a
+ * `[[Logger]]` instance.
  */
 trait Loggable {
   @transient protected val logger = Logger(this.getClass)
 }
 
 /**
- * If you mix this into your class, you will get a protected `logger` instance
- * `lazy val` that will be a `[[Logger]]` instance.
- * 
- * Useful for mixing into objects that are created before Lift has booted (and
- * thus Logging is not yet configured).
+ * If you mix this into your class, you will get a protected `logger` instance `lazy val` that will
+ * be a `[[Logger]]` instance.
+ *
+ * Useful for mixing into objects that are created before Lift has booted (and thus Logging is not
+ * yet configured).
  */
 trait LazyLoggable {
   @transient protected lazy val logger = Logger(this.getClass)
@@ -309,12 +335,12 @@ trait LazyLoggable {
  * Configuration helpers for the log4j logging backend.
  */
 object Log4j {
-  import org.apache.log4j.{LogManager,PropertyConfigurator}
+  import org.apache.log4j.{LogManager, PropertyConfigurator}
   import org.apache.log4j.xml.DOMConfigurator
-  
+
   /**
-   * Default configuration for log4j backend. Appends to the console with a
-   * simple layout at `INFO` level.
+   * Default configuration for log4j backend. Appends to the console with a simple layout at `INFO`
+   * level.
    */
   val defaultProps =
     """<?xml version="1.0" encoding="UTF-8" ?>
@@ -329,28 +355,28 @@ object Log4j {
     </root>
     </log4j:configuration>
     """
-  
+
   /**
-   * Configure with the contents of the file at the specified `url` (either
-   * `.xml` or `.properties`).
+   * Configure with the contents of the file at the specified `url` (either `.xml` or
+   * `.properties`).
    */
   def withFile(url: java.net.URL)() = {
     if (url.getPath.endsWith(".xml")) {
       val domConf = new DOMConfigurator
       domConf.doConfigure(url, LogManager.getLoggerRepository())
-    } else 
+    } else
       PropertyConfigurator.configure(url)
   }
+
   /**
-   * Configure with the specified configuration. `config` must contain a valid
-   * XML document.
+   * Configure with the specified configuration. `config` must contain a valid XML document.
    */
   def withConfig(config: String)() = {
     val domConf = new DOMConfigurator
     val is = new java.io.ByteArrayInputStream(config.getBytes("UTF-8"))
     domConf.doConfigure(is, LogManager.getLoggerRepository())
   }
-  
+
   /**
    * Configure with simple defaults. See [[defaultProps]].
    */
@@ -360,9 +386,8 @@ object Log4j {
 /**
  * Configuration helpers for the Logback logging backend.
  */
-object Logback  {
-  import ch.qos.logback.classic.LoggerContext;
-  import ch.qos.logback.core.util.StatusPrinter;
+object Logback {
+  import ch.qos.logback.classic.LoggerContext;;
   import ch.qos.logback.classic.joran.JoranConfigurator;
 
   /**
@@ -373,8 +398,7 @@ object Logback  {
     val configurator = new JoranConfigurator();
     configurator.setContext(lc);
     // the context was probably already configured by default configuration rules
-    lc.reset(); 
+    lc.reset();
     configurator.doConfigure(url);
   }
 }
-

@@ -18,16 +18,13 @@ package net.liftweb
 package http
 package testing
 
-import net.liftweb.util.Helpers._
-import net.liftweb.common.{ Box, Full, Empty, Failure}
-import net.liftweb.util.{Helpers}
+import net.liftweb.common.Box
 
 /*
  * The purpose of these classes is not to run actual tests,
  * but to insure that tests can be run correctly by
  * making sure they compile correctly
  */
-
 
 object MyCode extends TestKit {
   val baseUrl = ""
@@ -36,14 +33,13 @@ object MyCode extends TestKit {
   l2.foreach {
     x: HttpResponse =>
       val l3: TestResponse = x.get("ddd")
-    println("Hello")
+      println("Hello")
   }
 
-  
   for {
     login <- post("/whatever")
     next <- login.get("/bla")
-  } {} 
+  } {}
 }
 
 object MyBoxCode extends RequestKit {
@@ -53,14 +49,12 @@ object MyBoxCode extends RequestKit {
   l2.foreach {
     x: TheResponse =>
       val l3: Box[TheResponse] = x.get("ddd")
-    println("Hello")
+      println("Hello")
   }
 
-  
   for {
     login: TheResponse <- post("/whatever")
     next <- login.get("/bla")
-  } {} 
-  
-}
+  } {}
 
+}

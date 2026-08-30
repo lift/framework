@@ -21,10 +21,11 @@ import net.liftweb.http.{LiftRules, S}
 import scala.xml.{Elem, Text, NodeSeq}
 import net.liftweb.util.Helpers
 
-
 trait FlexMenuBuilder {
   // a hack to use structural typing to get around the private[http] on Loc.buildItem
-  type StructBuildItem = {def buildItem(kids: List[MenuItem], current: Boolean, path: Boolean): Box[MenuItem]}
+  type StructBuildItem = {
+    def buildItem(kids: List[MenuItem], current: Boolean, path: Boolean): Box[MenuItem]
+  }
 
   /**
    * Override if you want a link to the current page
@@ -32,7 +33,7 @@ trait FlexMenuBuilder {
   def linkToSelf = false
 
   /**
-   * Should all the menu items be expanded?  Defaults to false
+   * Should all the menu items be expanded? Defaults to false
    */
   def expandAll = false
 
@@ -44,16 +45,19 @@ trait FlexMenuBuilder {
   /**
    * This is used to build a MenuItem for a single Loc
    */
-  protected def buildItemMenu[A](loc: Loc[A], currLoc: Box[Loc[_]], expandAll: Boolean): List[MenuItem] = {
+  protected def buildItemMenu[A](
+      loc: Loc[A],
+      currLoc: Box[Loc[_]],
+      expandAll: Boolean): List[MenuItem] = {
     val isInPath = currLoc.map { cur =>
-      def isInPath(loc: Loc[_]): Boolean = (cur == loc) || loc.menu.kids.exists(k => isInPath(k.loc))
+      def isInPath(loc: Loc[_]): Boolean =
+        (cur == loc) || loc.menu.kids.exists(k => isInPath(k.loc))
       isInPath(loc)
     } openOr false
 
     val kids: List[MenuItem] = if (expandAll) loc.buildKidMenuItems(loc.menu.kids) else Nil
     loc.buildItem(kids, currLoc == Full(loc), isInPath).toList
   }
-
 
   /**
    * Compute the MenuItems to be rendered by looking at the 'item' and 'group' attributes
@@ -97,14 +101,14 @@ trait FlexMenuBuilder {
   protected def emptyPlaceholder: NodeSeq = NodeSeq.Empty
 
   /**
-   * Take the incoming Elem and add any attributes based on
-   * path which is true if this Elem is the path to the current page
+   * Take the incoming Elem and add any attributes based on path which is true if this Elem is the
+   * path to the current page
    */
   protected def updateForPath(nodes: Elem, path: Boolean): Elem = nodes
 
   /**
-   * Take the incoming Elem and add any attributes based on
-   * current which is a flag that indicates this is the currently viewed page
+   * Take the incoming Elem and add any attributes based on current which is a flag that indicates
+   * this is the currently viewed page
    */
   protected def updateForCurrent(nodes: Elem, current: Boolean): Elem = nodes
 
@@ -114,27 +118,39 @@ trait FlexMenuBuilder {
   protected def buildInnerTag(contents: NodeSeq, path: Boolean, current: Boolean): Elem =
     updateForCurrent(updateForPath(<li>{contents}</li>, path), current)
 
-
   /**
    * Render a placeholder
    */
   protected def renderPlaceholder(item: MenuItem, renderInner: Seq[MenuItem] => NodeSeq): Elem = {
-    buildInnerTag(<xml:group><span>{item.text}</span>{renderInner(item.kids)}</xml:group>,
-      item.path, item.current)
+    buildInnerTag(
+      <xml:group><span>{item.text}</span>{renderInner(item.kids)}</xml:group>,
+      item.path,
+      item.current)
   }
 
   /**
    * Render a link that's the current link, but the "link to self" flag is set to true
    */
   protected def renderSelfLinked(item: MenuItem, renderInner: Seq[MenuItem] => NodeSeq): Elem =
-    buildInnerTag(<xml:group>{renderLink(item.uri, item.text, item.path,
-      item.current)}{renderInner(item.kids)}</xml:group>, item.path, item.current)
+    buildInnerTag(
+      <xml:group>{
+        renderLink(
+          item.uri,
+          item.text,
+          item.path,
+          item.current)
+      }{renderInner(item.kids)}</xml:group>,
+      item.path,
+      item.current)
 
   /**
    * Render the currently selected menu item, but with no a link back to self
    */
   protected def renderSelfNotLinked(item: MenuItem, renderInner: Seq[MenuItem] => NodeSeq): Elem =
-    buildInnerTag(<xml:group>{renderSelf(item)}{renderInner(item.kids)}</xml:group>, item.path, item.current)
+    buildInnerTag(
+      <xml:group>{renderSelf(item)}{renderInner(item.kids)}</xml:group>,
+      item.path,
+      item.current)
 
   /**
    * Render the currently selected menu item
@@ -151,15 +167,31 @@ trait FlexMenuBuilder {
    * Render an item in the current path
    */
   protected def renderItemInPath(item: MenuItem, renderInner: Seq[MenuItem] => NodeSeq): Elem =
-    buildInnerTag(<xml:group>{renderLink(item.uri, item.text, item.path,
-      item.current)}{renderInner(item.kids)}</xml:group>, item.path, item.current)
+    buildInnerTag(
+      <xml:group>{
+        renderLink(
+          item.uri,
+          item.text,
+          item.path,
+          item.current)
+      }{renderInner(item.kids)}</xml:group>,
+      item.path,
+      item.current)
 
   /**
    * Render a menu item that's neither in the path nor
    */
   protected def renderItem(item: MenuItem, renderInner: Seq[MenuItem] => NodeSeq): Elem =
-    buildInnerTag(<xml:group>{renderLink(item.uri, item.text, item.path,
-      item.current)}{renderInner(item.kids)}</xml:group>, item.path, item.current)
+    buildInnerTag(
+      <xml:group>{
+        renderLink(
+          item.uri,
+          item.text,
+          item.path,
+          item.current)
+      }{renderInner(item.kids)}</xml:group>,
+      item.path,
+      item.current)
 
   /**
    * Render the outer tag for a group of menu items
@@ -171,11 +203,11 @@ trait FlexMenuBuilder {
    */
   protected def renderWhat(expandAll: Boolean): Seq[MenuItem] =
     (if (expandAll)
-      for {
-        sm <- LiftRules.siteMap;
-        req <- S.request
-      } yield sm.buildMenu(req.location).lines
-    else S.request.map(_.buildMenu.lines)) openOr Nil
+       for {
+         sm <- LiftRules.siteMap;
+         req <- S.request
+       } yield sm.buildMenu(req.location).lines
+     else S.request.map(_.buildMenu.lines)) openOr Nil
 
   def render: NodeSeq = {
 
@@ -192,13 +224,17 @@ trait FlexMenuBuilder {
         def buildANavItem(i: MenuItem): NodeSeq = {
           i match {
             // Per Loc.PlaceHolder, placeholder implies HideIfNoKids
-            case m@MenuItem(text, uri, kids, _, _, _) if m.placeholder_? && kids.isEmpty => emptyPlaceholder
-            case m@MenuItem(text, uri, kids, _, _, _) if m.placeholder_? => renderPlaceholder(m, buildLine _)
-            case m@MenuItem(text, uri, kids, true, _, _) if linkToSelf   => renderSelfLinked(m, k => ifExpandCurrent(buildLine(k)))
-            case m@MenuItem(text, uri, kids, true, _, _) => renderSelfNotLinked(m, k => ifExpandCurrent(buildLine(k)))
+            case m @ MenuItem(text, uri, kids, _, _, _) if m.placeholder_? && kids.isEmpty =>
+              emptyPlaceholder
+            case m @ MenuItem(text, uri, kids, _, _, _) if m.placeholder_? =>
+              renderPlaceholder(m, buildLine _)
+            case m @ MenuItem(text, uri, kids, true, _, _) if linkToSelf =>
+              renderSelfLinked(m, k => ifExpandCurrent(buildLine(k)))
+            case m @ MenuItem(text, uri, kids, true, _, _) =>
+              renderSelfNotLinked(m, k => ifExpandCurrent(buildLine(k)))
             // Not current, but on the path, so we need to expand children to show the current one
-            case m@MenuItem(text, uri, kids, _, true, _) => renderItemInPath(m, buildLine _)
-            case m =>renderItem(m, buildLine _)
+            case m @ MenuItem(text, uri, kids, _, true, _) => renderItemInPath(m, buildLine _)
+            case m => renderItem(m, buildLine _)
           }
         }
 

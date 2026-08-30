@@ -17,7 +17,6 @@
 package net.liftweb
 package http
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.xml.NodeSeq
 import net.liftweb.common.{Full, Empty, Failure}
 import net.liftweb.util.Helpers.tryo
@@ -70,8 +69,9 @@ class LiftSessionSpec extends Specification with BeforeEach {
           session.sendCometMessage(cometName, Full(cometName), message)
         }
 
-        session.findOrCreateComet[TestCometActor](Full(cometName), NodeSeq.Empty, Map.empty).map { comet =>
-          comet !? NoOp /* Block to allow time for all messages to be collected */
+        session.findOrCreateComet[TestCometActor](Full(cometName), NodeSeq.Empty, Map.empty).map {
+          comet =>
+            comet !? NoOp /* Block to allow time for all messages to be collected */
         }
 
         receivedMessages mustEqual sendingMessages
@@ -93,8 +93,9 @@ class LiftSessionSpec extends Specification with BeforeEach {
         session.sendCometMessage(cometType, 1)
 
         // Ensure both process the message
-        session.findOrCreateComet[TestCometActor](Full(cometName), NodeSeq.Empty, Map.empty).map { comet =>
-          comet !? NoOp
+        session.findOrCreateComet[TestCometActor](Full(cometName), NodeSeq.Empty, Map.empty).map {
+          comet =>
+            comet !? NoOp
         }
         session.findOrCreateComet[TestCometActor](Empty, NodeSeq.Empty, Map.empty).map { comet =>
           comet !? NoOp
@@ -109,7 +110,10 @@ class LiftSessionSpec extends Specification with BeforeEach {
       val session = new LiftSession("Test Session", "", Empty)
 
       S.init(Empty, session) {
-        val result = session.findOrCreateComet[ExplodesInConstructorCometActor](Empty, NodeSeq.Empty, Map.empty)
+        val result = session.findOrCreateComet[ExplodesInConstructorCometActor](
+          Empty,
+          NodeSeq.Empty,
+          Map.empty)
 
         result match {
           case Failure(_, Full(ex: java.lang.reflect.InvocationTargetException), _) =>

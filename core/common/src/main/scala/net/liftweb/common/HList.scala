@@ -25,7 +25,7 @@ package common
  *
  * {{{
  * import net.liftweb.common.HLists._
- * 
+ *
  * trait Base
  * case class Type1(value: String) extends Base
  * case class Type2(otherValue: String) extends Base
@@ -38,9 +38,8 @@ package common
  * }
  * }}}
  *
- * Above, we see that the `HList` preserved the value of the types of its
- * members, otherwise we wouldn't have been able to fetch `value` and
- * `otherValue`, respectively.
+ * Above, we see that the `HList` preserved the value of the types of its members, otherwise we
+ * wouldn't have been able to fetch `value` and `otherValue`, respectively.
  *
  * Trying the same thing with a list won't work:
  *
@@ -53,15 +52,14 @@ package common
  * }
  * }}}
  *
- * This is because `value` is not defined in `Base`. The inferred type of the
- * `List` has to be a common ancestor class or trait of `Type1` and `Type2`, and
- * no such type has a `value` method.
+ * This is because `value` is not defined in `Base`. The inferred type of the `List` has to be a
+ * common ancestor class or trait of `Type1` and `Type2`, and no such type has a `value` method.
  */
 object HLists {
 
   /**
-   * The base trait for `HList`s. Functions that take `HList`s will need a type
-   * parameter subtype of `HList`:
+   * The base trait for `HList`s. Functions that take `HList`s will need a type parameter subtype of
+   * `HList`:
    *
    * {{{
    * def myHListFunction[T <: HList](list: HList) = {
@@ -72,8 +70,8 @@ object HLists {
   sealed trait HList
 
   /**
-   * The last element of an `HList`. This is the starting point for an `HList`,
-   * and you can use `[[HListMethods.:+: :+:]]` to start one based on it:
+   * The last element of an `HList`. This is the starting point for an `HList`, and you can use
+   * `[[HListMethods.:+: :+:]]` to start one based on it:
    *
    * {{{
    * scala> Type1("Value") :+: HNil
@@ -90,11 +88,10 @@ object HLists {
   val HNil = new HNil()
 
   /**
-   * The `HList` cons cell, which represents one part of an `HList` in linked
-   * list style.
+   * The `HList` cons cell, which represents one part of an `HList` in linked list style.
    *
-   * Carries the information about the type of this element, plus the `HList`
-   * type of the rest of the list.
+   * Carries the information about the type of this element, plus the `HList` type of the rest of
+   * the list.
    *
    * You can use `[[HListMethods.:+: :+:]]` to make this `HList` longer:
    *
@@ -113,9 +110,8 @@ object HLists {
   }
 
   /**
-   * Provides the methods that can be used on an `HList`. These are set apart
-   * here due to certain issues we can experience otherwise with the type variance
-   * on the `:+:` class.
+   * Provides the methods that can be used on an `HList`. These are set apart here due to certain
+   * issues we can experience otherwise with the type variance on the `:+:` class.
    */
   implicit final class HListMethods[ListSoFar <: HList](hlist: ListSoFar) extends AnyRef {
     def :+:[T](v: T): :+:[T, ListSoFar] = {
@@ -142,8 +138,8 @@ object HLists {
 sealed trait ExcludeThisType[A, B]
 
 /**
- * The companion object to `ExcludeThisType`. This allows one of specify that a
- * type is not a subtype of another type.
+ * The companion object to `ExcludeThisType`. This allows one of specify that a type is not a
+ * subtype of another type.
  *
  * Based on work by Miles Sabin.
  */
@@ -153,15 +149,14 @@ object ExcludeThisType {
   // Uses ambiguity to rule out the cases we're trying to exclude
   implicit def nsub[A, B]: A ExcludeThisType B = null
 
-  implicit def `This type was excluded because it was explicitly excluded`[A, B >: A]: A ExcludeThisType B = unexpected
+  implicit def `This type was excluded because it was explicitly excluded`[A, B >: A]
+      : A ExcludeThisType B = unexpected
 
-  implicit def `Ignore me, I only exist to cause the compiler to fail`[A, B >: A]: A ExcludeThisType B = unexpected
+  implicit def `Ignore me, I only exist to cause the compiler to fail`[A, B >: A]
+      : A ExcludeThisType B = unexpected
 
   // Type alias for context bound
   type exclude[T] = {
     type other[U] = U ExcludeThisType T
   }
 }
-
-
-

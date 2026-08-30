@@ -24,7 +24,8 @@ import http.{S, SHtml}
 
 import scala.xml.NodeSeq
 
-abstract class MappedUniqueId[T<:Mapper[T]](override val fieldOwner: T, override val maxLen: Int) extends MappedString[T](fieldOwner, maxLen) {
+abstract class MappedUniqueId[T <: Mapper[T]](override val fieldOwner: T, override val maxLen: Int)
+    extends MappedString[T](fieldOwner, maxLen) {
   override def writePermission_? = false
   override lazy val defaultValue = randomString(maxLen)
 
@@ -32,19 +33,21 @@ abstract class MappedUniqueId[T<:Mapper[T]](override val fieldOwner: T, override
 }
 
 /**
-  * A field that holds the birth year for the user
-  */
+ * A field that holds the birth year for the user
+ */
 abstract class MappedBirthYear[T <: Mapper[T]](owner: T, minAge: Int) extends MappedInt[T](owner) {
   override def defaultValue = year(now) - minAge
 
   override def _toForm: Box[NodeSeq] = {
     val end = (year(now) - minAge)
     val start = end - 100
-    Full(SHtml.selectObj((start to end).
-		  toList.
-		  reverse.
-		  map(y => (y, y.toString)),
-		  Full(get), this.set) % ("id" -> fieldId))
+    Full(SHtml.selectObj(
+      (start to end).
+      toList.
+      reverse.
+      map(y => (y, y.toString)),
+      Full(get),
+      this.set) % ("id" -> fieldId))
   }
 }
 
@@ -57,14 +60,17 @@ object Genders extends Enumeration {
   val Male = new I18NGender(1, "male")
   val Female = new I18NGender(2, "female")
 
-  class I18NGender(id : Int, name: String) extends Val(id, name) {
+  class I18NGender(id: Int, name: String) extends Val(id, name) {
     override def toString = {
       S.?(name)
     }
   }
 }
 
-abstract class MappedStringIndex[T<:Mapper[T]](override val fieldOwner: T, override val maxLen: Int) extends MappedUniqueId[T](fieldOwner, maxLen) with IndexedField[String] {
+abstract class MappedStringIndex[T <: Mapper[T]](
+    override val fieldOwner: T,
+    override val maxLen: Int) extends MappedUniqueId[T](fieldOwner, maxLen)
+    with IndexedField[String] {
 
   override def writePermission_? = false // not writable
 
@@ -84,5 +90,3 @@ abstract class MappedStringIndex[T<:Mapper[T]](override val fieldOwner: T, overr
   def convertKey(in: AnyRef): Box[String] =
     Box.legacyNullTest(in).map(_.toString)
 }
-
-

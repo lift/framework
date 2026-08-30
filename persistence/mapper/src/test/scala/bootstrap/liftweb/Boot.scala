@@ -20,9 +20,8 @@ import net.liftweb.http._
 import net.liftweb.sitemap._
 
 /**
-  * A class that's instantiated early and run.  It allows the application
-  * to modify lift's environment
-  */
+ * A class that's instantiated early and run. It allows the application to modify lift's environment
+ */
 class Boot {
   def boot(): Unit = {
     // where to search snippet
@@ -30,10 +29,10 @@ class Boot {
 
     // Build SiteMap
     val entries = Menu("Home") / "index" ::
-    Menu("htmlFragmentWithHead") / "htmlFragmentWithHead" ::
-    Menu("htmlSnippetWithHead") / "htmlSnippetWithHead" ::
-    Nil
+      Menu("htmlFragmentWithHead") / "htmlFragmentWithHead" ::
+      Menu("htmlSnippetWithHead") / "htmlSnippetWithHead" ::
+      Nil
 
-    LiftRules.setSiteMap(SiteMap(entries:_*))
+    LiftRules.setSiteMap(SiteMap(entries: _*))
   }
 }

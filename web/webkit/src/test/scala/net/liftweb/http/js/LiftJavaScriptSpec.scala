@@ -23,19 +23,18 @@ import java.util.Locale
 import net.liftweb.http.js.extcore.ExtCoreArtifacts
 import net.liftweb.http.js.jquery.JQueryArtifacts
 import org.specs2.execute.{Result, AsResult}
-import org.specs2.mutable.{Around,  Specification}
+import org.specs2.mutable.{Around, Specification}
 
 import common._
 import http.js._
 import http.js.JsCmds._
 import http.js.JE._
-import util.Props
 import util.Helpers._
 
 /**
-  * System under specification for LiftJavaScript.
-  */
-class LiftJavaScriptSpec extends Specification  {
+ * System under specification for LiftJavaScript.
+ */
+class LiftJavaScriptSpec extends Specification {
   sequential
   "LiftJavaScript Specification".title
 
@@ -143,7 +142,8 @@ class LiftJavaScriptSpec extends Specification  {
     }
     "create init command" in withEnglishLocale {
       S.initIfUninitted(session) {
-        val init = LiftRules.javaScriptSettings.vend().map(_.apply(session)).map(LiftJavaScript.initCmd(_).toJsCmd)
+        val init = LiftRules.javaScriptSettings.vend().map(_.apply(
+          session)).map(LiftJavaScript.initCmd(_).toJsCmd)
         init must_== Full(formatjs(List(
           "var lift_settings = {};",
           "window.lift.extend(lift_settings,window.liftJQuery);",
@@ -166,7 +166,8 @@ class LiftJavaScriptSpec extends Specification  {
     "create init command with VanillaJS" in withEnglishLocale {
       S.initIfUninitted(session) {
         LiftRules.jsArtifacts = ExtCoreArtifacts
-        val init = LiftRules.javaScriptSettings.vend().map(_.apply(session)).map(LiftJavaScript.initCmd(_).toJsCmd)
+        val init = LiftRules.javaScriptSettings.vend().map(_.apply(
+          session)).map(LiftJavaScript.initCmd(_).toJsCmd)
         init must_== Full(formatjs(List(
           "var lift_settings = {};",
           "window.lift.extend(lift_settings,window.liftVanilla);",
@@ -189,7 +190,8 @@ class LiftJavaScriptSpec extends Specification  {
     "create init command with custom setting" in withEnglishLocale {
       S.initIfUninitted(session) {
         LiftRules.jsArtifacts = JQueryArtifacts
-        val settings = LiftJavaScript.settings.extend(JsObj("liftPath" -> "liftyStuff", "mysetting" -> 99))
+        val settings =
+          LiftJavaScript.settings.extend(JsObj("liftPath" -> "liftyStuff", "mysetting" -> 99))
         val init = LiftJavaScript.initCmd(settings)
         init.toJsCmd must_== formatjs(List(
           "var lift_settings = {};",
@@ -213,11 +215,13 @@ class LiftJavaScriptSpec extends Specification  {
     }
   }
 
-  def formatjs(line:String):String = formatjs(line :: Nil)
-  def formatjs(lines:List[String]):String = lines.map { _.stripMargin.linesIterator.toList match {
-    case init :+ last => (init.map(_ + " ") :+ last).mkString
-    case Nil => ""
-  }}.mkString("\n")
+  def formatjs(line: String): String = formatjs(line :: Nil)
+  def formatjs(lines: List[String]): String = lines.map {
+    _.stripMargin.linesIterator.toList match {
+      case init :+ last => (init.map(_ + " ") :+ last).mkString
+      case Nil => ""
+    }
+  }.mkString("\n")
 
   object withEnglishLocale extends WithLocale(Locale.ENGLISH)
 

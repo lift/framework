@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package json 
+package net.liftweb
+package json
 
-/** A difference between two JSONs (j1 diff j2).
- * @param changed what has changed from j1 to j2
- * @param added what has been added to j2
- * @param deleted what has been deleted from j1
+/**
+ * A difference between two JSONs (j1 diff j2).
+ * @param changed
+ *   what has changed from j1 to j2
+ * @param added
+ *   what has been added to j2
+ * @param deleted
+ *   what has been deleted from j1
  */
 case class Diff(changed: JValue, added: JValue, deleted: JValue) {
   def map(f: JValue => JValue): Diff = {
@@ -40,17 +44,15 @@ case class Diff(changed: JValue, added: JValue, deleted: JValue) {
   }
 }
 
-/** Computes a diff between two JSONs.
+/**
+ * Computes a diff between two JSONs.
  */
 object Diff {
-  /** Return a diff.
-   * <p>
-   * Example:<pre>
-   * val Diff(c, a, d) = ("name", "joe") ~ ("age", 10) diff ("fname", "joe") ~ ("age", 11)
-   * c = JObject(("age",JInt(11)) :: Nil)
-   * a = JObject(("fname",JString("joe")) :: Nil)
-   * d = JObject(("name",JString("joe")) :: Nil)
-   * </pre>
+
+  /**
+   * Return a diff. <p> Example:<pre> val Diff(c, a, d) = ("name", "joe") ~ ("age", 10) diff
+   * ("fname", "joe") ~ ("age", 11) c = JObject(("age",JInt(11)) :: Nil) a =
+   * JObject(("fname",JString("joe")) :: Nil) d = JObject(("name",JString("joe")) :: Nil) </pre>
    */
   def diff(val1: JValue, val2: JValue): Diff = (val1, val2) match {
     case (x, y) if x == y => Diff(JNothing, JNothing, JNothing)
@@ -67,14 +69,14 @@ object Diff {
     def diffRec(xleft: List[JField], yleft: List[JField]): Diff = xleft match {
       case Nil => Diff(JNothing, if (yleft.isEmpty) JNothing else JObject(yleft), JNothing)
       case x :: xs => yleft find (_.name == x.name) match {
-        case Some(y) =>
-          val Diff(c1, a1, d1) = diff(x.value, y.value).toField(y.name)
-          val Diff(c2, a2, d2) = diffRec(xs, yleft filterNot (_ == y))
-          Diff(c1 merge c2, a1 merge a2, d1 merge d2)
-        case None =>
-          val Diff(c, a, d) = diffRec(xs, yleft)
-          Diff(c, a, JObject(x :: Nil) merge d)
-      }
+          case Some(y) =>
+            val Diff(c1, a1, d1) = diff(x.value, y.value).toField(y.name)
+            val Diff(c2, a2, d2) = diffRec(xs, yleft filterNot (_ == y))
+            Diff(c1 merge c2, a1 merge a2, d1 merge d2)
+          case None =>
+            val Diff(c, a, d) = diffRec(xs, yleft)
+            Diff(c, a, JObject(x :: Nil) merge d)
+        }
     }
 
     diffRec(vs1, vs2)
@@ -94,8 +96,11 @@ object Diff {
   }
 
   private[json] trait Diffable { this: JValue =>
-    /** Return a diff.
-     * @see net.liftweb.json.Diff#diff
+
+    /**
+     * Return a diff.
+     * @see
+     *   net.liftweb.json.Diff#diff
      */
     def diff(other: JValue) = Diff.diff(this, other)
   }

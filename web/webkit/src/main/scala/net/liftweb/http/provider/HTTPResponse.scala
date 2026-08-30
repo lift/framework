@@ -57,7 +57,7 @@ trait HTTPResponse {
 
   /**
    * Returns the HTTP response status that has been set with setStatus
-   * */
+   */
   def getStatus: Int
 
   /**
@@ -73,4 +73,3 @@ trait HTTPResponse {
    */
   def outputStream: OutputStream
 }
-

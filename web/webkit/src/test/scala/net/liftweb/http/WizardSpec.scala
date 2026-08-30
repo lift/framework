@@ -26,7 +26,7 @@ import http._
 /**
  * System under specification for Wizard.
  */
-class WizardSpec extends Specification  {
+class WizardSpec extends Specification {
   "Wizard Specification".title
 
   val session: LiftSession = new LiftSession("", Helpers.randomString(20), Empty)
@@ -40,24 +40,32 @@ class WizardSpec extends Specification  {
     }
 
     class NameAndAgeScreen extends Screen {
-      val name = field(S ? "First Name", "",
-                       valMinLen(2, S ? "Name Too Short"))
+      val name = field(
+        S ? "First Name",
+        "",
+        valMinLen(2, S ? "Name Too Short"))
 
-      val age = field(S ? "Age", 0,
-                      minVal(5, S ? "Too young"),
-                      maxVal(120, S ? "You should be dead"))
+      val age = field(
+        S ? "Age",
+        0,
+        minVal(5, S ? "Too young"),
+        maxVal(120, S ? "You should be dead"))
 
       override def nextScreen = if (age.is < 18) parentName else favoritePet
     }
     class ParentNameScreen extends Screen {
-      val parentName = field(S ? "Mom or Dad's name", "",
-                             valMinLen(2, S ? "Name Too Short"),
-                             valMaxLen(40, S ? "Name Too Long"))
+      val parentName = field(
+        S ? "Mom or Dad's name",
+        "",
+        valMinLen(2, S ? "Name Too Short"),
+        valMaxLen(40, S ? "Name Too Long"))
     }
     class FavoritePetScreen extends Screen {
-      val petName = field(S ? "Pet's name", "",
-                          valMinLen(2, S ? "Name Too Short"),
-                          valMaxLen(40, S ? "Name Too Long"))
+      val petName = field(
+        S ? "Pet's name",
+        "",
+        valMinLen(2, S ? "Name Too Short"),
+        valMaxLen(40, S ? "Name Too Long"))
     }
 
     val nameAndAge = new NameAndAgeScreen
@@ -160,4 +168,3 @@ class WizardSpec extends Specification  {
     }
   }
 }
-

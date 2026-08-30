@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package webapptest 
-package snippet 
+package net.liftweb
+package webapptest
+package snippet
 
 import net.liftweb.http._
-import net.liftweb.util.Helpers._
 import scala.xml._
 
 object Counter {
@@ -30,7 +29,7 @@ class Oneshot {
   def render(in: NodeSeq): NodeSeq = {
     S.disableTestFuncNames {
       S.oneShot {
-        SHtml.text("", s => {Counter.x += 1})
+        SHtml.text("", s => { Counter.x += 1 })
       }
     }
   }
@@ -43,4 +42,3 @@ class Twoshot {
     }
   }
 }
-

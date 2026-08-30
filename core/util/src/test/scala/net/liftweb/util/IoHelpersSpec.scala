@@ -34,10 +34,11 @@ class IoHelpersSpec extends Specification with IoHelpers {
       // Copy a resource file to the tmp directory so we can refer to it as a Path
       val resourceAsPath: Box[Path] = {
         for {
-          bytes <- tryo(readWholeStream(getClass.getResourceAsStream("IoHelpersSpec.txt"))).filter(_ ne null)
+          bytes <- tryo(
+            readWholeStream(getClass.getResourceAsStream("IoHelpersSpec.txt"))).filter(_ ne null)
           text <- tryo(new String(bytes))
           path = {
-            val tempFile = Files.createTempFile(s"IoHelpersSpec_${nextFuncName}", ".tmp") 
+            val tempFile = Files.createTempFile(s"IoHelpersSpec_${nextFuncName}", ".tmp")
             Files.write(tempFile, text.getBytes(StandardCharsets.UTF_8))
             tempFile
           }

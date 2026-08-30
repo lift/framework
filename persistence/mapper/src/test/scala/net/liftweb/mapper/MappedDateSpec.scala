@@ -21,11 +21,10 @@ import org.specs2.mutable.Specification
 
 import common._
 
-
 /**
  * Systems under specification for MappedDate.
  */
-class MappedDateSpec extends Specification  {
+class MappedDateSpec extends Specification {
   "MappedDate Specification".title
 
   "MappedDate" should {
@@ -50,4 +49,3 @@ class MappedDateSpec extends Specification  {
     }
   }
 }
-

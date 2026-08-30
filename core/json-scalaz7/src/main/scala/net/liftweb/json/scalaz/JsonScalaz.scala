@@ -21,7 +21,6 @@ package net.liftweb.json.scalaz
 // unapply of a case class with a wildcard parameterized type.
 // Ostensibly should be fixed in 2.12, which means we're a ways away
 // from being able to remove this, though.
-import scala.language.existentials
 
 import scalaz.{Equal, Kleisli, Monoid, Semigroup, Show, ValidationNel}
 import scalaz.Validation._

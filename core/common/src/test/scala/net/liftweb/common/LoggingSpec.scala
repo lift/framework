@@ -19,7 +19,6 @@ package common
 
 import org.specs2.mutable.Specification
 
-
 /**
  * System under specification for Logging.
  *
@@ -35,7 +34,7 @@ class LoggingSpec extends Specification {
       MyObj.x must_== 2
 
       (new MyTopClass).x must_== 1
-      MyTopObj.x must_==1
+      MyTopObj.x must_== 1
     }
 
     "be nested in object" in {
@@ -59,7 +58,7 @@ class LoggingSpec extends Specification {
       val logger = Logger("StaticMDC")
 
       logger.info("Logged with no MDC")
-      MDC.put("mdc1" -> (1,2))
+      MDC.put("mdc1" -> (1, 2))
       logger.info("Logged with mdc1=(1,2)")
       MDC.put("mdc2" -> "yy")
       logger.info("Logged with mdc1=(1,2), mdc2=yy")
@@ -76,12 +75,12 @@ class LoggingSpec extends Specification {
       val logger = Logger("logWith")
 
       logger.info("Logged with no MDC")
-      MDC.put("mdc1" -> (1,2), "mdc2" -> "yy")
+      MDC.put("mdc1" -> (1, 2), "mdc2" -> "yy")
       logger.info("Logged with mdc1=(1,2), mdc2=yy")
       Logger.logWith("mdc2" -> "xx") {
         logger.info("Logged with mdc1=(1,2), mdc2=xx")
         Logger.logWith("mdc1" -> 99) {
-           logger.info("Logged with mdc1=99, mdc2=xx")
+          logger.info("Logged with mdc1=99, mdc2=xx")
         }
         logger.info("Logged with mdc1=(1,2), mdc2=xx")
       }
@@ -92,17 +91,19 @@ class LoggingSpec extends Specification {
     }
     "trace function results" in {
       object MyObj extends Logger {
-          val l = 1 to 10
-          info("Starting test")
-          trace("result",l.foldLeft(0)(trace("lhs",_) + trace("rhs",_))) must_== l.foldLeft(0)(_+_)
-          val x = 1
+        val l = 1 to 10
+        info("Starting test")
+        trace(
+          "result",
+          l.foldLeft(0)(trace("lhs", _) + trace("rhs", _))) must_== l.foldLeft(0)(_ + _)
+        val x = 1
       }
       MyObj
       success
     }
 
     "be used in different levels and yield different loggers" in {
-      class First  {
+      class First {
         First.info("In first")
       }
       object First extends Logger
@@ -121,15 +122,12 @@ class LoggingSpec extends Specification {
   }
 }
 
-
 class MyTopClass extends Logger {
-  val x=1
+  val x = 1
   debug("Top level class logging")
 }
 
-
 object MyTopObj extends Logger {
-  val x=1
+  val x = 1
   debug("Top level object logging")
 }
-

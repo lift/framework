@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
-import scala.language.implicitConversions
 
 import Helpers._
 import common._
@@ -26,14 +25,14 @@ import common._
 private[liftweb] object VarConstants {
   val varPrefix = "_lift_sv_"
   val initedSuffix = "_inited_?"
-  val lockSuffix="_lock_dude"
+  val lockSuffix = "_lock_dude"
 }
 
 trait HasCalcDefaultValue[T] {
   protected def calcDefaultValue: T
 }
 
-trait MemoizeVar[K, V]  {
+trait MemoizeVar[K, V] {
   protected def coreVar: AnyVar[LRU[K, Box[V]], _]
 
   protected def buildLRU = new LRU[K, Box[V]](cacheSize)
@@ -64,8 +63,8 @@ trait MemoizeVar[K, V]  {
   }
 
   /**
-   * Override this method if there's a default way of calculating
-   * this MemoizedVar (for example, a database lookup)
+   * Override this method if there's a default way of calculating this MemoizedVar (for example, a
+   * database lookup)
    */
   protected def defaultFunction(key: K): Box[V] = Empty
 
@@ -85,7 +84,7 @@ trait MemoizeVar[K, V]  {
     coreVar.is.update(key, Full(value))
   }
 
-  def update(key: K, value: V): Unit = set(key,value)
+  def update(key: K, value: V): Unit = set(key, value)
 }
 
 abstract class AnyVar[T, MyType <: AnyVar[T, MyType]](dflt: => T) extends AnyVarTrait[T, MyType] {
@@ -93,15 +92,15 @@ abstract class AnyVar[T, MyType <: AnyVar[T, MyType]](dflt: => T) extends AnyVar
 
   protected def calcDefaultValue: T = dflt
 
-  
 }
 
 /**
  * Abstract a request or a session scoped variable.
  */
-trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHolder[T] with HasCalcDefaultValue[T] {
+trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHolder[T]
+    with HasCalcDefaultValue[T] {
   self: MyType =>
-  protected lazy val name = VarConstants.varPrefix+getClass.getName+"_"+__nameSalt
+  protected lazy val name = VarConstants.varPrefix + getClass.getName + "_" + __nameSalt
   private lazy val initedKey = name + VarConstants.initedSuffix
   protected def findFunc(name: String): Box[T]
   protected def setFunc(name: String, value: T): Unit
@@ -123,27 +122,28 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
   private var changeFuncs: List[FuncType] = Nil
 
   /**
-   * The function takes a `Box[T]` (Full if the Var is being set, Empty if it's being cleared) and
-   * a Boolean indicating that the set function is setting to the default value.
-   *
+   * The function takes a `Box[T]` (Full if the Var is being set, Empty if it's being cleared) and a
+   * Boolean indicating that the set function is setting to the default value.
    */
   type FuncType = (Box[T], Boolean) => Unit
 
   protected def calcDefaultValue: T
 
-
   /**
-   * On any change to this Var, invoke the function. Changes are setting the value, clearing the value.
-   * There may not be a call if the Var goes out of scope (e.g., a RequestVar at the end of the Request).
+   * On any change to this Var, invoke the function. Changes are setting the value, clearing the
+   * value. There may not be a call if the Var goes out of scope (e.g., a RequestVar at the end of
+   * the Request).
    *
-   * The function takes a `Box[T]` (Full if the Var is being set, Empty if it's being cleared) and
-   * a Boolean indicating that the set function is setting to the default value.
+   * The function takes a `Box[T]` (Full if the Var is being set, Empty if it's being cleared) and a
+   * Boolean indicating that the set function is setting to the default value.
    *
-   * The function should execute *very* quickly (e.g., Schedule a function to be executed on a different thread).
+   * The function should execute *very* quickly (e.g., Schedule a function to be executed on a
+   * different thread).
    *
    * The function should generally be set in Boot or when a singleton is created.
    *
-   * @param f the function to execute on change
+   * @param f
+   *   the function to execute on change
    */
   def onChange(f: FuncType): Unit = {
     changeFuncs ::= f
@@ -166,8 +166,8 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
   type CleanUpParam
 
   /**
-   * Different Vars require different mechanisms for synchronization.  This method implements
-   * the Var specific synchronization mechanism
+   * Different Vars require different mechanisms for synchronization. This method implements the Var
+   * specific synchronization mechanism
    */
   def doSync[F](f: => F): F
 
@@ -177,11 +177,12 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
   def is: T = doSync {
     findFunc(name) match {
       case Full(v) => v
-      case _ => val ret = calcDefaultValue
+      case _ =>
+        val ret = calcDefaultValue
         testInitialized
-      settingDefault.doWith(true) {
-        apply(ret)
-      }
+        settingDefault.doWith(true) {
+          apply(ret)
+        }
         // Use findFunc so that we clear the "unread" flag
         findFunc(name) match {
           case Full(v) => v
@@ -224,7 +225,8 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
   /**
    * Set the session variable
    *
-   * @param what -- the value to set the session variable to
+   * @param what
+   *   -- the value to set the session variable to
    */
   def apply(what: T): T = {
     testInitialized
@@ -234,10 +236,11 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
   }
 
   /**
-   * Applies the given function to the contents of this
-   * variable and sets the variable to the resulting value.
+   * Applies the given function to the contents of this variable and sets the variable to the
+   * resulting value.
    *
-   * @param f -- the function to apply and set the result from.
+   * @param f
+   *   -- the function to apply and set the result from.
    */
   def update(f: T => T): T = {
     apply(f(is))
@@ -249,7 +252,7 @@ trait AnyVarTrait[T, MyType <: AnyVarTrait[T, MyType]] extends PSettableValueHol
 
   }
 
-  //def cleanupFunc: Box[() => Unit] = Empty
+  // def cleanupFunc: Box[() => Unit] = Empty
 
   protected def registerCleanupFunc(in: CleanUpParam => Unit): Unit
 
@@ -293,4 +296,3 @@ abstract class NonCleanAnyVar[T](dflt: => T) extends AnyVar[T, NonCleanAnyVar[T]
 object AnyVar {
   implicit def whatVarIs[T](in: AnyVar[T, _]): T = in.is
 }
-

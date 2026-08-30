@@ -29,13 +29,16 @@ import net.liftweb.json._
 import scala.xml.{Text, NodeSeq}
 import js._
 
-
 /**
- * Warning: Do not use unnamed Enumerations with 2.8.1 as this will cause too many items to be displayed in the dropdown.
+ * Warning: Do not use unnamed Enumerations with 2.8.1 as this will cause too many items to be
+ * displayed in the dropdown.
  *
  * See https://issues.scala-lang.org/browse/SI-3687 for details
- */ 
-abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, val `enum`: ENUM)(implicit val manifest: TypeTag[ENUM#Value]) extends MappedField[ENUM#Value, T] {
+ */
+abstract class MappedEnum[T <: Mapper[T], ENUM <: Enumeration](
+    val fieldOwner: T,
+    val `enum`: ENUM)(implicit val manifest: TypeTag[ENUM#Value])
+    extends MappedField[ENUM#Value, T] {
   private var data: ENUM#Value = defaultValue
   private var orgData: ENUM#Value = defaultValue
   def defaultValue: ENUM#Value = enum.values.iterator.next()
@@ -48,53 +51,67 @@ abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, 
 
   protected def i_is_! : ENUM#Value = data
   protected def i_was_! : ENUM#Value = orgData
+
   /**
-     * Called after the field is saved to the database
-     */
+   * Called after the field is saved to the database
+   */
   override protected[mapper] def doneWithSave(): Unit = {
     orgData = data
   }
 
   /**
    * Get the source field metadata for the field
-   * @return the source field metadata for the field
+   * @return
+   *   the source field metadata for the field
    */
-  def sourceInfoMetadata(): SourceFieldMetadata{type ST = ENUM#Value} =
-    SourceFieldMetadataRep(name, manifest, new FieldConverter {
-      /**
-       * The type of the field
-       */
-      type T = ENUM#Value
+  def sourceInfoMetadata(): SourceFieldMetadata { type ST = ENUM#Value } =
+    SourceFieldMetadataRep(
+      name,
+      manifest,
+      new FieldConverter {
 
-      /**
-       * Convert the field to a String
-       * @param v the field value
-       * @return the string representation of the field value
-       */
-      def asString(v: T): String = v.toString
+        /**
+         * The type of the field
+         */
+        type T = ENUM#Value
 
-      /**
-       * Convert the field into NodeSeq, if possible
-       * @param v the field value
-       * @return a NodeSeq if the field can be represented as one
-       */
-      def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(asString(v)))
+        /**
+         * Convert the field to a String
+         * @param v
+         *   the field value
+         * @return
+         *   the string representation of the field value
+         */
+        def asString(v: T): String = v.toString
 
-      /**
-       * Convert the field into a JSON value
-       * @param v the field value
-       * @return the JSON representation of the field
-       */
-      def asJson(v: T): Box[JValue] = Full(JsonAST.JInt(v.id))
+        /**
+         * Convert the field into NodeSeq, if possible
+         * @param v
+         *   the field value
+         * @return
+         *   a NodeSeq if the field can be represented as one
+         */
+        def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(asString(v)))
 
-      /**
-       * If the field can represent a sequence of SourceFields,
-       * get that
-       * @param v the field value
-       * @return the field as a sequence of SourceFields
-       */
-      def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
-    })
+        /**
+         * Convert the field into a JSON value
+         * @param v
+         *   the field value
+         * @return
+         *   the JSON representation of the field
+         */
+        def asJson(v: T): Box[JValue] = Full(JsonAST.JInt(v.id))
+
+        /**
+         * If the field can represent a sequence of SourceFields, get that
+         * @param v
+         *   the field value
+         * @return
+         *   the field as a sequence of SourceFields
+         */
+        def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+      }
+    )
 
   protected def real_i_set_!(value: ENUM#Value): ENUM#Value = {
     if (value != data) {
@@ -119,7 +136,6 @@ abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, 
 
   def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(get.id))
 
-
   override def setFromAny(in: Any): ENUM#Value = {
     in match {
       case JsonAST.JInt(bi) => this.set(fromInt(bi.intValue))
@@ -138,32 +154,56 @@ abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, 
     }
   }
 
-  protected def i_obscure_!(in : ENUM#Value) = defaultValue
+  protected def i_obscure_!(in: ENUM#Value) = defaultValue
 
   private def st(in: ENUM#Value): Unit = {
     data = in
     orgData = in
   }
 
-  def buildSetActualValue(accessor: Method, data: AnyRef, columnName: String) : (T, AnyRef) => Unit =
-    (inst, v) => doField(inst, accessor, {case f: MappedEnum[T, ENUM] => f.st(if (v eq null) defaultValue else fromInt(Helpers.toInt(v.toString)))})
+  def buildSetActualValue(accessor: Method, data: AnyRef, columnName: String): (T, AnyRef) => Unit =
+    (inst, v) =>
+      doField(
+        inst,
+        accessor,
+        { case f: MappedEnum[T, ENUM] =>
+          f.st(if (v eq null) defaultValue else fromInt(Helpers.toInt(v.toString)))
+        })
 
   def buildSetLongValue(accessor: Method, columnName: String): (T, Long, Boolean) => Unit =
-    (inst, v, isNull) => doField(inst, accessor, {case f: MappedEnum[T, ENUM] => f.st(if (isNull) defaultValue else fromInt(v.toInt))})
+    (inst, v, isNull) =>
+      doField(
+        inst,
+        accessor,
+        { case f: MappedEnum[T, ENUM] => f.st(if (isNull) defaultValue else fromInt(v.toInt)) })
 
   def buildSetStringValue(accessor: Method, columnName: String): (T, String) => Unit =
-    (inst, v) => doField(inst, accessor, {case f: MappedEnum[T, ENUM] => f.st(if (v eq null) defaultValue else fromInt(Helpers.toInt(v)))})
+    (inst, v) =>
+      doField(
+        inst,
+        accessor,
+        { case f: MappedEnum[T, ENUM] =>
+          f.st(if (v eq null) defaultValue else fromInt(Helpers.toInt(v)))
+        })
 
   def buildSetDateValue(accessor: Method, columnName: String): (T, Date) => Unit =
-    (inst, v) => doField(inst, accessor, {case f: MappedEnum[T, ENUM] => f.st(if (v eq null) defaultValue else fromInt(Helpers.toInt(v)))})
+    (inst, v) =>
+      doField(
+        inst,
+        accessor,
+        { case f: MappedEnum[T, ENUM] =>
+          f.st(if (v eq null) defaultValue else fromInt(Helpers.toInt(v)))
+        })
 
   def buildSetBooleanValue(accessor: Method, columnName: String): (T, Boolean, Boolean) => Unit =
-    (inst, v, isNull) => doField(inst, accessor, {case f: MappedEnum[T, ENUM] => f.st(defaultValue)})
+    (inst, v, isNull) =>
+      doField(inst, accessor, { case f: MappedEnum[T, ENUM] => f.st(defaultValue) })
 
   /**
    * Given the driver type, return the string required to create the column in the database
    */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.enumColumnType + notNullAppender()
+  def fieldCreatorString(dbType: DriverType, colName: String): String =
+    colName + " " + dbType.enumColumnType + notNullAppender()
 
   /*
   Mapper dependency on Widgets is the wrong order.  There should be a trait in Widgets that's
@@ -173,29 +213,32 @@ abstract class MappedEnum[T<:Mapper[T], ENUM <: Enumeration](val fieldOwner: T, 
    * Whether or not to use autocomplete in toForm
    */
   def autocomplete_? = false
-*/
+   */
 
   /**
-    * Build a list for the select.  Return a tuple of (String, String) where the first string
-    * is the id.string of the Value and the second string is the Text name of the Value.
-    */
+   * Build a list for the select. Return a tuple of (String, String) where the first string is the
+   * id.string of the Value and the second string is the Text name of the Value.
+   */
   def buildDisplayList: List[(Int, String)] = enum.values.toList.map(a => (a.id, a.toString))
 
   /**
    * Create an input field for the item
    */
   override def _toForm: Box[NodeSeq] =
-  /*
+    /*
     if (autocomplete_?)
       Full(AutoComplete.autocompleteObj[Int](buildDisplayList, Full(toInt),
                                       v => this.set(fromInt(v))))
     else
-    */
-      Full(SHtml.selectObj[Int](buildDisplayList, Full(toInt),
-                                v => this.set(fromInt(v))))
+     */
+    Full(SHtml.selectObj[Int](
+      buildDisplayList,
+      Full(toInt),
+      v => this.set(fromInt(v))))
 }
 
-abstract class MappedIntIndex[T<:Mapper[T]](owner : T) extends MappedInt[T](owner) with IndexedField[Int] {
+abstract class MappedIntIndex[T <: Mapper[T]](owner: T) extends MappedInt[T](owner)
+    with IndexedField[Int] {
 
   override def writePermission_? = false // not writable
 
@@ -205,11 +248,11 @@ abstract class MappedIntIndex[T<:Mapper[T]](owner : T) extends MappedInt[T](owne
 
   def defined_? = i_is_! != defaultValue
 
-  override def dbIndexFieldIndicatesSaved_? = {i_is_! != defaultValue}
+  override def dbIndexFieldIndicatesSaved_? = { i_is_! != defaultValue }
 
-  def makeKeyJDBCFriendly(in : Int) = java.lang.Integer.valueOf(in)
+  def makeKeyJDBCFriendly(in: Int) = java.lang.Integer.valueOf(in)
 
-  def convertKey(in : String): Box[Int] = {
+  def convertKey(in: String): Box[Int] = {
     if (in eq null) Empty
     try {
       val what = if (in.startsWith(name + "=")) in.substring((name + "=").length) else in
@@ -221,17 +264,17 @@ abstract class MappedIntIndex[T<:Mapper[T]](owner : T) extends MappedInt[T](owne
 
   override def dbDisplay_? = false
 
-  def convertKey(in : Int): Box[Int] = {
+  def convertKey(in: Int): Box[Int] = {
     if (in < 0) Empty
     else Full(in)
   }
 
-  def convertKey(in : Long): Box[Int] = {
+  def convertKey(in: Long): Box[Int] = {
     if (in < 0 || in > Integer.MAX_VALUE) Empty
     else Full(in.asInstanceOf[Int])
   }
 
-  def convertKey(in : AnyRef): Box[Int] = {
+  def convertKey(in: AnyRef): Box[Int] = {
     if ((in eq null) || (in eq None)) None
     try {
       convertKey(in.toString)
@@ -240,12 +283,12 @@ abstract class MappedIntIndex[T<:Mapper[T]](owner : T) extends MappedInt[T](owne
     }
   }
 
-  override def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.integerIndexColumnType + notNullAppender()
+  override def fieldCreatorString(dbType: DriverType, colName: String): String =
+    colName + " " + dbType.integerIndexColumnType + notNullAppender()
 
 }
 
-
-abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[Int, T] {
+abstract class MappedInt[T <: Mapper[T]](val fieldOwner: T) extends MappedField[Int, T] {
   private var data: Int = defaultValue
   private var orgData: Int = defaultValue
 
@@ -262,50 +305,64 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
 
   /**
    * Get the source field metadata for the field
-   * @return the source field metadata for the field
+   * @return
+   *   the source field metadata for the field
    */
-  def sourceInfoMetadata(): SourceFieldMetadata{type ST = Int} =
-    SourceFieldMetadataRep(name, manifest, new FieldConverter {
-      /**
-       * The type of the field
-       */
-      type T = Int
+  def sourceInfoMetadata(): SourceFieldMetadata { type ST = Int } =
+    SourceFieldMetadataRep(
+      name,
+      manifest,
+      new FieldConverter {
 
-      /**
-       * Convert the field to a String
-       * @param v the field value
-       * @return the string representation of the field value
-       */
-      def asString(v: T): String = v.toString
+        /**
+         * The type of the field
+         */
+        type T = Int
 
-      /**
-       * Convert the field into NodeSeq, if possible
-       * @param v the field value
-       * @return a NodeSeq if the field can be represented as one
-       */
-      def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(asString(v)))
+        /**
+         * Convert the field to a String
+         * @param v
+         *   the field value
+         * @return
+         *   the string representation of the field value
+         */
+        def asString(v: T): String = v.toString
 
-      /**
-       * Convert the field into a JSON value
-       * @param v the field value
-       * @return the JSON representation of the field
-       */
-      def asJson(v: T): Box[JValue] = Full(JsonAST.JInt(v))
+        /**
+         * Convert the field into NodeSeq, if possible
+         * @param v
+         *   the field value
+         * @return
+         *   a NodeSeq if the field can be represented as one
+         */
+        def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(asString(v)))
 
-      /**
-       * If the field can represent a sequence of SourceFields,
-       * get that
-       * @param v the field value
-       * @return the field as a sequence of SourceFields
-       */
-      def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
-    })
+        /**
+         * Convert the field into a JSON value
+         * @param v
+         *   the field value
+         * @return
+         *   the JSON representation of the field
+         */
+        def asJson(v: T): Box[JValue] = Full(JsonAST.JInt(v))
+
+        /**
+         * If the field can represent a sequence of SourceFields, get that
+         * @param v
+         *   the field value
+         * @return
+         *   the field as a sequence of SourceFields
+         */
+        def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+      }
+    )
 
   protected def i_is_! : Int = data
   protected def i_was_! : Int = orgData
+
   /**
-     * Called after the field is saved to the database
-     */
+   * Called after the field is saved to the database
+   */
   override protected[mapper] def doneWithSave(): Unit = {
     orgData = data
   }
@@ -314,10 +371,10 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
 
   def asJsonValue: Box[JsonAST.JValue] = Full(JsonAST.JInt(get))
 
-  protected def real_i_set_!(value : Int) : Int = {
+  protected def real_i_set_!(value: Int): Int = {
     if (value != data) {
       data = value
-      this.dirty_?( true)
+      this.dirty_?(true)
     }
     data
   }
@@ -328,7 +385,7 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
 
   def real_convertToJDBCFriendly(value: Int): Object = java.lang.Integer.valueOf(value)
 
-  def jdbcFriendly(field : String) = java.lang.Integer.valueOf(get)
+  def jdbcFriendly(field: String) = java.lang.Integer.valueOf(get)
 
   override def setFromAny(in: Any): Int = {
     in match {
@@ -346,7 +403,7 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
     }
   }
 
-  protected def i_obscure_!(in : Int) = 0
+  protected def i_obscure_!(in: Int) = 0
 
   private def st(in: Int): Unit = {
     data = in
@@ -354,23 +411,25 @@ abstract class MappedInt[T<:Mapper[T]](val fieldOwner: T) extends MappedField[In
   }
 
   def buildSetActualValue(accessor: Method, v: AnyRef, columnName: String): (T, AnyRef) => Unit =
-    (inst, v) => doField(inst, accessor, {case f: MappedInt[T] => f.st(toInt(v))})
+    (inst, v) => doField(inst, accessor, { case f: MappedInt[T] => f.st(toInt(v)) })
 
   def buildSetLongValue(accessor: Method, columnName: String): (T, Long, Boolean) => Unit =
-    (inst, v, isNull) => doField(inst, accessor, {case f: MappedInt[T] => f.st(if (isNull) 0 else v.toInt)})
+    (inst, v, isNull) =>
+      doField(inst, accessor, { case f: MappedInt[T] => f.st(if (isNull) 0 else v.toInt) })
 
   def buildSetStringValue(accessor: Method, columnName: String): (T, String) => Unit =
-    (inst, v) => doField(inst, accessor, {case f: MappedInt[T] => f.st(toInt(v))})
+    (inst, v) => doField(inst, accessor, { case f: MappedInt[T] => f.st(toInt(v)) })
 
   def buildSetDateValue(accessor: Method, columnName: String): (T, Date) => Unit =
-    (inst, v) => doField(inst, accessor, {case f: MappedInt[T] => f.st(toInt(v))})
+    (inst, v) => doField(inst, accessor, { case f: MappedInt[T] => f.st(toInt(v)) })
 
   def buildSetBooleanValue(accessor: Method, columnName: String): (T, Boolean, Boolean) => Unit =
-    (inst, v, isNull) => doField(inst, accessor, {case f: MappedInt[T] => f.st(if (isNull || !v) 0 else 1)})
+    (inst, v, isNull) =>
+      doField(inst, accessor, { case f: MappedInt[T] => f.st(if (isNull || !v) 0 else 1) })
 
   /**
    * Given the driver type, return the string required to create the column in the database
    */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.integerColumnType + notNullAppender()
+  def fieldCreatorString(dbType: DriverType, colName: String): String =
+    colName + " " + dbType.integerColumnType + notNullAppender()
 }
-

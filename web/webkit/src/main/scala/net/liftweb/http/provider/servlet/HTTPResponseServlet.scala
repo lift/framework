@@ -19,19 +19,15 @@ package http
 package provider
 package servlet
 
-import scala.collection.mutable.{ListBuffer}
 import java.io.{OutputStream}
-import jakarta.servlet.http.{HttpServletResponse, Cookie}
+import jakarta.servlet.http.HttpServletResponse
 import net.liftweb.http.provider.encoder.CookieEncoder
-import net.liftweb.common._
-import net.liftweb.util._
-import Helpers._
 
 class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
   private var _status = 0;
 
   private val SET_COOKIE_HEADER = "Set-Cookie"
- 
+
   def addCookies(cookies: List[HTTPCookie]) = cookies.foreach {
     case cookie =>
       resp.addHeader(SET_COOKIE_HEADER, CookieEncoder.encode(cookie))
@@ -42,7 +38,7 @@ class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
   /**
    * Encode the JSESSIONID in the URL if specified by LiftRules
    */
-  def encodeUrl(url: String): String = 
+  def encodeUrl(url: String): String =
     if (shouldEncodeUrl) {
       resp encodeURL url
     } else {
@@ -52,7 +48,7 @@ class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
   def addHeaders(headers: List[HTTPParam]): Unit = {
     val appearOnce = Set(LiftRules.overwrittenReponseHeaders.vend.map(_.toLowerCase): _*)
     for (h <- headers;
-         value <- h.values) {
+      value <- h.values) {
       if (appearOnce.contains(h.name.toLowerCase)) resp.setHeader(h.name, value)
       else
         resp.addHeader(h.name, value)
@@ -65,12 +61,11 @@ class HTTPResponseServlet(resp: HttpServletResponse) extends HTTPResponse {
   }
 
   def getStatus = _status
- 
+
   def setStatusWithReason(status: Int, reason: String) = {
     _status = status
-    resp sendError  (status, reason)
+    resp sendError (status, reason)
   }
 
   def outputStream: OutputStream = resp.getOutputStream
 }
-

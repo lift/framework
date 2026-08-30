@@ -2,7 +2,6 @@ package net.liftweb.actor
 
 import net.liftweb.common.{Box, Failure, Full}
 import org.specs2.mutable.Specification
-import java.util.concurrent.atomic.AtomicBoolean
 
 class LAFutureSpec extends Specification {
   sequential
@@ -11,7 +10,7 @@ class LAFutureSpec extends Specification {
 
   "LAFuture" should {
     val futureSpecScheduler = new LAScheduler {
-      override def execute(f: ()=>Unit): Unit = f()
+      override def execute(f: () => Unit): Unit = f()
     }
 
     "map to failing future if transforming function throws an Exception" in {
@@ -125,7 +124,7 @@ class LAFutureSpec extends Specification {
       }
 
       "collectAll empty list immediately" in {
-        val collectResult = LAFuture.collectAll(Nil : _*)
+        val collectResult = LAFuture.collectAll(Nil: _*)
         collectResult.isSatisfied shouldEqual true
         collectResult.get(timeout) shouldEqual Nil
       }

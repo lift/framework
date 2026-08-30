@@ -27,7 +27,10 @@ class ExtractionExamples extends Specification {
 
   "Extraction example" in {
     val json = parse(testJson)
-    json.extract[Person] mustEqual Person("joe", Address("Bulevard", "Helsinki"), List(Child("Mary", 5, Some(date("2004-09-04T18:06:22Z"))), Child("Mazy", 3, None)))
+    json.extract[Person] mustEqual Person(
+      "joe",
+      Address("Bulevard", "Helsinki"),
+      List(Child("Mary", 5, Some(date("2004-09-04T18:06:22Z"))), Child("Mazy", 3, None)))
   }
 
   "Extraction with path expression example" in {
@@ -42,20 +45,25 @@ class ExtractionExamples extends Specification {
 
   "Extract with a default value" in {
     val json = parse(testJson)
-    (json \ "address2").extractOrElse(Address("Tie", "Helsinki")) mustEqual Address("Tie", "Helsinki")
+    (json \ "address2").extractOrElse(Address("Tie", "Helsinki")) mustEqual Address(
+      "Tie",
+      "Helsinki")
   }
 
   "Map with primitive values extraction example" in {
     val json = parse(testJson)
-    json.extract[PersonWithMap] mustEqual 
+    json.extract[PersonWithMap] mustEqual
       PersonWithMap("joe", Map("street" -> "Bulevard", "city" -> "Helsinki"))
   }
 
   "Map with object values extraction example" in {
     val json = parse(twoAddresses)
-    json.extract[PersonWithAddresses] mustEqual 
-      PersonWithAddresses("joe", Map("address1" -> Address("Bulevard", "Helsinki"),
-                                     "address2" -> Address("Soho", "London")))
+    json.extract[PersonWithAddresses] mustEqual
+      PersonWithAddresses(
+        "joe",
+        Map(
+          "address1" -> Address("Bulevard", "Helsinki"),
+          "address2" -> Address("Soho", "London")))
   }
 
   "Simple value extraction example" in {
@@ -78,7 +86,16 @@ class ExtractionExamples extends Specification {
 
   "Primitive extraction example" in {
     val json = parse(primitives)
-    json.extract[Primitives] mustEqual Primitives(124, 123L, 126.5, 127.5.floatValue, "128", Symbol("symb"), 125, 129.byteValue, true)
+    json.extract[Primitives] mustEqual Primitives(
+      124,
+      123L,
+      126.5,
+      127.5.floatValue,
+      "128",
+      Symbol("symb"),
+      125,
+      129.byteValue,
+      true)
   }
 
   "Null extraction example" in {
@@ -93,7 +110,8 @@ class ExtractionExamples extends Specification {
 
   "Timestamp extraction example" in {
     val json = parse("""{"timestamp":"2009-09-04T18:06:22Z"}""")
-    new Date((json \ "timestamp").extract[java.sql.Timestamp].getTime) mustEqual date("2009-09-04T18:06:22Z")
+    new Date((json \ "timestamp").extract[java.sql.Timestamp].getTime) mustEqual date(
+      "2009-09-04T18:06:22Z")
   }
 
   "Option extraction example" in {
@@ -102,68 +120,95 @@ class ExtractionExamples extends Specification {
   }
 
   "Missing JSON array can be extracted as an empty List" in {
-    parse(missingChildren).extract[Person] mustEqual Person("joe", Address("Bulevard", "Helsinki"), Nil)
+    parse(missingChildren).extract[Person] mustEqual Person(
+      "joe",
+      Address("Bulevard", "Helsinki"),
+      Nil)
   }
 
   "Multidimensional array extraction example" in {
     parse(multiDimensionalArrays).extract[MultiDim] mustEqual MultiDim(
-      List(List(List(1, 2), List(3)), List(List(4), List(5, 6))), 
+      List(List(List(1, 2), List(3)), List(List(4), List(5, 6))),
       List(List(Name("joe"), Name("mary")), List(Name("mazy"))))
   }
-  
+
   "Flatten example with simple case class" in {
-    val f = Extraction.flatten(Extraction.decompose(SimplePerson("joe", Address("Bulevard", "Helsinki"))))
-    val e = Map(".name" -> "\"joe\"", ".address.street" -> "\"Bulevard\"", ".address.city"   -> "\"Helsinki\"")
-    
+    val f =
+      Extraction.flatten(Extraction.decompose(SimplePerson("joe", Address("Bulevard", "Helsinki"))))
+    val e = Map(
+      ".name" -> "\"joe\"",
+      ".address.street" -> "\"Bulevard\"",
+      ".address.city" -> "\"Helsinki\"")
+
     f mustEqual e
   }
-  
+
   "Unflatten example with top level string and int" in {
     val m = Map(".name" -> "\"joe\"", ".age" -> "32")
-    
-    Extraction.unflatten(m) mustEqual JObject(List(JField("name",JString("joe")), JField("age",JInt(32))))
+
+    Extraction.unflatten(m) mustEqual JObject(List(
+      JField("name", JString("joe")),
+      JField("age", JInt(32))))
   }
-  
+
   "Unflatten example with top level string and double" in {
     val m = Map(".name" -> "\"joe\"", ".age" -> "32.2")
-  
-    Extraction.unflatten(m) mustEqual JObject(List(JField("name",JString("joe")), JField("age",JDouble(32.2))))
+
+    Extraction.unflatten(m) mustEqual JObject(List(
+      JField("name", JString("joe")),
+      JField("age", JDouble(32.2))))
   }
-  
+
   "Unflatten example with two-level string properties" in {
-    val m = Map(".name" -> "\"joe\"", ".address.street" -> "\"Bulevard\"", ".address.city"   -> "\"Helsinki\"")
-    
-    Extraction.unflatten(m) mustEqual JObject(List(JField("name", JString("joe")), JField("address", JObject(List(JField("street", JString("Bulevard")), JField("city", JString("Helsinki")))))))
+    val m = Map(
+      ".name" -> "\"joe\"",
+      ".address.street" -> "\"Bulevard\"",
+      ".address.city" -> "\"Helsinki\"")
+
+    Extraction.unflatten(m) mustEqual JObject(List(
+      JField("name", JString("joe")),
+      JField(
+        "address",
+        JObject(List(JField("street", JString("Bulevard")), JField("city", JString("Helsinki")))))))
   }
-  
+
   "Unflatten example with top level array" in {
     val m = Map(".foo[2]" -> "2", ".foo[0]" -> "0", ".foo[1]" -> "1")
-    
-    Extraction.unflatten(m) mustEqual JObject(List(JField("foo", JArray(List(JInt(0), JInt(1), JInt(2))))))
+
+    Extraction.unflatten(m) mustEqual JObject(List(JField(
+      "foo",
+      JArray(List(JInt(0), JInt(1), JInt(2))))))
   }
 
   "Unflatten example with common prefixes" in {
-    val m = Map(".photo" -> "\"photo string\"", ".photographer" -> "\"photographer string\"", ".other" -> "\"other string\"")
+    val m = Map(
+      ".photo" -> "\"photo string\"",
+      ".photographer" -> "\"photographer string\"",
+      ".other" -> "\"other string\"")
 
-    Extraction.unflatten(m) mustEqual JObject(List(JField("photo", JString("photo string")), JField("photographer", JString("photographer string")), JField("other", JString("other string"))))
+    Extraction.unflatten(m) mustEqual JObject(List(
+      JField("photo", JString("photo string")),
+      JField("photographer", JString("photographer string")),
+      JField("other", JString("other string"))))
   }
-  
+
   "Flatten and unflatten are symmetric" in {
     val parsed = parse(testJson)
-    
+
     Extraction.unflatten(Extraction.flatten(parsed)) mustEqual parsed
   }
-  
+
   "Flatten preserves empty sets" in {
     val s = SetWrapper(Set())
-    
+
     Extraction.flatten(Extraction.decompose(s)).get(".set") mustEqual Some("[]")
   }
-  
+
   "Flatten and unflatten are symmetric with empty sets" in {
     val s = SetWrapper(Set())
-    
-    Extraction.unflatten(Extraction.flatten(Extraction.decompose(s))).extract[SetWrapper] mustEqual s
+
+    Extraction.unflatten(
+      Extraction.flatten(Extraction.decompose(s))).extract[SetWrapper] mustEqual s
   }
 
   "List extraction example" in {
@@ -183,7 +228,9 @@ class ExtractionExamples extends Specification {
 
   "Extraction failure message example" in {
     val json = parse("""{"city":"San Francisco"}""")
-    json.extract[Address] must throwA(MappingException("No usable value for street\nDid not find value which can be converted into java.lang.String", null))
+    json.extract[Address] must throwA(MappingException(
+      "No usable value for street\nDid not find value which can be converted into java.lang.String",
+      null))
   }
 
   "Best matching constructor selection example" in {
@@ -208,7 +255,9 @@ class ExtractionExamples extends Specification {
 
   "Partial JSON extraction" in {
     parse(stringField).extract[ClassWithJSON] mustEqual ClassWithJSON("one", JString("msg"))
-    parse(objField).extract[ClassWithJSON] mustEqual ClassWithJSON("one", JObject(List(JField("yes", JString("woo")))))
+    parse(objField).extract[ClassWithJSON] mustEqual ClassWithJSON(
+      "one",
+      JObject(List(JField("yes", JString("woo")))))
   }
 
   "Double can be coerced to Int or Long" in {
@@ -225,11 +274,13 @@ class ExtractionExamples extends Specification {
   }
 
   "Complex nested non-polymorphic collections extraction example" in {
-    parse("""{"a":[{"b":"c"}]}""").extract[Map[String, List[Map[String, String]]]] mustEqual Map("a" -> List(Map("b" -> "c")))
+    parse("""{"a":[{"b":"c"}]}""").extract[Map[
+      String,
+      List[Map[String, String]]]] mustEqual Map("a" -> List(Map("b" -> "c")))
   }
 
-  val testJson = 
-"""
+  val testJson =
+    """
 { "name": "joe",
   "address": {
     "street": "Bulevard",
@@ -250,7 +301,7 @@ class ExtractionExamples extends Specification {
 """
 
   val missingChildren =
-"""
+    """
 {
   "name": "joe",
   "address": {
@@ -261,7 +312,7 @@ class ExtractionExamples extends Specification {
 """
 
   val twoAddresses =
-"""
+    """
 {
   "name": "joe",
   "addresses": {
@@ -277,8 +328,8 @@ class ExtractionExamples extends Specification {
 }
 """
 
-  val primitives = 
-"""
+  val primitives =
+    """
 {
   "l": 123,
   "i": 124,
@@ -293,7 +344,7 @@ class ExtractionExamples extends Specification {
 """
 
   val multiDimensionalArrays =
-"""
+    """
 {
   "ints": [[[1, 2], [3]], [[4], [5, 6]]],
   "names": [[{"name": "joe"}, {"name": "mary"}], [[{"name": "mazy"}]]]
@@ -301,7 +352,7 @@ class ExtractionExamples extends Specification {
 """
 
   val stringField =
-"""
+    """
 {
   "name": "one",
   "message": "msg"
@@ -309,7 +360,7 @@ class ExtractionExamples extends Specification {
 """
 
   val objField =
-"""
+    """
 {
   "name": "one",
   "message": {
@@ -334,7 +385,16 @@ case class PersonWithAddresses(name: String, addresses: Map[String, Address])
 
 case class Name(name: String)
 
-case class Primitives(i: Int, l: Long, d: Double, f: Float, s: String, sym: Symbol, sh: Short, b: Byte, bool: Boolean)
+case class Primitives(
+    i: Int,
+    l: Long,
+    d: Double,
+    f: Float,
+    s: String,
+    sym: Symbol,
+    sh: Short,
+    b: Byte,
+    bool: Boolean)
 
 case class OChild(name: Option[String], age: Int, mother: Option[Parent], father: Option[Parent])
 case class Parent(name: String)
@@ -351,4 +411,3 @@ case class MultipleConstructors(name: String, age: Int, size: Option[String]) {
 }
 
 case class ClassWithJSON(name: String, message: JValue)
-

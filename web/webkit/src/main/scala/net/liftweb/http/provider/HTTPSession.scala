@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
-package provider 
+package net.liftweb
+package http
+package provider
 
 /**
  * The representation of a HTTP session
@@ -47,7 +47,6 @@ trait HTTPSession {
   /**
    * @return - the maximim interval in seconds between client request and the time when
    *            the session will be terminated
-   *
    */
   def maxInactiveInterval: Long
 
@@ -56,7 +55,6 @@ trait HTTPSession {
    * the session will be terminated
    *
    * @param interval - the value in seconds
-   *
    */
   def setMaxInactiveInterval(interval: Long): Unit
 
@@ -91,4 +89,3 @@ trait HTTPSession {
    */
   def terminate: Unit
 }
-

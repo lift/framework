@@ -16,28 +16,27 @@
 
 package net.liftweb
 
-import scala.concurrent.{ExecutionContext,Future}
-import scala.xml.{Comment,NodeSeq}
+import scala.xml.{Comment, NodeSeq}
 
-import actor.LAFuture
 import builtin.comet.AsyncRenderComet
 import http.js.JsCmds.Replace
 import util._
 
 package object http {
+
   /**
-   * Provides support for binding anything that has a `CanResolveAsync`
-   * implementation. Out of the box, that's just Scala `Future`s and
-   * `LAFuture`s, but it could just as easily be, for example, Twitter `Future`s
-   * if you're using Finagle; all you have to do is add a `CanResolveAsync`
+   * Provides support for binding anything that has a `CanResolveAsync` implementation. Out of the
+   * box, that's just Scala `Future`s and `LAFuture`s, but it could just as easily be, for example,
+   * Twitter `Future`s if you're using Finagle; all you have to do is add a `CanResolveAsync`
    * implicit for it.
    */
   implicit def asyncResolvableTransform[ResolvableType, ResolvedType](
-    implicit asyncResolveProvider: CanResolveAsync[ResolvableType,ResolvedType],
-             innerTransform: CanBind[ResolvedType]
+      implicit
+      asyncResolveProvider: CanResolveAsync[ResolvableType, ResolvedType],
+      innerTransform: CanBind[ResolvedType]
   ): net.liftweb.util.CanBind[ResolvableType] = {
     new CanBind[ResolvableType] {
-      def apply(resolvable: =>ResolvableType)(ns: NodeSeq): Seq[NodeSeq] = {
+      def apply(resolvable: => ResolvableType)(ns: NodeSeq): Seq[NodeSeq] = {
         val placeholderId = Helpers.nextFuncName
         AsyncRenderComet.setupAsync
 
@@ -53,14 +52,17 @@ package object http {
             })
 
           // Actually complete the render once the future is fulfilled.
-          asyncResolveProvider.resolveAsync(concreteResolvable, resolvedResult => deferredRender(resolvedResult))
+          asyncResolveProvider.resolveAsync(
+            concreteResolvable,
+            resolvedResult => deferredRender(resolvedResult))
 
-          <div id={placeholderId}><img src={s"${LiftRules.assetRootPath}images/ajax-loader.gif"} alt="Loading" /></div>
+          <div id={placeholderId}><img src={
+            s"${LiftRules.assetRootPath}images/ajax-loader.gif"
+          } alt="Loading" /></div>
         } openOr {
-          Comment("FIX"+"ME: Asynchronous rendering failed for unknown reason.")
+          Comment("FIX" + "ME: Asynchronous rendering failed for unknown reason.")
         }
       }
     }
   }
 }
-

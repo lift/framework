@@ -1,6 +1,6 @@
 package net.liftweb.javascript
 
-import net.liftweb.http.{TransientRequestVar, RequestVar, LiftRules}
+import net.liftweb.http.{TransientRequestVar, LiftRules}
 import net.liftweb.util._
 import Helpers._
 import org.mozilla.javascript.{NativeJavaObject, ScriptableObject, Context}
@@ -9,19 +9,17 @@ import net.liftweb.actor.LAFuture
 import net.liftweb.common._
 
 /**
- * You can add a JavaScript context to Lift so that
- * you can run server-side JavaScript as part of Lift page
- * rendering.
+ * You can add a JavaScript context to Lift so that you can run server-side JavaScript as part of
+ * Lift page rendering.
  *
- * In Boot.scala, just do `JavaScriptContext.install()`
- * and you get a JavaScript execution context around
- * all HTTP requests.
+ * In Boot.scala, just do `JavaScriptContext.install()` and you get a JavaScript execution context
+ * around all HTTP requests.
  */
 object JavaScriptContext {
+
   /**
-   * Hook into LiftRules to put a JavaScript
-   * execution loanwrapper around everything and
-   * also slurp in <script> tags with the data-lift-server attribute.
+   * Hook into LiftRules to put a JavaScript execution loanwrapper around everything and also slurp
+   * in <script> tags with the data-lift-server attribute.
    */
   def install(): Unit = {
     LiftRules.allAround.append(JSWrapper)
@@ -44,13 +42,13 @@ object JavaScriptContext {
             case _ => (PassThru, Full(value))
           }
 
-
         v2 match {
           case Full(v22) =>
             exec(v22) match {
-              case fut: LAFuture[_] => val ret = new LAFuture[NodeSeq]
-              fut.foreach(v => ret.satisfy(session.runSourceContext(v, rule, elem)))
-              ret
+              case fut: LAFuture[_] =>
+                val ret = new LAFuture[NodeSeq]
+                fut.foreach(v => ret.satisfy(session.runSourceContext(v, rule, elem)))
+                ret
 
               case func: Function0[_] =>
                 () => {
@@ -79,8 +77,10 @@ object JavaScriptContext {
 
   /**
    * Execute some JavaScript in the current context
-   * @param str the string to execute
-   * @return the value returned from the JavaScript execution
+   * @param str
+   *   the string to execute
+   * @return
+   *   the value returned from the JavaScript execution
    */
   def exec(str: String): AnyRef = currentScript.get.exec(str)
 
@@ -88,8 +88,6 @@ object JavaScriptContext {
     private var initted = false
     private var context: Context = null
     private var scope: ScriptableObject = null
-
-
 
     def init(): Unit = {
       context = Context.enter()
@@ -100,13 +98,12 @@ object JavaScriptContext {
       if (initted) Context.exit()
     }
 
-    def exec(str: String): AnyRef = synchronized{
+    def exec(str: String): AnyRef = synchronized {
       if (!initted) init()
-      context.evaluateString(scope, str, "Lift", 0, null)  match {
+      context.evaluateString(scope, str, "Lift", 0, null) match {
         case njo: NativeJavaObject => njo.unwrap()
         case x => x
       }
     }
   }
 }
-

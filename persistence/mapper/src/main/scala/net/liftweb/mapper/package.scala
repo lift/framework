@@ -25,6 +25,7 @@ package object mapper {
   type StandardDBVendor = db.StandardDBVendor
 
   def DBLogEntry: db.DBLogEntry.type = db.DBLogEntry
-  def DefaultConnectionIdentifier: util.DefaultConnectionIdentifier.type = util.DefaultConnectionIdentifier
+  def DefaultConnectionIdentifier: util.DefaultConnectionIdentifier.type =
+    util.DefaultConnectionIdentifier
   def DriverType: db.DriverType.type = db.DriverType
 }

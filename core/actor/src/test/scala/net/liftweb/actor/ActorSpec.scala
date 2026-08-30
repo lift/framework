@@ -21,7 +21,6 @@ import org.specs2.mutable.Specification
 import scala.concurrent.duration._
 import common._
 
-
 /**
  * Systems under specification for Lift Actor.
  */
@@ -73,7 +72,6 @@ class ActorSpec extends Specification {
   }
 
 }
-
 
 case class Add(num: Int)
 case class Sub(num: Int)

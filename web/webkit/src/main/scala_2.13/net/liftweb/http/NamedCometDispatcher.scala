@@ -28,46 +28,46 @@ class NamedCometDispatcher(name: Box[String]) extends LiftActor with Loggable {
 
   logger.debug("DispatcherActor got name: %s".format(name))
 
-  private var cometActorsToUpdate: Vector[BaseCometActor]= Vector()
+  private var cometActorsToUpdate: Vector[BaseCometActor] = Vector()
 
-  override def messageHandler  = {
+  override def messageHandler = {
+
     /**
      * if we do not have this actor in the list, add it (register it)
      */
     case registerCometActor(actor, Full(name)) => {
-      if(cometActorsToUpdate.contains(actor) == false){
+      if (cometActorsToUpdate.contains(actor) == false) {
         logger.debug("We are adding actor: %s to the list".format(actor))
-        cometActorsToUpdate= cometActorsToUpdate :+ actor
+        cometActorsToUpdate = cometActorsToUpdate :+ actor
       } else {
         logger.debug("The list so far is %s".format(cometActorsToUpdate))
       }
     }
     case unregisterCometActor(actor) => {
       logger.debug("before %s".format(cometActorsToUpdate))
-      cometActorsToUpdate= cometActorsToUpdate.filterNot(_ == actor)
+      cometActorsToUpdate = cometActorsToUpdate.filterNot(_ == actor)
       logger.debug("after %s".format(cometActorsToUpdate))
     }
 
-    //Catch the dummy message we send on comet creation
+    // Catch the dummy message we send on comet creation
     case CometName(name) =>
 
     /**
      * Go through the list of actors and send them a message
      */
     case msg => {
-      cometActorsToUpdate.par.foreach{ x => {
-        x ! msg
-        logger.debug("We will update this comet actor: %s showing name: %s".format(x, name))
-      }
+      cometActorsToUpdate.par.foreach { x =>
+        {
+          x ! msg
+          logger.debug("We will update this comet actor: %s showing name: %s".format(x, name))
+        }
       }
     }
   }
 }
 
-
 /**
- * These are the message we pass around to
- * register each named comet actor with a dispatcher that
+ * These are the message we pass around to register each named comet actor with a dispatcher that
  * only updates the specific version it monitors
  */
 case class registerCometActor(actor: BaseCometActor, name: Box[String])

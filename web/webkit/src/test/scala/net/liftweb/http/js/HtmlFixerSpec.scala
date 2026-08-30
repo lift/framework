@@ -21,11 +21,8 @@ package js
 import org.specs2.mutable.Specification
 
 import common._
-import json._
-import JsonDSL._
-import util.Helpers._
 
-class HtmlFixerSpec extends Specification  {
+class HtmlFixerSpec extends Specification {
   "HtmlFixer" should {
     val testFixer = new HtmlFixer {}
     val testSession = new LiftSession("/context-path", "underlying id", Empty)

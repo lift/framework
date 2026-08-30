@@ -25,18 +25,17 @@ import org.specs2.matcher.DataTables
 import common._
 import BasicTypesHelpers._
 
-
 /**
  * Systems under specification for BasicTypesHelpers.
  */
-class BasicTypesHelpersSpec extends Specification  with DataTables {
+class BasicTypesHelpersSpec extends Specification with DataTables {
   "BasicTypesHelpers Specification".title
 
   "Basic types helpers" should {
 
     "be lazy" in {
-      (false.?[Int]({throw new Exception("Bummer")}).|(3)) must_== 3
-      (true.?[Int](3).|({throw new Exception("Bummer")})) must_== 3
+      (false.?[Int]({ throw new Exception("Bummer") }).|(3)) must_== 3
+      (true.?[Int](3).|({ throw new Exception("Bummer") })) must_== 3
     }
 
     "provide a ternary operator: (condition) ? A | B" in {
@@ -50,94 +49,94 @@ class BasicTypesHelpersSpec extends Specification  with DataTables {
     val failure = Failure(null, null, null)
     "have a toBoolean method converting any object to a reasonable Boolean value" in {
       toBoolean(null) must_== false
-      "object value"  ||"boolean value"  |
-      (0: Any)        !!false            |
-      1               !!true             |
-      true            !!true             |
-      false           !!false            |
-      ""              !!false            |
-      "string"        !!false            |
-      "t"             !!true             |
-      "total"         !!false            |
-      "T"             !!true             |
-      "This"          !!false            |
-      "0"             !!false            |
-      "on"            !!true             |
-      None            !!false            |
-      Some("t")       !!true             |
-      Empty           !!false            |
-      Full("t")       !!true             |
-      failure         !!false            |
-      List("t", "f")  !!true             |> {
-        (o: Any, result: Boolean) => toBoolean(o) must_== result
-      }
+      "object value" || "boolean value" |
+        (0: Any) !! false |
+        1 !! true |
+        true !! true |
+        false !! false |
+        "" !! false |
+        "string" !! false |
+        "t" !! true |
+        "total" !! false |
+        "T" !! true |
+        "This" !! false |
+        "0" !! false |
+        "on" !! true |
+        None !! false |
+        Some("t") !! true |
+        Empty !! false |
+        Full("t") !! true |
+        failure !! false |
+        List("t", "f") !! true |> {
+          (o: Any, result: Boolean) => toBoolean(o) must_== result
+        }
     }
 
     "have a AsBoolean extractor converting any object to a reasonable Boolean value" in {
-      "object value"  ||"boolean value" |>
-      "t"             !!Some(true)      |
-      ""              !!None            |
-      "string"        !!None            |
-      "total"         !!None            |
-      "T"             !!Some(true)      |
-      "This"          !!None            |
-      "0"             !!Some(false)     | {
-        (o: String, result: Option[Boolean]) => AsBoolean.unapply(o) must_== result
-      }
+      "object value" || "boolean value" |>
+        "t" !! Some(true) |
+        "" !! None |
+        "string" !! None |
+        "total" !! None |
+        "T" !! Some(true) |
+        "This" !! None |
+        "0" !! Some(false) | {
+          (o: String, result: Option[Boolean]) => AsBoolean.unapply(o) must_== result
+        }
     }
 
     "have an AsInt extractor converting any String to a reasonable Int value" in {
-      "object value"  ||"int value" |>
-      "3"             !!Some(3)     |
-      "n"             !!None        | {
-        (o: String, result: Option[Int]) => AsInt.unapply(o) must_== result
-      }
+      "object value" || "int value" |>
+        "3" !! Some(3) |
+        "n" !! None | {
+          (o: String, result: Option[Int]) => AsInt.unapply(o) must_== result
+        }
     }
 
     "have an AsLong extractor converting any String to a reasonable Long value" in {
-      "object value"  ||"long value"  |>
-      "3"             !!Some(3L)      |
-      "n"             !!None          | {
-        (o: String, result: Option[Long]) => AsLong.unapply(o) must_== result
-      }
+      "object value" || "long value" |>
+        "3" !! Some(3L) |
+        "n" !! None | {
+          (o: String, result: Option[Long]) => AsLong.unapply(o) must_== result
+        }
     }
 
     "have a toInt method converting any object to a reasonable Int value" in {
       def date(t: Int) = new _root_.java.util.Date(t)
       toInt(null) must_== 0
-      "object value"  ||"int value" |>
-      1               !!1           |
-      1L              !!1           |
-      List(1, 2)      !!1           |
-      Some(1)         !!1           |
-      Full(1)         !!1           |
-      None            !!0           |
-      Empty           !!0           |
-      failure         !!0           |
-      "3"             !!3           |
-      "n"             !!0           |
-      date(3000)      !!3           | {
-        (o: Any, result: Int) => toInt(o) must_== result
-      }
+      "object value" || "int value" |>
+        1 !! 1 |
+        1L !! 1 |
+        List(1, 2) !! 1 |
+        Some(1) !! 1 |
+        Full(1) !! 1 |
+        None !! 0 |
+        Empty !! 0 |
+        failure !! 0 |
+        "3" !! 3 |
+        "n" !! 0 |
+        date(3000) !! 3 | {
+          (o: Any, result: Int) => toInt(o) must_== result
+        }
     }
 
     "have a toLong method converting any object to a reasonable Long value" in {
       def date(t: Int) = new _root_.java.util.Date(t)
       toLong(null) must_== 0L
-      "object value"  ||"long value"  |>
-      1               !!1L            |
-      1L              !!1L            |
-      List(1, 2)      !!1L            |
-      Some(1)         !!1L            |
-      Full(1)         !!1L            |
-      None            !!0L            |
-      Empty           !!0L            |
-      failure         !!0L            |
-      "3"             !!3L            |
-      "n"             !!0L            |
-      date(3000)      !!3000L         | {
-        (o: Any, result: Long) => toLong(o) must_== result
-      }
+      "object value" || "long value" |>
+        1 !! 1L |
+        1L !! 1L |
+        List(1, 2) !! 1L |
+        Some(1) !! 1L |
+        Full(1) !! 1L |
+        None !! 0L |
+        Empty !! 0L |
+        failure !! 0L |
+        "3" !! 3L |
+        "n" !! 0L |
+        date(3000) !! 3000L | {
+          (o: Any, result: Long) => toLong(o) must_== result
+        }
     }
 
     "have a toByteArrayInputStream reading an InputStream to a ByteArrayInputStream" in {
@@ -170,7 +169,7 @@ class BasicTypesHelpersSpec extends Specification  with DataTables {
 
       val pf2: PartialFunction[String, Boolean] = {
         case "snipe" => true
-        case "bipe"  => false
+        case "bipe" => false
       }
 
       val pf3 = pf1.guard(pf2)
@@ -183,11 +182,10 @@ class BasicTypesHelpersSpec extends Specification  with DataTables {
 
   "AvoidTypeErasure implicit value" should {
     "be in scope" in {
-      def f(i:Int)(implicit d: AvoidTypeErasureIssues1) = i+1
+      def f(i: Int)(implicit d: AvoidTypeErasureIssues1) = i + 1
 
       f(2) must_== 3
     }
   }
 
 }
-

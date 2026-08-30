@@ -17,26 +17,39 @@
 package net.liftweb
 package json
 
-import java.lang.reflect.{Constructor => JConstructor, Type, InvocationTargetException}
-import java.lang.{Integer => JavaInteger, Long => JavaLong, Short => JavaShort, Byte => JavaByte, Boolean => JavaBoolean, Double => JavaDouble, Float => JavaFloat}
+import java.lang.reflect.{Constructor => JConstructor, InvocationTargetException}
+import java.lang.{
+  Integer => JavaInteger,
+  Long => JavaLong,
+  Short => JavaShort,
+  Byte => JavaByte,
+  Boolean => JavaBoolean,
+  Double => JavaDouble,
+  Float => JavaFloat
+}
 import java.util.Date
 import java.sql.Timestamp
 import scala.reflect.Manifest
 
-/** Function to extract values from JSON AST using case classes.
+/**
+ * Function to extract values from JSON AST using case classes.
  *
- *  See: ExtractionExamples.scala
+ * See: ExtractionExamples.scala
  */
 object Extraction {
   import Meta._
   import Meta.Reflection._
 
-  /** Extract a case class from JSON.
-   * @see net.liftweb.json.JsonAST.JValue#extract
-   * @throws MappingException is thrown if extraction fails
+  /**
+   * Extract a case class from JSON.
+   * @see
+   *   net.liftweb.json.JsonAST.JValue#extract
+   * @throws MappingException
+   *   is thrown if extraction fails
    */
   def extract[A](json: JValue)(implicit formats: Formats, mf: Manifest[A]): A = {
-    def allTypes(mf: Manifest[_]): List[Class[_]] = mf.runtimeClass :: (mf.typeArguments flatMap allTypes)
+    def allTypes(mf: Manifest[_]): List[Class[_]] =
+      mf.runtimeClass :: (mf.typeArguments flatMap allTypes)
 
     try {
       val types = allTypes(mf)
@@ -47,28 +60,29 @@ object Extraction {
     }
   }
 
-  /** Extract a case class from JSON.
-   * @see net.liftweb.json.JsonAST.JValue#extract
+  /**
+   * Extract a case class from JSON.
+   * @see
+   *   net.liftweb.json.JsonAST.JValue#extract
    */
   def extractOpt[A](json: JValue)(implicit formats: Formats, mf: Manifest[A]): Option[A] =
-    try { Some(extract(json)(formats, mf)) } catch { case _: MappingException => None }
+    try { Some(extract(json)(formats, mf)) }
+    catch { case _: MappingException => None }
 
-  /** Decompose a case class into JSON.
-   * <p>
-   * Example:<pre>
-   * case class Person(name: String, age: Int)
-   * implicit val formats = net.liftweb.json.DefaultFormats
-   * Extraction.decompose(Person("joe", 25)) == JObject(JField("age",JInt(25)) :: JField("name",JString("joe")) :: Nil)
-   * </pre>
+  /**
+   * Decompose a case class into JSON. <p> Example:<pre> case class Person(name: String, age: Int)
+   * implicit val formats = net.liftweb.json.DefaultFormats Extraction.decompose(Person("joe", 25)) ==
+   * JObject(JField("age",JInt(25)) :: JField("name",JString("joe")) :: Nil) </pre>
    */
   def decompose(a: Any)(implicit formats: Formats): JValue = {
     def prependTypeHint(clazz: Class[_], o: JObject) =
       JObject(JField(formats.typeHintFieldName, JString(formats.typeHints.hintFor(clazz))) :: o.obj)
 
-    def mkObject(clazz: Class[_], fields: List[JField]) = formats.typeHints.containsHint_?(clazz) match {
-      case true  => prependTypeHint(clazz, JObject(fields))
-      case false => JObject(fields)
-    }
+    def mkObject(clazz: Class[_], fields: List[JField]) =
+      formats.typeHints.containsHint_?(clazz) match {
+        case true => prependTypeHint(clazz, JObject(fields))
+        case false => JObject(fields)
+      }
 
     val serializer = formats.typeHints.serialize
     val any = a.asInstanceOf[AnyRef]
@@ -79,7 +93,8 @@ object Extraction {
         case null => JNull
         case x: JValue => x
         case x if primitive_?(x.getClass) => primitive2jvalue(x)(formats)
-        case x: Map[_, _] => JObject((x map { case (k: String, v) => JField(k, decompose(v)) }).toList)
+        case x: Map[_, _] =>
+          JObject((x map { case (k: String, v) => JField(k, decompose(v)) }).toList)
         case x: Iterable[_] => JArray(x.toList map decompose)
         case x if (x.getClass.isArray) => JArray(x.asInstanceOf[Array[_]].toList map decompose)
         case x: Option[_] => x.flatMap[JValue] { y => Some(decompose(y)) }.getOrElse(JNothing)
@@ -87,7 +102,9 @@ object Extraction {
           JArray(x.productIterator.toList.map(decompose))
         case x =>
           val fields = getDeclaredFields(x.getClass)
-          val constructorArgs = primaryConstructorArgs(x.getClass).map{ case (name, _) => (name,fields.get(name)) }
+          val constructorArgs = primaryConstructorArgs(x.getClass).map { case (name, _) =>
+            (name, fields.get(name))
+          }
           constructorArgs.collect { case (name, Some(f)) =>
             f.setAccessible(true)
             JField(unmangleName(name), decompose(f get x))
@@ -110,57 +127,60 @@ object Extraction {
     } else prependTypeHint(any.getClass, serializer(any))
   }
 
-  /** Flattens the JSON to a key/value map.
+  /**
+   * Flattens the JSON to a key/value map.
    */
   def flatten(json: JValue): Map[String, String] = {
     def escapePath(str: String) = str
 
     def flatten0(path: String, json: JValue): Map[String, String] = {
       json match {
-        case JNothing | JNull    => Map()
-        case JString(s)          => Map(path -> ("\"" + JsonAST.quote(s) + "\""))
-        case JDouble(num)        => Map(path -> num.toString)
-        case JInt(num)           => Map(path -> num.toString)
-        case JBool(value)        => Map(path -> value.toString)
-        case JObject(obj)        => obj.foldLeft(Map[String, String]()) { case (map, JField(name, value)) =>
-          map ++ flatten0(path + "." + escapePath(name), value)
-        }
-        case JArray(arr)         => arr.length match {
-          case 0 => Map(path -> "[]")
-          case _ => arr.foldLeft((Map[String, String](), 0)) {
-                      (tuple, value) => (tuple._1 ++ flatten0(path + "[" + tuple._2 + "]", value), tuple._2 + 1)
-                    }._1
-        }
+        case JNothing | JNull => Map()
+        case JString(s) => Map(path -> ("\"" + JsonAST.quote(s) + "\""))
+        case JDouble(num) => Map(path -> num.toString)
+        case JInt(num) => Map(path -> num.toString)
+        case JBool(value) => Map(path -> value.toString)
+        case JObject(obj) => obj.foldLeft(Map[String, String]()) {
+            case (map, JField(name, value)) =>
+              map ++ flatten0(path + "." + escapePath(name), value)
+          }
+        case JArray(arr) => arr.length match {
+            case 0 => Map(path -> "[]")
+            case _ => arr.foldLeft((Map[String, String](), 0)) {
+                (tuple, value) =>
+                  (tuple._1 ++ flatten0(path + "[" + tuple._2 + "]", value), tuple._2 + 1)
+              }._1
+          }
       }
     }
 
     flatten0("", json)
   }
 
-  /** Unflattens a key/value map to a JSON object.
+  /**
+   * Unflattens a key/value map to a JSON object.
    */
   def unflatten(map: Map[String, String]): JValue = {
     import scala.util.matching.Regex
 
     def extractValue(value: String): JValue = value.toLowerCase match {
-      case ""      => JNothing
-      case "null"  => JNull
-      case "true"  => JBool(true)
+      case "" => JNothing
+      case "null" => JNull
+      case "true" => JBool(true)
       case "false" => JBool(false)
-      case "[]"    => JArray(Nil)
-      case x @ _   =>
+      case "[]" => JArray(Nil)
+      case x @ _ =>
         if (value.charAt(0).isDigit) {
           if (value.indexOf('.') == -1) JInt(BigInt(value))
           else JDouble(JsonParser.parseDouble(value))
-        }
-        else JString(JsonParser.unquote(value.substring(1)))
+        } else JString(JsonParser.unquote(value.substring(1)))
     }
 
     def submap(prefix: String): Map[String, String] =
       Map(
-        map.filter(t => t._1 == prefix || t._1.startsWith(prefix + ".") || t._1.startsWith(prefix + "[")).map(
-          t => (t._1.substring(prefix.length), t._2)
-        ).toList: _*
+        map.filter(t =>
+          t._1 == prefix || t._1.startsWith(prefix + ".") || t._1.startsWith(prefix + "[")).map(t =>
+          (t._1.substring(prefix.length), t._2)).toList: _*
       )
 
     val ArrayProp = new Regex("""^(\.([^\.\[]+))\[(\d+)\].*$""")
@@ -171,24 +191,26 @@ object Extraction {
       (set, key) =>
         key match {
           case ArrayProp(p, f, i) => set + p
-          case OtherProp(p, f)    => set + p
-          case ArrayElem(p, i)    => set + p
-          case x @ _              => set + x
+          case OtherProp(p, f) => set + p
+          case ArrayElem(p, i) => set + p
+          case x @ _ => set + x
         }
     }.toList.sortWith(_ < _) // Sort is necessary to get array order right
 
     uniquePaths.foldLeft[JValue](JNothing) { (jvalue, key) =>
       jvalue.merge(key match {
         case ArrayProp(p, f, i) => JObject(List(JField(f, unflatten(submap(key)))))
-        case ArrayElem(p, i)    => JArray(List(unflatten(submap(key))))
-        case OtherProp(p, f)    => JObject(List(JField(f, unflatten(submap(key)))))
-        case ""                 => extractValue(map(key))
+        case ArrayElem(p, i) => JArray(List(unflatten(submap(key))))
+        case OtherProp(p, f) => JObject(List(JField(f, unflatten(submap(key)))))
+        case "" => extractValue(map(key))
       })
     }
   }
 
-  private[this] def mkMapping(clazz: Class[_], typeArgs: Seq[Class[_]])(implicit formats: Formats): Meta.Mapping = {
-    if (clazz == classOf[Option[_]] || clazz == classOf[List[_]] || clazz == classOf[Set[_]] || clazz.isArray) {
+  private[this] def mkMapping(clazz: Class[_], typeArgs: Seq[Class[_]])(implicit
+      formats: Formats): Meta.Mapping = {
+    if (clazz == classOf[Option[_]] || clazz == classOf[List[_]] || clazz == classOf[
+        Set[_]] || clazz.isArray) {
       Col(TypeInfo(clazz, None), mkMapping(typeArgs.head, typeArgs.tail))
     } else if (clazz == classOf[Map[_, _]]) {
       Dict(mkMapping(typeArgs.tail.head, typeArgs.tail.tail))
@@ -200,8 +222,8 @@ object Extraction {
     }
   }
 
-  private def extract0(json: JValue, clazz: Class[_], typeArgs: Seq[Class[_]])
-                      (implicit formats: Formats): Any = {
+  private def extract0(json: JValue, clazz: Class[_], typeArgs: Seq[Class[_]])(implicit
+      formats: Formats): Any = {
     val mapping = mkMapping(clazz, typeArgs)
     extract0(json, mapping)
   }
@@ -220,7 +242,8 @@ object Extraction {
             case x => Nil
           }
           constructor.bestMatching(argNames)
-            .getOrElse(fail("No constructor for type " + constructor.targetType.clazz + ", " + json))
+            .getOrElse(fail(
+              "No constructor for type " + constructor.targetType.clazz + ", " + json))
         }
       }
 
@@ -228,7 +251,11 @@ object Extraction {
         case o: JObject =>
           formats.fieldSerializer(a.getClass).map { serializer =>
             val constructorArgNames =
-              Reflection.constructorArgs(a.getClass, constructor, formats.parameterNameReader, None).map(_._1).toSet
+              Reflection.constructorArgs(
+                a.getClass,
+                constructor,
+                formats.parameterNameReader,
+                None).map(_._1).toSet
             val jsonFields = o.obj.map { f =>
               val JField(n, v) = (serializer.deserializer orElse Map(f -> f))(f)
               (n, (n, v))
@@ -242,7 +269,8 @@ object Extraction {
                 val typeArgs = typeInfo.parameterizedType
                   .map(_.getActualTypeArguments.map(_.asInstanceOf[Class[_]]).toList.zipWithIndex
                     .map { case (t, idx) =>
-                      if (t == classOf[java.lang.Object]) ScalaSigReader.readField(name, a.getClass, idx)
+                      if (t == classOf[java.lang.Object])
+                        ScalaSigReader.readField(name, a.getClass, idx)
                       else t
                     })
                 val value = extract0(v, typeInfo.clazz, typeArgs.getOrElse(Nil))
@@ -267,14 +295,21 @@ object Extraction {
         } catch {
           case exception: Exception =>
             exception match {
-              case matchedException @ (_:IllegalArgumentException | _:InstantiationException) =>
-                fail("Parsed JSON values do not match with class constructor\nargs=" +
-                     args.mkString(",") + "\narg types=" + args.map(a => if (a != null)
-                       a.asInstanceOf[AnyRef].getClass.getName else "null").mkString(",") +
-                     "\nconstructor=" + jconstructor, matchedException)
+              case matchedException @ (_: IllegalArgumentException | _: InstantiationException) =>
+                fail(
+                  "Parsed JSON values do not match with class constructor\nargs=" +
+                    args.mkString(",") + "\narg types=" + args.map(a =>
+                      if (a != null)
+                        a.asInstanceOf[AnyRef].getClass.getName
+                      else "null").mkString(",") +
+                    "\nconstructor=" + jconstructor,
+                  matchedException
+                )
 
               case exceptionThrownInConstructor: InvocationTargetException =>
-                fail("An exception was thrown in the class constructor during extraction", exceptionThrownInConstructor)
+                fail(
+                  "An exception was thrown in the class constructor during extraction",
+                  exceptionThrownInConstructor)
 
               case unmatchedException =>
                 throw unmatchedException
@@ -286,7 +321,8 @@ object Extraction {
         val obj = JObject(fields filterNot (_.name == formats.typeHintFieldName))
         val deserializer = formats.typeHints.deserialize
         if (!deserializer.isDefinedAt(typeHint, obj)) {
-          val concreteClass = formats.typeHints.classFor(typeHint) getOrElse fail("Do not know how to deserialize '" + typeHint + "'")
+          val concreteClass = formats.typeHints.classFor(typeHint) getOrElse fail(
+            "Do not know how to deserialize '" + typeHint + "'")
           val typeArgs = typeInfo.parameterizedType
             .map(_.getActualTypeArguments.toList.map(Meta.rawClassOf)).getOrElse(Nil)
           build(obj, mappingOf(concreteClass, typeArgs))
@@ -325,9 +361,10 @@ object Extraction {
 
     def newCollection(root: JValue, m: Mapping, constructor: Array[_] => Any) = {
       val array: Array[_] = root match {
-        case JArray(arr)      => arr.map(build(_, m)).toArray
+        case JArray(arr) => arr.map(build(_, m)).toArray
         case JNothing | JNull => Array[AnyRef]()
-        case x                => fail("Expected collection but got " + x + " for root " + root + " and mapping " + m)
+        case x =>
+          fail("Expected collection but got " + x + " for root " + root + " and mapping " + m)
       }
 
       constructor(array)
@@ -350,7 +387,8 @@ object Extraction {
           val tupleIndex = items.length - 1
 
           val typedTupleConstructor = tupleConstructors.get(tupleIndex).getOrElse {
-            throw new IllegalArgumentException(s"Cannot instantiate a tuple of length ${items.length} even though that should be a valid tuple length.")
+            throw new IllegalArgumentException(
+              s"Cannot instantiate a tuple of length ${items.length} even though that should be a valid tuple length.")
           }
           typedTupleConstructor.newInstance(builtItems: _*)
 
@@ -367,7 +405,8 @@ object Extraction {
           newTuple(JArray(sortedItems.map(_.value)), mappings)
 
         case x =>
-          throw new IllegalArgumentException("Got unexpected while attempting to create tuples: " + x)
+          throw new IllegalArgumentException(
+            "Got unexpected while attempting to create tuples: " + x)
       }
     }
 
@@ -400,21 +439,24 @@ object Extraction {
         else if (c == classOf[List[_]]) newCollection(root, m, a => List(a.toList: _*))
         else if (c == classOf[Set[_]]) newCollection(root, m, a => Set(a.toList: _*))
         else if (c.isArray) newCollection(root, m, mkTypedArray(c))
-        else if (classOf[Seq[_]].isAssignableFrom(c)) newCollection(root, m, a => List(a.toList: _*))
+        else if (classOf[Seq[_]].isAssignableFrom(c))
+          newCollection(root, m, a => List(a.toList: _*))
         else if (c == classOf[Option[_]]) newOption(root, m)
         else fail("Expected collection but got " + m + " for class " + c)
       case Dict(m) => root match {
-        case JObject(xs) => Map(xs.map(x => (x.name, build(x.value, m))): _*)
-        case x => fail("Expected object but got " + x)
-      }
+          case JObject(xs) => Map(xs.map(x => (x.name, build(x.value, m))): _*)
+          case x => fail("Expected object but got " + x)
+        }
     }
 
     def mkTypedArray(c: Class[_])(a: Array[_]) = {
       import java.lang.reflect.Array.{newInstance => newArray}
 
-      a.foldLeft((newArray(c.getComponentType, a.length), 0)) { (tuple, e) => {
-        java.lang.reflect.Array.set(tuple._1, tuple._2, e); (tuple._1, tuple._2 + 1)
-      }}._1
+      a.foldLeft((newArray(c.getComponentType, a.length), 0)) { (tuple, e) =>
+        {
+          java.lang.reflect.Array.set(tuple._1, tuple._2, e); (tuple._1, tuple._2 + 1)
+        }
+      }._1
     }
 
     def mkList(root: JValue, m: Mapping) = root match {
@@ -470,8 +512,10 @@ object Extraction {
     case JDouble(x) if (targetType == classOf[Number]) => x
     case JString(s) if (targetType == classOf[String]) => s
     case JString(s) if (targetType == classOf[Symbol]) => Symbol(s)
-    case JString(s) if (targetType == classOf[Date]) => formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'"))
-    case JString(s) if (targetType == classOf[Timestamp]) => new Timestamp(formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'")).getTime)
+    case JString(s) if (targetType == classOf[Date]) =>
+      formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'"))
+    case JString(s) if (targetType == classOf[Timestamp]) =>
+      new Timestamp(formats.dateFormat.parse(s).getOrElse(fail("Invalid date '" + s + "'")).getTime)
     case JBool(x) if (targetType == classOf[Boolean]) => x
     case JBool(x) if (targetType == classOf[JavaBoolean]) => JavaBoolean.valueOf(x)
     case j: JValue if (targetType == classOf[JValue]) => j

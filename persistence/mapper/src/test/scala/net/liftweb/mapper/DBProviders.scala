@@ -23,11 +23,10 @@ import java.sql.{Connection, DriverManager}
 import common._
 import util._
 
-
 object DbProviders {
-  def asList = PostgreSqlProvider :: MySqlProvider :: DerbyProvider :: H2FileProvider :: H2MemoryProvider :: Nil
+  def asList =
+    PostgreSqlProvider :: MySqlProvider :: DerbyProvider :: H2FileProvider :: H2MemoryProvider :: Nil
   // Uncomment to run tests faster, but only against H2 def asList =  H2MemoryProvider :: Nil
-
 
   case object SnakeConnectionIdentifier extends ConnectionIdentifier {
     var jndiName = "snake"
@@ -36,14 +35,14 @@ object DbProviders {
   trait Provider {
     def name: String
     def setupDB: Unit
-    def required_? : Boolean = Props.getBool(propsPrefix+"required", false)
+    def required_? : Boolean = Props.getBool(propsPrefix + "required", false)
     def propName: String
-    lazy val propsPrefix: String = "mapper.test."+propName+"."
+    lazy val propsPrefix: String = "mapper.test." + propName + "."
   }
 
   trait FileDbSetup {
-    def filePath : String
-    def vendor : Vendor
+    def filePath: String
+    def vendor: Vendor
 
     def setupDB: Unit = {
       val f = new File(filePath)
@@ -53,7 +52,7 @@ object DbProviders {
   }
 
   trait DbSetup {
-    def vendor : Vendor
+    def vendor: Vendor
 
     def setupDB: Unit = {
       DB.defineConnectionManager(DefaultConnectionIdentifier, vendor)
@@ -62,21 +61,21 @@ object DbProviders {
       def deleteAllTables: Unit = {
         DB.use(DefaultConnectionIdentifier) {
           conn =>
-          val md = conn.getMetaData
-          val rs = md.getTables(null, Schemifier.getDefaultSchemaName(conn), null, null)
-          var toDelete: List[String] = Nil
-          while (rs.next) {
-            val tableName = rs.getString(3)
-            if (rs.getString(4).toLowerCase == "table") toDelete = tableName :: toDelete
-          }
-          rs.close
+            val md = conn.getMetaData
+            val rs = md.getTables(null, Schemifier.getDefaultSchemaName(conn), null, null)
+            var toDelete: List[String] = Nil
+            while (rs.next) {
+              val tableName = rs.getString(3)
+              if (rs.getString(4).toLowerCase == "table") toDelete = tableName :: toDelete
+            }
+            rs.close
         }
       }
       deleteAllTables
     }
   }
 
-  abstract class Vendor(driverClass : String) extends ConnectionManager {
+  abstract class Vendor(driverClass: String) extends ConnectionManager {
     def newConnection(name: ConnectionIdentifier): Box[Connection] = {
       Class.forName(driverClass)
       Full(mkConn)
@@ -86,19 +85,21 @@ object DbProviders {
       try {
         conn.close
       } catch {
-        case e: Exception => Empty //ignore
+        case e: Exception => Empty // ignore
       }
     }
 
-    def mkConn : Connection
+    def mkConn: Connection
   }
-
 
   object MySqlProvider extends Provider with DbSetup {
     def name = "MySql"
     def vendor = new Vendor("com.mysql.jdbc.Driver") {
       def mkConn = {
-        DriverManager.getConnection("jdbc:mysql://localhost:3306/lift_test?autoReconnect=true", "dpp", "")
+        DriverManager.getConnection(
+          "jdbc:mysql://localhost:3306/lift_test?autoReconnect=true",
+          "dpp",
+          "")
       }
     }
     def propName: String = "mysql_local"
@@ -144,7 +145,8 @@ object DbProviders {
   object SqlServerProvider extends Provider with DbSetup {
     def name = "Microsoft SQL Server"
     def vendor = new Vendor("net.sourceforge.jtds.jdbc.Driver") {
-      def mkConn = DriverManager.getConnection("jdbc:jtds:sqlserver://localhost/lift", "lift", "lift")
+      def mkConn =
+        DriverManager.getConnection("jdbc:jtds:sqlserver://localhost/lift", "lift", "lift")
     }
     def propName: String = "ms_sqlserver"
   }
@@ -160,9 +162,9 @@ object DbProviders {
   object MaxDbProvider extends Provider with DbSetup {
     def name = "SAP MaxDB"
     def vendor = new Vendor("com.sap.dbtech.jdbc.DriverSapDB") {
-      def mkConn = DriverManager.getConnection("jdbc:sapdb://localhost:7210/lift?user=lift&password=lift")
+      def mkConn =
+        DriverManager.getConnection("jdbc:sapdb://localhost:7210/lift?user=lift&password=lift")
     }
     def propName: String = "maxdb_local"
   }
 }
-

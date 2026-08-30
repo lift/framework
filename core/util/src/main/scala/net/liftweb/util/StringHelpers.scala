@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 import java.security.SecureRandom
 import java.util.regex._
 import java.lang.Character._
 import java.lang.{StringBuilder => GoodSB}
 
-import scala.language.implicitConversions
 import scala.xml.NodeSeq
 
 import common._
@@ -41,20 +40,21 @@ trait StringHelpers {
    * If str is surrounded by quotes it return the content between the quotes
    */
   def unquote(str: String) = {
-    if (str != null && str.length >= 2 && str.charAt(0) == '\"' && str.charAt(str.length - 1) == '\"')
+    if (str != null && str.length >= 2 && str.charAt(0) == '\"' && str.charAt(
+        str.length - 1) == '\"')
       str.substring(1, str.length - 1)
     else
       str
   }
 
   /**
-   * Splits a string of the form &lt;name1=value1, name2=value2, ... &gt; and unquotes the quoted values.
-   * The result is a Map[String, String]
+   * Splits a string of the form &lt;name1=value1, name2=value2, ... &gt; and unquotes the quoted
+   * values. The result is a Map[String, String]
    */
   def splitNameValuePairs(props: String): Map[String, String] = {
     val list = props.split(",").toList.map(in => {
       val pair = in.roboSplit("=")
-       (pair(0), unquote(pair(1)))
+      (pair(0), unquote(pair(1)))
     })
     val map: Map[String, String] = Map.empty
 
@@ -62,11 +62,13 @@ trait StringHelpers {
   }
 
   /**
-   * Replaces the value found in a string surrounded by &lt;%= ... %&gt; by a replacement according to the value found in the subst Map.<p/>
-   * Throws an exception if no correspondance can be found.
+   * Replaces the value found in a string surrounded by &lt;%= ... %&gt; by a replacement according
+   * to the value found in the subst Map.<p/> Throws an exception if no correspondance can be found.
    *
-   * @param msg string where replacements should be done
-   * @param subst map of [regular expression with groups, replacement]
+   * @param msg
+   *   string where replacements should be done
+   * @param subst
+   *   map of [regular expression with groups, replacement]
    */
   def processString(msg: String, subst: Map[String, String]): String = {
     val pattern = Pattern.compile("\\<\\%\\=([^\\%]*)\\%\\>")
@@ -78,29 +80,33 @@ trait StringHelpers {
     m.appendTail(ret)
     ret.toString
   }
-  
- /**
-   * Turn a string of format "FooBar" into snake case "foo_bar"
-   * 
-   * Note: snakify is not reversible, ie. in general the following will _not_ be true:
-   * 
-   * s == camelify(snakify(s))
-   * 
-   * @return the underscored string
-   */
-  def snakify(name : String) = name.replaceAll("([A-Z]+)([A-Z][a-z])", "$1_$2").replaceAll("([a-z\\d])([A-Z])", "$1_$2").toLowerCase
 
-  
+  /**
+   * Turn a string of format "FooBar" into snake case "foo_bar"
+   *
+   * Note: snakify is not reversible, ie. in general the following will _not_ be true:
+   *
+   * s == camelify(snakify(s))
+   *
+   * @return
+   *   the underscored string
+   */
+  def snakify(name: String) = name.replaceAll(
+    "([A-Z]+)([A-Z][a-z])",
+    "$1_$2").replaceAll("([a-z\\d])([A-Z])", "$1_$2").toLowerCase
+
   /**
    * Turns a string of format "foo_bar" into camel case "FooBar"
    *
    * Functional code courtesy of Jamie Webb (j@jmawebb.cjb.net) 2006/11/28
-   * @param name the String to CamelCase
+   * @param name
+   *   the String to CamelCase
    *
-   * @return the CamelCased string
+   * @return
+   *   the CamelCased string
    */
-  def camelify(name : String): String = {
-    def loop(x : List[Char]): List[Char] = (x: @unchecked) match {
+  def camelify(name: String): String = {
+    def loop(x: List[Char]): List[Char] = (x: @unchecked) match {
       case '_' :: '_' :: rest => loop('_' :: rest)
       case '_' :: c :: rest => Character.toUpperCase(c) :: loop(rest)
       case '_' :: Nil => Nil
@@ -108,30 +114,35 @@ trait StringHelpers {
       case Nil => Nil
     }
     if (name == null)
-    ""
+      ""
     else
-    loop('_' :: name.toList).mkString
+      loop('_' :: name.toList).mkString
   }
 
   /**
    * Turn a string of format "foo_bar" into camel case with the first letter in lower case: "fooBar"
    * This function is especially used to camelCase method names.
    *
-   * @param name the String to CamelCase
+   * @param name
+   *   the String to CamelCase
    *
-   * @return the CamelCased string
+   * @return
+   *   the CamelCased string
    */
   def camelifyMethod(name: String): String = {
     val tmp: String = camelify(name)
     if (tmp.length == 0)
-    ""
+      ""
     else
-    tmp.substring(0,1).toLowerCase + tmp.substring(1)
+      tmp.substring(0, 1).toLowerCase + tmp.substring(1)
   }
+
   /**
    * Capitalize every "word" in the string. A word is either separated by spaces or underscores.
-   * @param in string to capify
-   * @return the capified string
+   * @param in
+   *   string to capify
+   * @return
+   *   the capified string
    */
   def capify(in: String): String = {
     val tmp = ((in match {
@@ -147,17 +158,29 @@ trait StringHelpers {
   }
 
   /**
-   * Replaces the groups found in the msg string with a replacement according to the value found in the subst Map
-   * @param msg string where replacements should be done
-   * @param subst map of [regular expression with groups, replacement]
+   * Replaces the groups found in the msg string with a replacement according to the value found in
+   * the subst Map
+   * @param msg
+   *   string where replacements should be done
+   * @param subst
+   *   map of [regular expression with groups, replacement]
    */
-  private def capify(in: String, pos: Int, max: Int, lastLetter: Boolean, lastSymbol: Boolean, out: GoodSB): Unit = {
+  private def capify(
+      in: String,
+      pos: Int,
+      max: Int,
+      lastLetter: Boolean,
+      lastSymbol: Boolean,
+      out: GoodSB): Unit = {
     if (pos >= max || pos >= in.length) return
     else {
       in.charAt(pos) match {
         case c if Character.isDigit(c) => out.append(c); capify(in, pos + 1, max, false, false, out)
-        case c if Character.isLetter(c) => out.append(if (lastLetter) c else Character.toUpperCase(c)) ; capify(in, pos + 1, max, true, false, out)
-        case c if (c == ' ' || c == '_') && !lastSymbol => out.append(c) ; capify(in, pos + 1, max, false, true, out)
+        case c if Character.isLetter(c) =>
+          out.append(if (lastLetter) c else Character.toUpperCase(c));
+          capify(in, pos + 1, max, true, false, out)
+        case c if (c == ' ' || c == '_') && !lastSymbol =>
+          out.append(c); capify(in, pos + 1, max, false, true, out)
         case _ => capify(in, pos + 1, max, false, true, out)
       }
     }
@@ -165,14 +188,17 @@ trait StringHelpers {
 
   /**
    * Remove all the characters from a string exception a-z, A-Z, 0-9, and '_'
-   * @return the cleaned string and an empty string if the input is null
+   * @return
+   *   the cleaned string and an empty string if the input is null
    */
-  def clean(in : String) =  if (in == null) "" else in.replaceAll("[^a-zA-Z0-9_]", "")
+  def clean(in: String) = if (in == null) "" else in.replaceAll("[^a-zA-Z0-9_]", "")
 
   /**
-   * Create a random string of a given size.  5 bits of randomness per character
-   * @param size size of the string to create. Must be a positive integer.
-   * @return the generated string
+   * Create a random string of a given size. 5 bits of randomness per character
+   * @param size
+   *   size of the string to create. Must be a positive integer.
+   * @return
+   *   the generated string
    */
   def randomString(size: Int): String = {
     def addChar(pos: Int, lastRand: Int, sb: GoodSB): GoodSB = {
@@ -196,20 +222,27 @@ trait StringHelpers {
 
   /**
    * Create the unicode value of a character
-   * @param in character
-   * @return the unicode value as a string starting by \\u
+   * @param in
+   *   character
+   * @return
+   *   the unicode value as a string starting by \\u
    */
   def escChar(in: Char): String = {
     val ret = Integer.toString(in.toInt, 16)
-    "\\u"+("0000".substring(ret.length)) + ret
+    "\\u" + ("0000".substring(ret.length)) + ret
   }
 
   /**
-   * Split a string separated by a point or by a column in 2 parts. Uses default values if only one is found or if no parts are found
-   * @param in string to split
-   * @param first default value for the first part if no split can be done
-   * @param second default value for the second part if one or less parts can be found
-   * @return a pair containing the first and second parts
+   * Split a string separated by a point or by a column in 2 parts. Uses default values if only one
+   * is found or if no parts are found
+   * @param in
+   *   string to split
+   * @param first
+   *   default value for the first part if no split can be done
+   * @param second
+   *   default value for the second part if one or less parts can be found
+   * @return
+   *   a pair containing the first and second parts
    */
   def splitColonPair(in: String, first: String, second: String): (String, String) = {
     (in match {
@@ -217,23 +250,28 @@ trait StringHelpers {
       case s if s.indexOf(".") != -1 => s.roboSplit("\\.")
       case s => s.roboSplit(":")
     }) match {
-      case f :: s :: _ => (f,s)
+      case f :: s :: _ => (f, s)
       case f :: Nil => (f, second)
       case _ => (first, second)
     }
   }
 
-  /** @return an Empty can if the node seq is empty and a full can with the NodeSeq text otherwise */
-  implicit def nodeSeqToOptionString(in: NodeSeq): Box[String] = if (in.length == 0) Empty else Full(in.text)
+  /**
+   * @return
+   *   an Empty can if the node seq is empty and a full can with the NodeSeq text otherwise
+   */
+  implicit def nodeSeqToOptionString(in: NodeSeq): Box[String] =
+    if (in.length == 0) Empty else Full(in.text)
 
   /**
-   * Parse a string and return the Long value of that string.<p/>
-   * The string can start with '-' if it is a negative number or '+' for a positive number
-   * @return the Long value of the input String
+   * Parse a string and return the Long value of that string.<p/> The string can start with '-' if
+   * it is a negative number or '+' for a positive number
+   * @return
+   *   the Long value of the input String
    */
   def parseNumber(tin: String): Long = {
     def cToL(in: Char) = in.toLong - '0'.toLong
-    def p(in: List[Char]) = in.takeWhile(isDigit).foldLeft(0L)((acc,c) => (acc * 10L) + cToL(c))
+    def p(in: List[Char]) = in.takeWhile(isDigit).foldLeft(0L)((acc, c) => (acc * 10L) + cToL(c))
 
     if (tin eq null) 0L
     else {
@@ -258,29 +296,30 @@ trait StringHelpers {
 
   /**
    * Split a string according to a separator
-   * @param sep a regexp to use with the String::split method
-   * @return a list of trimmed parts whose length is &gt; 0
+   * @param sep
+   *   a regexp to use with the String::split method
+   * @return
+   *   a list of trimmed parts whose length is &gt; 0
    */
-  def roboSplit(what: String, sep: String): List[String] = 
+  def roboSplit(what: String, sep: String): List[String] =
     what match {
       case null => Nil
       case s => s.split(sep).toList.map(_.trim).filter(_.length > 0)
     }
 
   /**
-   * Faster than roboSplit... this method splits Strings at a given
-   * character
+   * Faster than roboSplit... this method splits Strings at a given character
    */
-  def charSplit(what: String, sep: Char): List[String] = 
+  def charSplit(what: String, sep: Char): List[String] =
     what match {
       case null => Nil
       case str => {
         val ret = new scala.collection.mutable.ListBuffer[String]
-        
+
         val len = str.length
         var pos = 0
         var lastPos = 0
-        
+
         while (pos < len) {
           if (str.charAt(pos) == sep) {
             if (pos > lastPos) {
@@ -303,7 +342,8 @@ trait StringHelpers {
 
   /**
    * Split a string in 2 parts at the first place where a separator is found
-   * @return a List containing a pair of the 2 trimmed parts
+   * @return
+   *   a List containing a pair of the 2 trimmed parts
    */
   def splitAt(what: String, sep: String): List[(String, String)] = {
     if (null eq what)
@@ -316,8 +356,10 @@ trait StringHelpers {
   }
 
   /**
-   * Encode the string to be including in JavaScript, replacing '\' or '\\' or non-ASCII characters by their unicode value
-   * @return the encoded string inserted into quotes
+   * Encode the string to be including in JavaScript, replacing '\' or '\\' or non-ASCII characters
+   * by their unicode value
+   * @return
+   *   the encoded string inserted into quotes
    */
   def encJs(what: String): String = {
     if (what eq null) "null"
@@ -342,13 +384,14 @@ trait StringHelpers {
 
   /**
    * Add commas before the last 3 characters
-   * @return the string with commas
+   * @return
+   *   the string with commas
    */
   def commafy(what: String): String = {
     if (null eq what) null
     else {
       val toDo = what.toList.reverse
-      
+
       def commaIt(in: List[Char]): List[Char] = in match {
         case Nil => in
         case x :: Nil => in
@@ -359,7 +402,6 @@ trait StringHelpers {
       commaIt(toDo).reverse.mkString("")
     }
   }
-
 
   /** @return a SuperString with more available methods such as roboSplit or commafy */
   implicit def stringToSuper(in: String): SuperString = new SuperString(in)
@@ -377,7 +419,8 @@ trait StringHelpers {
    *
    * A string containing only spaces is considered blank.
    *
-   * @return Full(s.trim) if s is not null or blank, Empty otherwise
+   * @return
+   *   Full(s.trim) if s is not null or blank, Empty otherwise
    */
   def emptyForBlank(s: String) = blankForNull(s).trim match {
     case "" => Empty
@@ -389,6 +432,7 @@ trait StringHelpers {
  * A class that allows chaining "foo" / "bar" / "baz"
  */
 final class SuperListString(lst: List[String]) {
+
   /**
    * Add the / method that allows chaining "foo" / "bar" / "baz"
    */
@@ -399,45 +443,46 @@ final class SuperListString(lst: List[String]) {
  * The SuperString class adds functionalities to the String class
  */
 final case class SuperString(what: String) {
+
   /**
    * Split a string according to a separator
-   * @param sep a regexp to use with the String::split method
-   * @return a list of trimmed parts whose length is &gt; 0
+   * @param sep
+   *   a regexp to use with the String::split method
+   * @return
+   *   a list of trimmed parts whose length is &gt; 0
    */
   def roboSplit(sep: String): List[String] = Helpers.roboSplit(what, sep)
-  
+
   /**
-   * Faster than roboSplit... this method splits Strings at a given
-   * character
+   * Faster than roboSplit... this method splits Strings at a given character
    */
   def charSplit(sep: Char): List[String] = Helpers.charSplit(what, sep)
 
   /**
    * Split a string in 2 parts at the first place where a separator is found
-   * @return a List containing a pair of the 2 trimmed parts
+   * @return
+   *   a List containing a pair of the 2 trimmed parts
    */
   def splitAt(sep: String): List[(String, String)] = Helpers.splitAt(what, sep)
 
   /**
-   * Encode the string to be including in JavaScript, replacing '\' or '\\' or non-ASCII characters by their unicode value
-   * @return the encoded string inserted into quotes
+   * Encode the string to be including in JavaScript, replacing '\' or '\\' or non-ASCII characters
+   * by their unicode value
+   * @return
+   *   the encoded string inserted into quotes
    */
   def encJs: String = Helpers.encJs(what)
 
   /**
    * Add commas before the last 3 characters
-   * @return the string with commas
+   * @return
+   *   the string with commas
    */
   def commafy: String = Helpers.commafy(what)
 
   /**
-   * Create a List of Strings using the / method so you
-   * can write "foo" / "bar"
+   * Create a List of Strings using the / method so you can write "foo" / "bar"
    */
   def /(other: String): List[String] = List(what, other)
 
-  
-
-  
 }
-

@@ -19,11 +19,10 @@ package json
 
 import org.specs2.mutable.Specification
 
-
 /**
  * System under specification for JSON Pull Parser.
  */
-object PullParserExamples extends Specification  {
+object PullParserExamples extends Specification {
   "JSON Pull Parser Examples".title
   import JsonParser._
 
@@ -31,9 +30,9 @@ object PullParserExamples extends Specification  {
     val parser = (p: Parser) => {
       def parse: BigInt = p.nextToken match {
         case FieldStart("postalCode") => p.nextToken match {
-          case IntVal(code) => code
-          case _ => p.fail("expected int")
-        }
+            case IntVal(code) => code
+            case _ => p.fail("expected int")
+          }
         case End => p.fail("no field named 'postalCode'")
         case _ => parse
       }

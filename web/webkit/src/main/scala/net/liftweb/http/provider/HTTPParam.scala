@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
-package provider 
+package net.liftweb
+package http
+package provider
 
 /**
  * Companion module for creating new HTTPParam objects
@@ -29,4 +29,3 @@ object HTTPParam {
  * Represents a HTTP query parameter or a HTTP header parameter
  */
 case class HTTPParam(name: String, values: List[String])
-

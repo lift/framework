@@ -10,7 +10,9 @@ ThisBuild / version := "3.5.0-jakarta"
 // built against (the app pins 1.3.1 for the same reason).
 ThisBuild / dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.3.0"
 ThisBuild / homepage := Some(url("http://www.liftweb.net"))
-ThisBuild / licenses += ("Apache License, Version 2.0", url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
+ThisBuild / licenses += (
+  "Apache License, Version 2.0",
+  url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
 ThisBuild / startYear := Some(2006)
 ThisBuild / organizationName := "WorldWide Conferencing, LLC"
 
@@ -26,9 +28,17 @@ val crossUpTo213 = scala213Version +: crossUpTo212
 // 2.12 line is unmaintained. scalaVersion must match the app (2.13.18).
 ThisBuild / scalaVersion := scala213Version
 
-ThisBuild / libraryDependencies ++= Seq(specs2, specs2Matchers, specs2Mock, scalacheck, scalactic, scalatest)
+ThisBuild / libraryDependencies ++= Seq(
+  specs2,
+  specs2Matchers,
+  specs2Mock,
+  scalacheck,
+  scalactic,
+  scalatest)
 
-ThisBuild / scalacOptions ++= Seq("-deprecation")
+ThisBuild / scalacOptions ++= Seq("-deprecation", "-Wunused:imports")
+ThisBuild / semanticdbEnabled := true
+ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 
 // Settings for Sonatype compliance
 ThisBuild / pomIncludeRepository := { _ => false }
@@ -39,18 +49,22 @@ ThisBuild / publishTo := {
     Some(Opts.resolver.sonatypeStaging)
   }
 }
-ThisBuild / scmInfo := Some(ScmInfo(url("https://github.com/lift/framework"), "scm:git:https://github.com/lift/framework.git"))
+ThisBuild / scmInfo := Some(ScmInfo(
+  url("https://github.com/lift/framework"),
+  "scm:git:https://github.com/lift/framework.git"))
 ThisBuild / pomExtra := Developers.toXml
 
-ThisBuild / credentials += Credentials(BuildPaths.getGlobalSettingsDirectory(state.value, BuildPaths.getGlobalBase(state.value)) / ".credentials")
+ThisBuild / credentials += Credentials(BuildPaths.getGlobalSettingsDirectory(
+  state.value,
+  BuildPaths.getGlobalBase(state.value)) / ".credentials")
 
 initialize := {
   printLogo(name.value, version.value, scalaVersion.value)
 }
 
 ThisBuild / resolvers ++= Seq(
-  "snapshots"     at "https://oss.sonatype.org/content/repositories/snapshots",
-  "releases"      at "https://oss.sonatype.org/content/repositories/releases"
+  "snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+  "releases" at "https://oss.sonatype.org/content/repositories/releases"
 )
 
 lazy val liftProjects = core ++ web ++ persistence
@@ -93,7 +107,7 @@ lazy val json =
     .settings(
       description := "JSON Library",
       Test / parallelExecution := false,
-      libraryDependencies ++= Seq(scalap(scalaVersion.value), paranamer,  scala_xml)
+      libraryDependencies ++= Seq(scalap(scalaVersion.value), paranamer, scala_xml)
     )
 
 lazy val documentationHelpers =
@@ -189,10 +203,9 @@ lazy val webkit =
       },
       Compile / compile := (Compile / compile).dependsOn(WebKeys.assets).value,
       /**
-        * This is to ensure that the tests in net.liftweb.webapptest run last
-        * so that other tests (MenuSpec in particular) run before the SiteMap
-        * is set.
-        */
+       * This is to ensure that the tests in net.liftweb.webapptest run last so that other tests
+       * (MenuSpec in particular) run before the SiteMap is set.
+       */
       Test / testGrouping := {
         (Test / definedTests).map { tests =>
           import Tests._
@@ -206,8 +219,7 @@ lazy val webkit =
             new Group("webapptests", webapptests, InProcess)
           )
         }.value
-      },
-
+      }
     )
     .enablePlugins(SbtWeb)
 
@@ -272,4 +284,3 @@ lazy val mongodb_record =
     .settings(
       Test / parallelExecution := false
     )
-

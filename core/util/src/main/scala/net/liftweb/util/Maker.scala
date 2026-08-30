@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 import java.util.concurrent.{ConcurrentHashMap => CHash, Callable}
 import java.lang.ThreadLocal
 
-import scala.language.implicitConversions
 import scala.reflect.Manifest
 import scala.xml.NodeSeq
 
@@ -40,12 +39,11 @@ trait SimpleInjector extends Injector {
   private val diHash: CHash[String, Function0[_]] = new CHash
 
   /**
-   * Perform the injection for the given type.  You can call:
-   * inject[Date] or inject[List[Map[String, PaymentThing]]].  The
-   * appropriate Manifest will be
+   * Perform the injection for the given type. You can call: inject[Date] or inject[List[Map[String,
+   * PaymentThing]]]. The appropriate Manifest will be
    */
   implicit def inject[T](implicit man: Manifest[T]): Box[T] =
-  (Box !! diHash.get(man.toString)).flatMap(f => Helpers.tryo(f.apply())).asInstanceOf[Box[T]]
+    (Box !! diHash.get(man.toString)).flatMap(f => Helpers.tryo(f.apply())).asInstanceOf[Box[T]]
 
   /**
    * Register a function that will inject for the given Manifest
@@ -55,13 +53,12 @@ trait SimpleInjector extends Injector {
   }
 
   /**
-   * Create an object or val that is a subclass of the FactoryMaker to
-   * generate factory for a particular class as well as define session and
-   * request specific vendors and use doWith to define the vendor just for
-   * the scope of the call.
+   * Create an object or val that is a subclass of the FactoryMaker to generate factory for a
+   * particular class as well as define session and request specific vendors and use doWith to
+   * define the vendor just for the scope of the call.
    */
-  abstract class Inject[T](_default: Vendor[T])
-                                (implicit man: Manifest[T]) extends StackableMaker[T] with Vendor[T] {
+  abstract class Inject[T](_default: Vendor[T])(implicit man: Manifest[T]) extends StackableMaker[T]
+      with Vendor[T] {
     registerInjection(this)(man)
 
     /**
@@ -93,22 +90,24 @@ trait SimpleInjector extends Injector {
 }
 
 /**
- * In addition to an Injector, you can have a Maker which will make a given
- * type.  The important thing about a Maker is that it's intended to be used
- * as part of a factory that can vend an instance without the vaguaries of
- * whether the given class has registered a with the injector.
+ * In addition to an Injector, you can have a Maker which will make a given type. The important
+ * thing about a Maker is that it's intended to be used as part of a factory that can vend an
+ * instance without the vaguaries of whether the given class has registered a with the injector.
  */
 trait Maker[T] {
   implicit def make: Box[T]
 }
 
 object Maker {
-  def apply[T](value: T): Maker[T] = new Maker[T]{implicit def make: Box[T] = Full(value)}
-  def apply[T](func:() => T): Maker[T] = new Maker[T]{implicit def make: Box[T] = Full(func())}
-  def apply[T](func: Box[() => T]): Maker[T] = new Maker[T]{implicit def make: Box[T] = func.map(_.apply())}
-  def apply1[T](box: Box[T]): Maker[T] = new Maker[T]{implicit def make: Box[T] = box}
-  def apply2[T](func: Box[() => Box[T]]): Maker[T] = new Maker[T]{implicit def make: Box[T] = func.flatMap(_.apply())}
-  def apply3[T](func: () => Box[T]): Maker[T] = new Maker[T]{implicit def make: Box[T] = func.apply()}
+  def apply[T](value: T): Maker[T] = new Maker[T] { implicit def make: Box[T] = Full(value) }
+  def apply[T](func: () => T): Maker[T] = new Maker[T] { implicit def make: Box[T] = Full(func()) }
+  def apply[T](func: Box[() => T]): Maker[T] =
+    new Maker[T] { implicit def make: Box[T] = func.map(_.apply()) }
+  def apply1[T](box: Box[T]): Maker[T] = new Maker[T] { implicit def make: Box[T] = box }
+  def apply2[T](func: Box[() => Box[T]]): Maker[T] =
+    new Maker[T] { implicit def make: Box[T] = func.flatMap(_.apply()) }
+  def apply3[T](func: () => Box[T]): Maker[T] =
+    new Maker[T] { implicit def make: Box[T] = func.apply() }
 
   implicit def vToMake[T](v: T): Maker[T] = this.apply(v)
   implicit def vToMake[T](v: () => T): Maker[T] = this.apply(v)
@@ -119,9 +118,9 @@ object Maker {
 }
 
 /**
- * A StackableMaker allows DynamicVar functionality by supply a Maker or function
- * that will vend an instance during any sub-call on the stack and then
- * restore the implementation.  This is value for testing.
+ * A StackableMaker allows DynamicVar functionality by supply a Maker or function that will vend an
+ * instance during any sub-call on the stack and then restore the implementation. This is value for
+ * testing.
  */
 trait StackableMaker[T] extends Maker[T] {
   private val _stack: ThreadLocal[List[PValueHolder[Maker[T]]]] = new ThreadLocal
@@ -135,13 +134,13 @@ trait StackableMaker[T] extends Maker[T] {
    * Changes to the stack of Makers made by this method are thread-local!
    */
   def doWith[F](value: T)(f: => F): F =
-  doWith(PValueHolder(Maker(value)))(f)
+    doWith(PValueHolder(Maker(value)))(f)
 
   /**
    * Changes to the stack of Makers made by this method are thread-local!
    */
   def doWith[F](vFunc: () => T)(f: => F): F =
-  doWith(PValueHolder(Maker(vFunc)))(f)
+    doWith(PValueHolder(Maker(vFunc)))(f)
 
   /**
    * Changes to the stack of Makers made by this method are thread-local!
@@ -189,6 +188,7 @@ trait Vendor[T] extends Maker[T] with Function0[T] {
  * A bridge from Java to Scala
  */
 class VendorJBridge {
+
   /**
    * Create a Vendor from a Func0
    */
@@ -223,6 +223,5 @@ object Vendor {
   implicit def funcToVendor[T](f: () => T): Vendor[T] = apply(f)
 }
 
-
-case class FormBuilderLocator[T](func: (T, T => Unit) => NodeSeq)(implicit val manifest: Manifest[T])
-
+case class FormBuilderLocator[T](func: (T, T => Unit) => NodeSeq)(implicit
+    val manifest: Manifest[T])

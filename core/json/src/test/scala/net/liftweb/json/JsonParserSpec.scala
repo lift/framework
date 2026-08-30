@@ -29,12 +29,13 @@ import org.scalacheck.Prop._
  */
 class JsonParserSpec extends Specification with JValueGen with ScalaCheck {
 
-  private def parseBadThing(): String =     try {
-    parse("""{"user":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"<}""")
-    "x" * 1000
-  } catch {
-    case e: Throwable => e.getMessage
-  }
+  private def parseBadThing(): String =
+    try {
+      parse("""{"user":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"<}""")
+      "x" * 1000
+    } catch {
+      case e: Throwable => e.getMessage
+    }
 
   "JSON Parser Specification".title
 
@@ -54,9 +55,9 @@ class JsonParserSpec extends Specification with JValueGen with ScalaCheck {
   }
 
   "All valid string escape characters can be parsed" in {
-    parse("[\"abc\\\"\\\\\\/\\b\\f\\n\\r\\t\\u00a0\"]") must_== JArray(JString("abc\"\\/\b\f\n\r\t\u00a0")::Nil)
+    parse("[\"abc\\\"\\\\\\/\\b\\f\\n\\r\\t\\u00a0\"]") must_== JArray(
+      JString("abc\"\\/\b\f\n\r\t\u00a0") :: Nil)
   }
-
 
   "Parser does not bleed prior results" in {
     parse("""{"a": "now is the time for all good men to come to the aid of their dog and eat dog food with other dogs and bark and woof and do dog things. now is the time for all good men to come to the aid of their dog and eat dog food with other dogs and bark and woof and do dog things. now is the time for all good men to come to the aid of their dog and eat dog food with other dogs and bark and woof and do dog things. now is the time for all good men to come to the aid of their dog and eat dog food with other dogs and bark and woof and do dog things. now is the time for all good men to come to the aid of their dog and eat dog food with other dogs and bark and woof and do dog things. now is the time for all good men to come to the aid of their dog and eat dog food with other dogs and bark and woof and do dog things. now is the time for all good men to come to the aid of their dog and eat dog food with other dogs and bark and woof and do dog things.now is the time for all good men to come to the aid of their dog and eat dog food with other dogs and bark and woof and do dog things"}""")

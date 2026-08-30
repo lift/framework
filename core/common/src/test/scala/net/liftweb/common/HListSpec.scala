@@ -19,7 +19,6 @@ package common
 
 import org.specs2.mutable.Specification
 
-
 /**
  * System under specification for Heterogeneous List.
  */
@@ -60,7 +59,7 @@ class HListSpec extends Specification {
       // result in a failure
       x match {
         case Left(_) => success
-        case _       => failure
+        case _ => failure
       }
     }
 
@@ -68,11 +67,11 @@ class HListSpec extends Specification {
       import CombinableBox._
       import HLists._
 
-      val x = Full("a") :&: Full(1) :&: Full(List(1,2,3))
+      val x = Full("a") :&: Full(1) :&: Full(List(1, 2, 3))
 
       // result in a failure
       x match {
-        case Right(a :+: one :+: lst :+:HNil) => {
+        case Right(a :+: one :+: lst :+: HNil) => {
           // val a2: Int = a  fails... not type safe
 
           val as: String = a
@@ -93,7 +92,7 @@ class HListSpec extends Specification {
 
       val res = for {
         a :+: one :+: lst :+: _ <-
-        (Full("a") ?~ "Yak" :&: Full(1) :&: Full(List(1,2,3))) ?~! "Dude"
+          (Full("a") ?~ "Yak" :&: Full(1) :&: Full(List(1, 2, 3))) ?~! "Dude"
       } yield a.length * one * lst.foldLeft(1)(_ * _)
 
       res must_== Full(6)
@@ -101,4 +100,3 @@ class HListSpec extends Specification {
   }
 
 }
-

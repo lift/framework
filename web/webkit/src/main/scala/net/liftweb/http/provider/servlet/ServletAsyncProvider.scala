@@ -22,30 +22,32 @@ import http.provider._
 import common._
 
 /**
- * Abstracts the management of asynchronous HTTP requests in order
- * to allow requests to be suspended and resumed later on.
- *  
+ * Abstracts the management of asynchronous HTTP requests in order to allow requests to be suspended
+ * and resumed later on.
  */
 trait ServletAsyncProvider {
 
   /**
-   * @return true if the underlying JEE container supports suspend/resume
+   * @return
+   *   true if the underlying JEE container supports suspend/resume
    */
   def suspendResumeSupport_? : Boolean
 
-  /** 
-   * @return the reference that was provided in the resume call 
-   */ 
-  def resumeInfo : Option[(Req, LiftResponse)]
+  /**
+   * @return
+   *   the reference that was provided in the resume call
+   */
+  def resumeInfo: Option[(Req, LiftResponse)]
 
   /**
    * Suspends this request for a given period of time
-   * 
+   *
    * @param timeout
-   * @return a RetryState
+   * @return
+   *   a RetryState
    */
   def suspend(timeout: Long): RetryState.Value
-  
+
   /**
    * Resumes this request
    *
@@ -56,8 +58,10 @@ trait ServletAsyncProvider {
 }
 
 trait AsyncProviderMeta {
+
   /**
-   * @return true if the underlying JEE container supports suspend/resume
+   * @return
+   *   true if the underlying JEE container supports suspend/resume
    */
   def suspendResumeSupport_? : Boolean
 

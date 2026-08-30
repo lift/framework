@@ -20,26 +20,25 @@ package actor
 import java.util.concurrent._
 
 /**
- * Rules for dealing with thread pools, both in lift-actor and
- * in lift-util
+ * Rules for dealing with thread pools, both in lift-actor and in lift-util
  */
 object ThreadPoolRules {
+
   /**
-   * When threads are created in the thread factories, should
-   * they null the context class loader.  By default false,
-   * but it you set it to true, Tomcat complains less about stuff.
-   * Must be set in the first line of Boot.scala
+   * When threads are created in the thread factories, should they null the context class loader. By
+   * default false, but it you set it to true, Tomcat complains less about stuff. Must be set in the
+   * first line of Boot.scala
    */
   @volatile var nullContextClassLoader: Boolean = false
 }
 
 /**
- * LAPinger is for scheduling LiftActors to be pinged with an arbitrary message at some point
- * in the future.
+ * LAPinger is for scheduling LiftActors to be pinged with an arbitrary message at some point in the
+ * future.
  */
 object LAPinger {
 
-  /**The underlying <code>java.util.concurrent.ScheduledExecutor</code> */
+  /** The underlying <code>java.util.concurrent.ScheduledExecutor</code> */
   private var service = Executors.newSingleThreadScheduledExecutor(TF)
 
   /**
@@ -60,11 +59,15 @@ object LAPinger {
   /**
    * Schedules the sending of a message to occur after the specified delay.
    *
-   * @param to The LiftActor to send the message to.
-   * @param msg The message to send.
-   * @param delay The number of milliseconds to delay before sending msg
-   * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
-   * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
+   * @param to
+   *   The LiftActor to send the message to.
+   * @param msg
+   *   The message to send.
+   * @param delay
+   *   The number of milliseconds to delay before sending msg
+   * @return
+   *   a <code>ScheduledFuture</code> which sends the <code>msg</code> to the <code>to<code> Actor
+   *   after the specified TimeSpan <code>delay</code>.
    */
   def schedule[T](to: SpecializedLiftActor[T], msg: T, delay: Long): ScheduledFuture[Unit] = {
     val r = new Callable[Unit] {
@@ -75,7 +78,8 @@ object LAPinger {
     try {
       service.schedule(r, delay, TimeUnit.MILLISECONDS)
     } catch {
-      case e: RejectedExecutionException => throw PingerException(String.valueOf(msg) + " could not be scheduled on " + to, e)
+      case e: RejectedExecutionException =>
+        throw PingerException(String.valueOf(msg) + " could not be scheduled on " + to, e)
     }
   }
 

@@ -16,30 +16,28 @@
 package net.liftweb
 package mockweb
 
-import scala.xml.{Null,Text,UnprefixedAttribute}
+import scala.xml.{Null, Text, UnprefixedAttribute}
 
 import org.specs2.mutable.Specification
 
 import common._
-import util._
 import http._
 import provider.servlet.HTTPRequestServlet
 import mocks.MockHttpServletRequest
 
-
 /**
- * System under specification for MockWeb. This does the double duty as both a spec
- * against the MockWeb object as well as an example of how to use it.
+ * System under specification for MockWeb. This does the double duty as both a spec against the
+ * MockWeb object as well as an example of how to use it.
  */
-class MockWebSpec extends Specification  {
+class MockWebSpec extends Specification {
   "MockWeb Specification".title
 
   import MockWeb._
 
-  /** We can create our own LiftRules instance for the purpose of this spec. In the
-   * examples below we can call LiftRulesMocker.devTestLiftRulesInstance.doWith(mockLiftRules) {...}
-   * whenever we want to evaluate LiftRules. For simpler usage, WebSpecSpec provides
-   * full-featured LiftRules mocking.
+  /**
+   * We can create our own LiftRules instance for the purpose of this spec. In the examples below we
+   * can call LiftRulesMocker.devTestLiftRulesInstance.doWith(mockLiftRules) {...} whenever we want
+   * to evaluate LiftRules. For simpler usage, WebSpecSpec provides full-featured LiftRules mocking.
    */
   val mockLiftRules = new LiftRules()
 
@@ -61,9 +59,9 @@ class MockWebSpec extends Specification  {
     LiftRules.early.append {
       req =>
         req match {
-          case httpReq : HTTPRequestServlet => {
+          case httpReq: HTTPRequestServlet => {
             httpReq.req match {
-              case mocked : MockHttpServletRequest => {
+              case mocked: MockHttpServletRequest => {
                 mocked.remoteAddr = "1.2.3.4"
               }
               case _ => println("Not a mocked request?")
@@ -79,7 +77,7 @@ class MockWebSpec extends Specification  {
       testReq("http://foo.com/test/this?a=b&a=c", "/test") {
         req =>
           req.uri must_== "/this"
-          req.params("a") must_== List("b","c")
+          req.params("a") must_== List("b", "c")
       }
     }
 
@@ -159,14 +157,13 @@ class MockWebSpec extends Specification  {
     }
 
     "emulate a snippet invocation" in {
-        testS("http://foo.com/test/stateful") {
-          withSnippet("MyWidget.foo", new UnprefixedAttribute("bar", Text("bat"), Null)) {
-            S.currentSnippet must_== Full("MyWidget.foo")
-            S.attr("bar") must_== Full("bat")
-          }
+      testS("http://foo.com/test/stateful") {
+        withSnippet("MyWidget.foo", new UnprefixedAttribute("bar", Text("bat"), Null)) {
+          S.currentSnippet must_== Full("MyWidget.foo")
+          S.attr("bar") must_== Full("bat")
         }
+      }
     }
-
 
     "simplify shared sessions" in {
       object testVar extends SessionVar[String]("Empty")

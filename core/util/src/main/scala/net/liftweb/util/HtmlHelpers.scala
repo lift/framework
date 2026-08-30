@@ -26,28 +26,24 @@ import scala.xml._
 import common._
 
 /**
- * This trait is used to identify an object that is representable as a
- * {@link NodeSeq}.
+ * This trait is used to identify an object that is representable as a {@link NodeSeq}.
  */
 trait Bindable {
   def asHtml: NodeSeq
 }
 
 /**
- * A common function-like interface for accessing information about
- * attributes, based on the two core <code>findAttr</code> and
- * <code>convert</code> methods.
+ * A common function-like interface for accessing information about attributes, based on the two
+ * core <code>findAttr</code> and <code>convert</code> methods.
  *
- * Extenders can be fairly flexible. The value of an attribute is
- * specified by the extender as type <code>Info</code>. Possibly-missing
- * attributes are returned in type Holder, which should be
- * parametrizable.  For example, you could create an AttrHelper that
- * deals in String attribute values (<code>type Info = String</code>)
- * and returns <code>Option</code>s in cases where the attribute may not
- * be found.
+ * Extenders can be fairly flexible. The value of an attribute is specified by the extender as type
+ * <code>Info</code>. Possibly-missing attributes are returned in type Holder, which should be
+ * parametrizable. For example, you could create an AttrHelper that deals in String attribute values
+ * (<code>type Info = String</code>) and returns <code>Option</code>s in cases where the attribute
+ * may not be found.
  *
- * Note that you can invoke an <code>AttrHelper</code> with conversion
- * functions to turn an <code>Info</code> into an arbitrary type.
+ * Note that you can invoke an <code>AttrHelper</code> with conversion functions to turn an
+ * <code>Info</code> into an arbitrary type.
  *
  * A sample implementation:
  * {{{
@@ -66,8 +62,8 @@ trait Bindable {
  * }
  * }}}
  *
- * The helper above takes a scala <code>Elem</code> and provides a
- * series of ways to access the values of its elements. For example:
+ * The helper above takes a scala <code>Elem</code> and provides a series of ways to access the
+ * values of its elements. For example:
  *
  * {{{
  * val attributes = HtmlAttributes(elem)
@@ -118,9 +114,8 @@ trait HtmlHelpers extends CssBindImplicits {
   // Finding things
 
   /**
-   * Given a NodeSeq and a function that returns a Box[T],
-   * return the first value found in which the function evaluates
-   * to Full
+   * Given a NodeSeq and a function that returns a Box[T], return the first value found in which the
+   * function evaluates to Full
    */
   def findBox[T](nodes: Seq[Node])(f: Elem => Box[T]): Box[T] = {
     nodes.view.flatMap {
@@ -131,9 +126,8 @@ trait HtmlHelpers extends CssBindImplicits {
   }
 
   /**
-   * Given a NodeSeq and a function that returns an Option[T],
-   * return the first value found in which the function evaluates
-   * to Some
+   * Given a NodeSeq and a function that returns an Option[T], return the first value found in which
+   * the function evaluates to Some
    */
   def findOption[T](nodes: Seq[Node])(f: Elem => Option[T]): Option[T] = {
     nodes.view.flatMap {
@@ -153,8 +147,8 @@ trait HtmlHelpers extends CssBindImplicits {
   }
 
   /**
-   * Finds the first `Elem` in the NodeSeq (or any children)
-   * that has an ID attribute and return the value of that attribute.
+   * Finds the first `Elem` in the NodeSeq (or any children) that has an ID attribute and return the
+   * value of that attribute.
    */
   def findId(ns: NodeSeq): Box[String] = {
     findBox(ns)(_.attribute("id").map(_.text))
@@ -172,9 +166,12 @@ trait HtmlHelpers extends CssBindImplicits {
   /**
    * Remove an attribute from the specified element.
    *
-   * @param name the name of the attribute to remove
-   * @param elem the element
-   * @return the element sans the named attribute
+   * @param name
+   *   the name of the attribute to remove
+   * @param elem
+   *   the element
+   * @return
+   *   the element sans the named attribute
    */
   def removeAttribute(name: String, element: Elem): Elem = {
     element.copy(attributes = removeAttribute(name, element.attributes))
@@ -183,24 +180,25 @@ trait HtmlHelpers extends CssBindImplicits {
   /**
    * Remove an attribute from the specified list of existing attributes.
    *
-   * @param name the name of the attribute to remove
-   * @param existingAttributes a list of existing attributes
-   * @return the attributes list sans the named attribute
+   * @param name
+   *   the name of the attribute to remove
+   * @param existingAttributes
+   *   a list of existing attributes
+   * @return
+   *   the attributes list sans the named attribute
    */
   def removeAttribute(name: String, existingAttributes: MetaData): MetaData = {
     existingAttributes.filter {
       case up: UnprefixedAttribute => up.key != name
       case _ => true
-    }   
+    }
   }
 
   /**
-   * Adds the specified <code>cssClass</code> to the existing class
-   * attribute of an Elem or create the class attribute with that
-   * class if it does not exist.
+   * Adds the specified <code>cssClass</code> to the existing class attribute of an Elem or create
+   * the class attribute with that class if it does not exist.
    *
-   * If <code>cssClass</code> is not <code>Full</code>, returns the
-   * passed Elem unchanged.
+   * If <code>cssClass</code> is not <code>Full</code>, returns the passed Elem unchanged.
    */
   def addCssClass(cssClass: Box[String], elem: Elem): Elem = {
     cssClass match {
@@ -210,9 +208,8 @@ trait HtmlHelpers extends CssBindImplicits {
   }
 
   /**
-   * Adds the specified <code>cssClass</code> to the existing class
-   * attribute of an Elem or creates the class attribute with that class
-   * if it does not exist.
+   * Adds the specified <code>cssClass</code> to the existing class attribute of an Elem or creates
+   * the class attribute with that class if it does not exist.
    */
   def addCssClass(cssClass: String, elem: Elem): Elem = {
     elem.attribute("class") match {
@@ -220,7 +217,7 @@ trait HtmlHelpers extends CssBindImplicits {
         def attributesWithUpdatedClass(existingAttributes: MetaData) = {
           new UnprefixedAttribute(
             "class",
-            existingClasses.text.trim + " " + cssClass.trim, 
+            existingClasses.text.trim + " " + cssClass.trim,
             removeAttribute("class", existingAttributes)
           )
         }
@@ -237,7 +234,9 @@ trait HtmlHelpers extends CssBindImplicits {
   // found as well as the duplicate id stripping function, and the
   // caller can decide whether to ensure uniqueness at only one level or
   // whether to recurse through children.
-  private def ensureUniqueIdHelper(in: Seq[NodeSeq], processElement: (Elem, (Node)=>Node)=>Elem): Seq[NodeSeq] = {
+  private def ensureUniqueIdHelper(
+      in: Seq[NodeSeq],
+      processElement: (Elem, (Node) => Node) => Elem): Seq[NodeSeq] = {
     var ids: Set[String] = Set()
 
     def stripDuplicateId(node: Node): Node = node match {
@@ -267,23 +266,23 @@ trait HtmlHelpers extends CssBindImplicits {
   }
 
   /**
-   * For a list of NodeSeq, ensure that the the id of the root Elems
-   * are unique.  If there's a duplicate, that Elem will be returned
-   * without an id
+   * For a list of NodeSeq, ensure that the the id of the root Elems are unique. If there's a
+   * duplicate, that Elem will be returned without an id
    */
   def ensureUniqueId(in: Seq[NodeSeq]): Seq[NodeSeq] = {
     ensureUniqueIdHelper(in, (element, _) => element)
   }
 
   /**
-   * For a list of NodeSeq, ensure that the the id of all Elems are
-   * unique, recursively.  If there's a duplicate, that Elem will be
-   * returned without an id.
+   * For a list of NodeSeq, ensure that the the id of all Elems are unique, recursively. If there's
+   * a duplicate, that Elem will be returned without an id.
    */
   def deepEnsureUniqueId(in: NodeSeq): NodeSeq = {
-    ensureUniqueIdHelper(List(in), { (element, stripUniqueId) =>
-      element.copy(child = element.child.map(stripUniqueId))
-    }).head
+    ensureUniqueIdHelper(
+      List(in),
+      { (element, stripUniqueId) =>
+        element.copy(child = element.child.map(stripUniqueId))
+      }).head
   }
 
   /**
@@ -291,7 +290,7 @@ trait HtmlHelpers extends CssBindImplicits {
    */
   def ensureId(ns: NodeSeq, id: String): NodeSeq = {
     var found = false
-    
+
     ns.map {
       case x if found => x
       case element: Elem => {
@@ -301,7 +300,7 @@ trait HtmlHelpers extends CssBindImplicits {
 
         element.copy(attributes = new UnprefixedAttribute("id", id, meta))
       }
- 
+
       case x => x
     }
   }
@@ -320,19 +319,22 @@ trait HtmlHelpers extends CssBindImplicits {
           </i>
           </div>)
 
-        case _ => Empty
+      case _ => Empty
     }
   }
 
   /**
-   * Make a MetaData instance from a key and a value. If key contains a colon, this
-   * method will generate a PrefixedAttribute with the text before the colon used as
-   * the prefix. Otherwise, it will produce an UnprefixedAttribute.
+   * Make a MetaData instance from a key and a value. If key contains a colon, this method will
+   * generate a PrefixedAttribute with the text before the colon used as the prefix. Otherwise, it
+   * will produce an UnprefixedAttribute.
    */
   def makeMetaData(key: String, value: String, rest: MetaData): MetaData = key.indexOf(":") match {
-    case x if x > 0 => new PrefixedAttribute(key.substring(0, x),
-      key.substring(x + 1),
-      value, rest)
+    case x if x > 0 =>
+      new PrefixedAttribute(
+        key.substring(0, x),
+        key.substring(x + 1),
+        value,
+        rest)
 
     case _ => new UnprefixedAttribute(key, value, rest)
   }

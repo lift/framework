@@ -9,12 +9,12 @@ class NoNoArgCtorModel(val x: Int) extends LongKeyedMapper[NoNoArgCtorModel] wit
 object NoNoArgCtorModel extends NoNoArgCtorModel(1) with LongKeyedMetaMapper[NoNoArgCtorModel]
 
 /**
- * Pins the reflection behavior of MetaMapper.createInstance after the
- * Class.newInstance -> Constructor.newInstance modernization.
+ * Pins the reflection behavior of MetaMapper.createInstance after the Class.newInstance ->
+ * Constructor.newInstance modernization.
  *
- * A model without a no-arg constructor must fail with NoSuchMethodException
- * (previously InstantiationException on some JDK paths); the test asserts
- * the exact failure type so a future JDK or refactor drift is caught.
+ * A model without a no-arg constructor must fail with NoSuchMethodException (previously
+ * InstantiationException on some JDK paths); the test asserts the exact failure type so a future
+ * JDK or refactor drift is caught.
  */
 class MetaMapperCreateInstanceSpec extends Specification {
 

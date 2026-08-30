@@ -17,17 +17,21 @@
 package net.liftweb
 package common
 
-import java.util.{List => JavaList, Iterator => JavaIterator, ArrayList,
-                ListIterator, Collection => JavaCollection}
+import java.util.{
+  List => JavaList,
+  Iterator => JavaIterator,
+  ArrayList,
+  ListIterator,
+  Collection => JavaCollection
+}
 
 /**
- * An immutable singly linked list that uses the Scala List class as backing
- * store, but is Java-friendly as a `java.util.List`. Note however that since it
- * is immutable, you have to capture the results of addition/removal operations.
+ * An immutable singly linked list that uses the Scala List class as backing store, but is
+ * Java-friendly as a `java.util.List`. Note however that since it is immutable, you have to capture
+ * the results of addition/removal operations.
  *
- * The typical mutating methods like `add`, `set`, `clear`, and `remove` are all
- * unsupported, as are mutating methods on its iterators, since this collection
- * is immutable.
+ * The typical mutating methods like `add`, `set`, `clear`, and `remove` are all unsupported, as are
+ * mutating methods on its iterators, since this collection is immutable.
  */
 final case class SimpleList[T](underlying: List[T]) extends JavaList[T] {
 
@@ -39,14 +43,13 @@ final case class SimpleList[T](underlying: List[T]) extends JavaList[T] {
   def this(jl: JavaList[T]) = this(jl.toArray().toList.asInstanceOf[List[T]])
 
   /**
-   * Append an item to this list. This operation is O(n) where `n` is the number
-   * of items in the underlying `List`, and returns the updated list.
+   * Append an item to this list. This operation is O(n) where `n` is the number of items in the
+   * underlying `List`, and returns the updated list.
    */
   def append(item: T): SimpleList[T] = SimpleList(underlying :+ item)
 
   /**
-   * Prepends an item to this list.  This operation is O(1) and returns the
-   * updated list.
+   * Prepends an item to this list. This operation is O(1) and returns the updated list.
    */
   def prepend(item: T): SimpleList[T] = SimpleList(item :: underlying)
 
@@ -122,8 +125,7 @@ final case class SimpleList[T](underlying: List[T]) extends JavaList[T] {
     }
 
     ret
-    }
-
+  }
 
   def toArray[X](in: Array[X with Object]): Array[X with Object] = {
     val clz = in.getClass.getComponentType()
@@ -138,7 +140,6 @@ final case class SimpleList[T](underlying: List[T]) extends JavaList[T] {
       pos += 1
     }
 
-
     ret
   }
 
@@ -148,7 +149,8 @@ final case class SimpleList[T](underlying: List[T]) extends JavaList[T] {
 
   def addAll(jc: JavaCollection[_ <: T]): Boolean = throw new UnsupportedOperationException()
 
-  def addAll(index: Int, jc: JavaCollection[_ <: T]): Boolean = throw new UnsupportedOperationException()
+  def addAll(index: Int, jc: JavaCollection[_ <: T]): Boolean =
+    throw new UnsupportedOperationException()
 
   def containsAll(jc: JavaCollection[_]): Boolean = {
     val it = jc.iterator()
@@ -158,29 +160,27 @@ final case class SimpleList[T](underlying: List[T]) extends JavaList[T] {
     @tailrec def check(): Boolean = it.hasNext() match {
       case false => true
       case _ => contains(it.next().asInstanceOf[Object]) match {
-        case false => false
-        case _ => check()
-      }
+          case false => false
+          case _ => check()
+        }
     }
 
     check()
   }
 
-
 }
 
 /**
- * An immutable vector that uses the Scala `[[scala.collection.immutable.Vector Vector]]`
- * class as backing store, but is Java-friendly as a `java.util.List`. Note however that
- * since it is immutable, you have to capture the results of addition/removal
- * operations.
+ * An immutable vector that uses the Scala `[[scala.collection.immutable.Vector Vector]]` class as
+ * backing store, but is Java-friendly as a `java.util.List`. Note however that since it is
+ * immutable, you have to capture the results of addition/removal operations.
  *
- * The typical mutating methods like `add`, `set`, `clear`, and `remove` are all
- * unsupported, as are mutating methods on its iterators, since this collection
- * is immutable.
+ * The typical mutating methods like `add`, `set`, `clear`, and `remove` are all unsupported, as are
+ * mutating methods on its iterators, since this collection is immutable.
  *
- * @see [[http://docs.scala-lang.org/overviews/collections/concrete-immutable-collection-classes.html#vectors "Scala's Collection Library overview"]]
- *      section on Vectors for more information.
+ * @see
+ *   [[http://docs.scala-lang.org/overviews/collections/concrete-immutable-collection-classes.html#vectors "Scala's Collection Library overview"]]
+ *   section on Vectors for more information.
  */
 final case class SimpleVector[T](underlying: Vector[T]) extends JavaList[T] {
 
@@ -189,17 +189,17 @@ final case class SimpleVector[T](underlying: Vector[T]) extends JavaList[T] {
    */
   def this() = this(Vector())
 
-  def this(jl: JavaList[T]) = this(Vector(jl.toArray().toList.asInstanceOf[List[T]] :_*))
+  def this(jl: JavaList[T]) = this(Vector(jl.toArray().toList.asInstanceOf[List[T]]: _*))
 
   /**
-   * Append an item to this vector. This operation is effectively O(1) and
-   * returns the updated vector.
+   * Append an item to this vector. This operation is effectively O(1) and returns the updated
+   * vector.
    */
   def append(item: T): SimpleVector[T] = SimpleVector(underlying :+ item)
 
   /**
-   * Prepends an item to this vector.  This operation is effectively O(1) and
-   * returns the updated vector.
+   * Prepends an item to this vector. This operation is effectively O(1) and returns the updated
+   * vector.
    */
   def prepend(item: T): SimpleVector[T] = SimpleVector(item +: underlying)
 
@@ -269,8 +269,8 @@ final case class SimpleVector[T](underlying: Vector[T]) extends JavaList[T] {
     var pos = 0
     underlying.foreach {
       e =>
-      ret(pos) = e.asInstanceOf[Object]
-      pos += 1
+        ret(pos) = e.asInstanceOf[Object]
+        pos += 1
     }
 
     ret
@@ -282,9 +282,10 @@ final case class SimpleVector[T](underlying: Vector[T]) extends JavaList[T] {
     val ret = java.lang.reflect.Array.newInstance(clz, len).asInstanceOf[Array[X with Object]]
 
     var pos = 0
-    underlying.foreach{
-      e => ret(pos) = clz.cast(e).asInstanceOf[X with Object]
-      pos += 1
+    underlying.foreach {
+      e =>
+        ret(pos) = clz.cast(e).asInstanceOf[X with Object]
+        pos += 1
     }
 
     ret
@@ -296,7 +297,8 @@ final case class SimpleVector[T](underlying: Vector[T]) extends JavaList[T] {
 
   def addAll(jc: JavaCollection[_ <: T]): Boolean = throw new UnsupportedOperationException()
 
-  def addAll(index: Int, jc: JavaCollection[_ <: T]): Boolean = throw new UnsupportedOperationException()
+  def addAll(index: Int, jc: JavaCollection[_ <: T]): Boolean =
+    throw new UnsupportedOperationException()
 
   def containsAll(jc: JavaCollection[_]): Boolean = {
     val it = jc.iterator()
@@ -306,14 +308,13 @@ final case class SimpleVector[T](underlying: Vector[T]) extends JavaList[T] {
     @tailrec def check(): Boolean = it.hasNext() match {
       case false => true
       case _ => contains(it.next().asInstanceOf[Object]) match {
-        case false => false
-        case _ => check()
-      }
+          case false => false
+          case _ => check()
+        }
     }
 
     check()
   }
-
 
 }
 

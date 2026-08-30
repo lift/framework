@@ -29,14 +29,13 @@ import scala.reflect.runtime.universe._
 import scala.xml.{Text, NodeSeq}
 import json.JsonAST.JValue
 
-
-abstract class MappedBinary[T<:Mapper[T]](val fieldOwner: T) extends MappedField[Array[Byte], T] {
-  private val data : FatLazy[Array[Byte]] =  FatLazy(defaultValue)
+abstract class MappedBinary[T <: Mapper[T]](val fieldOwner: T) extends MappedField[Array[Byte], T] {
+  private val data: FatLazy[Array[Byte]] = FatLazy(defaultValue)
   private val orgData: FatLazy[Array[Byte]] = FatLazy(defaultValue)
 
-  protected def real_i_set_!(value : Array[Byte]) : Array[Byte] = {
+  protected def real_i_set_!(value: Array[Byte]): Array[Byte] = {
     data() = value
-    this.dirty_?( true)
+    this.dirty_?(true)
     value
   }
 
@@ -44,50 +43,63 @@ abstract class MappedBinary[T<:Mapper[T]](val fieldOwner: T) extends MappedField
 
   /**
    * Get the source field metadata for the field
-   * @return the source field metadata for the field
+   * @return
+   *   the source field metadata for the field
    */
-  def sourceInfoMetadata(): SourceFieldMetadata{type ST = Array[Byte]} =
-    SourceFieldMetadataRep(name, manifest, new FieldConverter {
-    /**
-     * The type of the field
-     */
-    type T = Array[Byte]
+  def sourceInfoMetadata(): SourceFieldMetadata { type ST = Array[Byte] } =
+    SourceFieldMetadataRep(
+      name,
+      manifest,
+      new FieldConverter {
 
-    /**
-     * Convert the field to a String
-     * @param v the field value
-     * @return the string representation of the field value
-     */
-    def asString(v: T): String = ""
+        /**
+         * The type of the field
+         */
+        type T = Array[Byte]
 
-    /**
-     * Convert the field into NodeSeq, if possible
-     * @param v the field value
-     * @return a NodeSeq if the field can be represented as one
-     */
-    def asNodeSeq(v: T): Box[NodeSeq] = Empty
+        /**
+         * Convert the field to a String
+         * @param v
+         *   the field value
+         * @return
+         *   the string representation of the field value
+         */
+        def asString(v: T): String = ""
 
-    /**
-     * Convert the field into a JSON value
-     * @param v the field value
-     * @return the JSON representation of the field
-     */
-    def asJson(v: T): Box[JValue] = Empty
+        /**
+         * Convert the field into NodeSeq, if possible
+         * @param v
+         *   the field value
+         * @return
+         *   a NodeSeq if the field can be represented as one
+         */
+        def asNodeSeq(v: T): Box[NodeSeq] = Empty
 
-    /**
-     * If the field can represent a sequence of SourceFields,
-     * get that
-     * @param v the field value
-     * @return the field as a sequence of SourceFields
-     */
-    def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
-  })
+        /**
+         * Convert the field into a JSON value
+         * @param v
+         *   the field value
+         * @return
+         *   the JSON representation of the field
+         */
+        def asJson(v: T): Box[JValue] = Empty
+
+        /**
+         * If the field can represent a sequence of SourceFields, get that
+         * @param v
+         *   the field value
+         * @return
+         *   the field as a sequence of SourceFields
+         */
+        def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+      }
+    )
 
   def dbFieldClass: Class[Array[Byte]] = classOf[Array[Byte]]
 
   /**
-  * Get the JDBC SQL Type for this field
-  */
+   * Get the JDBC SQL Type for this field
+   */
   //  def getTargetSQLType(field : String) = Types.BINARY
   def targetSQLType: Int = Types.BINARY
 
@@ -99,9 +111,9 @@ abstract class MappedBinary[T<:Mapper[T]](val fieldOwner: T) extends MappedField
 
   protected def i_was_! : Array[Byte] = orgData.get
 
-  protected[mapper] def doneWithSave(): Unit = {orgData.setFrom(data)}
+  protected[mapper] def doneWithSave(): Unit = { orgData.setFrom(data) }
 
-  protected def i_obscure_!(in : Array[Byte]) : Array[Byte] = {
+  protected def i_obscure_!(in: Array[Byte]): Array[Byte] = {
     new Array[Byte](0)
   }
 
@@ -121,91 +133,110 @@ abstract class MappedBinary[T<:Mapper[T]](val fieldOwner: T) extends MappedField
     case s => this.set(s.toString.getBytes("UTF-8"))
   }
 
-  def jdbcFriendly(field : String) : Object = get
+  def jdbcFriendly(field: String): Object = get
 
   def real_convertToJDBCFriendly(value: Array[Byte]): Object = value
 
   def buildSetActualValue(accessor: Method, inst: AnyRef, columnName: String): (T, AnyRef) => Unit =
-  (inst, v) => doField(inst, accessor, {case f: MappedBinary[T] =>
-    val toSet = v match {
-      case null => null
-      case ba: Array[Byte] => ba
-      case other => other.toString.getBytes("UTF-8")
-    }
-    f.data() = toSet
-    f.orgData() = toSet
-  })
+    (inst, v) =>
+      doField(
+        inst,
+        accessor,
+        { case f: MappedBinary[T] =>
+          val toSet = v match {
+            case null => null
+            case ba: Array[Byte] => ba
+            case other => other.toString.getBytes("UTF-8")
+          }
+          f.data() = toSet
+          f.orgData() = toSet
+        }
+      )
 
-  def buildSetLongValue(accessor : Method, columnName : String): (T, Long, Boolean) => Unit = null
-  def buildSetStringValue(accessor : Method, columnName : String): (T, String) => Unit  = null
-  def buildSetDateValue(accessor : Method, columnName : String): (T, Date) => Unit = null
-  def buildSetBooleanValue(accessor : Method, columnName : String): (T, Boolean, Boolean) => Unit = null
+  def buildSetLongValue(accessor: Method, columnName: String): (T, Long, Boolean) => Unit = null
+  def buildSetStringValue(accessor: Method, columnName: String): (T, String) => Unit = null
+  def buildSetDateValue(accessor: Method, columnName: String): (T, Date) => Unit = null
+  def buildSetBooleanValue(accessor: Method, columnName: String): (T, Boolean, Boolean) => Unit =
+    null
 
   /**
-  * Given the driver type, return the string required to create the column in the database
-  */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.binaryColumnType + notNullAppender()
+   * Given the driver type, return the string required to create the column in the database
+   */
+  def fieldCreatorString(dbType: DriverType, colName: String): String =
+    colName + " " + dbType.binaryColumnType + notNullAppender()
 }
 
-abstract class MappedText[T<:Mapper[T]](val fieldOwner: T) extends MappedField[String, T] {
-  private val data : FatLazy[String] =  FatLazy(defaultValue)
+abstract class MappedText[T <: Mapper[T]](val fieldOwner: T) extends MappedField[String, T] {
+  private val data: FatLazy[String] = FatLazy(defaultValue)
   private val orgData: FatLazy[String] = FatLazy(defaultValue)
 
   protected def real_i_set_!(value: String): String = {
     data() = value
-    this.dirty_?( true)
+    this.dirty_?(true)
     value
   }
-
 
   def manifest: TypeTag[String] = typeTag[String]
 
   /**
    * Get the source field metadata for the field
-   * @return the source field metadata for the field
+   * @return
+   *   the source field metadata for the field
    */
-  def sourceInfoMetadata(): SourceFieldMetadata{type ST = String} =
-    SourceFieldMetadataRep(name, manifest, new FieldConverter {
-      /**
-       * The type of the field
-       */
-      type T = String
+  def sourceInfoMetadata(): SourceFieldMetadata { type ST = String } =
+    SourceFieldMetadataRep(
+      name,
+      manifest,
+      new FieldConverter {
 
-      /**
-       * Convert the field to a String
-       * @param v the field value
-       * @return the string representation of the field value
-       */
-      def asString(v: T): String = v
+        /**
+         * The type of the field
+         */
+        type T = String
 
-      /**
-       * Convert the field into NodeSeq, if possible
-       * @param v the field value
-       * @return a NodeSeq if the field can be represented as one
-       */
-      def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(v))
+        /**
+         * Convert the field to a String
+         * @param v
+         *   the field value
+         * @return
+         *   the string representation of the field value
+         */
+        def asString(v: T): String = v
 
-      /**
-       * Convert the field into a JSON value
-       * @param v the field value
-       * @return the JSON representation of the field
-       */
-      def asJson(v: T): Box[JValue] = Full(JString(v))
+        /**
+         * Convert the field into NodeSeq, if possible
+         * @param v
+         *   the field value
+         * @return
+         *   a NodeSeq if the field can be represented as one
+         */
+        def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(v))
 
-      /**
-       * If the field can represent a sequence of SourceFields,
-       * get that
-       * @param v the field value
-       * @return the field as a sequence of SourceFields
-       */
-      def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
-    })
+        /**
+         * Convert the field into a JSON value
+         * @param v
+         *   the field value
+         * @return
+         *   the JSON representation of the field
+         */
+        def asJson(v: T): Box[JValue] = Full(JString(v))
+
+        /**
+         * If the field can represent a sequence of SourceFields, get that
+         * @param v
+         *   the field value
+         * @return
+         *   the field as a sequence of SourceFields
+         */
+        def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+      }
+    )
 
   def dbFieldClass: Class[String] = classOf[String]
 
   /**
-  * Get the JDBC SQL Type for this field
-  */
+   * Get the JDBC SQL Type for this field
+   */
   //  def getTargetSQLType(field : String) = Types.BINARY
   def targetSQLType: Int = Types.VARCHAR
 
@@ -217,7 +248,7 @@ abstract class MappedText[T<:Mapper[T]](val fieldOwner: T) extends MappedField[S
 
   protected def i_was_! : String = orgData.get
 
-  protected[mapper] def doneWithSave(): Unit = {orgData.setFrom(data)}
+  protected[mapper] def doneWithSave(): Unit = { orgData.setFrom(data) }
 
   def asJsExp: JsExp = JE.Str(get)
 
@@ -244,7 +275,7 @@ abstract class MappedText[T<:Mapper[T]](val fieldOwner: T) extends MappedField[S
     }
   }
 
-  def jdbcFriendly(field : String): Object = real_convertToJDBCFriendly(data.get)
+  def jdbcFriendly(field: String): Object = real_convertToJDBCFriendly(data.get)
 
   def real_convertToJDBCFriendly(value: String): Object = value match {
     case null => null
@@ -252,40 +283,51 @@ abstract class MappedText[T<:Mapper[T]](val fieldOwner: T) extends MappedField[S
   }
 
   def buildSetActualValue(accessor: Method, inst: AnyRef, columnName: String): (T, AnyRef) => Unit =
-  (inst, v) => doField(inst, accessor, {case f: MappedText[T] =>
-    val toSet = v match {
-      case null => null
-      case s: String => s
-      case ba: Array[Byte] => new String(ba, "UTF-8")
-      case clob: java.sql.Clob => clob.getSubString(1,clob.length.toInt)
-      case other => other.toString
-    }
-    f.data() = toSet
-    f.orgData() = toSet
-  })
+    (inst, v) =>
+      doField(
+        inst,
+        accessor,
+        { case f: MappedText[T] =>
+          val toSet = v match {
+            case null => null
+            case s: String => s
+            case ba: Array[Byte] => new String(ba, "UTF-8")
+            case clob: java.sql.Clob => clob.getSubString(1, clob.length.toInt)
+            case other => other.toString
+          }
+          f.data() = toSet
+          f.orgData() = toSet
+        }
+      )
 
-  def buildSetLongValue(accessor : Method, columnName : String): (T, Long, Boolean) => Unit = null
-  def buildSetStringValue(accessor : Method, columnName : String): (T, String) => Unit  = (inst, v) => doField(inst, accessor, {case f: MappedText[T] =>
-    val toSet = v
-    f.data() = toSet
-    f.orgData() = toSet
-  })
-  def buildSetDateValue(accessor : Method, columnName : String): (T, Date) => Unit = null
-  def buildSetBooleanValue(accessor : Method, columnName : String): (T, Boolean, Boolean) => Unit = null
+  def buildSetLongValue(accessor: Method, columnName: String): (T, Long, Boolean) => Unit = null
+  def buildSetStringValue(accessor: Method, columnName: String): (T, String) => Unit = (inst, v) =>
+    doField(
+      inst,
+      accessor,
+      { case f: MappedText[T] =>
+        val toSet = v
+        f.data() = toSet
+        f.orgData() = toSet
+      })
+  def buildSetDateValue(accessor: Method, columnName: String): (T, Date) => Unit = null
+  def buildSetBooleanValue(accessor: Method, columnName: String): (T, Boolean, Boolean) => Unit =
+    null
 
   /**
-  * Given the driver type, return the string required to create the column in the database
-  */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.clobColumnType + notNullAppender()
+   * Given the driver type, return the string required to create the column in the database
+   */
+  def fieldCreatorString(dbType: DriverType, colName: String): String =
+    colName + " " + dbType.clobColumnType + notNullAppender()
 }
 
-abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedField[String, T] {
-  private val data : FatLazy[String] =  FatLazy(defaultValue)
+abstract class MappedFakeClob[T <: Mapper[T]](val fieldOwner: T) extends MappedField[String, T] {
+  private val data: FatLazy[String] = FatLazy(defaultValue)
   private val orgData: FatLazy[String] = FatLazy(defaultValue)
 
   protected def real_i_set_!(value: String): String = {
     data() = value
-    this.dirty_?( true)
+    this.dirty_?(true)
     value
   }
 
@@ -295,49 +337,61 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
 
   /**
    * Get the source field metadata for the field
-   * @return the source field metadata for the field
+   * @return
+   *   the source field metadata for the field
    */
-  def sourceInfoMetadata(): SourceFieldMetadata{type ST = String} =
-    SourceFieldMetadataRep(name, manifest, new FieldConverter {
-      /**
-       * The type of the field
-       */
-      type T = String
+  def sourceInfoMetadata(): SourceFieldMetadata { type ST = String } =
+    SourceFieldMetadataRep(
+      name,
+      manifest,
+      new FieldConverter {
 
-      /**
-       * Convert the field to a String
-       * @param v the field value
-       * @return the string representation of the field value
-       */
-      def asString(v: T): String = v
+        /**
+         * The type of the field
+         */
+        type T = String
 
-      /**
-       * Convert the field into NodeSeq, if possible
-       * @param v the field value
-       * @return a NodeSeq if the field can be represented as one
-       */
-      def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(v))
+        /**
+         * Convert the field to a String
+         * @param v
+         *   the field value
+         * @return
+         *   the string representation of the field value
+         */
+        def asString(v: T): String = v
 
-      /**
-       * Convert the field into a JSON value
-       * @param v the field value
-       * @return the JSON representation of the field
-       */
-      def asJson(v: T): Box[JValue] = Full(JString(v))
+        /**
+         * Convert the field into NodeSeq, if possible
+         * @param v
+         *   the field value
+         * @return
+         *   a NodeSeq if the field can be represented as one
+         */
+        def asNodeSeq(v: T): Box[NodeSeq] = Full(Text(v))
 
-      /**
-       * If the field can represent a sequence of SourceFields,
-       * get that
-       * @param v the field value
-       * @return the field as a sequence of SourceFields
-       */
-      def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
-    })
+        /**
+         * Convert the field into a JSON value
+         * @param v
+         *   the field value
+         * @return
+         *   the JSON representation of the field
+         */
+        def asJson(v: T): Box[JValue] = Full(JString(v))
 
+        /**
+         * If the field can represent a sequence of SourceFields, get that
+         * @param v
+         *   the field value
+         * @return
+         *   the field as a sequence of SourceFields
+         */
+        def asSeq(v: T): Box[Seq[SourceFieldInfo]] = Empty
+      }
+    )
 
   /**
-  * Get the JDBC SQL Type for this field
-  */
+   * Get the JDBC SQL Type for this field
+   */
   //  def getTargetSQLType(field : String) = Types.BINARY
   def targetSQLType: Int = Types.BINARY
 
@@ -349,7 +403,7 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
 
   protected def i_was_! : String = orgData.get
 
-  protected[mapper] def doneWithSave(): Unit = {orgData.setFrom(data)}
+  protected[mapper] def doneWithSave(): Unit = { orgData.setFrom(data) }
 
   protected def i_obscure_!(in: String): String = ""
 
@@ -376,7 +430,7 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
     }
   }
 
-  def jdbcFriendly(field : String): Object = real_convertToJDBCFriendly(data.get)
+  def jdbcFriendly(field: String): Object = real_convertToJDBCFriendly(data.get)
 
   def real_convertToJDBCFriendly(value: String): Object = value match {
     case null => null
@@ -384,28 +438,39 @@ abstract class MappedFakeClob[T<:Mapper[T]](val fieldOwner: T) extends MappedFie
   }
 
   def buildSetActualValue(accessor: Method, inst: AnyRef, columnName: String): (T, AnyRef) => Unit =
-  (inst, v) => doField(inst, accessor, {case f: MappedFakeClob[T] =>
-    val toSet = v match {
-      case null => null
-      case ba: Array[Byte] => new String(ba, "UTF-8")
-      case clob: java.sql.Clob => clob.getSubString(1,clob.length.toInt)
-      case other => other.toString
-    }
-    f.data() = toSet
-    f.orgData() = toSet
-  })
+    (inst, v) =>
+      doField(
+        inst,
+        accessor,
+        { case f: MappedFakeClob[T] =>
+          val toSet = v match {
+            case null => null
+            case ba: Array[Byte] => new String(ba, "UTF-8")
+            case clob: java.sql.Clob => clob.getSubString(1, clob.length.toInt)
+            case other => other.toString
+          }
+          f.data() = toSet
+          f.orgData() = toSet
+        }
+      )
 
-  def buildSetLongValue(accessor : Method, columnName : String): (T, Long, Boolean) => Unit = null
-  def buildSetStringValue(accessor : Method, columnName : String): (T, String) => Unit = (inst, v) => doField(inst, accessor, {case f: MappedFakeClob[T] =>
-    val toSet = v
-    f.data() = toSet
-    f.orgData() = toSet
-  })
-  def buildSetDateValue(accessor : Method, columnName : String): (T, Date) => Unit = null
-  def buildSetBooleanValue(accessor : Method, columnName : String): (T, Boolean, Boolean) => Unit = null
+  def buildSetLongValue(accessor: Method, columnName: String): (T, Long, Boolean) => Unit = null
+  def buildSetStringValue(accessor: Method, columnName: String): (T, String) => Unit = (inst, v) =>
+    doField(
+      inst,
+      accessor,
+      { case f: MappedFakeClob[T] =>
+        val toSet = v
+        f.data() = toSet
+        f.orgData() = toSet
+      })
+  def buildSetDateValue(accessor: Method, columnName: String): (T, Date) => Unit = null
+  def buildSetBooleanValue(accessor: Method, columnName: String): (T, Boolean, Boolean) => Unit =
+    null
 
   /**
-  * Given the driver type, return the string required to create the column in the database
-  */
-  def fieldCreatorString(dbType: DriverType, colName: String): String = colName + " " + dbType.binaryColumnType + notNullAppender()
+   * Given the driver type, return the string required to create the column in the database
+   */
+  def fieldCreatorString(dbType: DriverType, colName: String): String =
+    colName + " " + dbType.binaryColumnType + notNullAppender()
 }

@@ -17,7 +17,8 @@
 package net.liftweb
 package json
 
-/** Functions to convert between JSON and XML.
+/**
+ * Functions to convert between JSON and XML.
  */
 object Xml {
   import scala.xml._
@@ -27,10 +28,10 @@ object Xml {
    *
    * The following rules are used in the conversion:
    *
-   *  - an XML leaf element is converted to a JSON string
-   *  - an XML parent element is converted to a JSON object and its children to JSON fields
-   *  - XML elements with the same name at the same level are converted to a JSON array
-   *  - XML attributes are converted to JSON fields
+   *   - an XML leaf element is converted to a JSON string
+   *   - an XML parent element is converted to a JSON object and its children to JSON fields
+   *   - XML elements with the same name at the same level are converted to a JSON array
+   *   - XML attributes are converted to JSON fields
    *
    * For example:
    * {{{
@@ -62,14 +63,13 @@ object Xml {
    * }
    * }}}
    *
-   * Now, the above example has two problems. First, the id is converted to a
-   * `String` while we might want it as an `Int`. This is easy to fix by mapping
-   * `JString(s)` to `JInt(s.toInt)`. The second problem is more subtle: the
-   * conversion function decides to use a JSON array  because there's more than
-   * one `user` element in the XML. Therefore a structurally equivalent XML
-   * document which happens to have just one `user` element will generate a JSON
-   * document without a JSON array. This is rarely a desired outcome. Both of
-   * these problems can be fixed by the following `map` invocation:
+   * Now, the above example has two problems. First, the id is converted to a `String` while we
+   * might want it as an `Int`. This is easy to fix by mapping `JString(s)` to `JInt(s.toInt)`. The
+   * second problem is more subtle: the conversion function decides to use a JSON array because
+   * there's more than one `user` element in the XML. Therefore a structurally equivalent XML
+   * document which happens to have just one `user` element will generate a JSON document without a
+   * JSON array. This is rarely a desired outcome. Both of these problems can be fixed by the
+   * following `map` invocation:
    *
    * {{{
    * json mapField {
@@ -97,7 +97,8 @@ object Xml {
     def array_?(nodeNames: Seq[String]) = nodeNames.size != 1 && nodeNames.toList.distinct.size == 1
     def directChildren(n: Node): NodeSeq = n.child.filter(c => c.isInstanceOf[Elem])
     def nameOf(n: Node) = (if (n.prefix ne null) n.prefix + ":" else "") + n.label
-    def buildAttrs(n: Node) = n.attributes.map((a: MetaData) => (a.key, XValue(a.value.text))).toList
+    def buildAttrs(n: Node) =
+      n.attributes.map((a: MetaData) => (a.key, XValue(a.value.text))).toList
 
     sealed trait XElem
     case class XValue(value: String) extends XElem
@@ -108,22 +109,25 @@ object Xml {
     def toJValue(x: XElem): JValue = x match {
       case XValue(s) => JString(s)
       case XLeaf((name, value), attrs) => (value, attrs) match {
-        case (_, Nil) => toJValue(value)
-        case (XValue(""), xs) => JObject(mkFields(xs))
-        case (_, xs) => JObject(JField(name, toJValue(value)) :: mkFields(xs))
-      }
+          case (_, Nil) => toJValue(value)
+          case (XValue(""), xs) => JObject(mkFields(xs))
+          case (_, xs) => JObject(JField(name, toJValue(value)) :: mkFields(xs))
+        }
       case XNode(xs) => JObject(mkFields(xs))
       case XArray(elems) => JArray(elems.map(toJValue))
     }
 
     def mkFields(xs: List[(String, XElem)]) =
-      xs.flatMap { case (name, value) => (value, toJValue(value)) match {
-        // This special case is needed to flatten nested objects which resulted from
-        // XML attributes. Flattening keeps transformation more predicatable.
-        // <a><foo id="1">x</foo></a> -> {"a":{"foo":{"foo":"x","id":"1"}}} vs
-        // <a><foo id="1">x</foo></a> -> {"a":{"foo":"x","id":"1"}}
-        case (XLeaf(v, x :: xs), o: JObject) => o.obj
-        case (_, json) => JField(name, json) :: Nil }}
+      xs.flatMap { case (name, value) =>
+        (value, toJValue(value)) match {
+          // This special case is needed to flatten nested objects which resulted from
+          // XML attributes. Flattening keeps transformation more predicatable.
+          // <a><foo id="1">x</foo></a> -> {"a":{"foo":{"foo":"x","id":"1"}}} vs
+          // <a><foo id="1">x</foo></a> -> {"a":{"foo":"x","id":"1"}}
+          case (XLeaf(v, x :: xs), o: JObject) => o.obj
+          case (_, json) => JField(name, json) :: Nil
+        }
+      }
 
     def buildNodes(xml: NodeSeq): List[XElem] = xml match {
       case n: Node =>
@@ -156,13 +160,13 @@ object Xml {
    *
    * The following rules are used in conversion:
    *
-   *  - JSON primitives are converted to XML leaf elements
-   *  - JSON objects are converted to XML elements
-   *  - JSON arrays are recursively converted to XML elements
+   *   - JSON primitives are converted to XML leaf elements
+   *   - JSON objects are converted to XML elements
+   *   - JSON arrays are recursively converted to XML elements
    *
-   * Use the `map` function to preprocess JSON before conversion to adjust
-   * the end result. For instance a common conversion is to encode arrays as
-   * comma separated Strings since XML does not have an array type:
+   * Use the `map` function to preprocess JSON before conversion to adjust the end result. For
+   * instance a common conversion is to encode arrays as comma separated Strings since XML does not
+   * have an array type:
    *
    * {{{
    * toXml(json map {
@@ -189,7 +193,9 @@ object Xml {
     }
   }
 
-  private[json] class XmlNode(name: String, children: Seq[Node]) extends Elem(null, name, scala.xml.Null, TopScope, true, children :_*)
+  private[json] class XmlNode(name: String, children: Seq[Node])
+      extends Elem(null, name, scala.xml.Null, TopScope, true, children: _*)
 
-  private[json] class XmlElem(name: String, value: String) extends Elem(null, name, scala.xml.Null, TopScope, true, Text(value))
+  private[json] class XmlElem(name: String, value: String)
+      extends Elem(null, name, scala.xml.Null, TopScope, true, Text(value))
 }

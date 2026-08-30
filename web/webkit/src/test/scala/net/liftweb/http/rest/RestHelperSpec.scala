@@ -15,24 +15,23 @@ object RestHelperSpecBoot {
   }
 }
 
-
 class RestHelperSpec extends WebSpec(RestHelperSpecBoot.boot _) {
-  sequential  // This is important for using SessionVars, etc.
+  sequential // This is important for using SessionVars, etc.
 
   "RestHelper" should {
     val testOptionsUrl = "http://foo.com/api/info"
     val testPatchUrl = "http://foo.com/api/patched"
     val testFutureUrl = "http://foo.com/api/futured"
 
-    val testOptionsReq = new MockHttpServletRequest(testOptionsUrl){
+    val testOptionsReq = new MockHttpServletRequest(testOptionsUrl) {
       method = "OPTIONS"
     }
 
-    val testPatchReq = new MockHttpServletRequest(testPatchUrl){
+    val testPatchReq = new MockHttpServletRequest(testPatchUrl) {
       method = "PATCH"
     }
 
-    val testFutureReq = new MockHttpServletRequest(testFutureUrl){
+    val testFutureReq = new MockHttpServletRequest(testFutureUrl) {
       method = "GET"
     }
 
@@ -74,7 +73,7 @@ class RestHelperSpec extends WebSpec(RestHelperSpecBoot.boot _) {
   }
 }
 
-object RestHelperSpecRest extends RestHelper  {
+object RestHelperSpecRest extends RestHelper {
   serve {
     case "api" :: "info" :: Nil Options req => OkResponse()
     case "api" :: "patched" :: Nil Patch req => OkResponse()

@@ -22,12 +22,10 @@ import javax.mail.internet._
 import javax.naming.{Context, InitialContext}
 import java.util.Properties
 
-import scala.language.implicitConversions
 import scala.xml.{Text, Elem, Node, NodeSeq}
 
 import common._
 import actor._
-
 
 /**
  * Utilities for sending email.
@@ -35,28 +33,30 @@ import actor._
 object Mailer extends Mailer {
 
   sealed abstract class MailTypes
+
   /**
    * Add message headers to outgoing messages
    */
   final case class MessageHeader(name: String, value: String) extends MailTypes
   abstract class MailBodyType extends MailTypes
-  final case class PlusImageHolder(name: String, mimeType: String, bytes: Array[Byte], attachment: Boolean = false)
+  final case class PlusImageHolder(
+      name: String,
+      mimeType: String,
+      bytes: Array[Byte],
+      attachment: Boolean = false)
 
   /**
-   * Represents a text/plain mail body. The given text will
-   * be encoded as UTF-8 when sent.
+   * Represents a text/plain mail body. The given text will be encoded as UTF-8 when sent.
    */
   final case class PlainMailBodyType(text: String) extends MailBodyType
 
   /**
-   * Represents a text/plain mail body that is encoded with the
-   * specified charset
+   * Represents a text/plain mail body that is encoded with the specified charset
    */
   final case class PlainPlusBodyType(text: String, charset: String) extends MailBodyType
 
   final case class XHTMLMailBodyType(text: NodeSeq) extends MailBodyType
   final case class XHTMLPlusImages(text: NodeSeq, items: PlusImageHolder*) extends MailBodyType
-
 
   sealed abstract class RoutingType extends MailTypes
   sealed abstract class AddressType extends RoutingType {
@@ -74,7 +74,7 @@ object Mailer extends Mailer {
 }
 
 /**
- * This trait implmenets the mail sending.  You can create subclasses of this class/trait and
+ * This trait implmenets the mail sending. You can create subclasses of this class/trait and
  * implement your own mailer functionality
  */
 trait Mailer extends SimpleInjector {
@@ -85,17 +85,18 @@ trait Mailer extends SimpleInjector {
 
   implicit def addressToAddress(in: AddressType): Address = {
     val ret = new InternetAddress(in.address)
-    in.name.foreach{n => ret.setPersonal(n)}
+    in.name.foreach { n => ret.setPersonal(n) }
     ret
   }
 
-  implicit def adListToAdArray(in: List[AddressType]): Array[Address] = in.map(addressToAddress).toArray
+  implicit def adListToAdArray(in: List[AddressType]): Array[Address] =
+    in.map(addressToAddress).toArray
 
   /**
-   * Passwords cannot be accessed via System.getProperty.  Instead, we
-   * provide a means of explicitlysetting the authenticator.
+   * Passwords cannot be accessed via System.getProperty. Instead, we provide a means of
+   * explicitlysetting the authenticator.
    */
-  //def authenticator = authenticatorFunc
+  // def authenticator = authenticatorFunc
   var authenticator: Box[Authenticator] = Empty
 
   /**
@@ -109,17 +110,17 @@ trait Mailer extends SimpleInjector {
   var customProperties: Map[String, String] = Map()
 
   lazy val jndiSession: Box[Session] =
-  for{
-    name <- jndiName
-    contextObj <- Helpers.tryo(new InitialContext().lookup("java:comp/env"))
-    context <- Box.asA[Context](contextObj)
-    sessionObj <- Helpers.tryo(context.lookup(name))
-    session <- Box.asA[Session](sessionObj)
-  } yield session
+    for {
+      name <- jndiName
+      contextObj <- Helpers.tryo(new InitialContext().lookup("java:comp/env"))
+      context <- Box.asA[Context](contextObj)
+      sessionObj <- Helpers.tryo(context.lookup(name))
+      session <- Box.asA[Session](sessionObj)
+    } yield session
 
   lazy val properties: Properties = {
     val p = System.getProperties.clone.asInstanceOf[Properties]
-    customProperties.foreach {case (name, value) => p.put(name, value)}
+    customProperties.foreach { case (name, value) => p.put(name, value) }
     // allow the properties file to set/override system properties
 
     Props.props.foreach {
@@ -135,8 +136,8 @@ trait Mailer extends SimpleInjector {
   def host = hostFunc()
 
   /**
-   * To change the way the host is calculated, set this to the function that calcualtes the host name.
-   * By default: System.getProperty("mail.smtp.host")
+   * To change the way the host is calculated, set this to the function that calcualtes the host
+   * name. By default: System.getProperty("mail.smtp.host")
    */
   var hostFunc: () => String = () => _host
 
@@ -156,8 +157,7 @@ trait Mailer extends SimpleInjector {
   }
 
   /**
-   * Set the mail.charset property to something other than UTF-8 for non-UTF-8
-   * mail.
+   * Set the mail.charset property to something other than UTF-8 for non-UTF-8 mail.
    */
   lazy val charSet = properties.getProperty("mail.charset") match {
     case null => "UTF-8"
@@ -180,44 +180,51 @@ trait Mailer extends SimpleInjector {
   protected def performTransportSend(msg: MimeMessage) = {
     import Props.RunModes._
     (Props.mode match {
-        case Development => devModeSend.vend
-        case Test => testModeSend.vend
-        case Staging => stagingModeSend.vend
-        case Production => productionModeSend.vend
-        case Pilot => pilotModeSend.vend
-        case Profile => profileModeSend.vend
-      }).apply(msg)
+      case Development => devModeSend.vend
+      case Test => testModeSend.vend
+      case Staging => stagingModeSend.vend
+      case Production => productionModeSend.vend
+      case Pilot => pilotModeSend.vend
+      case Profile => profileModeSend.vend
+    }).apply(msg)
   }
 
   /**
-   * How to send a message in dev mode.  By default, use Transport.send(msg)
+   * How to send a message in dev mode. By default, use Transport.send(msg)
    */
-  lazy val devModeSend: Inject[MimeMessage => Unit] = new Inject[MimeMessage => Unit]((m: MimeMessage) => Transport.send(m)) {}
+  lazy val devModeSend: Inject[MimeMessage => Unit] =
+    new Inject[MimeMessage => Unit]((m: MimeMessage) => Transport.send(m)) {}
 
   /**
-   * How to send a message in test mode.  By default, log the message
+   * How to send a message in test mode. By default, log the message
    */
-  lazy val testModeSend: Inject[MimeMessage => Unit] = new Inject[MimeMessage => Unit]((m: MimeMessage) => logger.info("Sending Mime Message: "+m)) {}
+  lazy val testModeSend: Inject[MimeMessage => Unit] =
+    new Inject[MimeMessage => Unit]((m: MimeMessage) =>
+      logger.info("Sending Mime Message: " + m)) {}
 
   /**
-   * How to send a message in staging mode.  By default, use Transport.send(msg)
+   * How to send a message in staging mode. By default, use Transport.send(msg)
    */
-  lazy val stagingModeSend: Inject[MimeMessage => Unit] = new Inject[MimeMessage => Unit]((m: MimeMessage) => Transport.send(m)) {}
+  lazy val stagingModeSend: Inject[MimeMessage => Unit] =
+    new Inject[MimeMessage => Unit]((m: MimeMessage) => Transport.send(m)) {}
 
   /**
-   * How to send a message in production mode.  By default, use Transport.send(msg)
+   * How to send a message in production mode. By default, use Transport.send(msg)
    */
-  lazy val productionModeSend: Inject[MimeMessage => Unit] = new Inject[MimeMessage => Unit]((m: MimeMessage) => Transport.send(m)) {}
+  lazy val productionModeSend: Inject[MimeMessage => Unit] =
+    new Inject[MimeMessage => Unit]((m: MimeMessage) => Transport.send(m)) {}
 
   /**
-   * How to send a message in pilot mode.  By default, use Transport.send(msg)
+   * How to send a message in pilot mode. By default, use Transport.send(msg)
    */
-  lazy val pilotModeSend: Inject[MimeMessage => Unit] = new Inject[MimeMessage => Unit]((m: MimeMessage) => Transport.send(m)) {}
+  lazy val pilotModeSend: Inject[MimeMessage => Unit] =
+    new Inject[MimeMessage => Unit]((m: MimeMessage) => Transport.send(m)) {}
 
   /**
-   * How to send a message in profile mode.  By default, use Transport.send(msg)
+   * How to send a message in profile mode. By default, use Transport.send(msg)
    */
-  lazy val profileModeSend: Inject[MimeMessage => Unit] = new Inject[MimeMessage => Unit]((m: MimeMessage) => Transport.send(m)) {}
+  lazy val profileModeSend: Inject[MimeMessage => Unit] =
+    new Inject[MimeMessage => Unit]((m: MimeMessage) => Transport.send(m)) {}
 
   /**
    * Synchronously send an email.
@@ -234,19 +241,37 @@ trait Mailer extends SimpleInjector {
     val subj = MimeUtility.encodeText(subject.subject, "utf-8", "Q")
     val message = new MimeMessage(session)
     message.setFrom(from)
-    message.setRecipients(Message.RecipientType.TO, info.flatMap {case x: To => Some[To](x) case _ => None})
-    message.setRecipients(Message.RecipientType.CC, info.flatMap {case x: CC => Some[CC](x) case _ => None})
-    message.setRecipients(Message.RecipientType.BCC, info.flatMap {case x: BCC => Some[BCC](x) case _ => None})
+    message.setRecipients(
+      Message.RecipientType.TO,
+      info.flatMap {
+        case x: To => Some[To](x)
+        case _ => None
+      })
+    message.setRecipients(
+      Message.RecipientType.CC,
+      info.flatMap {
+        case x: CC => Some[CC](x)
+        case _ => None
+      })
+    message.setRecipients(
+      Message.RecipientType.BCC,
+      info.flatMap {
+        case x: BCC => Some[BCC](x)
+        case _ => None
+      })
     message.setSentDate(new java.util.Date())
     // message.setReplyTo(filter[MailTypes, ReplyTo](info, {case x @ ReplyTo(_) => Some(x); case _ => None}))
-    message.setReplyTo(info.flatMap {case x: ReplyTo => Some[ReplyTo](x) case _ => None})
+    message.setReplyTo(info.flatMap {
+      case x: ReplyTo => Some[ReplyTo](x)
+      case _ => None
+    })
     message.setSubject(subj)
     info.foreach {
       case MessageHeader(name, value) => message.addHeader(name, value)
       case _ =>
     }
 
-    val bodyTypes = info.flatMap {case x: MailBodyType => Some[MailBodyType](x); case _ => None}
+    val bodyTypes = info.flatMap { case x: MailBodyType => Some[MailBodyType](x); case _ => None }
     bodyTypes match {
       case PlainMailBodyType(txt) :: Nil =>
         message.setText(txt)
@@ -255,8 +280,8 @@ trait Mailer extends SimpleInjector {
         val multiPart = new MimeMultipart("alternative")
         bodyTypes.foreach {
           tab =>
-          val bp = buildMailBody(tab)
-          multiPart.addBodyPart(bp)
+            val bp = buildMailBody(tab)
+            multiPart.addBodyPart(bp)
         }
         message.setContent(multiPart);
     }
@@ -267,22 +292,23 @@ trait Mailer extends SimpleInjector {
   protected lazy val msgSender = new MsgSender
 
   /**
-   * The default mechanism for encoding a NodeSeq to a String representing HTML.  By default, use Html5.toString(node)
+   * The default mechanism for encoding a NodeSeq to a String representing HTML. By default, use
+   * Html5.toString(node)
    */
   protected def encodeHtmlBodyPart(in: NodeSeq): String = Html5.toString(firstNode(in))
 
   protected def firstNode(in: NodeSeq): Node = in match {
     case n: Node => n
     case ns => ns.toList.collect {
-      case e: Elem => e
-    } match {
-      case Nil => if (ns.length == 0) Text("") else ns(0)
-      case x :: xs => x
-    }
+        case e: Elem => e
+      } match {
+        case Nil => if (ns.length == 0) Text("") else ns(0)
+        case x :: xs => x
+      }
   }
 
   /**
-   * Given a MailBodyType, convert it to a javax.mail.BodyPart.  You can override this method if you
+   * Given a MailBodyType, convert it to a javax.mail.BodyPart. You can override this method if you
    * add custom MailBodyTypes
    */
   protected def buildMailBody(tab: MailBodyType): BodyPart = {
@@ -298,7 +324,7 @@ trait Mailer extends SimpleInjector {
       case XHTMLMailBodyType(html) =>
         bp.setContent(encodeHtmlBodyPart(html), "text/html; charset=" + charSet)
 
-      case XHTMLPlusImages(html, img@_*) =>
+      case XHTMLPlusImages(html, img @ _*) =>
         val (attachments, images) = img.partition(_.attachment)
         val relatedMultipart = new MimeMultipart("related")
 
@@ -349,7 +375,6 @@ trait Mailer extends SimpleInjector {
 
     part
   }
-
 
   /**
    * Asynchronously send an email.

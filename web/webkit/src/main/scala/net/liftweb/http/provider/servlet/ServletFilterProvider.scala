@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
-package provider 
-package servlet 
+package net.liftweb
+package http
+package provider
+package servlet
 
 import jakarta.servlet._
 import jakarta.servlet.http._
@@ -25,13 +25,11 @@ import jakarta.servlet.http._
 import net.liftweb.common._
 import net.liftweb.util._
 import net.liftweb.http._
-import Helpers._
-
 
 trait ServletFilterProvider extends Filter with HTTPProvider {
   var ctx: HTTPContext = _
 
-  //We need to capture the ServletContext on init
+  // We need to capture the ServletContext on init
   override def init(config: FilterConfig): Unit = {
     ctx = new HTTPServletContext(config.getServletContext)
 
@@ -41,7 +39,7 @@ trait ServletFilterProvider extends Filter with HTTPProvider {
 
   }
 
-  //And throw it away on destruction
+  // And throw it away on destruction
   override def destroy: Unit = {
     ctx = null
     terminate
@@ -71,10 +69,11 @@ trait ServletFilterProvider extends Filter with HTTPProvider {
     else {
       LiftRules.reqCnt.incrementAndGet()
       try {
-        TransientRequestVarHandler(Empty,
-                                   RequestVarHandler(Empty,
-
-                                                     (req, res) match {
+        TransientRequestVarHandler(
+          Empty,
+          RequestVarHandler(
+            Empty,
+            (req, res) match {
               case (httpReq: HttpServletRequest, httpRes: HttpServletResponse) =>
                 val httpRequest = new HTTPRequestServlet(httpReq, this)
                 val httpResponse = new HTTPResponseServlet(httpRes)
@@ -83,8 +82,10 @@ trait ServletFilterProvider extends Filter with HTTPProvider {
                   chain.doFilter(req, res)
                 })
               case _ => chain.doFilter(req, res)
-            }))
-      } finally {LiftRules.reqCnt.decrementAndGet()}
+            }
+          )
+        )
+      } finally { LiftRules.reqCnt.decrementAndGet() }
     }
   }
 }

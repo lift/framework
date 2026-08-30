@@ -17,7 +17,6 @@
 package net.liftweb
 package util
 
-import net.liftweb.common._
 import java.lang.ref.WeakReference
 import Helpers.TimeSpan
 
@@ -25,6 +24,7 @@ import Helpers.TimeSpan
  * Something that depends on the values of other cells
  */
 trait Dependent {
+
   /**
    * If the predicate cell changes, the Dependent will be notified
    */
@@ -43,7 +43,7 @@ trait Dependent {
   /**
    * The Cell notifies the Dependent of the removed dependency
    */
-  def youDontDependOnMe(who: Cell[_]): Unit =  synchronized {
+  def youDontDependOnMe(who: Cell[_]): Unit = synchronized {
     val tList = _iDependOn.filter(_.get match {
       case null => false
       case x => x ne who
@@ -73,13 +73,12 @@ trait Dependent {
 }
 
 /**
- * A wiring Cell.  A Cell can be a ValueCell which holds
- * a value which can be set (and thus update the dependencies),
- * a FuncCell (a cell that is a function that depends on other cells),
- * or a DynamicCell which has a value that updates each time the cell is
- * accessed.
+ * A wiring Cell. A Cell can be a ValueCell which holds a value which can be set (and thus update
+ * the dependencies), a FuncCell (a cell that is a function that depends on other cells), or a
+ * DynamicCell which has a value that updates each time the cell is accessed.
  */
 trait Cell[T] extends Dependent {
+
   /**
    * The cell's value and most recent change time
    */
@@ -95,16 +94,15 @@ trait Cell[T] extends Dependent {
    */
   def lift[A](f: T => A): Cell[A] = FuncCell(this)(f)
 
-  def lift[A,B](cell: Cell[B])(f: (T, B) => A): Cell[A] = 
+  def lift[A, B](cell: Cell[B])(f: (T, B) => A): Cell[A] =
     FuncCell(this, cell)(f)
 
   private var _dependentCells: List[WeakReference[Dependent]] = Nil
 
   /**
-   * Add a Dependent to this cell.  The Dependent will
-   * be notified when the Cell's value changes.  Dependents
-   * are kept around as WeakReferences so they do not
-   * have to be explicitly removed from the List
+   * Add a Dependent to this cell. The Dependent will be notified when the Cell's value changes.
+   * Dependents are kept around as WeakReferences so they do not have to be explicitly removed from
+   * the List
    */
   def addDependent[T <: Dependent](dep: T): T = {
     synchronized {
@@ -112,8 +110,7 @@ trait Cell[T] extends Dependent {
         case null => false
         case x => x ne dep
       })
-      
-      
+
       _dependentCells = new WeakReference(dep: Dependent) :: tList
     }
 
@@ -139,11 +136,11 @@ trait Cell[T] extends Dependent {
   }
 
   /**
-   * Notify dependents of a state change.  Note this
-   * will be performed on a separate thread asynchronously
+   * Notify dependents of a state change. Note this will be performed on a separate thread
+   * asynchronously
    */
   def notifyDependents(): Unit = {
-    Schedule.schedule(() => dependents.foreach(_.predicateChanged(this)),TimeSpan(0))
+    Schedule.schedule(() => dependents.foreach(_.predicateChanged(this)), TimeSpan(0))
   }
 
   /**
@@ -163,22 +160,21 @@ object Cell {
 }
 
 /**
- * A cell that changes value on each access.  This kind of cell
- * could be used to access an external resource.  <b>Warning</b>
- * the function may be accessed many times during a single wiring
- * recalculation, so it's best to use this as a front to a value
- * that's memoized for some duration.
+ * A cell that changes value on each access. This kind of cell could be used to access an external
+ * resource. <b>Warning</b> the function may be accessed many times during a single wiring
+ * recalculation, so it's best to use this as a front to a value that's memoized for some duration.
  */
 final case class DynamicCell[T](f: () => T) extends Cell[T] {
+
   /**
    * The cell's value and most recent change time
    */
-  def currentValue: (T, Long) = 
+  def currentValue: (T, Long) =
     f() -> System.nanoTime()
 
   /**
-   * If the predicate cell changes, the Dependent will be notified.
-   * This Cell has no predicates, so this is just Unit
+   * If the predicate cell changes, the Dependent will be notified. This Cell has no predicates, so
+   * this is just Unit
    */
   def predicateChanged(which: Cell[_]): Unit = {}
 
@@ -188,7 +184,6 @@ final case class DynamicCell[T](f: () => T) extends Cell[T] {
  * The companion object that has a helpful constructor
  */
 object ValueCell {
-  import scala.language.implicitConversions
 
   def apply[A](value: A): ValueCell[A] = new ValueCell(value)
 
@@ -223,14 +218,13 @@ final class ValueCell[A](initialValue: A) extends Cell[A] with LiftValue[A] {
   }
 
   /**
-   * If the predicate cell changes, the Dependent will be notified.
-   * A ValueCell cannot have predicates
+   * If the predicate cell changes, the Dependent will be notified. A ValueCell cannot have
+   * predicates
    */
   def predicateChanged(which: Cell[_]): Unit = {}
 
-
   override def toString(): String = synchronized {
-    "ValueCell("+value+")"
+    "ValueCell(" + value + ")"
   }
 
   override def hashCode(): Int = synchronized {
@@ -247,15 +241,15 @@ final class ValueCell[A](initialValue: A) extends Cell[A] with LiftValue[A] {
 }
 
 /**
-* A collection of Cells og a given type
-*/
+ * A collection of Cells og a given type
+ */
 final case class SeqCell[T](cells: Cell[T]*) extends Cell[Seq[T]] {
 
   cells.foreach(_.addDependent(this))
 
   /**
-  * The cell's value and most recent change time
-  */
+   * The cell's value and most recent change time
+   */
   def currentValue: (Seq[T], Long) = {
     val tcv = cells.map(_.currentValue)
     tcv.map(_._1) -> tcv.foldLeft(0L)((max, c) => if (max > c._2) max else c._2)
@@ -268,33 +262,44 @@ final case class SeqCell[T](cells: Cell[T]*) extends Cell[Seq[T]] {
 }
 
 /**
-* The companion object for FuncCell (function cells)
-*/
+ * The companion object for FuncCell (function cells)
+ */
 object FuncCell {
+
   /**
-  * Construct a function cell based on a single parameter
-  */
+   * Construct a function cell based on a single parameter
+   */
   def apply[A, Z](a: Cell[A])(f: A => Z): Cell[Z] = FuncCell1(a, f)
 
   /**
-  * Construct a function cell based on two parameters
-  */
+   * Construct a function cell based on two parameters
+   */
   def apply[A, B, Z](a: Cell[A], b: Cell[B])(f: (A, B) => Z): Cell[Z] = FuncCell2(a, b, f)
 
   /**
-  * Construct a function cell based on three parameters
-  */
-  def apply[A, B, C, Z](a: Cell[A], b: Cell[B], c: Cell[C])(f: (A, B, C) => Z): Cell[Z] = FuncCell3(a, b, c, f)
+   * Construct a function cell based on three parameters
+   */
+  def apply[A, B, C, Z](a: Cell[A], b: Cell[B], c: Cell[C])(f: (A, B, C) => Z): Cell[Z] =
+    FuncCell3(a, b, c, f)
 
   /**
-  * Construct a function cell based on four parameters
-  */
-  def apply[A, B, C, D, Z](a: Cell[A], b: Cell[B], c: Cell[C], d: Cell[D])(f: (A, B, C, D) => Z): Cell[Z] = FuncCell4(a, b, c, d, f)
+   * Construct a function cell based on four parameters
+   */
+  def apply[A, B, C, D, Z](
+      a: Cell[A],
+      b: Cell[B],
+      c: Cell[C],
+      d: Cell[D])(f: (A, B, C, D) => Z): Cell[Z] = FuncCell4(a, b, c, d, f)
 
   /**
-  * Construct a function cell based on five parameters
-  */
-  def apply[A, B, C, D, E, Z](a: Cell[A], b: Cell[B], c: Cell[C], d: Cell[D], e: Cell[E])(f: (A, B, C, D, E) => Z): Cell[Z] = FuncCell5(a, b, c, d, e, f)
+   * Construct a function cell based on five parameters
+   */
+  def apply[A, B, C, D, E, Z](
+      a: Cell[A],
+      b: Cell[B],
+      c: Cell[C],
+      d: Cell[D],
+      e: Cell[E])(f: (A, B, C, D, E) => Z): Cell[Z] = FuncCell5(a, b, c, d, e, f)
 }
 
 final case class FuncCell1[A, Z](a: Cell[A], f: A => Z) extends Cell[Z] {
@@ -345,7 +350,8 @@ final case class FuncCell2[A, B, Z](a: Cell[A], b: Cell[B], f: (A, B) => Z) exte
   }
 }
 
-final case class FuncCell3[A, B, C, Z](a: Cell[A], b: Cell[B], c: Cell[C], f: (A, B, C) => Z) extends Cell[Z] {
+final case class FuncCell3[A, B, C, Z](a: Cell[A], b: Cell[B], c: Cell[C], f: (A, B, C) => Z)
+    extends Cell[Z] {
   private var value: Z = _
   private var ct: Long = 0
 
@@ -371,7 +377,12 @@ final case class FuncCell3[A, B, C, Z](a: Cell[A], b: Cell[B], c: Cell[C], f: (A
   }
 }
 
-final case class FuncCell4[A, B, C, D, Z](a: Cell[A], b: Cell[B], c: Cell[C], d: Cell[D], f: (A, B, C, D) => Z) extends Cell[Z] {
+final case class FuncCell4[A, B, C, D, Z](
+    a: Cell[A],
+    b: Cell[B],
+    c: Cell[C],
+    d: Cell[D],
+    f: (A, B, C, D) => Z) extends Cell[Z] {
   private var value: Z = _
   private var ct: Long = 0
 
@@ -401,7 +412,13 @@ final case class FuncCell4[A, B, C, D, Z](a: Cell[A], b: Cell[B], c: Cell[C], d:
   }
 }
 
-final case class FuncCell5[A, B, C, D, E, Z](a: Cell[A], b: Cell[B], c: Cell[C], d: Cell[D], e: Cell[E], f: (A, B, C, D, E) => Z) extends Cell[Z] {
+final case class FuncCell5[A, B, C, D, E, Z](
+    a: Cell[A],
+    b: Cell[B],
+    c: Cell[C],
+    d: Cell[D],
+    e: Cell[E],
+    f: (A, B, C, D, E) => Z) extends Cell[Z] {
   private var value: Z = _
   private var ct: Long = 0
 
@@ -434,7 +451,7 @@ final case class FuncCell5[A, B, C, D, E, Z](a: Cell[A], b: Cell[B], c: Cell[C],
 }
 
 private object WiringHelper {
-  def max(a: Long, b: Long*): Long = b.foldLeft(a){
+  def max(a: Long, b: Long*): Long = b.foldLeft(a) {
     (v1, v2) =>
       if (v1 > v2) v1 else v2
   }

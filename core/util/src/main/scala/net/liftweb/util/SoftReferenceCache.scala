@@ -25,15 +25,13 @@ import concurrent.locks._
 import common._
 import util._
 import Helpers._
-import Schedule._
-import java.lang.Thread._
-
 
 /**
- * Companion module that has the role of monitoring garbage collected references and remove the orphaned
- * keys from the cache. The monitor is started by calling <i>initialize</i> function and terminated by
- * calling <i>shutDown</i>. It monitors all SoftReferenceCache instances in the context of the same classloader.
- * It can also be used as a factory for obtaining new instances of SoftReferenceCache class
+ * Companion module that has the role of monitoring garbage collected references and remove the
+ * orphaned keys from the cache. The monitor is started by calling <i>initialize</i> function and
+ * terminated by calling <i>shutDown</i>. It monitors all SoftReferenceCache instances in the
+ * context of the same classloader. It can also be used as a factory for obtaining new instances of
+ * SoftReferenceCache class
  */
 object SoftReferenceCache {
 
@@ -88,7 +86,8 @@ case object ProcessQueue
 case object Done
 
 /**
- * A Map that holds the values as SoftReference-s. It also applies a LRU policy for the cache entries.
+ * A Map that holds the values as SoftReference-s. It also applies a LRU policy for the cache
+ * entries.
  */
 class SoftReferenceCache[K, V](cacheSize: Int) {
 
@@ -117,10 +116,11 @@ class SoftReferenceCache[K, V](cacheSize: Int) {
    * Returns the cached value mapped with this key or Empty if not found
    *
    * @param key
-   * @return Box[V]
+   * @return
+   *   Box[V]
    */
   def apply(key: K): Box[V] = {
-    val result:(Boolean,Box[V]) /* (doRemove, retval) */ =
+    val result: (Boolean, Box[V]) /* (doRemove, retval) */ =
       lock(readLock) {
         Box.!!(cache.get(key)) match {
           case Full(value) =>
@@ -148,8 +148,10 @@ class SoftReferenceCache[K, V](cacheSize: Int) {
 
   /**
    * Puts a new keyed entry in cache
-   * @param tuple: (K, V)*
-   * @return this
+   * @param tuple:
+   *   (K, V)*
+   * @return
+   *   this
    */
   def +=(tuple: (K, V)*) = {
     lock(writeLock) {
@@ -163,27 +165,28 @@ class SoftReferenceCache[K, V](cacheSize: Int) {
   /**
    * Removes the cache entry mapped with this key
    *
-   * @return the value removed
+   * @return
+   *   the value removed
    */
   def remove(key: Any): Box[V] = {
     lock(writeLock) {
-      for {value <- Box.!!(cache.remove(key).asInstanceOf[SoftValue[K, V]])
-           realValue <- Box.!!(value.get)
+      for {
+        value <- Box.!!(cache.remove(key).asInstanceOf[SoftValue[K, V]])
+        realValue <- Box.!!(value.get)
       } yield realValue
     }
   }
-
 
   def keys = cache.keySet
 
 }
 
-class SoftValue[K, V](k: K,
-                      v: V,
-                      lruCache: SoftReferenceCache[K, V],
-                      queue: ReferenceQueue[Any]) extends SoftReference[V](v, queue) {
+class SoftValue[K, V](
+    k: K,
+    v: V,
+    lruCache: SoftReferenceCache[K, V],
+    queue: ReferenceQueue[Any]) extends SoftReference[V](v, queue) {
   def key: K = k
 
   def cache: SoftReferenceCache[K, V] = lruCache
 }
-

@@ -22,25 +22,29 @@ import common._
 
 import scala.collection.mutable
 
-class HasManyThrough[From <: KeyedMapper[ThroughType, From],
-                     To <: Mapper[To],
-                     Through <: Mapper[Through],
-                     ThroughType <: Any](
-                      owner: From,
-                      otherSingleton: MetaMapper[To],
-                      through: MetaMapper[Through],
-                      throughFromField: MappedField[ThroughType, Through],
-                      throughToField: MappedField[ThroughType, Through])
-  extends LifecycleCallbacks {
+class HasManyThrough[
+    From <: KeyedMapper[ThroughType, From],
+    To <: Mapper[To],
+    Through <: Mapper[Through],
+    ThroughType <: Any](
+    owner: From,
+    otherSingleton: MetaMapper[To],
+    through: MetaMapper[Through],
+    throughFromField: MappedField[ThroughType, Through],
+    throughToField: MappedField[ThroughType, Through])
+    extends LifecycleCallbacks {
   private var theSetList: Seq[ThroughType] = Nil
 
   private val others = FatLazy[List[To]] {
     DB.use(owner.connectionIdentifier) { conn =>
-      val query = "SELECT DISTINCT "+otherSingleton._dbTableNameLC+".* FROM "+otherSingleton._dbTableNameLC+","+
-      through._dbTableNameLC+" WHERE "+
-      otherSingleton._dbTableNameLC+"."+otherSingleton.indexedField(otherSingleton.asInstanceOf[To]).openOrThrowException("legacy code")._dbColumnNameLC+" = "+
-      through._dbTableNameLC+"."+throughToField._dbColumnNameLC+" AND "+
-      through._dbTableNameLC+"."+throughFromField._dbColumnNameLC+" = ?"
+      val query =
+        "SELECT DISTINCT " + otherSingleton._dbTableNameLC + ".* FROM " + otherSingleton._dbTableNameLC + "," +
+          through._dbTableNameLC + " WHERE " +
+          otherSingleton._dbTableNameLC + "." + otherSingleton.indexedField(
+            otherSingleton.asInstanceOf[To]).openOrThrowException(
+            "legacy code")._dbColumnNameLC + " = " +
+          through._dbTableNameLC + "." + throughToField._dbColumnNameLC + " AND " +
+          through._dbTableNameLC + "." + throughFromField._dbColumnNameLC + " = ?"
       DB.prepareStatement(query, conn) { st =>
         owner.getSingleton.indexedField(owner).map { indVal =>
           if (indVal.dbIgnoreSQLType_?)
@@ -109,4 +113,3 @@ class HasManyThrough[From <: KeyedMapper[ThroughType, From],
     super.afterCreate
   }
 }
-

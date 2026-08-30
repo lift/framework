@@ -21,20 +21,20 @@ package servlet
 
 import jakarta.servlet.http._
 import net.liftweb.common._
-import net.liftweb.util._
 
 class HTTPServletSession(session: HttpSession) extends HTTPSession {
   private[this] val servletSessionIdentifier = LiftRules.servletSessionIdentifier
 
   def sessionId: String = session.getId
 
-  def link(liftSession: LiftSession) = session.setAttribute(servletSessionIdentifier, SessionToServletBridge(liftSession.underlyingId))
+  def link(liftSession: LiftSession) =
+    session.setAttribute(servletSessionIdentifier, SessionToServletBridge(liftSession.underlyingId))
 
   def unlink(liftSession: LiftSession) = session.removeAttribute(servletSessionIdentifier)
 
   def maxInactiveInterval: Long = session.getMaxInactiveInterval
 
-  def setMaxInactiveInterval(interval: Long) = session.setMaxInactiveInterval (interval.toInt)
+  def setMaxInactiveInterval(interval: Long) = session.setMaxInactiveInterval(interval.toInt)
 
   def lastAccessedTime: Long = session.getLastAccessedTime
 
@@ -50,19 +50,19 @@ class HTTPServletSession(session: HttpSession) extends HTTPSession {
 /**
  * Represents the "bridge" between HttpSession and LiftSession
  */
-case class SessionToServletBridge(uniqueId: String) extends HttpSessionBindingListener with HttpSessionActivationListener {
+case class SessionToServletBridge(uniqueId: String) extends HttpSessionBindingListener
+    with HttpSessionActivationListener {
   override def sessionDidActivate(se: HttpSessionEvent) = {
     SessionMaster.getSession(uniqueId, Empty).foreach(ls =>
-            LiftSession.onSessionActivate.foreach(_(ls)))
+      LiftSession.onSessionActivate.foreach(_(ls)))
   }
 
   override def sessionWillPassivate(se: HttpSessionEvent) = {
     SessionMaster.getSession(uniqueId, Empty).foreach(ls =>
-            LiftSession.onSessionPassivate.foreach(_(ls)))
+      LiftSession.onSessionPassivate.foreach(_(ls)))
   }
 
-  override def valueBound(event: HttpSessionBindingEvent): Unit = {
-  }
+  override def valueBound(event: HttpSessionBindingEvent): Unit = {}
 
   /**
    * When the session is unbound the the HTTP session, stop us

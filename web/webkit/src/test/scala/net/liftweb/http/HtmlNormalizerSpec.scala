@@ -1,19 +1,14 @@
 package net.liftweb
 package http
 
-import scala.xml._
 
 import org.specs2._
-  import execute.{Result, AsResult}
-  import mutable.{Around, Specification}
-  import matcher.XmlMatchers
-  import mock.Mockito
+import mutable.Specification
+import matcher.XmlMatchers
+import mock.Mockito
 
-import org.mockito.Mockito._
 
-import common._
 
-import js.JE.JsObj
 
 class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
   val eventAttributeMatcher = "(?s).*\\W(on[a-zA-Z]+)=.*".r
@@ -90,16 +85,17 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           true
         )
 
-      List("testJs1",
-           "testJs2",
-           "testJs3",
-           "testJs4",
-           "testJs5",
-           "testJs6",
-           "testJs7",
-           "testJs8",
-           "testJs9",
-           "testJs10")
+      List(
+        "testJs1",
+        "testJs2",
+        "testJs3",
+        "testJs4",
+        "testJs5",
+        "testJs6",
+        "testJs7",
+        "testJs8",
+        "testJs9",
+        "testJs10")
         .foreach(js.toJsCmd must contain(_))
 
       html.toString must beLike {
@@ -151,10 +147,10 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           true
         )
 
-      js.toJsCmd must be matching("""(?s)\Qlift.onEvent("lift-event-js-\E[^"]+\Q","event",function(event) {doStuff;});
+      js.toJsCmd must be matching ("""(?s)\Qlift.onEvent("lift-event-js-\E[^"]+\Q","event",function(event) {doStuff;});
         |lift.onEvent("hello","event",function(event) {doStuff2;});
-        |lift.onEvent("lift-event-js-\E[^"]+\Q","event",function(event) {doStuff3;});\E""".stripMargin('|').linesIterator.mkString("\n").r
-      )
+        |lift.onEvent("lift-event-js-\E[^"]+\Q","event",function(event) {doStuff3;});\E""".stripMargin(
+        '|').linesIterator.mkString("\n").r)
     }
 
     "extract events from hrefs and actions" in {
@@ -176,11 +172,11 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
 
       (html \ "myelement").map(_ \@ "href").filter(_.nonEmpty) must beEmpty
       (html \ "myelement").map(_ \@ "action").filter(_.nonEmpty) must beEmpty
-      js.toJsCmd must be matching("""(?s)\Qlift.onEvent("lift-event-js-\E[^"]+\Q","click",function(event) {doStuff; event.preventDefault();});
+      js.toJsCmd must be matching ("""(?s)\Qlift.onEvent("lift-event-js-\E[^"]+\Q","click",function(event) {doStuff; event.preventDefault();});
         |lift.onEvent("hello","submit",function(event) {doStuff2; event.preventDefault();});
         |lift.onEvent("hello2","click",function(event) {doStuff3; event.preventDefault();});
-        |lift.onEvent("lift-event-js-\E[^"]+\Q","submit",function(event) {/doStuff4; event.preventDefault();});\E""".stripMargin('|').linesIterator.mkString("\n").r
-      )
+        |lift.onEvent("lift-event-js-\E[^"]+\Q","submit",function(event) {/doStuff4; event.preventDefault();});\E""".stripMargin(
+        '|').linesIterator.mkString("\n").r)
     }
 
     "not extract events from hrefs and actions without the proper prefix" in {
@@ -197,8 +193,12 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
           true
         )
 
-      (html \ "myelement").map(_ \@ "href").filter(_.nonEmpty) must_== List("doStuff", "javascrip://doStuff3")
-      (html \ "myelement").map(_ \@ "action").filter(_.nonEmpty) must_== List("javascrip:doStuff2", "doStuff4")
+      (html \ "myelement").map(_ \@ "href").filter(_.nonEmpty) must_== List(
+        "doStuff",
+        "javascrip://doStuff3")
+      (html \ "myelement").map(_ \@ "action").filter(_.nonEmpty) must_== List(
+        "javascrip:doStuff2",
+        "doStuff4")
       js.toJsCmd.trim must beEmpty
     }
 
@@ -498,7 +498,7 @@ class HtmlNormalizerSpec extends Specification with XmlMatchers with Mockito {
 
     "not extract events from hrefs and actions" in {
       val startingHtml =
-          <div>
+        <div>
             <myelement href="javascript:doStuff" />
             <myelement id="hello" action="javascript:doStuff2" />
             <myelement id="hello2" href="javascript://doStuff3" />

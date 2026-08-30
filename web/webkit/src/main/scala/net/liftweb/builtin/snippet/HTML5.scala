@@ -27,7 +27,7 @@ import net.liftweb.common._
  */
 object HTML5 extends DispatchSnippet {
 
-  def dispatch : DispatchIt = {
+  def dispatch: DispatchIt = {
     case _ => render _
   }
 
@@ -36,4 +36,3 @@ object HTML5 extends DispatchSnippet {
     xhtml
   }
 }
-

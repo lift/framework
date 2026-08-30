@@ -63,7 +63,6 @@ trait Tryo {
    */
   def tryo[T](f: => T): Box[T] = tryo(Nil, Empty)(f)
 
-
   /**
    * Wraps a "try" block around the function f and trigger a callback function if an exception is thrown
    * @param onError - an optional callback function that will use the thrown exception as a parameter

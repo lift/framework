@@ -7,8 +7,8 @@ import java.util.{List => JavaList}
 // import scala.jdk.CollectionConverters._
 
 /**
- * A trait that has some helpful implicit conversions from
- * Iterable[NodeSeq], Seq[String], Box[String], and Option[String]
+ * A trait that has some helpful implicit conversions from Iterable[NodeSeq], Seq[String],
+ * Box[String], and Option[String]
  */
 trait IterableConst {
   def constList(nodeSeq: NodeSeq): Seq[NodeSeq]
@@ -45,7 +45,8 @@ final case class BoxNodeSeqFuncIterableConst(it: Box[NodeSeq => NodeSeq]) extend
 /**
  * The implementation for a Option[NodeSeq => Node] Iterable Const
  */
-final case class OptionNodeSeqFuncIterableConst(it: Option[NodeSeq => NodeSeq]) extends IterableConst {
+final case class OptionNodeSeqFuncIterableConst(it: Option[NodeSeq => NodeSeq])
+    extends IterableConst {
 
   def constList(nodeSeq: NodeSeq): Seq[NodeSeq] = it.toList.map(_(nodeSeq))
 }
@@ -69,16 +70,14 @@ final case class SeqBindableIterableConst(it: Iterable[Bindable]) extends Iterab
 }
 
 /**
- * The companion object that does the helpful promotion of common
- * collection types into an IterableConst,
- * e.g. Iterable[NodeSeq], Seq[String], Box[String], and Option[String]
+ * The companion object that does the helpful promotion of common collection types into an
+ * IterableConst, e.g. Iterable[NodeSeq], Seq[String], Box[String], and Option[String]
  */
 object IterableConst {
-  import scala.language.implicitConversions
 
   /**
-   * Converts anything that can be converted into an Iterable[NodeSeq]
-   * into an IterableConst.  This includes Seq[NodeSeq]
+   * Converts anything that can be converted into an Iterable[NodeSeq] into an IterableConst. This
+   * includes Seq[NodeSeq]
    */
   implicit def itNodeSeq(it: Iterable[NodeSeq]): IterableConst =
     NodeSeqIterableConst(it)
@@ -96,9 +95,8 @@ object IterableConst {
     NodeSeqIterableConst(it.toList)
 
   /**
-   * Converts anything that can be converted into an Iterable[NodeSeq]
-   * into an IterableConst.  This includes Seq[NodeSeq], Option[NodeSeq],
-   * and Box[NodeSeq]
+   * Converts anything that can be converted into an Iterable[NodeSeq] into an IterableConst. This
+   * includes Seq[NodeSeq], Option[NodeSeq], and Box[NodeSeq]
    */
   implicit def itNodeSeq(it: JavaList[NodeSeq]): IterableConst =
     new NodeSeqIterableConst(it)
@@ -133,12 +131,12 @@ object IterableConst {
   implicit def itBindable(it: JavaList[Bindable]): IterableConst =
     new SeqBindableIterableConst(it)
 
-
   implicit def boxBindablePromotable(it: Box[Bindable]): IterableConst =
     SeqBindableIterableConst(it.toList)
 
   implicit def optionBindablePromotable(it: Option[Bindable]): IterableConst =
     SeqBindableIterableConst(it.toList)
 
-  implicit def optionStringPromotable[T](o: Option[T])(implicit view: T => StringPromotable): IterableConst = optionString(o.map(view(_).toString))
+  implicit def optionStringPromotable[T](o: Option[T])(implicit
+      view: T => StringPromotable): IterableConst = optionString(o.map(view(_).toString))
 }

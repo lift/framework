@@ -21,16 +21,15 @@ package snippet
 import scala.xml._
 import net.liftweb.http._
 import net.liftweb.util._
-  import Helpers._
+import Helpers._
 import net.liftweb.common._
 
 import Box._
 
 /**
- * This object implements the logic for the &lt;lift:embed&gt; tag. It
- * supports retrieving a template based on the "what" attribute, and
- * any &lt;lift:bind-at&gt; tags contained in the embed tag will be used
- * to replace &lt;lift:bind&gt; tags within the embedded template.
+ * This object implements the logic for the &lt;lift:embed&gt; tag. It supports retrieving a
+ * template based on the "what" attribute, and any &lt;lift:bind-at&gt; tags contained in the embed
+ * tag will be used to replace &lt;lift:bind&gt; tags within the embedded template.
  */
 object Embed extends DispatchSnippet {
   // Extract a lift:bind-at Elem with a name attribute, yielding the
@@ -49,21 +48,22 @@ object Embed extends DispatchSnippet {
 
   private lazy val logger = Logger(this.getClass)
 
-  def dispatch : DispatchIt = {
+  def dispatch: DispatchIt = {
     case _ => render _
   }
 
-  def render(kids: NodeSeq) : NodeSeq =
-  {
+  def render(kids: NodeSeq): NodeSeq = {
     for {
-      ctx <- S.session ?~ ("FIX"+"ME: session is invalid")
-      what <- S.attr ~ ("what") ?~ ("FIX" + "ME The 'what' attribute not defined. In order to embed a template, the 'what' attribute must be specified")
-      templateOpt <- ctx.findTemplate(what.text) ?~ ("FIX"+"ME trying to embed a template named '"+what+"', but the template was not found. ")
+      ctx <- S.session ?~ ("FIX" + "ME: session is invalid")
+      what <-
+        S.attr ~ ("what") ?~ ("FIX" + "ME The 'what' attribute not defined. In order to embed a template, the 'what' attribute must be specified")
+      templateOpt <-
+        ctx.findTemplate(what.text) ?~ ("FIX" + "ME trying to embed a template named '" + what + "', but the template was not found. ")
     } yield {
       (what, Templates.checkForContentId(templateOpt))
     }
   } match {
-    case Full((templateName,template)) => {
+    case Full((templateName, template)) => {
       val bindings: Seq[CssSel] = kids.collect {
         case BindAtWithName(element, name) =>
           s"#$name" #> element.child
@@ -80,12 +80,12 @@ object Embed extends DispatchSnippet {
       bindFn(template)
     }
     case Failure(msg, Full(ex), _) =>
-      logger.error("'embed' snippet failed with message: "+msg, ex)
-      throw new SnippetExecutionException("Embed Snippet failed: "+msg)
+      logger.error("'embed' snippet failed with message: " + msg, ex)
+      throw new SnippetExecutionException("Embed Snippet failed: " + msg)
 
     case Failure(msg, _, _) =>
-      logger.error("'embed' snippet failed with message: "+msg)
-      throw new SnippetExecutionException("Embed Snippet failed: "+msg)
+      logger.error("'embed' snippet failed with message: " + msg)
+      throw new SnippetExecutionException("Embed Snippet failed: " + msg)
 
     case _ =>
       logger.error("'embed' snippet failed because it was invoked outside session context")
@@ -93,4 +93,3 @@ object Embed extends DispatchSnippet {
   }
 
 }
-

@@ -23,7 +23,6 @@ import util._
 import http._
 import Helpers._
 
-
 trait ProtoExtendedSession[T <: ProtoExtendedSession[T]] extends KeyedMapper[Long, T] {
   self: T =>
 
@@ -45,8 +44,7 @@ trait ProtoExtendedSession[T <: ProtoExtendedSession[T]] extends KeyedMapper[Lon
   }
 
   /**
-   * Change this string to "experation" for compatibility with
-   * old mis-spelling
+   * Change this string to "experation" for compatibility with old mis-spelling
    */
   protected def expirationColumnName = "expiration"
 
@@ -58,15 +56,15 @@ trait UserIdAsString {
 }
 
 /**
- * The root trait for defining the session cookie path for extended sessions
- * that defines the default session cookie path: "/".
+ * The root trait for defining the session cookie path for extended sessions that defines the
+ * default session cookie path: "/".
  */
 trait ProtoSessionCookiePath {
   def sessionCookiePath: String = "/"
 }
 
-trait MetaProtoExtendedSession[T <: ProtoExtendedSession[T]] extends
-KeyedMetaMapper[Long, T] with ProtoSessionCookiePath {
+trait MetaProtoExtendedSession[T <: ProtoExtendedSession[T]] extends KeyedMetaMapper[Long, T]
+    with ProtoSessionCookiePath {
   self: T =>
 
   def CookieName = "ext_id"
@@ -112,32 +110,30 @@ KeyedMetaMapper[Long, T] with ProtoSessionCookiePath {
   // def requestLoans: List[LoanWrapper] = myWrapper :: Nil
 
   /**
-   * This does the cookie to User lookup.  In Boot.scala:
-   * <code>
-    LiftRules.earlyInStateful.append(ExtendedSession.testCookieEarlyInStateful)
-   * </code>
+   * This does the cookie to User lookup. In Boot.scala: <code>
+   * LiftRules.earlyInStateful.append(ExtendedSession.testCookieEarlyInStateful) </code>
    */
   def testCookieEarlyInStateful: Box[Req] => Unit = {
-    ignoredReq => {
-      (recoverUserId, S.findCookie(CookieName)) match {
-        case (Empty, Full(c)) =>
-          find(By(cookieId, c.value openOr "")) match {
-            case Full(es) if es.expiration.get < millis => es.delete_!
-            case Full(es) => logUserIdIn(es.userId.get)
-            case _ =>
-          }
+    ignoredReq =>
+      {
+        (recoverUserId, S.findCookie(CookieName)) match {
+          case (Empty, Full(c)) =>
+            find(By(cookieId, c.value openOr "")) match {
+              case Full(es) if es.expiration.get < millis => es.delete_!
+              case Full(es) => logUserIdIn(es.userId.get)
+              case _ =>
+            }
 
-        case _ =>
+          case _ =>
+        }
       }
-    }
   }
 }
 
 /**
- * Mix this in to your extended session singleton to set the cookie path
- * to the context path for your application. This is useful if you have
- * multiple applications on a single application server and want to ensure
- * their cookies don't cross-pollinate.
+ * Mix this in to your extended session singleton to set the cookie path to the context path for
+ * your application. This is useful if you have multiple applications on a single application server
+ * and want to ensure their cookies don't cross-pollinate.
  *
  * Example usage:
  *

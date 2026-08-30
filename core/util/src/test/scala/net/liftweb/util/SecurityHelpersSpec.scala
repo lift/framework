@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package net.liftweb
 package util
 
@@ -27,12 +26,13 @@ import SecurityHelpers._
 /**
  * Systems under specification for SecurityHelpers.
  */
-class SecurityHelpersSpec extends Specification  {
+class SecurityHelpersSpec extends Specification {
   "SecurityHelpers Specification".title
 
   "Security Helpers" should {
     "not parse XML with a DOCTYPE" in {
-      secureXML.loadString("""<?xml version="1.0" encoding="ISO-8859-1"?>
+      secureXML.loadString(
+        """<?xml version="1.0" encoding="ISO-8859-1"?>
         <!DOCTYPE foo [
           <!ELEMENT foo ANY >
           <!ENTITY xxe SYSTEM "file:///etc/passwd" >]>
@@ -68,7 +68,7 @@ class SecurityHelpersSpec extends Specification  {
       encrypted must_!= "hello world"
       blowfishDecrypt(encrypted, key) must_== "hello world"
     }
-    */
+     */
 
     "provide a md5 function to create a md5 digest from a string" in {
       md5("hello") must_== "XUFAKrxLKna5cZ2REBfFkg=="
@@ -87,10 +87,10 @@ class SecurityHelpersSpec extends Specification  {
       hexDigest("hello".getBytes) must_!= hexDigest("hell0".getBytes)
     }
     "provide a hex encoded SHA-256 hash function" in {
-      hexDigest256("hello".getBytes) must_== "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+      hexDigest256(
+        "hello".getBytes) must_== "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
       hexDigest256("hello".getBytes) must_!= hexDigest256("hell0".getBytes)
     }
   }
 
 }
-

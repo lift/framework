@@ -22,11 +22,10 @@ import org.specs2.mutable.Specification
 import util._
 import view._
 
-
 /**
  * Systems under specification for ItemsList.
  */
-class ItemsListSpec extends Specification  {
+class ItemsListSpec extends Specification {
   "ItemsList Specification".title
   sequential
 
@@ -34,13 +33,13 @@ class ItemsListSpec extends Specification  {
 
   def init = {
     provider.setupDB
-    Schemifier.destroyTables_!!(DefaultConnectionIdentifier, Schemifier.neverF _,  SampleItem)
+    Schemifier.destroyTables_!!(DefaultConnectionIdentifier, Schemifier.neverF _, SampleItem)
     Schemifier.schemify(true, Schemifier.neverF _, SampleItem)
     new ItemsList[SampleItem] {
       def metaMapper = SampleItem
     }
   }
-  
+
   "ItemsList" should {
     "buffer items to save" in {
       val il = init
@@ -73,7 +72,7 @@ class ItemsListSpec extends Specification  {
       il.removed.length must_== 0
     }
   }
-  
+
 }
 
 class SampleItem extends LongKeyedMapper[SampleItem] with IdPK {
@@ -90,4 +89,3 @@ object SampleItem extends SampleItem with LongKeyedMetaMapper[SampleItem] {
     x
   }
 }
-

@@ -24,7 +24,6 @@ import scala.xml.{Text, Unparsed}
 import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
-
 /**
  * Systems under specification for XmlParser, specifically PCDataMarkupParser.
  */
@@ -34,12 +33,12 @@ class XmlParserSpec extends Specification with XmlMatchers {
   "Multiple attributes with same name, but different namespace" should {
     "parse correctly" >> {
       val actual =
-      <lift:surround with="base" at="body">
+        <lift:surround with="base" at="body">
         <lift:Menu.builder  li_path:class="p" li_item:class="i"/>
       </lift:surround>
 
       val expected =
-      <lift:surround with="base" at="body">
+        <lift:surround with="base" at="body">
         <lift:Menu.builder  li_path:class="p" li_item:class="i"/>
       </lift:surround>
 
@@ -52,8 +51,8 @@ class XmlParserSpec extends Specification with XmlMatchers {
 
   "XML can contain PCData" in {
     val data = <foo>{
-        PCData("Hello Yak")
-      }</foo>
+      PCData("Hello Yak")
+    }</foo>
 
     val str = AltXML.toXML(data, false, true)
 
@@ -62,8 +61,8 @@ class XmlParserSpec extends Specification with XmlMatchers {
 
   "XML can contain Unparsed" in {
     val data = <foo>{
-        Unparsed("Hello & goodbye > <yak Yak")
-      }</foo>
+      Unparsed("Hello & goodbye > <yak Yak")
+    }</foo>
 
     val str = AltXML.toXML(data, false, true)
 
@@ -71,8 +70,8 @@ class XmlParserSpec extends Specification with XmlMatchers {
   }
 
   "XML cannot contain Control characters" in {
-     val data = 
-     <foo>
+    val data =
+      <foo>
       {
         '\u0085'
       }{
@@ -100,4 +99,3 @@ class XmlParserSpec extends Specification with XmlMatchers {
   }
 
 }
-

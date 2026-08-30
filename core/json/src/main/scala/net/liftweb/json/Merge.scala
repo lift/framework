@@ -17,18 +17,17 @@
 package net.liftweb
 package json
 
-/** Use fundep encoding to improve return type of merge function 
- *  (see: http://www.chuusai.com/2011/07/16/fundeps-in-scala/)
+/**
+ * Use fundep encoding to improve return type of merge function (see:
+ * http://www.chuusai.com/2011/07/16/fundeps-in-scala/)
  *
- *  JObject merge JObject = JObject
- *  JArray  merge JArray  = JArray
- *  _       merge _       = JValue
+ * JObject merge JObject = JObject JArray merge JArray = JArray _ merge _ = JValue
  */
-private [json] trait MergeDep[A <: JValue, B <: JValue, R <: JValue] {
+private[json] trait MergeDep[A <: JValue, B <: JValue, R <: JValue] {
   def apply(val1: A, val2: B): R
 }
 
-private [json] trait LowPriorityMergeDep {
+private[json] trait LowPriorityMergeDep {
   implicit def jjj[A <: JValue, B <: JValue]: MergeDep[A, B, JValue] = new MergeDep[A, B, JValue] {
     def apply(val1: A, val2: B): JValue = merge(val1, val2)
 
@@ -42,9 +41,10 @@ private [json] trait LowPriorityMergeDep {
   }
 }
 
-private [json] trait MergeDeps extends LowPriorityMergeDep {
+private[json] trait MergeDeps extends LowPriorityMergeDep {
   implicit object ooo extends MergeDep[JObject, JObject, JObject] {
-    def apply(val1: JObject, val2: JObject): JObject = JObject(Merge.mergeFields(val1.obj, val2.obj))
+    def apply(val1: JObject, val2: JObject): JObject =
+      JObject(Merge.mergeFields(val1.obj, val2.obj))
   }
 
   implicit object aaa extends MergeDep[JArray, JArray, JArray] {
@@ -52,27 +52,27 @@ private [json] trait MergeDeps extends LowPriorityMergeDep {
   }
 }
 
-/** Function to merge two JSONs.
+/**
+ * Function to merge two JSONs.
  */
 object Merge {
-  /** Return merged JSON.
-   * <p>
-   * Example:<pre>
-   * val m = ("name", "joe") ~ ("age", 10) merge ("name", "joe") ~ ("iq", 105)
-   * m: JObject(List((name,JString(joe)), (age,JInt(10)), (iq,JInt(105))))
+
+  /**
+   * Return merged JSON. <p> Example:<pre> val m = ("name", "joe") ~ ("age", 10) merge ("name",
+   * "joe") ~ ("iq", 105) m: JObject(List((name,JString(joe)), (age,JInt(10)), (iq,JInt(105))))
    * </pre>
    */
-  def merge[A <: JValue, B <: JValue, R <: JValue]
-    (val1: A, val2: B)(implicit instance: MergeDep[A, B, R]): R = instance(val1, val2)
+  def merge[A <: JValue, B <: JValue, R <: JValue](val1: A, val2: B)(implicit
+      instance: MergeDep[A, B, R]): R = instance(val1, val2)
 
   private[json] def mergeFields(vs1: List[JField], vs2: List[JField]): List[JField] = {
     def mergeRec(xleft: List[JField], yleft: List[JField]): List[JField] = xleft match {
       case Nil => yleft
       case JField(xn, xv) :: xs => yleft find (_.name == xn) match {
-        case Some(y @ JField(yn, yv)) => 
-          JField(xn, merge(xv, yv)) :: mergeRec(xs, yleft filterNot (_ == y))
-        case None => JField(xn, xv) :: mergeRec(xs, yleft)
-      }
+          case Some(y @ JField(yn, yv)) =>
+            JField(xn, merge(xv, yv)) :: mergeRec(xs, yleft filterNot (_ == y))
+          case None => JField(xn, xv) :: mergeRec(xs, yleft)
+        }
     }
 
     mergeRec(vs1, vs2)
@@ -82,20 +82,23 @@ object Merge {
     def mergeRec(xleft: List[JValue], yleft: List[JValue]): List[JValue] = xleft match {
       case Nil => yleft
       case x :: xs => yleft find (_ == x) match {
-        case Some(y) => merge(x, y) :: mergeRec(xs, yleft filterNot (_ == y))
-        case None => x :: mergeRec(xs, yleft)
-      }
+          case Some(y) => merge(x, y) :: mergeRec(xs, yleft filterNot (_ == y))
+          case None => x :: mergeRec(xs, yleft)
+        }
     }
 
     mergeRec(vs1, vs2)
   }
 
-  private[json] trait Mergeable extends MergeDeps { 
+  private[json] trait Mergeable extends MergeDeps {
     implicit class MergeSyntax[A <: JValue](val json: A) {
-      /** Return merged JSON.
-       * @see net.liftweb.json.Merge#merge
+
+      /**
+       * Return merged JSON.
+       * @see
+       *   net.liftweb.json.Merge#merge
        */
-      def merge[B <: JValue, R <: JValue](other: B)(implicit instance: MergeDep[A, B, R]): R = 
+      def merge[B <: JValue, R <: JValue](other: B)(implicit instance: MergeDep[A, B, R]): R =
         Merge.merge(json, other)(instance)
     }
   }

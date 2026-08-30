@@ -26,15 +26,17 @@ import common._
 object IoHelpers extends IoHelpers
 
 trait IoHelpers {
+
   /**
-   * Execute the specified OS command and return the output of that command
-   * in a Full Box if the command succeeds, or a Failure if an error occurs.
+   * Execute the specified OS command and return the output of that command in a Full Box if the
+   * command succeeds, or a Failure if an error occurs.
    */
   def exec(cmds: String*): Box[String] = {
     try {
       class ReadItAll(in: InputStream, done: String => Unit) extends Runnable {
         def run: Unit = {
-          val br = new BufferedReader(new InputStreamReader(in)) // default to platform character set
+          val br =
+            new BufferedReader(new InputStreamReader(in)) // default to platform character set
           val lines = new ListBuffer[String]
           var line = ""
           while (line != null) {
@@ -64,8 +66,8 @@ trait IoHelpers {
   }
 
   /**
-   * Read all data to the end of the specified Reader and concatenate
-   * the resulting data into a string.
+   * Read all data to the end of the specified Reader and concatenate the resulting data into a
+   * string.
    */
   def readWholeThing(in: Reader): String = {
     val bos = new StringBuilder
@@ -116,31 +118,34 @@ trait IoHelpers {
   /**
    * Executes by-name function f and then closes the Closeables parameters
    */
-  def doClose[T](is: java.io.Closeable*)(f : => T): T = {
+  def doClose[T](is: java.io.Closeable*)(f: => T): T = {
     try {
       f
     } finally {
-      is.foreach(stream => tryo{ stream.close })
+      is.foreach(stream => tryo { stream.close })
     }
   }
 }
 
 /**
- * A trait that defines an Automatic Resource Manager. The ARM
- * allocates a resource (connection to a DB, etc.) when the `exec`
- * method is invoked and releases the resource before the exec method terminates
+ * A trait that defines an Automatic Resource Manager. The ARM allocates a resource (connection to a
+ * DB, etc.) when the `exec` method is invoked and releases the resource before the exec method
+ * terminates
  *
- * @tparam ResourceType the type of resource allocated
+ * @tparam ResourceType
+ *   the type of resource allocated
  */
 trait AutoResourceManager[ResourceType] {
 
   /**
    * Execute a block of code with the allocated resource
    *
-   * @param f the function that takes the resource and returns a value
-   * @tparam T the type of the value returned by the function
-   *@return the value returned from the function
-   *
+   * @param f
+   *   the function that takes the resource and returns a value
+   * @tparam T
+   *   the type of the value returned by the function
+   * @return
+   *   the value returned from the function
    */
   def exec[T](f: ResourceType => T): T
 }

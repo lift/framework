@@ -31,7 +31,7 @@ class ScheduleJBridge {
 /**
  * The Schedule object schedules an actor to be ping-ed with a given message after a specified
  * delay. If you need recurrent scheduled pings you will need to reschedule.
- * 
+ *
  * The schedule methods return a ScheduledFuture object which can be cancelled if necessary
  */
 object Schedule extends Schedule
@@ -39,7 +39,7 @@ object Schedule extends Schedule
 /**
  * The Schedule object schedules an actor to be ping-ed with a given message after a specified
  * delay. If you need recurrent scheduled pings you will need to reschedule.
- * 
+ *
  * The schedule methods return a ScheduledFuture object which can be cancelled if necessary
  */
 sealed trait Schedule extends Loggable {
@@ -52,27 +52,27 @@ sealed trait Schedule extends Loggable {
   @volatile var maxThreadPoolSize = threadPoolSize * 25
 
   /**
-   * If it's Full, then create a ArrayBlockingQueue
-   * otherwith create a LinkedBlockingQueue.  Default
+   * If it's Full, then create a ArrayBlockingQueue otherwith create a LinkedBlockingQueue. Default
    * to Full(200000)
    */
   @volatile var blockingQueueSize: Box[Int] = Full(200000)
-  
+
   @volatile var buildExecutor: () => ThreadPoolExecutor =
-    () => new ThreadPoolExecutor(threadPoolSize, 
-                                 maxThreadPoolSize,
-                                 60,
-                                 TimeUnit.SECONDS,
-                                 blockingQueueSize match {
-                                   case Full(x) => 
-                                     new ArrayBlockingQueue(x)
-                                   case _ => new LinkedBlockingQueue
-                                 })
-  
-    
+    () =>
+      new ThreadPoolExecutor(
+        threadPoolSize,
+        maxThreadPoolSize,
+        60,
+        TimeUnit.SECONDS,
+        blockingQueueSize match {
+          case Full(x) =>
+            new ArrayBlockingQueue(x)
+          case _ => new LinkedBlockingQueue
+        })
 
   /** The underlying <code>java.util.concurrent.ScheduledExecutor</code> */
-  @volatile var buildService: () => ScheduledExecutorService = () => Executors.newSingleThreadScheduledExecutor(TF)
+  @volatile var buildService: () => ScheduledExecutorService =
+    () => Executors.newSingleThreadScheduledExecutor(TF)
 
   private var service: ScheduledExecutorService = buildService()
   private var pool = buildExecutor()
@@ -80,77 +80,77 @@ sealed trait Schedule extends Loggable {
   /**
    * Re-create the underlying <code>SingleThreadScheduledExecutor</code>
    */
-  def restart: Unit = synchronized
-  { if ((service eq null) || service.isShutdown)
-    service = buildService()
-   if ((pool eq null) || pool.isShutdown)
-     pool = buildExecutor()
- }
-
+  def restart: Unit = synchronized {
+    if ((service eq null) || service.isShutdown)
+      service = buildService()
+    if ((pool eq null) || pool.isShutdown)
+      pool = buildExecutor()
+  }
 
   /**
    * Shut down the underlying <code>SingleThreadScheduledExecutor</code>
    */
   def shutdown(): Unit = synchronized {
-    service.shutdown 
+    service.shutdown
     pool.shutdown
   }
 
   /**
    * Schedules the sending of a message to occur after the specified delay.
    *
-   * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
-   * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
+   * @return
+   *   a <code>ScheduledFuture</code> which sends the <code>msg</code> to the <code>to<code> Actor
+   *   after the specified TimeSpan <code>delay</code>.
    */
   def schedule[T](to: SimpleActor[T], msg: T, delay: TimeSpan): ScheduledFuture[Unit] =
-  this.schedule(() => Helpers.tryo( to ! msg ), delay)
+    this.schedule(() => Helpers.tryo(to ! msg), delay)
 
   /**
    * Schedules the sending of a message to occur after the specified delay.
    *
-   * @return a <code>ScheduledFuture</code> which sends the <code>msg</code> to
-   * the <code>to<code> Actor after the specified TimeSpan <code>delay</code>.
+   * @return
+   *   a <code>ScheduledFuture</code> which sends the <code>msg</code> to the <code>to<code> Actor
+   *   after the specified TimeSpan <code>delay</code>.
    */
   def perform[T](to: SimpleActor[T], msg: T, delay: Long): ScheduledFuture[Unit] =
-  this.schedule(() => Helpers.tryo( to ! msg ), TimeSpan(delay))
+    this.schedule(() => Helpers.tryo(to ! msg), TimeSpan(delay))
 
-   /**
+  /**
    * Schedules the sending of a message to occur after the specified delay.
    *
-   * @return a <code>ScheduledFuture</code> which applies the function f
-   * after delay
+   * @return
+   *   a <code>ScheduledFuture</code> which applies the function f after delay
    */
   def perform(f: () => Unit, delay: Long): ScheduledFuture[Unit] =
     schedule(f, TimeSpan(delay))
 
+  /**
+   * Schedules the application of a function
+   *
+   * @return
+   *   a <code>ScheduledFuture</code> which executes the function f immediately on a worker thread
+   */
+  def apply(f: () => Unit): ScheduledFuture[Unit] = schedule(f, TimeSpan(0))
 
   /**
    * Schedules the application of a function
    *
-   * @return a <code>ScheduledFuture</code> which executes the function f
-   * immediately on a worker thread
+   * @return
+   *   a <code>ScheduledFuture</code> which executes the function f after the delay
    */
-  def apply(f: () => Unit): ScheduledFuture[Unit] = schedule(f, TimeSpan(0))
-  
-  /**
-   * Schedules the application of a function
-   *
-   * @return a <code>ScheduledFuture</code> which executes the function f
-   * after the delay
-   */
-  def apply(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] = 
+  def apply(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] =
     schedule(f, delay)
-  
+
   /**
    * Schedules the application of a function
    *
-   * @return a <code>ScheduledFuture</code> which executes the function f
-   * after the delay
+   * @return
+   *   a <code>ScheduledFuture</code> which executes the function f after the delay
    */
-  def schedule(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] = 
+  def schedule(f: () => Unit, delay: TimeSpan): ScheduledFuture[Unit] =
     synchronized {
       val r = new Runnable {
-        def run(): Unit = { 
+        def run(): Unit = {
           try {
             f.apply()
           } catch {
@@ -158,7 +158,7 @@ sealed trait Schedule extends Loggable {
           }
         }
       }
-      
+
       val fast = new java.util.concurrent.Callable[Unit] {
         def call(): Unit = {
           try {
@@ -169,12 +169,13 @@ sealed trait Schedule extends Loggable {
           }
         }
       }
-      
+
       try {
         this.restart
         service.schedule(fast, delay.millis, TimeUnit.MILLISECONDS)
       } catch {
-        case e: RejectedExecutionException => throw ActorPingException("ping could not be scheduled", e)
+        case e: RejectedExecutionException =>
+          throw ActorPingException("ping could not be scheduled", e)
       }
     }
 }
@@ -196,7 +197,7 @@ case class ActorPingException(msg: String, e: Throwable) extends RuntimeExceptio
 
 private object TF extends ThreadFactory {
   val threadFactory = Executors.defaultThreadFactory()
-  def newThread(r: Runnable) : Thread = {
+  def newThread(r: Runnable): Thread = {
     val d: Thread = threadFactory.newThread(r)
     d setName "Lift Scheduler"
     d setDaemon true
@@ -207,4 +208,3 @@ private object TF extends ThreadFactory {
     d
   }
 }
-

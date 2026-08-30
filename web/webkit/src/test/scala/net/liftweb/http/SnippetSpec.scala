@@ -22,8 +22,6 @@ import org.specs2.matcher.XmlMatchers
 import org.specs2.mutable.Specification
 
 import common._
-import util.Helpers._
-
 
 /**
  * System under specification for SnippetSpec.
@@ -31,9 +29,17 @@ import util.Helpers._
 class SnippetSpec extends Specification with XmlMatchers {
   "SnippetSpec Specification".title
 
-  def makeReq = Full(new Req(Req.NilPath, "", GetRequest, Empty, null,
-                    System.nanoTime, System.nanoTime, false,
-                    () => ParamCalcInfo(Nil, Map.empty, Nil, Empty), Map()))
+  def makeReq = Full(new Req(
+    Req.NilPath,
+    "",
+    GetRequest,
+    Empty,
+    null,
+    System.nanoTime,
+    System.nanoTime,
+    false,
+    () => ParamCalcInfo(Nil, Map.empty, Nil, Empty),
+    Map()))
 
   "Templates" should {
     "Correctly process lift:content_id" in {
@@ -44,7 +50,7 @@ class SnippetSpec extends Specification with XmlMatchers {
                                      </body>
                                      </html>)
 
-      ret must ==/ (<div id="content" class="lift:surround"/>)
+      ret must ==/(<div id="content" class="lift:surround"/>)
     }
 
     "Correctly process body class" in {
@@ -57,7 +63,7 @@ class SnippetSpec extends Specification with XmlMatchers {
                                      </body>
                                      </html>)
 
-      ret must ==/ (<div id="frog" class="lift:surround"/>)
+      ret must ==/(<div id="frog" class="lift:surround"/>)
     }
 
     "Correctly process l:content_id" in {
@@ -68,7 +74,7 @@ class SnippetSpec extends Specification with XmlMatchers {
                                      </body>
                                      </html>)
 
-      ret must ==/ (<lift:surround id="dog"><div/></lift:surround>)
+      ret must ==/(<lift:surround id="dog"><div/></lift:surround>)
     }
 
     "Correctly process not lift:designer_friendly" in {
@@ -96,9 +102,8 @@ class SnippetSpec extends Specification with XmlMatchers {
           }
         }
 
-      ret.openOrThrowException("legacy code") must ==/( res)
+      ret.openOrThrowException("legacy code") must ==/(res)
     }
-
 
     "Snippet invocation works <l:xxx/>" in {
       val res = <div/>
@@ -112,7 +117,7 @@ class SnippetSpec extends Specification with XmlMatchers {
           }
         }
 
-      ret.openOrThrowException("legacy code") must ==/( res)
+      ret.openOrThrowException("legacy code") must ==/(res)
     }
 
     "Snippet invocation works class='l:foo'" in {
@@ -127,7 +132,7 @@ class SnippetSpec extends Specification with XmlMatchers {
           }
         }
 
-      ret.openOrThrowException("legacy code") must ==/( res)
+      ret.openOrThrowException("legacy code") must ==/(res)
     }
 
     "Snippet invocation works class='l:foo' and ? for attr sep" in {
@@ -145,13 +150,14 @@ class SnippetSpec extends Specification with XmlMatchers {
           S.mapSnippetsWith("foo" -> testAttrs _) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", <div class="l:foo?bing=bong?fuzz=faz+snark?noodle=FatPoodle" />)
+            } yield s.processSurroundAndInclude(
+              "test",
+              <div class="l:foo?bing=bong?fuzz=faz+snark?noodle=FatPoodle" />)
           }
         }
 
-      ret.openOrThrowException("legacy code") must ==/( res)
+      ret.openOrThrowException("legacy code") must ==/(res)
     }
-
 
     "Snippet invocation works class='l:foo' and ; for attr sep" in {
       val res = <div/>
@@ -168,13 +174,14 @@ class SnippetSpec extends Specification with XmlMatchers {
           S.mapSnippetsWith("foo" -> testAttrs _) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", <div class="l:foo?bing=bong;fuzz=faz+snark;noodle=FatPoodle" />)
+            } yield s.processSurroundAndInclude(
+              "test",
+              <div class="l:foo?bing=bong;fuzz=faz+snark;noodle=FatPoodle" />)
           }
         }
 
-      ret.openOrThrowException("legacy code") must ==/( res)
+      ret.openOrThrowException("legacy code") must ==/(res)
     }
-
 
     "Snippet invocation works class='l:foo' and & for attr sep" in {
       val res = <div/>
@@ -196,9 +203,8 @@ class SnippetSpec extends Specification with XmlMatchers {
           }
         }
 
-      ret.openOrThrowException("legacy code") must ==/( res)
+      ret.openOrThrowException("legacy code") must ==/(res)
     }
-
 
     "Snippet invocation works class='l:foo' and mixed attr sep" in {
       val res = <div/>
@@ -215,14 +221,14 @@ class SnippetSpec extends Specification with XmlMatchers {
           S.mapSnippetsWith("foo" -> testAttrs _) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test", <div class="l:foo?bing=bong?fuzz=faz+snark;noodle=FatPoodle" />)
+            } yield s.processSurroundAndInclude(
+              "test",
+              <div class="l:foo?bing=bong?fuzz=faz+snark;noodle=FatPoodle" />)
           }
         }
 
-      ret.openOrThrowException("legacy code") must ==/( res)
+      ret.openOrThrowException("legacy code") must ==/(res)
     }
-
-
 
     "Snippet invocation works class='lift:foo'" in {
       val res = <div/>
@@ -236,7 +242,7 @@ class SnippetSpec extends Specification with XmlMatchers {
           }
         }
 
-      ret.openOrThrowException("legacy code") must ==/( res)
+      ret.openOrThrowException("legacy code") must ==/(res)
     }
 
     "Snippet invocation fails class='l:bar'" in {
@@ -276,8 +282,9 @@ class SnippetSpec extends Specification with XmlMatchers {
           S.mapSnippetsWith("foo" -> ChangeVar.foo _) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test",
-                                                <lift:foo>{res}</lift:foo>)
+            } yield s.processSurroundAndInclude(
+              "test",
+              <lift:foo>{res}</lift:foo>)
           }
         }
 
@@ -293,8 +300,9 @@ class SnippetSpec extends Specification with XmlMatchers {
           S.mapSnippetsWith("foo" -> ChangeVar.foo _) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test",
-                                                <lift:foo>{res}</lift:foo>)
+            } yield s.processSurroundAndInclude(
+              "test",
+              <lift:foo>{res}</lift:foo>)
           }
         }
 
@@ -309,8 +317,9 @@ class SnippetSpec extends Specification with XmlMatchers {
           S.mapSnippetsWith("foo" -> Funky.foo _) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test",
-                                                <lift:foo>{res}</lift:foo>)
+            } yield s.processSurroundAndInclude(
+              "test",
+              <lift:foo>{res}</lift:foo>)
           }
         }
 
@@ -326,8 +335,9 @@ class SnippetSpec extends Specification with XmlMatchers {
           S.mapSnippetsWith("foo" -> Funky.foo _) {
             for {
               s <- S.session
-            } yield s.processSurroundAndInclude("test",
-                                                <lift:foo>{res}</lift:foo>)
+            } yield s.processSurroundAndInclude(
+              "test",
+              <lift:foo>{res}</lift:foo>)
           }
         }
 
@@ -352,7 +362,7 @@ class SnippetSpec extends Specification with XmlMatchers {
         val ret = SHtml.onSubmitBoolean(s => ())(<input type="checkbox"/>)
 
         ret.size must_== 2
-        (ret \\ "input" ).flatMap(_ \ "@name").map(_.text).mkString.length must be > 0
+        (ret \\ "input").flatMap(_ \ "@name").map(_.text).mkString.length must be > 0
       }
     }
 
@@ -368,7 +378,7 @@ class SnippetSpec extends Specification with XmlMatchers {
       }
 
       ret.openOrThrowException("legacy code") must ==/ (<yak/>)
-      */
+       */
       pending
     }
 
@@ -384,11 +394,9 @@ class SnippetSpec extends Specification with XmlMatchers {
       }
 
       (ret.openOrThrowException("legacy code") \ "@name").text.length must be > 0
-      */
+       */
       pending
     }
-
-
 
     "Eager Eval works" in {
       val session = new LiftSession("", "hello", Empty)
@@ -397,8 +405,9 @@ class SnippetSpec extends Specification with XmlMatchers {
         S.mapSnippetsWith("foo" -> ChangeVar.foo _) {
           for {
             s <- S.session
-          } yield s.processSurroundAndInclude("test",
-                                              <div class="l:foo?eager_eval=true">a<lift:foo>b</lift:foo></div>)
+          } yield s.processSurroundAndInclude(
+            "test",
+            <div class="l:foo?eager_eval=true">a<lift:foo>b</lift:foo></div>)
         }
         myInfo.is must_== "ab"
       }
@@ -475,4 +484,3 @@ class SnippetSpec extends Specification with XmlMatchers {
     }
   }
 }
-

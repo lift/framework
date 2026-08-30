@@ -20,11 +20,10 @@ import org.specs2.mutable.Specification
 
 import json.JsonDSL._
 
-
 /**
  * System under specification for MockHttpRequest.
  */
-class MockHttpRequestSpec extends Specification  {
+class MockHttpRequestSpec extends Specification {
   "MockHttpRequest Specification".title
 
   val IF_MODIFIED_HEADER = "If-Modified-Since"
@@ -44,7 +43,7 @@ class MockHttpRequestSpec extends Specification  {
       testRequest.getRequestURI must_== "/test/this/page"
       testRequest.getRequestURL.toString must_== TEST_URL
       testRequest.getQueryString must_== "a=b&b=a&a=c"
-      testRequest.getParameterValues("a").toList must_== List("b","c")
+      testRequest.getParameterValues("a").toList must_== List("b", "c")
       testRequest.getParameter("b") must_== "a"
     }
 
@@ -83,14 +82,13 @@ class MockHttpRequestSpec extends Specification  {
     "throw an IllegalArgumentException for an invalid context path" in {
       (new MockHttpServletRequest(TEST_URL, "foo")) must throwA[IllegalArgumentException]
       (new MockHttpServletRequest(TEST_URL, "/foo/")) must throwA[IllegalArgumentException]
-     }
+    }
 
     "throw an IllegalArgumentException for an invalid query string" in {
       val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
-      
-      (testRequest.queryString ="this=a&&that=b") must throwA[IllegalArgumentException]
-     }
 
+      (testRequest.queryString = "this=a&&that=b") must throwA[IllegalArgumentException]
+    }
 
     "properly set a default content type for JSON" in {
       val testRequest = new MockHttpServletRequest(TEST_URL, "/test")
@@ -121,7 +119,7 @@ class MockHttpRequestSpec extends Specification  {
 
       testRequest.body_=(<test/>, "application/xml")
 
-      testRequest.contentType must_== "application/xml"  
+      testRequest.contentType must_== "application/xml"
     }
 
     "properly set a default content type for a String" in {
@@ -139,6 +137,6 @@ class MockHttpRequestSpec extends Specification  {
 
       testRequest.contentType must_== "text/csv"
     }
-    
+
   }
 }

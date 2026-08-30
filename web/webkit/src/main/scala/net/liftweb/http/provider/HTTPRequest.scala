@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
-package provider 
+package net.liftweb
+package http
+package provider
 
 import java.io.{InputStream}
 import java.util.{Locale}
 import net.liftweb.common.{Box}
-
 
 object RetryState extends Enumeration {
   val SUSPENDED, TIMED_OUT, RESUMED = Value
@@ -132,8 +131,9 @@ trait HTTPRequest {
   def destroyServletSession(): Unit
 
   /**
-   * @return the sessionID (if there is one) for this request.  This will *NOT* create
-   * a new session if one does not already exist
+   * @return
+   *   the sessionID (if there is one) for this request. This will *NOT* create a new session if one
+   *   does not already exist
    */
   def sessionId: Box[String]
 
@@ -173,7 +173,8 @@ trait HTTPRequest {
   def method: String
 
   /**
-   * @return true if the underlying container supports suspend/resume idiom.
+   * @return
+   *   true if the underlying container supports suspend/resume idiom.
    */
   def suspendResumeSupport_? : Boolean
 
@@ -181,7 +182,7 @@ trait HTTPRequest {
    * @return - Some[Any] if this is a resumed request, return the state
    *           associated with it.
    */
-  def resumeInfo : Option[(Req, LiftResponse)]
+  def resumeInfo: Option[(Req, LiftResponse)]
 
   /**
    * Suspend the curent request and resume it after a given timeout
@@ -190,8 +191,8 @@ trait HTTPRequest {
 
   /**
    * Resume this request
-   * @return false if this continuation cannot be resumed
-   *         as it is not in pending state.
+   * @return
+   *   false if this continuation cannot be resumed as it is not in pending state.
    */
   def resume(what: (Req, LiftResponse)): Boolean
 
@@ -201,7 +202,8 @@ trait HTTPRequest {
   def inputStream: InputStream
 
   /**
-   * @return true - if the request content is multipart
+   * @return
+   *   true - if the request content is multipart
    */
   def multipartContent_? : Boolean
 
@@ -223,16 +225,15 @@ trait HTTPRequest {
   def setCharacterEncoding(encoding: String): Unit
 
   /**
-   * Creates a new HTTPRequest instance as a copy of this one. It is used when
-   * snapshots of the current request context is created in order for this request object
-   * to be used on different threads (such as asynchronous template fragments processing).
-   * The new instance must not keep any reference to the container' instances.
+   * Creates a new HTTPRequest instance as a copy of this one. It is used when snapshots of the
+   * current request context is created in order for this request object to be used on different
+   * threads (such as asynchronous template fragments processing). The new instance must not keep
+   * any reference to the container' instances.
    */
   def snapshot: HTTPRequest
 
   /**
-  * The User-Agent of the request
-  */
+   * The User-Agent of the request
+   */
   def userAgent: Box[String]
 }
-

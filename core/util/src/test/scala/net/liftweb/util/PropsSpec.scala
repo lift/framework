@@ -20,7 +20,6 @@ package util
 import java.io.ByteArrayInputStream
 
 import org.specs2.mutable.Specification
-import org.specs2.mutable.After
 
 import common._
 import Props.RunModes._
@@ -44,7 +43,9 @@ class PropsSpec extends Specification {
         wasCalled = true
 
         List(
-          ("test propsters", () => Full(new ByteArrayInputStream("test.prop=value".getBytes("UTF-8"))))
+          (
+            "test propsters",
+            () => Full(new ByteArrayInputStream("test.prop=value".getBytes("UTF-8"))))
         )
       }
 

@@ -20,14 +20,12 @@ package json
 import java.util.{Date, TimeZone}
 import java.util.concurrent.ConcurrentHashMap
 
-import scala.collection.concurrent.{Map=>ConcurrentScalaMap}
+import scala.collection.concurrent.{Map => ConcurrentScalaMap}
 import scala.jdk.CollectionConverters._
 
-/** Formats to use when converting JSON.
- * Formats are usually configured by using an implicit parameter:
- * <pre>
- * implicit val formats = net.liftweb.json.DefaultFormats
- * </pre>
+/**
+ * Formats to use when converting JSON. Formats are usually configured by using an implicit
+ * parameter: <pre> implicit val formats = net.liftweb.json.DefaultFormats </pre>
  */
 trait Formats { self: Formats =>
   val dateFormat: DateFormat
@@ -36,10 +34,10 @@ trait Formats { self: Formats =>
   val fieldSerializers: List[(Class[_], FieldSerializer[_])] = Nil
 
   /**
-   * Support for the tuple decomposition/extraction that represents tuples as JSON
-   * arrays. This provides better support for heterogenous arrays in JSON, but enable it at your
-   * own risk as it does change the behavior of serialization/deserialization and comes
-   * with some caveats (such as Scala primitives not being recognized reliably during extraction).
+   * Support for the tuple decomposition/extraction that represents tuples as JSON arrays. This
+   * provides better support for heterogenous arrays in JSON, but enable it at your own risk as it
+   * does change the behavior of serialization/deserialization and comes with some caveats (such as
+   * Scala primitives not being recognized reliably during extraction).
    */
   val tuplesAsArrays = false
 
@@ -56,7 +54,7 @@ trait Formats { self: Formats =>
   /**
    * Adds the specified type hints to this formats.
    */
-  def + (extraHints: TypeHints): Formats = new Formats {
+  def +(extraHints: TypeHints): Formats = new Formats {
     val dateFormat = Formats.this.dateFormat
     override val typeHintFieldName = self.typeHintFieldName
     override val parameterNameReader = self.parameterNameReader
@@ -68,7 +66,7 @@ trait Formats { self: Formats =>
   /**
    * Adds the specified custom serializer to this formats.
    */
-  def + (newSerializer: Serializer[_]): Formats = new Formats {
+  def +(newSerializer: Serializer[_]): Formats = new Formats {
     val dateFormat = Formats.this.dateFormat
     override val typeHintFieldName = self.typeHintFieldName
     override val parameterNameReader = self.parameterNameReader
@@ -80,13 +78,13 @@ trait Formats { self: Formats =>
   /**
    * Adds the specified custom serializers to this formats.
    */
-  def ++ (newSerializers: Iterable[Serializer[_]]): Formats =
+  def ++(newSerializers: Iterable[Serializer[_]]): Formats =
     newSerializers.foldLeft(this)(_ + _)
 
   /**
    * Adds a field serializer for a given type to this formats.
    */
-  def + [A](newSerializer: FieldSerializer[A])(implicit mf: Manifest[A]): Formats = new Formats {
+  def +[A](newSerializer: FieldSerializer[A])(implicit mf: Manifest[A]): Formats = new Formats {
     val dateFormat = Formats.this.dateFormat
     override val typeHintFieldName = self.typeHintFieldName
     override val parameterNameReader = self.parameterNameReader
@@ -95,7 +93,8 @@ trait Formats { self: Formats =>
     // The type inferencer infers an existential type below if we use
     // value :: list instead of list.::(value), and we get a feature
     // warning.
-    override val fieldSerializers: List[(Class[_], FieldSerializer[_])] = self.fieldSerializers.::((mf.runtimeClass: Class[_], newSerializer))
+    override val fieldSerializers: List[(Class[_], FieldSerializer[_])] =
+      self.fieldSerializers.::((mf.runtimeClass: Class[_], newSerializer))
   }
 
   private[json] def fieldSerializer(clazz: Class[_]): Option[FieldSerializer[_]] = {
@@ -104,7 +103,7 @@ trait Formats { self: Formats =>
     val ord = Ordering[Int].on[(Class[_], FieldSerializer[_])](x => delta(x._1, clazz))
     fieldSerializers filter (_._1.isAssignableFrom(clazz)) match {
       case Nil => None
-      case xs  => Some((xs min ord)._2)
+      case xs => Some((xs min ord)._2)
     }
   }
 
@@ -119,7 +118,8 @@ trait Formats { self: Formats =>
     }
 }
 
-/** Conversions between String and Date.
+/**
+ * Conversions between String and Date.
  */
 trait DateFormat {
   def parse(s: String): Option[Date]
@@ -131,35 +131,31 @@ trait Serializer[A] {
   def serialize(implicit format: Formats): PartialFunction[Any, JValue]
 }
 
-/** Type hints can be used to alter the default conversion rules when converting
- * Scala instances into JSON and vice versa. Type hints must be used when converting
- * class which is not supported by default (for instance when class is not a case class).
- * <p>
- * Example:<pre>
- * class DateTime(val time: Long)
+/**
+ * Type hints can be used to alter the default conversion rules when converting Scala instances into
+ * JSON and vice versa. Type hints must be used when converting class which is not supported by
+ * default (for instance when class is not a case class). <p> Example:<pre> class DateTime(val time:
+ * Long)
  *
- * val hints = new ShortTypeHints(classOf[DateTime] :: Nil) {
- *   override def serialize: PartialFunction[Any, JObject] = {
- *     case t: DateTime => JObject(JField("t", JInt(t.time)) :: Nil)
- *   }
+ * val hints = new ShortTypeHints(classOf[DateTime] :: Nil) { override def serialize:
+ * PartialFunction[Any, JObject] = { case t: DateTime => JObject(JField("t", JInt(t.time)) :: Nil) }
  *
- *   override def deserialize: PartialFunction[(String, JObject), Any] = {
- *     case ("DateTime", JObject(JField("t", JInt(t)) :: Nil)) => new DateTime(t.longValue)
- *   }
- * }
- * implicit val formats = DefaultFormats.withHints(hints)
- * </pre>
+ * override def deserialize: PartialFunction[(String, JObject), Any] = { case ("DateTime",
+ * JObject(JField("t", JInt(t)) :: Nil)) => new DateTime(t.longValue) } } implicit val formats =
+ * DefaultFormats.withHints(hints) </pre>
  */
 trait TypeHints {
   import ClassDelta._
 
   val hints: List[Class[_]]
 
-  /** Return hint for given type.
+  /**
+   * Return hint for given type.
    */
   def hintFor(clazz: Class[_]): String
 
-  /** Return type for given hint.
+  /**
+   * Return type for given hint.
    */
   def classFor(hint: String): Option[Class[_]]
 
@@ -172,32 +168,40 @@ trait TypeHints {
   /**
    * Adds the specified type hints to this type hints.
    */
-  def + (hints: TypeHints): TypeHints = CompositeTypeHints(components ::: hints.components)
+  def +(hints: TypeHints): TypeHints = CompositeTypeHints(components ::: hints.components)
 
-  private[TypeHints] case class CompositeTypeHints(override val components: List[TypeHints]) extends TypeHints {
+  private[TypeHints] case class CompositeTypeHints(override val components: List[TypeHints])
+      extends TypeHints {
     val hints: List[Class[_]] = components.flatMap(_.hints)
 
     /**
      * Chooses most specific class.
      */
     def hintFor(clazz: Class[_]): String = components.filter(_.containsHint_?(clazz))
-        .map(th => (th.hintFor(clazz), th.classFor(th.hintFor(clazz)).getOrElse(sys.error("hintFor/classFor not invertible for " + th))))
-        .sortWith((x, y) => (delta(x._2, clazz) - delta(y._2, clazz)) < 0).head._1
+      .map(th =>
+        (
+          th.hintFor(clazz),
+          th.classFor(
+            th.hintFor(clazz)).getOrElse(sys.error("hintFor/classFor not invertible for " + th))))
+      .sortWith((x, y) => (delta(x._2, clazz) - delta(y._2, clazz)) < 0).head._1
 
     def classFor(hint: String): Option[Class[_]] = {
       def hasClass(h: TypeHints) =
-        scala.util.control.Exception.allCatch opt (h.classFor(hint)) map (_.isDefined) getOrElse(false)
+        scala.util.control.Exception.allCatch opt (h.classFor(
+          hint)) map (_.isDefined) getOrElse (false)
 
       components find (hasClass) flatMap (_.classFor(hint))
-  }
-
-    override def deserialize: PartialFunction[(String, JObject), Any] = components.foldLeft[PartialFunction[(String, JObject),Any]](Map()) {
-      (result, cur) => result.orElse(cur.deserialize)
     }
 
-    override def serialize: PartialFunction[Any, JObject] = components.foldLeft[PartialFunction[Any, JObject]](Map()) {
-      (result, cur) => result.orElse(cur.serialize)
-    }
+    override def deserialize: PartialFunction[(String, JObject), Any] =
+      components.foldLeft[PartialFunction[(String, JObject), Any]](Map()) {
+        (result, cur) => result.orElse(cur.deserialize)
+      }
+
+    override def serialize: PartialFunction[Any, JObject] =
+      components.foldLeft[PartialFunction[Any, JObject]](Map()) {
+        (result, cur) => result.orElse(cur.serialize)
+      }
   }
 }
 
@@ -208,15 +212,14 @@ private[json] object ClassDelta {
     else if (class2.getInterfaces.contains(class1)) 0
     else if (class1.isAssignableFrom(class2)) {
       1 + delta(class1, class2.getSuperclass)
-    }
-    else if (class2.isAssignableFrom(class1)) {
+    } else if (class2.isAssignableFrom(class1)) {
       1 + delta(class1.getSuperclass, class2)
-    }
-    else sys.error("Don't call delta unless one class is assignable from the other")
+    } else sys.error("Don't call delta unless one class is assignable from the other")
   }
 }
 
-/** Do not use any type hints.
+/**
+ * Do not use any type hints.
  */
 case object NoTypeHints extends TypeHints {
   val hints = Nil
@@ -224,18 +227,21 @@ case object NoTypeHints extends TypeHints {
   def classFor(hint: String) = None
 }
 
-/** Use short class name as a type hint.
+/**
+ * Use short class name as a type hint.
  */
 case class ShortTypeHints(hints: List[Class[_]]) extends TypeHints {
-  def hintFor(clazz: Class[_]) = clazz.getName.substring(clazz.getName.lastIndexOf(".")+1)
+  def hintFor(clazz: Class[_]) = clazz.getName.substring(clazz.getName.lastIndexOf(".") + 1)
   def classFor(hint: String) = hints find (hintFor(_) == hint)
 }
 
-/** Use full class name as a type hint.
+/**
+ * Use full class name as a type hint.
  */
 case class FullTypeHints(hints: List[Class[_]]) extends TypeHints {
   private val hintsToClass: ConcurrentScalaMap[String, Class[_]] =
-    new ConcurrentHashMap[String, Class[_]]().asScala ++= hints.map(clazz => hintFor(clazz) -> clazz)
+    new ConcurrentHashMap[String, Class[_]]().asScala ++= hints.map(clazz =>
+      hintFor(clazz) -> clazz)
 
   def hintFor(clazz: Class[_]) = clazz.getName
 
@@ -247,7 +253,8 @@ case class FullTypeHints(hints: List[Class[_]]) extends TypeHints {
   }
 }
 
-/** Default date format is UTC time.
+/**
+ * Default date format is UTC time.
  */
 object DefaultFormats extends DefaultFormats {
   val losslessDate = new ThreadLocal(new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
@@ -258,11 +265,12 @@ trait DefaultFormats extends Formats {
   import java.text.{ParseException, SimpleDateFormat}
 
   val dateFormat = new DateFormat {
-    def parse(s: String) = try {
-      Some(formatter.parse(s))
-    } catch {
-      case e: ParseException => None
-    }
+    def parse(s: String) =
+      try {
+        Some(formatter.parse(s))
+      } catch {
+        case e: ParseException => None
+      }
 
     def format(d: Date) = formatter.format(d)
 
@@ -275,13 +283,15 @@ trait DefaultFormats extends Formats {
 
   protected def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
-  /** Lossless date format includes milliseconds too.
+  /**
+   * Lossless date format includes milliseconds too.
    */
   def lossless = new DefaultFormats {
     override def dateFormatter = DefaultFormats.losslessDate()
   }
 
-  /** Default formats with given <code>TypeHint</code>s.
+  /**
+   * Default formats with given <code>TypeHint</code>s.
    */
   def withHints(hints: TypeHints) = new DefaultFormats {
     override val typeHints = hints
@@ -294,7 +304,8 @@ private[json] class ThreadLocal[A](init: => A) extends java.lang.ThreadLocal[A] 
 }
 
 class CustomSerializer[A: Manifest](
-  ser: Formats => (PartialFunction[JValue, A], PartialFunction[Any, JValue])) extends Serializer[A] {
+    ser: Formats => (PartialFunction[JValue, A], PartialFunction[Any, JValue]))
+    extends Serializer[A] {
 
   val Class = implicitly[Manifest[A]].runtimeClass
 

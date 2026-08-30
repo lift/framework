@@ -61,7 +61,8 @@ object ExtractionBugs extends Specification {
   }
 
   "Extraction should handle AnyRef" in {
-    implicit val formats = DefaultFormats.withHints(FullTypeHints(classOf[ExtractWithAnyRef] :: Nil))
+    implicit val formats =
+      DefaultFormats.withHints(FullTypeHints(classOf[ExtractWithAnyRef] :: Nil))
     val json = JObject(JField("jsonClass", JString(classOf[ExtractWithAnyRef].getName)) :: Nil)
     val extracted = Extraction.extract[AnyRef](json)
     extracted mustEqual ExtractWithAnyRef()
@@ -88,7 +89,8 @@ object ExtractionBugs extends Specification {
   "Extraction should fail if you're attempting to extract an option and you're given data of the wrong type" in {
     val json = JsonParser.parse("""{"opt": "hi"}""")
     json.extract[OptionOfInt] must throwA[MappingException].like {
-      case e => e.getMessage mustEqual "No usable value for opt\nDo not know how to convert JString(hi) into int"
+      case e =>
+        e.getMessage mustEqual "No usable value for opt\nDo not know how to convert JString(hi) into int"
     }
 
     val json2 = JString("hi")

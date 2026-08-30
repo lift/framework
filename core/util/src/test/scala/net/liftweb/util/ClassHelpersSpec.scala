@@ -22,16 +22,17 @@ import org.specs2.mutable.Specification
 import common._
 import ClassHelpers._
 
-
 /**
  * Systems under specification for ClassHelpers.
  */
-class ClassHelpersSpec extends Specification  {
+class ClassHelpersSpec extends Specification {
   "ClassHelpers Specification".title
 
   "The findType function" should {
     "return a Full can with the found class when given the type, the name, and a list of packages to conform to" in {
-      findType[java.util.List[Object]]("ArrayList", List("java.util")) must_== Full(classOf[java.util.ArrayList[Object]])
+      findType[java.util.List[Object]](
+        "ArrayList",
+        List("java.util")) must_== Full(classOf[java.util.ArrayList[Object]])
     }
     "return an Empty can if the class cannot be coerced to the expected type" in {
       findType[String]("ClassHelpers", List("net.liftweb.util")) must_== Empty
@@ -45,11 +46,18 @@ class ClassHelpersSpec extends Specification  {
       findClass("class_helpers", List("net.liftweb.util")) must_== Full(classOf[ClassHelpers])
     }
     "return a Full can with the found class when given the name and a list of packages" in {
-      findClass("ClassHelpers", List("net.liftweb.util", "java.util")) must_== Full(classOf[ClassHelpers])
-      findClass("ArrayList", List("net.liftweb.util", "java.util")) must_== Full(classOf[java.util.ArrayList[_]])
+      findClass(
+        "ClassHelpers",
+        List("net.liftweb.util", "java.util")) must_== Full(classOf[ClassHelpers])
+      findClass(
+        "ArrayList",
+        List("net.liftweb.util", "java.util")) must_== Full(classOf[java.util.ArrayList[_]])
     }
     "return a Full can with the found class when given the name, a list of packages and a target type to conform to" in {
-      findClass("ArrayList", List("java.util"), classOf[java.util.List[Object]]) must_== Full(classOf[java.util.ArrayList[Object]])
+      findClass(
+        "ArrayList",
+        List("java.util"),
+        classOf[java.util.List[Object]]) must_== Full(classOf[java.util.ArrayList[Object]])
     }
     "return an Empty can if no class is found given a name and package" in {
       findClass("ClassHelpers", List("net.liftweb.nothere")) must_== Empty
@@ -61,11 +69,17 @@ class ClassHelpersSpec extends Specification  {
 
   "The findClass function" should {
     "return a Full can with the found class when given a list of names and corresponding packages" in {
-      findClass(List(("wrong name", List("net.liftweb.util", "other.package")),
-                     ("ClassHelpers", List("net.liftweb.util", "other.package")))) must_== Full(classOf[ClassHelpers])
+      findClass(List(
+        ("wrong name", List("net.liftweb.util", "other.package")),
+        (
+          "ClassHelpers",
+          List("net.liftweb.util", "other.package")))) must_== Full(classOf[ClassHelpers])
     }
     "use a list of modifiers functions to try to modify the original name in order to find the class" in {
-      findClass("classHelpers", List("net.liftweb.util"), List((n: String) => n.capitalize)) must_== Full(classOf[ClassHelpers])
+      findClass(
+        "classHelpers",
+        List("net.liftweb.util"),
+        List((n: String) => n.capitalize)) must_== Full(classOf[ClassHelpers])
     }
   }
 
@@ -79,7 +93,9 @@ class ClassHelpersSpec extends Specification  {
       callableMethod_?(publicWithParameters) must beFalse
     }
     "return false if the method is private" in {
-      val privateMethod = classOf[java.util.ArrayList[Object]].getDeclaredMethod("readObject", classOf[java.io.ObjectInputStream])
+      val privateMethod = classOf[java.util.ArrayList[Object]].getDeclaredMethod(
+        "readObject",
+        classOf[java.io.ObjectInputStream])
       callableMethod_?(privateMethod) must beFalse
     }
     "return false if the method is null" in {
@@ -129,13 +145,17 @@ class ClassHelpersSpec extends Specification  {
       invokeMethod(null, "", "length") must beLike { case Failure(_, _, _) => 1 must_== 1 }
     }
     "return a Failure if the instance is null" in {
-      invokeMethod(classOf[String], null, "length") must beLike { case Failure(_, _, _) => 1 must_== 1 }
+      invokeMethod(classOf[String], null, "length") must beLike { case Failure(_, _, _) =>
+        1 must_== 1
+      }
     }
     "return a Failure if the method name is null" in {
       invokeMethod(classOf[String], "", null) must beLike { case Failure(_, _, _) => 1 must_== 1 }
     }
     "return a Failure if the method doesnt exist on the class" in {
-      invokeMethod(classOf[String], "", "isNotEmpty") must beLike { case Failure(_, _, _) => 1 must_== 1 }
+      invokeMethod(classOf[String], "", "isNotEmpty") must beLike { case Failure(_, _, _) =>
+        1 must_== 1
+      }
     }
     "return a Full can with the result if the method exist on the class" in {
       invokeMethod(classOf[String], "", "length") must_== Full(0)
@@ -145,9 +165,12 @@ class ClassHelpersSpec extends Specification  {
     }
     "throw an exception if the method throws an exception" in {
       class SpecificException extends Exception
-      class TestSnippet { def throwException = throw new SpecificException  }
+      class TestSnippet { def throwException = throw new SpecificException }
       val testSnippet = new TestSnippet
-      invokeMethod(testSnippet.getClass, testSnippet, "throwException") must throwA[SpecificException]
+      invokeMethod(
+        testSnippet.getClass,
+        testSnippet,
+        "throwException") must throwA[SpecificException]
     }
   }
 
@@ -156,7 +179,12 @@ class ClassHelpersSpec extends Specification  {
       invokeMethod(classOf[String], "", "valueOf", Array("1")) must_== Full("1")
     }
     "call a method with its parameters and parameter types" in {
-      invokeMethod(classOf[String], "", "valueOf", Array("c"), Array(classOf[String])) must_== Full("c")
+      invokeMethod(
+        classOf[String],
+        "",
+        "valueOf",
+        Array("c"),
+        Array(classOf[String])) must_== Full("c")
     }
   }
 
@@ -189,4 +217,3 @@ class ClassHelpersSpec extends Specification  {
   }
 
 }
-

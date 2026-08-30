@@ -25,8 +25,7 @@ import proto.{ProtoUser => GenProtoUser}
 import scala.xml.{NodeSeq, Text}
 
 /**
- * ProtoUser is a base class that gives you a "User" that has a first name,
- * last name, email, etc.
+ * ProtoUser is a base class that gives you a "User" that has a first name, last name, email, etc.
  */
 trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsString {
   self: T =>
@@ -34,13 +33,9 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   override def primaryKeyField: MappedLongIndex[T] = id
 
   /**
-   * The primary key field for the User.  You can override the behavior
-   * of this field:
-   * <pre name="code" class="scala">
-   * override lazy val id = new MyMappedLongClass(this) {
-   *   println("I am doing something different")
-   * }
-   * </pre>
+   * The primary key field for the User. You can override the behavior of this field: <pre
+   * name="code" class="scala"> override lazy val id = new MyMappedLongClass(this) { println("I am
+   * doing something different") } </pre>
    */
   lazy val id: MappedLongIndex[T] = new MyMappedLongClass(this)
 
@@ -50,15 +45,11 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
    * Convert the id to a String
    */
   def userIdAsString: String = id.get.toString
-  
+
   /**
-   * The first name field for the User.  You can override the behavior
-   * of this field:
-   * <pre name="code" class="scala">
-   * override lazy val firstName = new MyFirstName(this, 32) {
-   *   println("I am doing something different")
-   * }
-   * </pre>
+   * The first name field for the User. You can override the behavior of this field: <pre
+   * name="code" class="scala"> override lazy val firstName = new MyFirstName(this, 32) { println("I
+   * am doing something different") } </pre>
    */
 
   lazy val firstName: MappedString[T] = new MyFirstName(this, 32)
@@ -74,13 +65,9 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   def firstNameDisplayName = S.?("first.name")
 
   /**
-   * The last field for the User.  You can override the behavior
-   * of this field:
-   * <pre name="code" class="scala">
-   * override lazy val lastName = new MyLastName(this, 32) {
-   *   println("I am doing something different")
-   * }
-   * </pre>
+   * The last field for the User. You can override the behavior of this field: <pre name="code"
+   * class="scala"> override lazy val lastName = new MyLastName(this, 32) { println("I am doing
+   * something different") } </pre>
    */
   lazy val lastName: MappedString[T] = new MyLastName(this, 32)
 
@@ -95,13 +82,9 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   def lastNameDisplayName = S.?("last.name")
 
   /**
-   * The email field for the User.  You can override the behavior
-   * of this field:
-   * <pre name="code" class="scala">
-   * override lazy val email = new MyEmail(this, 48) {
-   *   println("I am doing something different")
-   * }
-   * </pre>
+   * The email field for the User. You can override the behavior of this field: <pre name="code"
+   * class="scala"> override lazy val email = new MyEmail(this, 48) { println("I am doing something
+   * different") } </pre>
    */
   lazy val email: MappedEmail[T] = new MyEmail(this, 48)
 
@@ -118,13 +101,9 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   def emailDisplayName = S.?("email.address")
 
   /**
-   * The password field for the User.  You can override the behavior
-   * of this field:
-   * <pre name="code" class="scala">
-   * override lazy val password = new MyPassword(this) {
-   *   println("I am doing something different")
-   * }
-   * </pre>
+   * The password field for the User. You can override the behavior of this field: <pre name="code"
+   * class="scala"> override lazy val password = new MyPassword(this) { println("I am doing
+   * something different") } </pre>
    */
   lazy val password: MappedPassword[T] = new MyPassword(this)
 
@@ -138,14 +117,10 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   def passwordDisplayName = S.?("password")
 
   /**
-   * The superuser field for the User.  You can override the behavior
-   * of this field:
-   * <pre name="code" class="scala">
-   * override lazy val superUser = new MySuperUser(this) {
-   *   println("I am doing something different")
-   * }
-   * </pre>
-   */  
+   * The superuser field for the User. You can override the behavior of this field: <pre name="code"
+   * class="scala"> override lazy val superUser = new MySuperUser(this) { println("I am doing
+   * something different") } </pre>
+   */
   lazy val superUser: MappedBoolean[T] = new MySuperUser(this)
 
   protected class MySuperUser(obj: T) extends MappedBoolean(obj) {
@@ -153,27 +128,28 @@ trait ProtoUser[T <: ProtoUser[T]] extends KeyedMapper[Long, T] with UserIdAsStr
   }
 
   def niceName: String = (firstName.get, lastName.get, email.get) match {
-    case (f, l, e) if f.length > 1 && l.length > 1 => f+" "+l+" ("+e+")"
-    case (f, _, e) if f.length > 1 => f+" ("+e+")"
-    case (_, l, e) if l.length > 1 => l+" ("+e+")"
+    case (f, l, e) if f.length > 1 && l.length > 1 => f + " " + l + " (" + e + ")"
+    case (f, _, e) if f.length > 1 => f + " (" + e + ")"
+    case (_, l, e) if l.length > 1 => l + " (" + e + ")"
     case (_, _, e) => e
   }
 
   def shortName: String = (firstName.get, lastName.get) match {
-    case (f, l) if f.length > 1 && l.length > 1 => f+" "+l
+    case (f, l) if f.length > 1 && l.length > 1 => f + " " + l
     case (f, _) if f.length > 1 => f
     case (_, l) if l.length > 1 => l
     case _ => email.get
   }
 
-  def niceNameWEmailLink = <a href={"mailto:"+email.get}>{niceName}</a>
+  def niceNameWEmailLink = <a href={"mailto:" + email.get}>{niceName}</a>
 }
 
 /**
- * Mix this trait into the the Mapper singleton for User and you
- * get a bunch of user functionality including password reset, etc.
+ * Mix this trait into the the Mapper singleton for User and you get a bunch of user functionality
+ * including password reset, etc.
  */
-trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends KeyedMetaMapper[Long, ModelType] with GenProtoUser {
+trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]]
+    extends KeyedMetaMapper[Long, ModelType] with GenProtoUser {
   self: ModelType =>
 
   type TheUserType = ModelType
@@ -186,10 +162,11 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends KeyedMeta
   /**
    * Based on a FieldPointer, build a FieldPointerBridge
    */
-  protected implicit def buildFieldBridge(from: FieldPointerType): FieldPointerBridge = new MyPointer(from)
-
+  protected implicit def buildFieldBridge(from: FieldPointerType): FieldPointerBridge =
+    new MyPointer(from)
 
   protected class MyPointer(from: FieldPointerType) extends FieldPointerBridge {
+
     /**
      * What is the display name of this field?
      */
@@ -207,13 +184,14 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends KeyedMeta
   /**
    * Convert an instance of TheUserType to the Bridge trait
    */
-  protected implicit def typeToBridge(in: TheUserType): UserBridge = 
+  protected implicit def typeToBridge(in: TheUserType): UserBridge =
     new MyUserBridge(in)
 
   /**
    * Bridges from TheUserType to methods used in this class
    */
   protected class MyUserBridge(in: TheUserType) extends UserBridge {
+
     /**
      * Convert the user's primary key to a String
      */
@@ -247,7 +225,7 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends KeyedMeta
     /**
      * Does the supplied password match the actual password?
      */
-    def testPassword(toTest: Box[String]): Boolean = 
+    def testPassword(toTest: Box[String]): Boolean =
       toTest.map(in.password.match_?) openOr false
 
     /**
@@ -290,8 +268,9 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends KeyedMeta
   /**
    * Given a field pointer and an instance, get the field on that instance
    */
-  protected def computeFieldFromPointer(instance: TheUserType, pointer: FieldPointerType): Box[BaseField] = Full(getActualField(instance, pointer))
-
+  protected def computeFieldFromPointer(
+      instance: TheUserType,
+      pointer: FieldPointerType): Box[BaseField] = Full(getActualField(instance, pointer))
 
   /**
    * Given an username (probably email address), find the user
@@ -318,58 +297,49 @@ trait MetaMegaProtoUser[ModelType <: MegaProtoUser[ModelType]] extends KeyedMeta
   /**
    * The list of fields presented to the user at sign-up
    */
-  def signupFields: List[FieldPointerType] = List(firstName, 
-                                                  lastName, 
-                                                  email, 
-                                                  locale, 
-                                                  timezone,
-                                                  password)
+  def signupFields: List[FieldPointerType] = List(
+    firstName,
+    lastName,
+    email,
+    locale,
+    timezone,
+    password)
 
   /**
    * The list of fields presented to the user for editing
    */
-  def editFields: List[FieldPointerType] = List(firstName, 
-                                                lastName, 
-                                                email, 
-                                                locale, 
-                                                timezone)
+  def editFields: List[FieldPointerType] = List(
+    firstName,
+    lastName,
+    email,
+    locale,
+    timezone)
 
 }
 
 /**
- * ProtoUser is bare bones.  MetaProtoUser contains a bunch
- * more fields including a validated flag, locale, timezone, etc.
+ * ProtoUser is bare bones. MetaProtoUser contains a bunch more fields including a validated flag,
+ * locale, timezone, etc.
  */
 trait MegaProtoUser[T <: MegaProtoUser[T]] extends ProtoUser[T] {
   self: T =>
 
   /**
-   * The unique id field for the User. This field
-   * is used for validation, lost passwords, etc.
-   * You can override the behavior
-   * of this field:
-   * <pre name="code" class="scala">
-   * override lazy val uniqueId = new MyUniqueId(this, 32) {
-   *   println("I am doing something different")
-   * }
-   * </pre>
+   * The unique id field for the User. This field is used for validation, lost passwords, etc. You
+   * can override the behavior of this field: <pre name="code" class="scala"> override lazy val
+   * uniqueId = new MyUniqueId(this, 32) { println("I am doing something different") } </pre>
    */
   lazy val uniqueId: MappedUniqueId[T] = new MyUniqueId(this, 32)
 
   protected class MyUniqueId(obj: T, size: Int) extends MappedUniqueId(obj, size) {
     override def dbIndexed_? = true
-    override def writePermission_?  = true
+    override def writePermission_? = true
   }
 
   /**
-   * The has the user been validated.
-   * You can override the behavior
-   * of this field:
-   * <pre name="code" class="scala">
-   * override lazy val validated = new MyValidated(this, 32) {
-   *   println("I am doing something different")
-   * }
-   * </pre>
+   * The has the user been validated. You can override the behavior of this field: <pre name="code"
+   * class="scala"> override lazy val validated = new MyValidated(this, 32) { println("I am doing
+   * something different") } </pre>
    */
   lazy val validated: MappedBoolean[T] = new MyValidated(this)
 
@@ -379,14 +349,9 @@ trait MegaProtoUser[T <: MegaProtoUser[T]] extends ProtoUser[T] {
   }
 
   /**
-   * The locale field for the User.
-   * You can override the behavior
-   * of this field:
-   * <pre name="code" class="scala">
-   * override lazy val locale = new MyLocale(this, 32) {
-   *   println("I am doing something different")
-   * }
-   * </pre>
+   * The locale field for the User. You can override the behavior of this field: <pre name="code"
+   * class="scala"> override lazy val locale = new MyLocale(this, 32) { println("I am doing
+   * something different") } </pre>
    */
   lazy val locale = new MyLocale(this)
 
@@ -396,14 +361,9 @@ trait MegaProtoUser[T <: MegaProtoUser[T]] extends ProtoUser[T] {
   }
 
   /**
-   * The time zone field for the User.
-   * You can override the behavior
-   * of this field:
-   * <pre name="code" class="scala">
-   * override lazy val timezone = new MyTimeZone(this, 32) {
-   *   println("I am doing something different")
-   * }
-   * </pre>
+   * The time zone field for the User. You can override the behavior of this field: <pre name="code"
+   * class="scala"> override lazy val timezone = new MyTimeZone(this, 32) { println("I am doing
+   * something different") } </pre>
    */
   lazy val timezone = new MyTimeZone(this)
 
@@ -423,4 +383,3 @@ trait MegaProtoUser[T <: MegaProtoUser[T]] extends ProtoUser[T] {
   def localeDisplayName = S.?("locale")
 
 }
-

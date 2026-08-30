@@ -20,20 +20,21 @@ package http
 import common._
 import actor._
 import util._
-  import Helpers._
+import Helpers._
 
 /**
- * A LiftActor that runs in the scope of the current Session, repleat with SessionVars, etc.
- * In general, you'll want to use a ScopedLiftActor when you do stuff with clientActorFor, etc.
- * so that you have the session scope
- *
+ * A LiftActor that runs in the scope of the current Session, repleat with SessionVars, etc. In
+ * general, you'll want to use a ScopedLiftActor when you do stuff with clientActorFor, etc. so that
+ * you have the session scope
  */
 trait ScopedLiftActor extends LiftActor with LazyLoggable {
+
   /**
-   * The session captured when the instance is created. It should be correct if the instance is created
-   * in the scope of a request
+   * The session captured when the instance is created. It should be correct if the instance is
+   * created in the scope of a request
    */
-  protected val _session: LiftSession = S.session openOr new LiftSession("", Helpers.nextFuncName, Empty)
+  protected val _session: LiftSession =
+    S.session openOr new LiftSession("", Helpers.nextFuncName, Empty)
 
   /**
    * The render version of the page that this was created in the scope of
@@ -41,12 +42,11 @@ trait ScopedLiftActor extends LiftActor with LazyLoggable {
   protected val _uniqueId: String = RenderVersion.get
 
   /**
-   * The session associated with this actor. By default it's captured at the time of instantiation, but
-   * that doesn't always work, so you might have to override this method
+   * The session associated with this actor. By default it's captured at the time of instantiation,
+   * but that doesn't always work, so you might have to override this method
    * @return
    */
   def session: LiftSession = _session
-
 
   /**
    * The unique page ID of the page that this Actor was created in the scope of
@@ -55,11 +55,9 @@ trait ScopedLiftActor extends LiftActor with LazyLoggable {
   def uniqueId: String = _uniqueId
 
   /**
-   * Compose the Message Handler function. By default,
-   * composes highPriority orElse mediumPriority orElse internalHandler orElse
-   * lowPriority orElse internalHandler.  But you can change how
-   * the handler works if doing stuff in highPriority, mediumPriority and
-   * lowPriority is not enough.
+   * Compose the Message Handler function. By default, composes highPriority orElse mediumPriority
+   * orElse internalHandler orElse lowPriority orElse internalHandler. But you can change how the
+   * handler works if doing stuff in highPriority, mediumPriority and lowPriority is not enough.
    */
   protected def composeFunction: PartialFunction[Any, Unit] = composeFunction_i
 

@@ -28,21 +28,23 @@ object SameSite extends Enumeration {
  * Companion module for creating HTTPCookie objects
  */
 object HTTPCookie {
-  def apply(name: String, value: String) = new HTTPCookie(name, Full(value), Empty, Empty, Empty, Empty, Empty)
+  def apply(name: String, value: String) =
+    new HTTPCookie(name, Full(value), Empty, Empty, Empty, Empty, Empty)
 }
 
 /**
  * Repersents an immutable representation of an HTTP Cookie
  */
-case class HTTPCookie(name: String,
-                      value: Box[String],
-                      domain: Box[String],
-                      path: Box[String],
-                      maxAge: Box[Int],
-                      version: Box[Int],
-                      secure_? : Box[Boolean],
-                       httpOnly: Box[Boolean] = Empty,
-                       sameSite : Box[SameSite.Value] = Empty) extends java.lang.Cloneable {
+case class HTTPCookie(
+    name: String,
+    value: Box[String],
+    domain: Box[String],
+    path: Box[String],
+    maxAge: Box[Int],
+    version: Box[Int],
+    secure_? : Box[Boolean],
+    httpOnly: Box[Boolean] = Empty,
+    sameSite: Box[SameSite.Value] = Empty) extends java.lang.Cloneable {
   override def clone(): HTTPCookie = {
     super.clone()
     copy()
@@ -104,6 +106,4 @@ case class HTTPCookie(name: String,
    */
   def setSecure(newSecure: Boolean): HTTPCookie = copy(secure_? = Box !! newSecure)
 
-
 }
-

@@ -18,9 +18,7 @@ package net.liftweb
 package proto
 
 import net.liftweb.common._
-import net.liftweb.util._
 import net.liftweb.http._
-import scala.reflect.Manifest
 
 import java.util.regex.Pattern
 
@@ -28,10 +26,12 @@ import java.util.regex.Pattern
  * This singleton contains the rules for persistence
  */
 object ProtoRules extends Factory with LazyLoggable {
+
   /**
    * The regular expression pattern for matching email addresses.
    */
-  val emailRegexPattern = new FactoryMaker(Pattern.compile("^[a-z0-9._%\\-+]+@(?:[a-z0-9\\-]+\\.)+[a-z]{2,}$", Pattern.CASE_INSENSITIVE)) {}
-  
-}
+  val emailRegexPattern = new FactoryMaker(Pattern.compile(
+    "^[a-z0-9._%\\-+]+@(?:[a-z0-9\\-]+\\.)+[a-z]{2,}$",
+    Pattern.CASE_INSENSITIVE)) {}
 
+}

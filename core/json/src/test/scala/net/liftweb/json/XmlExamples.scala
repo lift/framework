@@ -19,14 +19,14 @@ package json
 
 import org.specs2.mutable.Specification
 
-object XmlExamples extends Specification  {
+object XmlExamples extends Specification {
   "XML Examples".title
   import JsonDSL._
   import Xml._
   import scala.xml.{Group, Text}
 
   "Basic conversion example" in {
-    val json = toJson(users1) 
+    val json = toJson(users1)
     compactRender(json) mustEqual """{"users":{"count":"2","user":[{"disabled":"true","id":"1","name":"Harry"},{"id":"2","name":"David","nickname":"Dave"}]}}"""
   }
 
@@ -53,7 +53,7 @@ object XmlExamples extends Specification  {
   "Lotto example which flattens number arrays into encoded string arrays" in {
     def flattenArray(nums: List[JValue]) = JString(nums.map(_.values).mkString(","))
 
-    val printer = new scala.xml.PrettyPrinter(100,2)
+    val printer = new scala.xml.PrettyPrinter(100, 2)
     val lotto: JObject = LottoExample.json
     val xml = toXml(lotto.transformField {
       case JField("winning-numbers", JArray(nums)) => JField("winning-numbers", flattenArray(nums))
@@ -127,7 +127,7 @@ object XmlExamples extends Specification  {
         <id>2</id>
         <name nickname="Dave">David</name>
       </user>
-    </users>   
+    </users>
 
   val users2 =
     <users>
@@ -140,8 +140,8 @@ object XmlExamples extends Specification  {
   val url = "test"
   val groupedText =
     <g>
-      <group>{ Group(List(Text("foo"), Text("bar"))) }</group>
-      <url>http://example.com/{ url }</url>
+      <group>{Group(List(Text("foo"), Text("bar")))}</group>
+      <url>http://example.com/{url}</url>
     </g>
 
   // Examples by Jonathan Ferguson. See http://groups.google.com/group/liftweb/browse_thread/thread/f3bdfcaf1c21c615/c311a91e44f9c178?show_docid=c311a91e44f9c178
@@ -149,35 +149,38 @@ object XmlExamples extends Specification  {
   // default conversion rules. The transformation function 'attrToObject' makes following conversion:
   // { ..., "fieldName": "", "attrName":"someValue", ...}      ->
   // { ..., "fieldName": { "attrName": f("someValue") }, ... }
-  def attrToObject(fieldName: String, attrName: String, f: JString => JValue)(json: JValue) = json.transformField {
-    case JField(n, v: JString) if n == attrName => JField(fieldName, JObject(JField(n, f(v)) :: Nil))
-    case JField(n, JString("")) if n == fieldName => JField(n, JNothing)
-  } transformField {
-    case JField(n, x: JObject) if n == attrName => JField(fieldName, x)
-  }
+  def attrToObject(fieldName: String, attrName: String, f: JString => JValue)(json: JValue) =
+    json.transformField {
+      case JField(n, v: JString) if n == attrName =>
+        JField(fieldName, JObject(JField(n, f(v)) :: Nil))
+      case JField(n, JString("")) if n == fieldName => JField(n, JNothing)
+    } transformField {
+      case JField(n, x: JObject) if n == attrName => JField(fieldName, x)
+    }
 
-  "Example with multiple attributes, multiple nested elements " in  {  
+  "Example with multiple attributes, multiple nested elements " in {
     val a1 = attrToObject("stats", "count", s => JInt(s.s.toInt)) _
     val a2 = attrToObject("messages", "href", identity) _
     val json = a1(a2(toJson(messageXml1)))
     (json diff parse(expected1)) mustEqual Diff(JNothing, JNothing, JNothing)
   }
 
-  "Example with one attribute, one nested element " in { 
+  "Example with one attribute, one nested element " in {
     val a = attrToObject("stats", "count", s => JInt(s.s.toInt)) _
     compactRender(a(toJson(messageXml2))) mustEqual expected2
     compactRender(a(toJson(messageXml3))) mustEqual expected2
   }
 
-  val messageXml1 = 
+  val messageXml1 =
     <message expiry_date="20091126" text="text" word="ant" self="me">
       <stats count="0"></stats>
       <messages href="https://domain.com/message/ant"></messages>
     </message>
 
-  val expected1 = """{"message":{"expiry_date":"20091126","word":"ant","text":"text","self":"me","stats":{"count":0},"messages":{"href":"https://domain.com/message/ant"}}}"""
+  val expected1 =
+    """{"message":{"expiry_date":"20091126","word":"ant","text":"text","self":"me","stats":{"count":0},"messages":{"href":"https://domain.com/message/ant"}}}"""
 
-  val messageXml2 = 
+  val messageXml2 =
     <message expiry_date="20091126">
       <stats count="0"></stats>
     </message>

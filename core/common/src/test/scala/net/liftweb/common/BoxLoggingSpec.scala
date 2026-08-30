@@ -1,7 +1,6 @@
 package net.liftweb
 package common
 
-import org.slf4j.{Logger=>SLF4JLogger}
 
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
@@ -36,21 +35,21 @@ class BoxLoggingSpec extends Specification with Mockito {
       def verifyContentList(list: List[(String, Option[Throwable])]) = {
         list must beLike {
           case (paramFailure4, None) ::
-               (paramFailure3, None) ::
-               (paramFailure2, None) ::
-               (paramFailure1, Some(paramExp)) ::
-               (chained1, None) ::
-               (chained2, None) ::
-               (level1, None) ::
-               (level2, Some(exp2)) ::
-               (level3, None) ::
-               (level4, Some(exp4)) ::
-               (emptyMessage, None) ::
-               (fullParamMessage, Some(paramException)) ::
-               (paramMessage, None) ::
-               (exceptedMessage, Some(failureException)) ::
-               (failureMessage, None) ::
-               Nil =>
+              (paramFailure3, None) ::
+              (paramFailure2, None) ::
+              (paramFailure1, Some(paramExp)) ::
+              (chained1, None) ::
+              (chained2, None) ::
+              (level1, None) ::
+              (level2, Some(exp2)) ::
+              (level3, None) ::
+              (level4, Some(exp4)) ::
+              (emptyMessage, None) ::
+              (fullParamMessage, Some(paramException)) ::
+              (paramMessage, None) ::
+              (exceptedMessage, Some(failureException)) ::
+              (failureMessage, None) ::
+              Nil =>
             (failureMessage must startWith("Second")) and
               (failureMessage must contain("Failed")) and
               (exceptedMessage must startWith("Third")) and
@@ -74,9 +73,12 @@ class BoxLoggingSpec extends Specification with Mockito {
               (chained1 must contain("Chained failure caused by: Boom")) and
               (chained2 must contain("Chain all failures: Chained failure")) and
               (paramFailure4 must contain("Param Failure lvl 3 with param Param 3 caused by: Param Failure lvl 4 with param Param 4")) and
-              (paramFailure3 must contain("Failure lvl 2 caused by: Param Failure lvl 3 with param Param 3")) and
-              (paramFailure2 must contain("Param Failure lvl 1 with param Param 1 caused by: Failure lvl 2")) and
-              (paramFailure1 must contain("Param failure: Param Failure lvl 1 with param Param 1")) and
+              (paramFailure3 must contain(
+                "Failure lvl 2 caused by: Param Failure lvl 3 with param Param 3")) and
+              (paramFailure2 must contain(
+                "Param Failure lvl 1 with param Param 1 caused by: Failure lvl 2")) and
+              (paramFailure1 must contain(
+                "Param failure: Param Failure lvl 1 with param Param 1")) and
               (paramExp must beAnInstanceOf[IllegalArgumentException])
         }
       }
@@ -96,19 +98,33 @@ class BoxLoggingSpec extends Specification with Mockito {
             ).logEmptyBox("Fifth")
             (Empty).logEmptyBox("Sixth")
             Failure(
-              "Failure level 1", Full(new NullPointerException), Full(Failure(
-                "Failure level 2", Empty, Full(Failure(
-                  "Failure level 3", Full(new IllegalArgumentException), Full(Failure(
-                    "Failure level 4"
-                  )))
-                ))
+              "Failure level 1",
+              Full(new NullPointerException),
+              Full(
+                Failure(
+                  "Failure level 2",
+                  Empty,
+                  Full(
+                    Failure(
+                      "Failure level 3",
+                      Full(new IllegalArgumentException),
+                      Full(Failure(
+                        "Failure level 4"
+                      )))
+                  ))
               )
             ).logEmptyBox("Multilevel failure")
             (Failure("Boom") ?~! "Chained failure").logEmptyBox("Chain all failures")
             ParamFailure(
-              "Param Failure lvl 1", Full(new IllegalArgumentException), Full(Failure(
-                "Failure lvl 2", Empty, Full(ParamFailure(
-                  "Param Failure lvl 3", Empty, Full(ParamFailure(
+              "Param Failure lvl 1",
+              Full(new IllegalArgumentException),
+              Full(Failure(
+                "Failure lvl 2",
+                Empty,
+                Full(ParamFailure(
+                  "Param Failure lvl 3",
+                  Empty,
+                  Full(ParamFailure(
                     "Param Failure lvl 4",
                     "Param 4"
                   )),
@@ -137,19 +153,33 @@ class BoxLoggingSpec extends Specification with Mockito {
             ).warnLogEmptyBox("Fifth")
             (Empty).warnLogEmptyBox("Sixth")
             Failure(
-              "Failure level 1", Full(new NullPointerException), Full(Failure(
-                "Failure level 2", Empty, Full(Failure(
-                  "Failure level 3", Full(new IllegalArgumentException), Full(Failure(
-                    "Failure level 4"
-                  )))
-                ))
+              "Failure level 1",
+              Full(new NullPointerException),
+              Full(
+                Failure(
+                  "Failure level 2",
+                  Empty,
+                  Full(
+                    Failure(
+                      "Failure level 3",
+                      Full(new IllegalArgumentException),
+                      Full(Failure(
+                        "Failure level 4"
+                      )))
+                  ))
               )
             ).warnLogEmptyBox("Multilevel failure")
             (Failure("Boom") ?~! "Chained failure").warnLogEmptyBox("Chain all failures")
             ParamFailure(
-              "Param Failure lvl 1", Full(new IllegalArgumentException), Full(Failure(
-                "Failure lvl 2", Empty, Full(ParamFailure(
-                  "Param Failure lvl 3", Empty, Full(ParamFailure(
+              "Param Failure lvl 1",
+              Full(new IllegalArgumentException),
+              Full(Failure(
+                "Failure lvl 2",
+                Empty,
+                Full(ParamFailure(
+                  "Param Failure lvl 3",
+                  Empty,
+                  Full(ParamFailure(
                     "Param Failure lvl 4",
                     "Param 4"
                   )),
@@ -178,19 +208,33 @@ class BoxLoggingSpec extends Specification with Mockito {
             ).infoLogEmptyBox("Fifth")
             (Empty).infoLogEmptyBox("Sixth")
             Failure(
-              "Failure level 1", Full(new NullPointerException), Full(Failure(
-                "Failure level 2", Empty, Full(Failure(
-                  "Failure level 3", Full(new IllegalArgumentException), Full(Failure(
-                    "Failure level 4"
-                  )))
-                ))
+              "Failure level 1",
+              Full(new NullPointerException),
+              Full(
+                Failure(
+                  "Failure level 2",
+                  Empty,
+                  Full(
+                    Failure(
+                      "Failure level 3",
+                      Full(new IllegalArgumentException),
+                      Full(Failure(
+                        "Failure level 4"
+                      )))
+                  ))
               )
             ).infoLogEmptyBox("Multilevel failure")
             (Failure("Boom") ?~! "Chained failure").infoLogEmptyBox("Chain all failures")
             ParamFailure(
-              "Param Failure lvl 1", Full(new IllegalArgumentException), Full(Failure(
-                "Failure lvl 2", Empty, Full(ParamFailure(
-                  "Param Failure lvl 3", Empty, Full(ParamFailure(
+              "Param Failure lvl 1",
+              Full(new IllegalArgumentException),
+              Full(Failure(
+                "Failure lvl 2",
+                Empty,
+                Full(ParamFailure(
+                  "Param Failure lvl 3",
+                  Empty,
+                  Full(ParamFailure(
                     "Param Failure lvl 4",
                     "Param 4"
                   )),
@@ -219,19 +263,33 @@ class BoxLoggingSpec extends Specification with Mockito {
             ).debugLogEmptyBox("Fifth")
             (Empty).debugLogEmptyBox("Sixth")
             Failure(
-              "Failure level 1", Full(new NullPointerException), Full(Failure(
-                "Failure level 2", Empty, Full(Failure(
-                  "Failure level 3", Full(new IllegalArgumentException), Full(Failure(
-                    "Failure level 4"
-                  )))
-                ))
+              "Failure level 1",
+              Full(new NullPointerException),
+              Full(
+                Failure(
+                  "Failure level 2",
+                  Empty,
+                  Full(
+                    Failure(
+                      "Failure level 3",
+                      Full(new IllegalArgumentException),
+                      Full(Failure(
+                        "Failure level 4"
+                      )))
+                  ))
               )
             ).debugLogFailure("Multilevel failure")
             (Failure("Boom") ?~! "Chained failure").debugLogFailure("Chain all failures")
             ParamFailure(
-              "Param Failure lvl 1", Full(new IllegalArgumentException), Full(Failure(
-                "Failure lvl 2", Empty, Full(ParamFailure(
-                  "Param Failure lvl 3", Empty, Full(ParamFailure(
+              "Param Failure lvl 1",
+              Full(new IllegalArgumentException),
+              Full(Failure(
+                "Failure lvl 2",
+                Empty,
+                Full(ParamFailure(
+                  "Param Failure lvl 3",
+                  Empty,
+                  Full(ParamFailure(
                     "Param Failure lvl 4",
                     "Param 4"
                   )),
@@ -260,19 +318,33 @@ class BoxLoggingSpec extends Specification with Mockito {
             ).traceLogEmptyBox("Fifth")
             (Empty).traceLogEmptyBox("Sixth")
             Failure(
-              "Failure level 1", Full(new NullPointerException), Full(Failure(
-                "Failure level 2", Empty, Full(Failure(
-                  "Failure level 3", Full(new IllegalArgumentException), Full(Failure(
-                    "Failure level 4"
-                  )))
-                ))
+              "Failure level 1",
+              Full(new NullPointerException),
+              Full(
+                Failure(
+                  "Failure level 2",
+                  Empty,
+                  Full(
+                    Failure(
+                      "Failure level 3",
+                      Full(new IllegalArgumentException),
+                      Full(Failure(
+                        "Failure level 4"
+                      )))
+                  ))
               )
             ).traceLogEmptyBox("Multilevel failure")
             (Failure("Boom") ?~! "Chained failure").traceLogEmptyBox("Chain all failures")
             ParamFailure(
-              "Param Failure lvl 1", Full(new IllegalArgumentException), Full(Failure(
-                "Failure lvl 2", Empty, Full(ParamFailure(
-                  "Param Failure lvl 3", Empty, Full(ParamFailure(
+              "Param Failure lvl 1",
+              Full(new IllegalArgumentException),
+              Full(Failure(
+                "Failure lvl 2",
+                Empty,
+                Full(ParamFailure(
+                  "Param Failure lvl 3",
+                  Empty,
+                  Full(ParamFailure(
                     "Param Failure lvl 4",
                     "Param 4"
                   )),
@@ -291,10 +363,10 @@ class BoxLoggingSpec extends Specification with Mockito {
       def verifyContentList(list: List[(String, Option[Throwable])]) = {
         list must beLike {
           case (fullParamMessage, Some(paramException)) ::
-                  (paramMessage, None) ::
-                  (exceptedMessage, Some(failureException)) ::
-                  (failureMessage, None) ::
-                  Nil =>
+              (paramMessage, None) ::
+              (exceptedMessage, Some(failureException)) ::
+              (failureMessage, None) ::
+              Nil =>
             (failureMessage must startWith("Second")) and
               (failureMessage must contain("Failed")) and
               (exceptedMessage must startWith("Third")) and
@@ -427,7 +499,7 @@ class BoxLoggingSpec extends Specification with Mockito {
           }
 
         (there was one(mockLogger).error(any[String])) and
-        (there was one(mockLogger).error(any[String], any[Exception]))
+          (there was one(mockLogger).error(any[String], any[Exception]))
       }
     }
 

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package webapptest 
-package snippet 
+package net.liftweb
+package webapptest
+package snippet
 
 import net.liftweb.http._
 import scala.xml._
@@ -24,25 +24,25 @@ import scala.xml._
 class DeferredSnippet {
   object MyNumber extends RequestVar(55)
 
-  def first:NodeSeq = {
+  def first: NodeSeq = {
     MyNumber.set(44)
     <span id="first">first</span>
   }
 
-  def secondLazy:NodeSeq = {
+  def secondLazy: NodeSeq = {
     val old = MyNumber.is
     MyNumber.set(99)
     <span id="second">Very lazy {old}</span>
   }
 
-  def third:NodeSeq = {
+  def third: NodeSeq = {
     <span id="third">third {MyNumber.is}</span>
   }
 
-   def stackWhack: NodeSeq = {
-     val inActor: Boolean = Thread.currentThread.getStackTrace.exists(_.getClassName.contains("net.liftweb.actor."))
+  def stackWhack: NodeSeq = {
+    val inActor: Boolean =
+      Thread.currentThread.getStackTrace.exists(_.getClassName.contains("net.liftweb.actor."))
 
-     <span id={"actor_"+inActor}>stackWhack</span>
-   }
+    <span id={"actor_" + inActor}>stackWhack</span>
+  }
 }
-

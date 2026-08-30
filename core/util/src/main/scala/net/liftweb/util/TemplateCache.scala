@@ -26,8 +26,8 @@ trait TemplateCache[K, V] {
   type T = K
 
   /**
-   * Returns a cached template by a key. If the template is not cached yet,
-   * it will be provided by templateProvider.
+   * Returns a cached template by a key. If the template is not cached yet, it will be provided by
+   * templateProvider.
    */
   def get(key: K): Box[V];
 
@@ -53,8 +53,7 @@ object NoCache extends TemplateCache[(Locale, List[String]), NodeSeq] {
 
   def set(key: T, node: NodeSeq): NodeSeq = node
 
-  def delete(key: T): Unit = {
-  }
+  def delete(key: T): Unit = {}
 }
 
 /**
@@ -67,9 +66,8 @@ object InMemoryCache {
 /**
  * Caches templates in a LRU map
  */
-class InMemoryCache(templatesCount: Int) extends
-TemplateCache[(Locale, List[String]), NodeSeq] {
-  private val cache : LRU[(Locale, List[String]), NodeSeq] = new LRU(templatesCount)
+class InMemoryCache(templatesCount: Int) extends TemplateCache[(Locale, List[String]), NodeSeq] {
+  private val cache: LRU[(Locale, List[String]), NodeSeq] = new LRU(templatesCount)
 
   def get(key: T): Box[NodeSeq] = {
     cache.synchronized {
@@ -87,4 +85,3 @@ TemplateCache[(Locale, List[String]), NodeSeq] {
   }
 
 }
-

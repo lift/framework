@@ -24,14 +24,15 @@ import java.util.concurrent.{ConcurrentHashMap, Callable}
 import scala.jdk.CollectionConverters._
 
 /**
- * The bridge between Scala *Vars implementations and
- * the
+ * The bridge between Scala *Vars implementations and the
  */
 class VarsJBridge {
   def vendSessionVar[T](default: T, e: Exception): SessionVar[T] = {
-    vendSessionVar(new Callable[T] {
-      def call() = default
-    }, e)
+    vendSessionVar(
+      new Callable[T] {
+        def call() = default
+      },
+      e)
   }
 
   def vendSessionVar[T](default: Callable[T], e: Exception): SessionVar[T] = {
@@ -70,20 +71,22 @@ abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) 
     case Full(s) => s.get(name)
     case _ =>
       if (LiftRules.throwOnOutOfScopeVarAccess) {
-        throw new IllegalAccessException("Access to SessionVar outside a request or comet actor scope")
+        throw new IllegalAccessException(
+          "Access to SessionVar outside a request or comet actor scope")
       }
 
       if (showWarningWhenAccessedOutOfSessionScope_?)
-        logger.warn("Getting a SessionVar " + name + " outside session scope") // added warning per issue 188
+        logger.warn(
+          "Getting a SessionVar " + name + " outside session scope"
+        ) // added warning per issue 188
 
       Empty
   }
 
   /**
-   * Stateless session enforcement is new to Lift, but there
-   * are some legacy issues in WebKit and allowing for a SessionVar
-   * to be "magic" (settable even in stateless sessions) seems to be
-   * an efficient, yet somewhat hacky, way around the issue
+   * Stateless session enforcement is new to Lift, but there are some legacy issues in WebKit and
+   * allowing for a SessionVar to be "magic" (settable even in stateless sessions) seems to be an
+   * efficient, yet somewhat hacky, way around the issue
    */
   private[liftweb] def magicSessionVar_? = false
 
@@ -96,16 +99,19 @@ abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) 
     case Full(s) => s.set(name, value)
     case _ =>
       if (LiftRules.throwOnOutOfScopeVarAccess) {
-        throw new IllegalAccessException("Access to SessionVar outside a request or comet actor scope")
+        throw new IllegalAccessException(
+          "Access to SessionVar outside a request or comet actor scope")
       }
 
       if (showWarningWhenAccessedOutOfSessionScope_?)
-        logger.warn("Setting a SessionVar " + name + " to " + value + " outside session scope") // added warning per issue 188
+        logger.warn(
+          "Setting a SessionVar " + name + " to " + value + " outside session scope"
+        ) // added warning per issue 188
   }
 
   /**
-   * Different Vars require different mechanisms for synchronization.  This method implements
-   * the Var specific synchronization mechanism
+   * Different Vars require different mechanisms for synchronization. This method implements the Var
+   * specific synchronization mechanism
    */
   def doSync[F](f: => F): F = S.session match {
     case Full(s) =>
@@ -114,9 +120,10 @@ abstract class SessionVar[T](dflt: => T) extends AnyVar[T, SessionVar[T]](dflt) 
       val lockObj = s.synchronized {
         s.get[AnyRef](lockName) match {
           case Full(lock) => lock
-          case _ => val lock = new AnyRef
-          s.set(lockName, lock)
-          lock
+          case _ =>
+            val lock = new AnyRef
+            s.set(lockName, lock)
+            lock
         }
       }
 
@@ -151,7 +158,6 @@ private[http] trait HasLogUnreadVal {
   def logUnreadVal: Boolean
 }
 
-
 /**
  * A typesafe container for data with a lifetime nominally equivalent to the
  * lifetime of HttpSession attributes.  This alternative to SessionVar
@@ -180,7 +186,8 @@ private[http] trait HasLogUnreadVal {
  * about only storing things that can be actually serialized.  Lift
  * provides a subset of these.
  */
-abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: ContainerSerializer[T]) extends AnyVar[T, ContainerVar[T]](dflt) with LazyLoggable {
+abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: ContainerSerializer[T])
+    extends AnyVar[T, ContainerVar[T]](dflt) with LazyLoggable {
 
   override protected def findFunc(name: String): Box[T] = S.session match {
     case Full(session) => {
@@ -191,7 +198,9 @@ abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: Contain
     }
     case _ => {
       if (showWarningWhenAccessedOutOfSessionScope_?)
-        logger.warn("Getting a SessionVar " + name + " outside session scope") // added warning per issue 188
+        logger.warn(
+          "Getting a SessionVar " + name + " outside session scope"
+        ) // added warning per issue 188
 
       Empty
     }
@@ -210,7 +219,6 @@ abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: Contain
     } yield attr
   }
 
-
   override protected def setFunc(name: String, value: T): Unit = S.session match {
     // If we're in a stateless session, don't allow SessionVar setting
     case Full(s) if !s.allowContainerState_? && !s.stateful_? && !settingDefault_? =>
@@ -223,14 +231,16 @@ abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: Contain
 
     case _ =>
       if (showWarningWhenAccessedOutOfSessionScope_?)
-        logger.warn("Setting a ContainerVar " + name + " to " + value + " outside session scope") // added warning per issue 188
+        logger.warn(
+          "Setting a ContainerVar " + name + " to " + value + " outside session scope"
+        ) // added warning per issue 188
   }
 
   /**
-   * Different Vars require different mechanisms for synchronization.  This method implements
-   * the Var specific synchronization mechanism.
+   * Different Vars require different mechanisms for synchronization. This method implements the Var
+   * specific synchronization mechanism.
    *
-   * In the case of ContainerVar, we don't need to do any explicit synchronization.  Values are
+   * In the case of ContainerVar, we don't need to do any explicit synchronization. Values are
    * stored in the HttpSession, which already gives us atomic get and set operations.
    */
   def doSync[F](f: => F): F = f
@@ -244,17 +254,19 @@ abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: Contain
     } httpSession.removeAttribute(name)
 
   override protected def wasInitialized(name: String, bn: String): Boolean = {
-    val old: Boolean = S.session.flatMap(s => localGet(s, bn) match {
-      case Full(b: Boolean) => Full(b)
-      case _ => Empty
-    }) openOr false
+    val old: Boolean = S.session.flatMap(s =>
+      localGet(s, bn) match {
+        case Full(b: Boolean) => Full(b)
+        case _ => Empty
+      }) openOr false
     S.session.foreach(s => localSet(s, bn, true))
     old
   }
 
   override protected def testWasSet(name: String, bn: String): Boolean = {
     S.session.flatMap(s => localGet(s, name)).isDefined ||
-      (S.session.flatMap(s => localGet(s, bn) match {
+    (S.session.flatMap(s =>
+      localGet(s, bn) match {
         case Full(b: Boolean) => Full(b)
         case _ => Empty
       }) openOr false)
@@ -267,9 +279,8 @@ abstract class ContainerVar[T](dflt: => T)(implicit containerSerializer: Contain
 }
 
 /**
- * A trait that provides *actual* serialization of a type so that
- * the type can be stored into a container's session and be migrated across
- * servers
+ * A trait that provides *actual* serialization of a type so that the type can be stored into a
+ * container's session and be migrated across servers
  */
 trait ContainerSerializer[T] {
   def serialize(in: T): Array[Byte]
@@ -315,24 +326,27 @@ object ContainerSerializer {
   implicit val stringSerializer: ContainerSerializer[String] = buildSerializer
   implicit val jodaDateSerializer: ContainerSerializer[DateTime] = buildSerializer
 
-  implicit def arraySerializer[T](implicit tc: ContainerSerializer[T]): ContainerSerializer[Array[T]] = buildSerializer
+  implicit def arraySerializer[T](implicit
+      tc: ContainerSerializer[T]): ContainerSerializer[Array[T]] = buildSerializer
 
-  implicit def listSerializer[T](implicit tc: ContainerSerializer[T]): ContainerSerializer[List[T]] = buildSerializer
+  implicit def listSerializer[T](implicit
+      tc: ContainerSerializer[T]): ContainerSerializer[List[T]] = buildSerializer
 
   implicit def anyRefSerializer[T <: Serializable]: ContainerSerializer[T] = buildSerializer
 }
 
 /**
- * Create case objects that implement this trait and use the case objects to denote
- * specific SnapshotGroups for RequestVars
+ * Create case objects that implement this trait and use the case objects to denote specific
+ * SnapshotGroups for RequestVars
  */
 trait RequestVarSnapshotGroup
 
 /**
- * This subclass of RequestVars that allow the specification of a RequestVarSnapshotGroup.
- * You can create a snapshot of all the members of this group in RequestVar.snapshot
+ * This subclass of RequestVars that allow the specification of a RequestVarSnapshotGroup. You can
+ * create a snapshot of all the members of this group in RequestVar.snapshot
  */
-abstract class SnapshotRequestVar[T](val group: RequestVarSnapshotGroup, d: => T) extends RequestVar[T](d) {
+abstract class SnapshotRequestVar[T](val group: RequestVarSnapshotGroup, d: => T)
+    extends RequestVar[T](d) {
 
   /**
    * The Snapshot group this requestvar is part of
@@ -344,10 +358,11 @@ abstract class SnapshotRequestVar[T](val group: RequestVarSnapshotGroup, d: => T
  * The companion object to RequestVars
  */
 object RequestVar {
+
   /**
    * Given a RequestVarSnapshotGroup, generate a function that will snapshot all the RequestVars in
-   * that group.  When the function is run, the RequestVars will be set to the value they held
-   * when they were snapshotted
+   * that group. When the function is run, the RequestVars will be set to the value they held when
+   * they were snapshotted
    */
   def snapshot(group: RequestVarSnapshotGroup): () => Unit = {
     // capture the restore functions
@@ -385,17 +400,17 @@ object RequestVar {
  * @param dflt - the default value to be returned if none was set prior to
  * requesting a value to be returned from the container
  */
-abstract class RequestVar[T](dflt: => T) extends AnyVar[T, RequestVar[T]](dflt) with HasLogUnreadVal {
+abstract class RequestVar[T](dflt: => T) extends AnyVar[T, RequestVar[T]](dflt)
+    with HasLogUnreadVal {
   type CleanUpParam = Box[LiftSession]
 
   /**
-   * Is this RequestVar a member of a snapshot group?  If so, specify the group here
+   * Is this RequestVar a member of a snapshot group? If so, specify the group here
    */
   def snapshotGroup: Box[RequestVarSnapshotGroup] = Empty
 
   /**
-   * Return a function that, when applied, will set the value of the RequestVar to its
-   * current value
+   * Return a function that, when applied, will set the value of the RequestVar to its current value
    */
   def snapshot(): () => Unit = {
     if (set_?) {
@@ -408,7 +423,8 @@ abstract class RequestVar[T](dflt: => T) extends AnyVar[T, RequestVar[T]](dflt) 
 
   override protected def findFunc(name: String): Box[T] = RequestVarHandler.get(name)
 
-  override protected def setFunc(name: String, value: T): Unit = RequestVarHandler.set(name, this, value)
+  override protected def setFunc(name: String, value: T): Unit =
+    RequestVarHandler.set(name, this, value)
 
   override protected def clearFunc(name: String): Unit = RequestVarHandler.clear(name)
 
@@ -419,8 +435,8 @@ abstract class RequestVar[T](dflt: => T) extends AnyVar[T, RequestVar[T]](dflt) 
   }
 
   /**
-   * Different Vars require different mechanisms for synchronization.  This method implements
-   * the Var specific synchronization mechanism
+   * Different Vars require different mechanisms for synchronization. This method implements the Var
+   * specific synchronization mechanism
    */
   def doSync[F](f: => F): F = f
 
@@ -431,21 +447,23 @@ abstract class RequestVar[T](dflt: => T) extends AnyVar[T, RequestVar[T]](dflt) 
   }
 
   /**
-   * Generate a function that will take a snapshot of the current RequestVars
-   * such that they can be restored
+   * Generate a function that will take a snapshot of the current RequestVars such that they can be
+   * restored
    */
-  final def generateSnapshotRestorer[T](): Function1[Function0[T], T] = RequestVarHandler.generateSnapshotRestorer()
+  final def generateSnapshotRestorer[T](): Function1[Function0[T], T] =
+    RequestVarHandler.generateSnapshotRestorer()
 
   override protected def registerCleanupFunc(in: Box[LiftSession] => Unit): Unit = {
     RequestVarHandler.addCleanupFunc(in)
   }
 
   /**
-   * This defines whether or not Lift will log when a RequestVar is set but then not read within
-   * the same request cycle. Change this to false to turn off logging. Logging can also be turned
-   * off globally via LiftRules.logUnreadRequestVars.
+   * This defines whether or not Lift will log when a RequestVar is set but then not read within the
+   * same request cycle. Change this to false to turn off logging. Logging can also be turned off
+   * globally via LiftRules.logUnreadRequestVars.
    *
-   * @see LiftRules#logUnreadRequestVars
+   * @see
+   *   LiftRules#logUnreadRequestVars
    */
   def logUnreadVal = true
 }
@@ -461,12 +479,14 @@ abstract class RequestVar[T](dflt: => T) extends AnyVar[T, RequestVar[T]](dflt) 
  * @param dflt - the default value to be returned if none was set prior to
  * requesting a value to be returned from the container
  */
-abstract class TransientRequestVar[T](dflt: => T) extends AnyVar[T, TransientRequestVar[T]](dflt) with HasLogUnreadVal {
+abstract class TransientRequestVar[T](dflt: => T) extends AnyVar[T, TransientRequestVar[T]](dflt)
+    with HasLogUnreadVal {
   type CleanUpParam = Box[LiftSession]
 
   override protected def findFunc(name: String): Box[T] = TransientRequestVarHandler.get(name)
 
-  override protected def setFunc(name: String, value: T): Unit = TransientRequestVarHandler.set(name, this, value)
+  override protected def setFunc(name: String, value: T): Unit =
+    TransientRequestVarHandler.set(name, this, value)
 
   override protected def clearFunc(name: String): Unit = TransientRequestVarHandler.clear(name)
 
@@ -477,12 +497,13 @@ abstract class TransientRequestVar[T](dflt: => T) extends AnyVar[T, TransientReq
   }
 
   protected override def testWasSet(name: String, bn: String): Boolean = {
-    TransientRequestVarHandler.get(name).isDefined || (TransientRequestVarHandler.get(bn) openOr false)
+    TransientRequestVarHandler.get(
+      name).isDefined || (TransientRequestVarHandler.get(bn) openOr false)
   }
 
   /**
-   * Different Vars require different mechanisms for synchronization.  This method implements
-   * the Var specific synchronization mechanism
+   * Different Vars require different mechanisms for synchronization. This method implements the Var
+   * specific synchronization mechanism
    */
   def doSync[F](f: => F): F = f
 
@@ -492,11 +513,12 @@ abstract class TransientRequestVar[T](dflt: => T) extends AnyVar[T, TransientReq
     TransientRequestVarHandler.addCleanupFunc(in)
 
   /**
-   * This defines whether or not Lift will log when a RequestVar is set but then not read within
-   * the same request cycle. Change this to false to turn off logging. Logging can also be turned
-   * off globally via LiftRules.logUnreadRequestVars.
+   * This defines whether or not Lift will log when a RequestVar is set but then not read within the
+   * same request cycle. Change this to false to turn off logging. Logging can also be turned off
+   * globally via LiftRules.logUnreadRequestVars.
    *
-   * @see LiftRules#logUnreadRequestVars
+   * @see
+   *   LiftRules#logUnreadRequestVars
    */
   def logUnreadVal = false
 }
@@ -507,7 +529,6 @@ trait CleanRequestVarOnSessionTransition {
 
 private[http] object RequestVarHandler extends CoreRequestVarHandler {
   type MyType = RequestVar[_]
-
 
   private[http] def instancesOfGroup(grp: RequestVarSnapshotGroup): List[MyType] = {
     val cmp = Full(grp)
@@ -527,32 +548,34 @@ private[http] trait CoreRequestVarHandler {
 
   private val logger = Logger(classOf[CoreRequestVarHandler])
   // This maps from the RV name to (RV instance, value, set-but-not-read flag)
-  private val vals: ThreadGlobal[ConcurrentHashMap[String, (MyType, Any, Boolean)]] = new ThreadGlobal
+  private val vals: ThreadGlobal[ConcurrentHashMap[String, (MyType, Any, Boolean)]] =
+    new ThreadGlobal
   private val cleanup: ThreadGlobal[ListBuffer[Box[LiftSession] => Unit]] = new ThreadGlobal
   private val isIn: ThreadGlobal[String] = new ThreadGlobal
   private val sessionThing: ThreadGlobal[Box[LiftSession]] = new ThreadGlobal
 
   /**
-   * Generate a function that will take a snapshot of the current RequestVars
-   * such that they can be restored
+   * Generate a function that will take a snapshot of the current RequestVars such that they can be
+   * restored
    */
   final def generateSnapshotRestorer[T](): Function1[Function0[T], T] = {
     val myVals = vals.value
     val mySessionThing = sessionThing.value
 
-    f => isIn.doWith("in")(
-      vals.doWith(myVals)(
-        cleanup.doWith(new ListBuffer) {
-          sessionThing.doWith(mySessionThing) {
-            val ret: T = f()
+    f =>
+      isIn.doWith("in")(
+        vals.doWith(myVals)(
+          cleanup.doWith(new ListBuffer) {
+            sessionThing.doWith(mySessionThing) {
+              val ret: T = f()
 
-            cleanup.value.toList.foreach(clean => Helpers.tryo(clean(sessionThing.value)))
+              cleanup.value.toList.foreach(clean => Helpers.tryo(clean(sessionThing.value)))
 
-            ret
+              ret
+            }
           }
-        }
+        )
       )
-    )
   }
 
   protected def backingStore: Box[ConcurrentHashMap[String, (MyType, Any, Boolean)]] =
@@ -601,7 +624,6 @@ private[http] trait CoreRequestVarHandler {
 
       toRemove.foreach(n => tv.asScala -= n)
 
-
       sessionThing.set(session)
       f
     } else {
@@ -614,12 +636,17 @@ private[http] trait CoreRequestVarHandler {
               cleanup.value.toList.foreach(clean => Helpers.tryo(clean(sessionThing.value)))
 
               if (Props.devMode && LiftRules.logUnreadRequestVars) {
-                vals.value.keys.asScala.filter(!_.startsWith(VarConstants.varPrefix + "net.liftweb"))
+                vals.value.keys.asScala.filter(!_.startsWith(
+                  VarConstants.varPrefix + "net.liftweb"))
                   .filter(!_.endsWith(VarConstants.initedSuffix))
-                  .foreach(key => vals.value.asScala(key) match {
-                  case (rv, _, true) if rv.logUnreadVal => logger.warn("RequestVar %s was set but not read".format(key.replace(VarConstants.varPrefix, "")))
-                  case _ =>
-                })
+                  .foreach(key =>
+                    vals.value.asScala(key) match {
+                      case (rv, _, true) if rv.logUnreadVal =>
+                        logger.warn("RequestVar %s was set but not read".format(key.replace(
+                          VarConstants.varPrefix,
+                          "")))
+                      case _ =>
+                    })
               }
 
               ret
@@ -630,7 +657,6 @@ private[http] trait CoreRequestVarHandler {
     }
   }
 }
-
 
 object AnyVar {
   implicit def whatSessionVarIs[T](in: SessionVar[T]): T = in.is
@@ -652,7 +678,8 @@ abstract class SessionMemoize[K, V] extends MemoizeVar[K, V] {
 }
 
 /**
- * Memoize a value for the duration of the current request (and subsequent Ajax requests made as a result of viewing the page)
+ * Memoize a value for the duration of the current request (and subsequent Ajax requests made as a
+ * result of viewing the page)
  */
 abstract class RequestMemoize[K, V] extends MemoizeVar[K, V] {
 

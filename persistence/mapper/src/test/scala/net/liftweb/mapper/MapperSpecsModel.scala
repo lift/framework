@@ -22,7 +22,6 @@ import java.util.Locale
 import common._
 import json._
 import util._
-import Helpers._
 
 /*
  * This file contains a number of objects that are common to several
@@ -44,14 +43,14 @@ object MapperSpecsModel {
 
   MapperRules.columnName = snakify
   MapperRules.tableName = snakify
-  
+
   // Simple name calculator
   def displayNameCalculator(bm: BaseMapper, l: Locale, name: String) = {
     val mapperName = bm.dbName
     val displayName = name match {
-      case "firstName" if l == Locale.getDefault()    => "DEFAULT:" + mapperName + "." + name
+      case "firstName" if l == Locale.getDefault() => "DEFAULT:" + mapperName + "." + name
       case "firstName" if l == new Locale("xx", "YY") => "xx_YY:" + mapperName + "." + name
-      case _                                          => name
+      case _ => name
     }
     displayName
   }
@@ -72,26 +71,60 @@ object MapperSpecsModel {
       c.jndiName != "snake"
     }
 
-    Schemifier.destroyTables_!!(DefaultConnectionIdentifier, if (doLog) Schemifier.infoF _ else ignoreLogger _, SampleTag, SampleModel, Dog, Mixer, Dog2, User, TstItem, Thing)
-    Schemifier.destroyTables_!!(DbProviders.SnakeConnectionIdentifier, if (doLog) Schemifier.infoF _ else ignoreLogger _, SampleTagSnake, SampleModelSnake)
-    Schemifier.schemify(true, if (doLog) Schemifier.infoF _ else ignoreLogger _, DefaultConnectionIdentifier, SampleModel, SampleTag, User, Dog, Mixer, Dog2, TstItem, Thing)
-    Schemifier.schemify(true, if (doLog) Schemifier.infoF _ else ignoreLogger _, DbProviders.SnakeConnectionIdentifier, SampleModelSnake, SampleTagSnake)
+    Schemifier.destroyTables_!!(
+      DefaultConnectionIdentifier,
+      if (doLog) Schemifier.infoF _ else ignoreLogger _,
+      SampleTag,
+      SampleModel,
+      Dog,
+      Mixer,
+      Dog2,
+      User,
+      TstItem,
+      Thing)
+    Schemifier.destroyTables_!!(
+      DbProviders.SnakeConnectionIdentifier,
+      if (doLog) Schemifier.infoF _ else ignoreLogger _,
+      SampleTagSnake,
+      SampleModelSnake)
+    Schemifier.schemify(
+      true,
+      if (doLog) Schemifier.infoF _ else ignoreLogger _,
+      DefaultConnectionIdentifier,
+      SampleModel,
+      SampleTag,
+      User,
+      Dog,
+      Mixer,
+      Dog2,
+      TstItem,
+      Thing)
+    Schemifier.schemify(
+      true,
+      if (doLog) Schemifier.infoF _ else ignoreLogger _,
+      DbProviders.SnakeConnectionIdentifier,
+      SampleModelSnake,
+      SampleTagSnake)
   }
 }
-
 
 object SampleTag extends SampleTag with LongKeyedMetaMapper[SampleTag] {
   override def dbAddTable = Full(populate)
 
   private def populate(): Unit = {
     val samp = SampleModel.findAll()
-    val tags = List("Hello", "Moose", "Frog", "WooHoo", "Sloth",
-                    "Meow", "Moof")
+    val tags = List(
+      "Hello",
+      "Moose",
+      "Frog",
+      "WooHoo",
+      "Sloth",
+      "Meow",
+      "Moof")
     for (t <- tags;
-         m <- samp) SampleTag.create.tag(t).model(m).save
+      m <- samp) SampleTag.create.tag(t).model(m).save
   }
 }
-
 
 class SampleTag extends LongKeyedMapper[SampleTag] with IdPK {
   def getSingleton = SampleTag
@@ -146,21 +179,25 @@ class SampleModel extends KeyedMapper[Long, SampleModel] {
   def encodeAsJson(): JsonAST.JObject = SampleModel.encodeAsJson(this)
 }
 
-
 object SampleTagSnake extends SampleTagSnake with LongKeyedMetaMapper[SampleTagSnake] {
   override def dbAddTable = Full(populate)
 
   private def populate(): Unit = {
     val samp = SampleModelSnake.findAll()
-    val tags = List("Hello", "Moose", "Frog", "WooHoo", "Sloth",
-                    "Meow", "Moof")
+    val tags = List(
+      "Hello",
+      "Moose",
+      "Frog",
+      "WooHoo",
+      "Sloth",
+      "Meow",
+      "Moof")
     for (t <- tags;
-         m <- samp) SampleTagSnake.create.tag(t).model(m).save
+      m <- samp) SampleTagSnake.create.tag(t).model(m).save
   }
 
   override def dbDefaultConnectionIdentifier = DbProviders.SnakeConnectionIdentifier
 }
-
 
 class SampleTagSnake extends LongKeyedMapper[SampleTagSnake] with IdPK {
   def getSingleton = SampleTagSnake
@@ -176,7 +213,6 @@ class SampleTagSnake extends LongKeyedMapper[SampleTagSnake] with IdPK {
   }
 
 }
-
 
 object SampleModelSnake extends SampleModelSnake with KeyedMetaMapper[Long, SampleModelSnake] {
   override def dbAddTable = Full(populate)
@@ -194,7 +230,6 @@ object SampleModelSnake extends SampleModelSnake with KeyedMetaMapper[Long, Samp
 
   override def dbDefaultConnectionIdentifier = DbProviders.SnakeConnectionIdentifier
 }
-
 
 class SampleModelSnake extends KeyedMapper[Long, SampleModelSnake] {
   def getSingleton = SampleModelSnake
@@ -215,7 +250,6 @@ class SampleModelSnake extends KeyedMapper[Long, SampleModelSnake] {
   def encodeAsJson(): JsonAST.JObject = SampleModelSnake.encodeAsJson(this)
 }
 
-
 /**
  * The singleton that has methods for accessing the database
  */
@@ -231,22 +265,23 @@ object User extends User with MetaMegaProtoUser[User] {
   override def dbTableName = "users"
 
   // define the DB table name
-  override def screenWrap = Full(<lift:surround with="default" at="content"><lift:bind/></lift:surround>)
+  override def screenWrap =
+    Full(<lift:surround with="default" at="content"><lift:bind/></lift:surround>)
 
   // define the order fields will appear in forms and output
-  override def fieldOrder = List(id, firstName, lastName, email, locale, timezone, password, textArea)
+  override def fieldOrder =
+    List(id, firstName, lastName, email, locale, timezone, password, textArea)
 
   // comment this line out to require email validations
   override def skipEmailValidation = true
 }
 
-
 /**
- * An O-R mapped "User" class that includes first name, last name, password and we add a "Personal Essay" to it
+ * An O-R mapped "User" class that includes first name, last name, password and we add a "Personal
+ * Essay" to it
  */
 class User extends MegaProtoUser[User] {
   def getSingleton = User
-
 
   // what's the "meta" server
 
@@ -259,9 +294,7 @@ class User extends MegaProtoUser[User] {
     override def displayName = "Personal Essay"
   }
 
-
 }
-
 
 class Dog extends LongKeyedMapper[Dog] with IdPK {
   def getSingleton = Dog
@@ -274,7 +307,6 @@ class Dog extends LongKeyedMapper[Dog] with IdPK {
 
   object price extends MappedDecimal(this, new java.math.MathContext(7), 2)
 }
-
 
 object Dog extends Dog with LongKeyedMetaMapper[Dog] {
   override def dbAddTable = Full(populate)
@@ -289,7 +321,6 @@ object Dog extends Dog with LongKeyedMetaMapper[Dog] {
   def who(in: Dog): Box[User] = in.owner
 }
 
-
 class Mixer extends LongKeyedMapper[Mixer] with IdPK {
   def getSingleton = Mixer
 
@@ -303,7 +334,6 @@ class Mixer extends LongKeyedMapper[Mixer] with IdPK {
     override def defaultValue = -99
   }
 }
-
 
 object Mixer extends Mixer with LongKeyedMetaMapper[Mixer] {
   override def dbAddTable = Full(populate)
@@ -325,7 +355,6 @@ object Thing extends Thing with KeyedMetaMapper[String, Thing] {
   })
 }
 
-
 class Thing extends KeyedMapper[String, Thing] {
   def getSingleton = Thing
 
@@ -340,10 +369,8 @@ class Thing extends KeyedMapper[String, Thing] {
   object name extends MappedString(this, 64)
 }
 
-
 /**
- * Test class to see if you can have a non-autogenerated primary key
- * Issue 552
+ * Test class to see if you can have a non-autogenerated primary key Issue 552
  */
 class TstItem extends LongKeyedMapper[TstItem] {
   def getSingleton = TstItem
@@ -357,9 +384,7 @@ class TstItem extends LongKeyedMapper[TstItem] {
   object name extends MappedText(this)
 }
 
-
 object TstItem extends TstItem with LongKeyedMetaMapper[TstItem]
-
 
 class Dog2 extends LongKeyedMapper[Dog2] with CreatedUpdated {
   def getSingleton = Dog2
@@ -381,13 +406,11 @@ class Dog2 extends LongKeyedMapper[Dog2] with CreatedUpdated {
     override def dbIndexed_? = true
   }
 
-
   object isDog extends MappedBoolean(this) {
     override def dbColumnName = "is_a_dog"
     override def defaultValue = false
     override def dbIndexed_? = true
   }
-
 
   object createdTime extends MappedDateTime(this) {
     override def dbColumnName = "CreatedTime"
@@ -395,9 +418,7 @@ class Dog2 extends LongKeyedMapper[Dog2] with CreatedUpdated {
     override def dbIndexed_? = true
   }
 
-
 }
-
 
 object Dog2 extends Dog2 with LongKeyedMetaMapper[Dog2] {
   override def dbTableName = "DOG2"

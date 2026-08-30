@@ -23,116 +23,116 @@ import java.io.{InputStreamReader, StringWriter}
 import java.nio.file.{Files, Paths}
 
 /**
- * Quick and dirty test for measuring the time of this Parser.
- * Contains hardcoded file paths, just ignore this, it will be removed soon.
+ * Quick and dirty test for measuring the time of this Parser. Contains hardcoded file paths, just
+ * ignore this, it will be removed soon.
  */
 
 trait TimedTransformer {
 
-    /**
-     * Overwrite this method to return a custom decorator if you want modified output.
-     */
-    def deco():Decorator = Decorator
+  /**
+   * Overwrite this method to return a custom decorator if you want modified output.
+   */
+  def deco(): Decorator = Decorator
 
-    private object lineTokenizer extends LineTokenizer {
-        override def allowXmlBlocks() = TimedTransformer.this.deco().allowVerbatimXml()
-    }
-    private object blockParser extends BlockParsers {
-        override def deco() = TimedTransformer.this.deco()
-    }
+  private object lineTokenizer extends LineTokenizer {
+    override def allowXmlBlocks() = TimedTransformer.this.deco().allowVerbatimXml()
+  }
+  private object blockParser extends BlockParsers {
+    override def deco() = TimedTransformer.this.deco()
+  }
 
-    /**
-     * This is the method that turns markdown source into xhtml.
-     */
-    def apply(s:String) = {
+  /**
+   * This is the method that turns markdown source into xhtml.
+   */
+  def apply(s: String) = {
 
-        //first, run the input through the line parser
-        val (ms1,lineReader:MarkdownLineReader) = TimeTest.executionTime(()=>lineTokenizer.tokenize(s))
+    // first, run the input through the line parser
+    val (ms1, lineReader: MarkdownLineReader) =
+      TimeTest.executionTime(() => lineTokenizer.tokenize(s))
 
-        //then, run it through the block parser
-        val (ms2, result) = TimeTest.executionTime(()=>blockParser(lineReader))
-        println("lines=" + ms1 + ", blocks=" + ms2)
-        result
-    }
+    // then, run it through the block parser
+    val (ms2, result) = TimeTest.executionTime(() => blockParser(lineReader))
+    println("lines=" + ms1 + ", blocks=" + ms2)
+    result
+  }
 }
 
-
-
 object TimeTest {
-    private object actuariusProcessor extends TimedTransformer()
+  private object actuariusProcessor extends TimedTransformer()
 
-    private def readFile(path:String):String  = {
-        //read from system input stream
-        val reader = new InputStreamReader(Files.newInputStream(Paths.get(path)))
-        val writer = new StringWriter()
-        val buffer = new Array[Char](1024)
-		var read = reader.read(buffer)
-		while (read != -1) {
-			writer.write(buffer, 0, read)
-			read = reader.read(buffer)
-		}
-        //turn read input into a string
-        writer.toString
+  private def readFile(path: String): String = {
+    // read from system input stream
+    val reader = new InputStreamReader(Files.newInputStream(Paths.get(path)))
+    val writer = new StringWriter()
+    val buffer = new Array[Char](1024)
+    var read = reader.read(buffer)
+    while (read != -1) {
+      writer.write(buffer, 0, read)
+      read = reader.read(buffer)
     }
+    // turn read input into a string
+    writer.toString
+  }
 
-    def executionTime[T](f:(()=>T)):(Long, T) = {
-        val start = System.currentTimeMillis
-        val t = f()
-        val end = System.currentTimeMillis
-        (end - start, t)
+  def executionTime[T](f: (() => T)): (Long, T) = {
+    val start = System.currentTimeMillis
+    val t = f()
+    val end = System.currentTimeMillis
+    (end - start, t)
+  }
+
+  private def runActuarius(markdown: String, iterations: Int): Unit = {
+    for (i <- 0 until iterations) actuariusProcessor(markdown)
+  }
+
+  def testRun(markdown: String, iterations: Int): Unit = {
+    println("Running Actuarius " + iterations + " times...")
+    println("... took " + (executionTime(() => runActuarius(markdown, iterations)))._1 + "ms")
+  }
+
+  object testParser extends BaseParsers {
+    // def ws1:Parser[String] = """( |\t|\v)+""".r
+    def ws2: Parser[String] = rep1(elem(' ') | elem('\t') | elem('\u000B')) ^^ { _.mkString }
+
+    def runParser(s: String, p: Parser[String], iterations: Int): Unit = {
+      for (i <- 0 until iterations) {
+        apply(p, s)
+      }
     }
+  }
 
-    private def runActuarius(markdown:String, iterations:Int): Unit = {
-        for (i <- 0 until iterations) actuariusProcessor(markdown)
-    }
+  def runActuarius = {
+    val markdown = readFile("/home/chris/sbt_projects/markdown_race/test.txt").mkString * 100
+    val iterations = 10
+    println("==== First run to warm up the VM: ====")
+    testRun(markdown, iterations)
+    println("==== Second run, JIT compiler should be done now: ====")
+    testRun(markdown, iterations)
+  }
 
+  def runWs = {
+    val wsString = " " * 1000
+    val iterations = 100000
+    println("Running ws...")
+    println("...took " + executionTime(() =>
+      testParser.runParser(wsString, testParser.ws, iterations))._1 + "ms")
+    // println("Running ws1...")
+    // println("...took " + executionTime (() => testParser.runParser(wsString, testParser.ws, iterations)))
+    println("Running ws2...")
+    println("...took " + executionTime(() =>
+      testParser.runParser(wsString, testParser.ws2, iterations))._1 + "ms")
 
-    def testRun(markdown:String, iterations:Int): Unit = {
-        println("Running Actuarius " + iterations + " times...")
-        println("... took " + (executionTime(() => runActuarius(markdown, iterations)))._1 + "ms")
-    }
+  }
 
-    object testParser extends BaseParsers {
-        //def ws1:Parser[String] = """( |\t|\v)+""".r
-        def ws2:Parser[String] = rep1(elem(' ') | elem('\t') | elem('\u000B')) ^^ {_.mkString}
-
-        def runParser(s:String, p:Parser[String], iterations:Int): Unit = {
-            for (i <- 0 until iterations) {
-                apply(p, s)
-            }
-        }
-    }
-
-    def runActuarius = {
-        val markdown = readFile("/home/chris/sbt_projects/markdown_race/test.txt").mkString*100
-        val iterations = 10
-        println("==== First run to warm up the VM: ====")
-        testRun(markdown, iterations)
-        println("==== Second run, JIT compiler should be done now: ====")
-        testRun(markdown, iterations)
-    }
-
-    def runWs = {
-        val wsString = " " * 1000
-        val iterations = 100000
-        println("Running ws...")
-        println("...took " + executionTime (() => testParser.runParser(wsString, testParser.ws, iterations))._1 + "ms")
-        //println("Running ws1...")
-        //println("...took " + executionTime (() => testParser.runParser(wsString, testParser.ws, iterations)))
-        println("Running ws2...")
-        println("...took " + executionTime (() => testParser.runParser(wsString, testParser.ws2, iterations))._1 + "ms")
-
-    }
-
-    def main(args:Array[String]): Unit = {
-        /*
+  def main(args: Array[String]): Unit = {
+    /*
         val markdown = readFile("/home/chris/sbt_projects/markdown_race/test.txt").mkString*100
         val iterations = 10
         println("==== First run to warm up the VM: ====")
         testRun(markdown, iterations)
         println("==== Second run, JIT compiler should be done now: ====")
         testRun(markdown, iterations)*/
-        //runWs
-        runActuarius
-    }
+    // runWs
+    runActuarius
+  }
 }

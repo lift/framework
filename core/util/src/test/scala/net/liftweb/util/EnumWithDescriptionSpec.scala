@@ -19,11 +19,10 @@ package util
 
 import org.specs2.mutable.Specification
 
-
 /**
  * Systems under specification for EnumWithDescription.
  */
-class EnumWithDescriptionSpec extends Specification  {
+class EnumWithDescriptionSpec extends Specification {
   "EnumWithDescription Specification".title
 
   "An enumWithDescription" should {
@@ -57,22 +56,20 @@ class EnumWithDescriptionSpec extends Specification  {
     }
 
     "have a mrs description" in {
-      Title1.valueOf("MRS").getOrElse(null).description must beMatching ("Mrs")
+      Title1.valueOf("MRS").getOrElse(null).description must beMatching("Mrs")
     }
   }
 
 }
 
 object Title1 extends EnumWithDescription {
-  val mr  = Value("MR", "Mr")
+  val mr = Value("MR", "Mr")
   val mrs = Value("MRS", "Mrs")
-  val dr  = Value("DR", "Dr")
+  val dr = Value("DR", "Dr")
   val sir = Value("SirS", "Sir")
 }
 
-
 object Title2 extends EnumWithDescription {
-  val mr  = Value("MR", "Mr")
+  val mr = Value("MR", "Mr")
   val mrs = Value("MRS", "Mrs")
 }
-

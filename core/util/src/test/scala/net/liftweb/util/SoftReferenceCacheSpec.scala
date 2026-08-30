@@ -4,11 +4,11 @@ import org.specs2.mutable._
 import net.liftweb.common._
 
 class SoftReferenceCacheSpec extends Specification {
-  
+
   sequential
 
   object cache extends SoftReferenceCache[String, String](1)
-  
+
   "SoftReferenceCache " should {
     "Accept additions" in {
       cache += ("test" -> "test")

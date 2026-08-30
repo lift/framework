@@ -19,7 +19,6 @@ package json
 
 import org.specs2.mutable.Specification
 
-
 object DiffExamples extends Specification {
   import MergeExamples.{scala1, scala2, lotto1, lotto2, mergedLottoResult}
 
@@ -70,5 +69,6 @@ object DiffExamples extends Specification {
   }
 
   private def read(resource: String) =
-    parse(scala.io.Source.fromInputStream(getClass.getResourceAsStream(resource)).getLines().mkString)
+    parse(
+      scala.io.Source.fromInputStream(getClass.getResourceAsStream(resource)).getLines().mkString)
 }

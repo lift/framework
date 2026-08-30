@@ -30,7 +30,7 @@ import util.Helpers.secureXML
 class MsgsSpec extends Specification with XmlMatchers {
   "Msgs Specification".title
 
-  def withSession[T](f: => T) : T =
+  def withSession[T](f: => T): T =
     S.initIfUninitted(new LiftSession("test", "", Empty))(f)
 
   "The built-in Msgs snippet" should {
@@ -73,4 +73,3 @@ class MsgsSpec extends Specification with XmlMatchers {
     }
   }
 }
-

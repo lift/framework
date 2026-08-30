@@ -3,16 +3,16 @@ package net.liftweb.http
 import net.liftweb.actor.{LAFuture, LAScheduler}
 import net.liftweb.common.{EmptyBox, Failure, Full}
 
-
 object LAFutureWithSession {
 
   /**
-    * Creates `LAFuture` instance aware of the current request and session. Each `LAFuture` returned by chained
-    * transformation method (e.g. `map`, `flatMap`) will be also request/session-aware. However, it's
-    * important to bear in mind that initial session or request are not propagated to chained methods. It's required
-    * that current execution thread for chained method has request or session available in scope if reading/writing
-    * some data to it as a part of chained method execution.
-    */
+   * Creates `LAFuture` instance aware of the current request and session. Each `LAFuture` returned
+   * by chained transformation method (e.g. `map`, `flatMap`) will be also request/session-aware.
+   * However, it's important to bear in mind that initial session or request are not propagated to
+   * chained methods. It's required that current execution thread for chained method has request or
+   * session available in scope if reading/writing some data to it as a part of chained method
+   * execution.
+   */
   def withCurrentSession[T](task: => T, scheduler: LAScheduler = LAScheduler): LAFuture[T] = {
     S.session match {
       case Full(session) =>
@@ -27,12 +27,14 @@ object LAFutureWithSession {
     val sessionContext = new LAFuture.Context {
 
       def around[S](fn: () => S): () => S = {
-        val session = S.session openOrThrowException "LiftSession not available in this thread context"
+        val session =
+          S.session openOrThrowException "LiftSession not available in this thread context"
         session.buildDeferredFunction(fn)
       }
 
       def around[A, S](fn: (A) => S): (A) => S = {
-        val session = S.session openOrThrowException "LiftSession not available in this thread context"
+        val session =
+          S.session openOrThrowException "LiftSession not available in this thread context"
         session.buildDeferredFunction(fn)
       }
     }

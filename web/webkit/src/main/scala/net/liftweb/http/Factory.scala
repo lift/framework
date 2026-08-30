@@ -22,26 +22,23 @@ import util._
 import scala.reflect.Manifest
 
 /**
- * A base trait for a Factory.  A Factory is both an Injector and
- * a collection of FactorMaker instances.  The FactoryMaker instances auto-register
- * with the Injector.  This provides both concrete Maker/Vender functionality as
- * well as Injector functionality.
+ * A base trait for a Factory. A Factory is both an Injector and a collection of FactorMaker
+ * instances. The FactoryMaker instances auto-register with the Injector. This provides both
+ * concrete Maker/Vender functionality as well as Injector functionality.
  */
 trait Factory extends SimpleInjector {
+
   /**
-   * Create an object or val that is a subclass of the FactoryMaker to
-   * generate factory for a particular class as well as define session and
-   * request specific vendors and use doWith to define the vendor just for
-   * the scope of the call.
+   * Create an object or val that is a subclass of the FactoryMaker to generate factory for a
+   * particular class as well as define session and request specific vendors and use doWith to
+   * define the vendor just for the scope of the call.
    */
-  abstract class FactoryMaker[T](_default: Vendor[T])
-                                (implicit man: Manifest[T]) extends
-  StackableMaker[T] with Vendor[T] {
+  abstract class FactoryMaker[T](_default: Vendor[T])(implicit man: Manifest[T])
+      extends StackableMaker[T] with Vendor[T] {
     registerInjection(this)(man)
-    
+
     /**
-     * An alias for the default object so that it can be accessed
-     * from Java
+     * An alias for the default object so that it can be accessed from Java
      */
     def theDefault: PSettableValueHolder[Vendor[T]] = default
 
@@ -87,4 +84,3 @@ trait Factory extends SimpleInjector {
     override implicit def make: Box[T] = super.make or find(_sub) or Full(default.is.apply())
   }
 }
-

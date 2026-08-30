@@ -22,7 +22,10 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
     "fail if session is not available" in {
       val future = LAFutureWithSession.withCurrentSession("kaboom")
 
-      future.get(timeout) must_== Failure("LiftSession not available in this thread context", Empty, Empty)
+      future.get(timeout) must_== Failure(
+        "LiftSession not available in this thread context",
+        Empty,
+        Empty)
     }
 
     "succeed with original value if session is available" withSFor "/" in {
@@ -189,24 +192,28 @@ class LAFutureWithSessionSpec extends WebSpec with ThrownMessages {
       SessionVar1("come")
       SessionVar2("prey")
 
-      val future = LAFutureWithSession.withCurrentSession("do not come between the nazgul and his prey")
+      val future =
+        LAFutureWithSession.withCurrentSession("do not come between the nazgul and his prey")
       val filtered = future
         .withFilter(_.contains(SessionVar1.is))
         .withFilter(_.contains(SessionVar2.is))
 
-      filtered.get(timeout) must eventually(beEqualTo("do not come between the nazgul and his prey"))
+      filtered.get(timeout) must eventually(
+        beEqualTo("do not come between the nazgul and his prey"))
     }
 
     "have access to request variables in chains of withFilter()" withSFor "/" in {
       ReqVar1("hurt")
       ReqVar2("precious")
 
-      val future = LAFutureWithSession.withCurrentSession("mustn't go that way, mustn't hurt the precious!")
+      val future =
+        LAFutureWithSession.withCurrentSession("mustn't go that way, mustn't hurt the precious!")
       val filtered = future
         .withFilter(_.contains(ReqVar1.is))
         .withFilter(_.contains(ReqVar2.is))
 
-      filtered.get(timeout) must eventually(beEqualTo("mustn't go that way, mustn't hurt the precious!"))
+      filtered.get(timeout) must eventually(
+        beEqualTo("mustn't go that way, mustn't hurt the precious!"))
     }
 
     "have access to session variables in chains of map()" withSFor "/" in {

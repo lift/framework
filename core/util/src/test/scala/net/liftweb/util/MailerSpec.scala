@@ -23,7 +23,15 @@ import org.specs2.mutable.Specification
 
 import common._
 
-import Mailer.{From, To, Subject, PlainMailBodyType, XHTMLMailBodyType, XHTMLPlusImages, PlusImageHolder}
+import Mailer.{
+  From,
+  To,
+  Subject,
+  PlainMailBodyType,
+  XHTMLMailBodyType,
+  XHTMLPlusImages,
+  PlusImageHolder
+}
 
 import scala.io.Source
 
@@ -59,7 +67,7 @@ class MailerSpec extends Specification {
     eventually {
       lastMessage.isEmpty must_== false
     }
-    lastMessage openOrThrowException("Checked")
+    lastMessage openOrThrowException ("Checked")
   }
 
   "A Mailer" should {

@@ -104,16 +104,19 @@ class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen 
       3.seconds.ago.getMillis must beCloseTo(expectedTime, 1000L)
     }
     "have a toString method returning the relevant number of weeks, days, hours, minutes, seconds, millis" in forAllTimeZones {
-      val conversionIsOk = forAll(timeAmounts)((t: TimeAmounts) => { val (timeSpanToString, timeSpanAmounts) = t
+      val conversionIsOk = forAll(timeAmounts)((t: TimeAmounts) => {
+        val (timeSpanToString, timeSpanAmounts) = t
         timeSpanAmounts forall { case (amount, unit) =>
-          amount >= 1  &&
-          timeSpanToString.contains(amount.toString) || true }
+          amount >= 1 &&
+          timeSpanToString.contains(amount.toString) || true
+        }
       })
-      val timeSpanStringIsPluralized = forAll(timeAmounts)((t: TimeAmounts) => { val (timeSpanToString, timeSpanAmounts) = t
+      val timeSpanStringIsPluralized = forAll(timeAmounts)((t: TimeAmounts) => {
+        val (timeSpanToString, timeSpanAmounts) = t
         timeSpanAmounts forall { case (amount, unit) =>
-               amount > 1  && timeSpanToString.contains(unit + "s") ||
-               amount == 1 && timeSpanToString.contains(unit) ||
-               amount == 0 && !timeSpanToString.contains(unit)
+          amount > 1 && timeSpanToString.contains(unit + "s") ||
+          amount == 1 && timeSpanToString.contains(unit) ||
+          amount == 0 && !timeSpanToString.contains(unit)
         }
       })
       conversionIsOk && timeSpanStringIsPluralized
@@ -141,8 +144,10 @@ class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen 
     }
 
     "make sure noTime does not change the day" in forAllTimeZones {
-      dateFormatter.format(0.days.ago.noTime.toDate) must_== dateFormatter.format(new DateTime().toDate)
-      dateFormatter.format(3.days.ago.noTime.toDate) must_== dateFormatter.format(new Date(millis - (3 * 24 * 60 * 60 * 1000)))
+      dateFormatter.format(0.days.ago.noTime.toDate) must_== dateFormatter.format(
+        new DateTime().toDate)
+      dateFormatter.format(3.days.ago.noTime.toDate) must_== dateFormatter.format(
+        new Date(millis - (3 * 24 * 60 * 60 * 1000)))
     }
 
     "provide a day function returning the day of month corresponding to a given date (relative to UTC)" in forAllTimeZones {
@@ -156,9 +161,12 @@ class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen 
     }
     "provide a millisToDays function returning the number of days since the epoch time" in forAllTimeZones {
       millisToDays(new Date(0).getTime) must_== 0
-      millisToDays(today.setYear(1970).setMonth(0).setDay(1).getTime.getTime) must_== 0 // the epoch time
+      millisToDays(
+        today.setYear(1970).setMonth(0).setDay(1).getTime.getTime
+      ) must_== 0 // the epoch time
       // on the 3rd day after the epoch time, 2 days are passed
-      millisToDays(today.setTimezone(utc).setYear(1970).setMonth(0).setDay(3).getTime.getTime) must_== 2
+      millisToDays(
+        today.setTimezone(utc).setYear(1970).setMonth(0).setDay(3).getTime.getTime) must_== 2
     }
     "provide a daysSinceEpoch function returning the number of days since the epoch time" in forAllTimeZones {
       daysSinceEpoch must_== millisToDays(now.getTime)
@@ -168,7 +176,7 @@ class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen 
     }
     "provide a calcTime function returning the time taken to evaluate a block in millis and the block's result" in forAllTimeZones {
       val (time, result) = calcTime((1 to 10).reduceLeft[Int](_ + _))
-      time.toInt must beCloseTo(0, 1000)  // it should take less than 1 second!
+      time.toInt must beCloseTo(0, 1000) // it should take less than 1 second!
       result must_== 55
     }
 
@@ -189,7 +197,9 @@ class TimeHelpersSpec extends Specification with ScalaCheck with TimeAmountsGen 
     }
 
     "provide a parseInternetDate function to parse a string formatted using the internet format" in forAllTimeZones {
-      parseInternetDate(internetDateFormatter.format(now)).getTime.toLong must beCloseTo(now.getTime.toLong, 1000L)
+      parseInternetDate(internetDateFormatter.format(now)).getTime.toLong must beCloseTo(
+        now.getTime.toLong,
+        1000L)
     }
     "provide a parseInternetDate function returning new Date(0) if the input date cant be parsed" in forAllTimeZones {
       parseInternetDate("unparsable") must_== new Date(0)
@@ -235,9 +245,12 @@ object forAllTimeZones extends Around {
     import scala.jdk.CollectionConverters._
     // setDefault is on static context so tests should be sequenced
     // some timezones for java (used in formatters) and for Joda (other computations) has other offset
-    val commonJavaAndJodaTimeZones = (TimeZone.getAvailableIDs.toSet & DateTimeZone.getAvailableIDs.asScala.toSet).filter { timeZoneId =>
-      TimeZone.getTimeZone(timeZoneId).getOffset(millis) == DateTimeZone.forID(timeZoneId).getOffset(millis)
-    }
+    val commonJavaAndJodaTimeZones =
+      (TimeZone.getAvailableIDs.toSet & DateTimeZone.getAvailableIDs.asScala.toSet).filter {
+        timeZoneId =>
+          TimeZone.getTimeZone(timeZoneId).getOffset(millis) == DateTimeZone.forID(
+            timeZoneId).getOffset(millis)
+      }
     val tzBefore = TimeZone.getDefault
     val dtzBefore = DateTimeZone.getDefault
     try {
@@ -253,7 +266,6 @@ object forAllTimeZones extends Around {
   }
 }
 
-
 trait TimeAmountsGen {
 
   type TimeAmounts = (String, List[(Int, String)])
@@ -266,9 +278,10 @@ trait TimeAmountsGen {
       m <- choose(0, 59)
       s <- choose(0, 59)
       ml <- choose(0, 999)
-    }
-    yield (
+    } yield (
       TimeSpan(weeks(w) + days(d) + hours(h) + minutes(m) + seconds(s) + ml).toString,
-      (w, "week") :: (d, "day") :: (h, "hour") :: (m, "minute") :: (s, "second") :: (ml, "milli") :: Nil
+      (w, "week") :: (
+        d,
+        "day") :: (h, "hour") :: (m, "minute") :: (s, "second") :: (ml, "milli") :: Nil
     )
 }

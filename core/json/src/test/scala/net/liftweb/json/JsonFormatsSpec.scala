@@ -25,22 +25,26 @@ import org.specs2.mutable.Specification
 class JsonFormatsSpec extends Specification with TypeHintExamples {
   "JsonFormats Specification".title
 
-  implicit val formats: Formats = ShortTypeHintExamples.formats + FullTypeHintExamples.formats.typeHints
+  implicit val formats: Formats =
+    ShortTypeHintExamples.formats + FullTypeHintExamples.formats.typeHints
 
-  val hintsForFish   = ShortTypeHintExamples.formats.typeHints.hintFor(classOf[Fish])
-  val hintsForDog    = ShortTypeHintExamples.formats.typeHints.hintFor(classOf[Dog])
+  val hintsForFish = ShortTypeHintExamples.formats.typeHints.hintFor(classOf[Fish])
+  val hintsForDog = ShortTypeHintExamples.formats.typeHints.hintFor(classOf[Dog])
   val hintsForAnimal = FullTypeHintExamples.formats.typeHints.hintFor(classOf[Animal])
 
   "hintsFor across composite formats" in {
-    (formats.typeHints.hintFor(classOf[Fish])   mustEqual (hintsForFish)) and
-    (formats.typeHints.hintFor(classOf[Dog])    mustEqual (hintsForDog))  and
-    (formats.typeHints.hintFor(classOf[Animal]) mustEqual (hintsForAnimal))
+    (formats.typeHints.hintFor(classOf[Fish]) mustEqual (hintsForFish)) and
+      (formats.typeHints.hintFor(classOf[Dog]) mustEqual (hintsForDog)) and
+      (formats.typeHints.hintFor(classOf[Animal]) mustEqual (hintsForAnimal))
   }
 
   "classFor across composite formats" in {
-    (formats.typeHints.classFor(hintsForFish)   mustEqual (ShortTypeHintExamples.formats.typeHints.classFor(hintsForFish))) and
-    (formats.typeHints.classFor(hintsForDog)    mustEqual (ShortTypeHintExamples.formats.typeHints.classFor(hintsForDog))) and
-    (formats.typeHints.classFor(hintsForAnimal) mustEqual (FullTypeHintExamples.formats.typeHints.classFor(hintsForAnimal)))
+    (formats.typeHints.classFor(
+      hintsForFish) mustEqual (ShortTypeHintExamples.formats.typeHints.classFor(hintsForFish))) and
+      (formats.typeHints.classFor(
+        hintsForDog) mustEqual (ShortTypeHintExamples.formats.typeHints.classFor(hintsForDog))) and
+      (formats.typeHints.classFor(
+        hintsForAnimal) mustEqual (FullTypeHintExamples.formats.typeHints.classFor(hintsForAnimal)))
   }
 
   "parameter name reading strategy can be changed" in {

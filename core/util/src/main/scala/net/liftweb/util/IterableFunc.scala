@@ -1,7 +1,6 @@
 package net.liftweb
 package util
 
-import scala.language.implicitConversions
 import scala.xml.{Text, NodeSeq}
 
 import common._
@@ -21,14 +20,13 @@ object IterableFunc {
       def apply(in: NodeSeq): Seq[NodeSeq] = List(it(in))
     }
 
-
   implicit def itStringFuncPromotable(it: NodeSeq => String): IterableFunc =
     new IterableFunc {
       def apply(in: NodeSeq): Seq[NodeSeq] = it(in) match {
         case null => List(NodeSeq.Empty)
-        case str => List(Text(str))}
+        case str => List(Text(str))
+      }
     }
-
 
   implicit def itStringPromotable(it: NodeSeq => Seq[String]): IterableFunc =
     new IterableFunc {
@@ -40,10 +38,8 @@ object IterableFunc {
       def apply(in: NodeSeq): Seq[NodeSeq] = it(in).filter(_ ne null).toList.map(a => Text(a))
     }
 
-
   implicit def optionStringPromotable(it: NodeSeq => Option[String]): IterableFunc =
     new IterableFunc {
       def apply(in: NodeSeq): Seq[NodeSeq] = it(in).filter(_ ne null).toList.map(a => Text(a))
     }
 }
-

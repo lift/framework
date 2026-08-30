@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package http 
-package provider 
-package servlet 
+package net.liftweb
+package http
+package provider
+package servlet
 
 import java.io.InputStream
 import java.util.Locale
@@ -28,20 +28,24 @@ import net.liftweb.common._
 import net.liftweb.util._
 import Helpers._
 
-class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val provider: HTTPProvider) extends HTTPRequest {
+class HTTPRequestServlet(
+    @transient val req: HttpServletRequest,
+    @transient val provider: HTTPProvider) extends HTTPRequest {
   private lazy val ctx = {
     new HTTPServletContext(req.getSession.getServletContext)
   }
 
   lazy val cookies: List[HTTPCookie] = {
     req.getSession(false) // do this to make sure we capture the JSESSIONID cookie
-    (Box !! req.getCookies).map(_.toList.map(c => HTTPCookie(c.getName,
-      Box !! (c.getValue),
-      Box !! (c.getDomain),
-      Box !! (c.getPath),
-      Box !! (c.getMaxAge),
-      Box !! (c.getVersion),
-      Box !! (c.getSecure)))) openOr Nil
+    (Box !! req.getCookies).map(_.toList.map(c =>
+      HTTPCookie(
+        c.getName,
+        Box !! (c.getValue),
+        Box !! (c.getDomain),
+        Box !! (c.getPath),
+        Box !! (c.getMaxAge),
+        Box !! (c.getVersion),
+        Box !! (c.getSecure)))) openOr Nil
   }
 
   lazy val authType: Box[String] = Box !! req.getAuthType
@@ -75,10 +79,14 @@ class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val 
 
   lazy val queryString: Box[String] = Box !! req.getQueryString
 
-  def param(name: String): List[String] = req.getParameterValues(name) match {case null => Nil case x => x.toList}
+  def param(name: String): List[String] = req.getParameterValues(name) match {
+    case null => Nil
+    case x => x.toList
+  }
 
-  lazy val params: List[HTTPParam] = enumToList[String](req.getParameterNames.asInstanceOf[java.util.Enumeration[String]]).
-          map(n => HTTPParam(n, param(n)))
+  lazy val params: List[HTTPParam] =
+    enumToList[String](req.getParameterNames.asInstanceOf[java.util.Enumeration[String]]).
+    map(n => HTTPParam(n, param(n)))
 
   lazy val paramNames: List[String] = params map (_.name)
 
@@ -87,7 +95,8 @@ class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val 
   /**
    * The User-Agent of the request
    */
-  lazy val userAgent: Box[String] =  headers find (_.name equalsIgnoreCase "user-agent") flatMap (_.values.headOption)
+  lazy val userAgent: Box[String] =
+    headers find (_.name equalsIgnoreCase "user-agent") flatMap (_.values.headOption)
 
   def remotePort: Int = req.getRemotePort
 
@@ -111,17 +120,18 @@ class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val 
    * Destroy the underlying servlet session
    */
   def destroyServletSession(): Unit = {
-    for{
+    for {
       httpSession <- Box !! req.getSession(false)
     } yield httpSession.invalidate()
   }
 
   /**
-   * @return the sessionID (if there is one) for this request.  This will *NOT* create
-   * a new session if one does not already exist
+   * @return
+   *   the sessionID (if there is one) for this request. This will *NOT* create a new session if one
+   *   does not already exist
    */
   def sessionId: Box[String] =
-    for{
+    for {
       httpSession <- Box !! req.getSession(false)
       id <- Box !! httpSession.getId
     } yield id
@@ -129,9 +139,10 @@ class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val 
   def extractFiles: List[ParamHolder] = (new Iterator[ParamHolder] {
     val mimeUpload = new JakartaServletFileUpload
     mimeUpload.setProgressListener(new ProgressListener {
-      lazy val progList: (Long, Long, Int) => Unit = S.session.flatMap(_.progressListener) openOr LiftRules.progressListener
+      lazy val progList: (Long, Long, Int) => Unit =
+        S.session.flatMap(_.progressListener) openOr LiftRules.progressListener
 
-      def update(a: Long, b: Long, c: Int): Unit = {progList(a, b, c)}
+      def update(a: Long, b: Long, c: Int): Unit = { progList(a, b, c) }
     })
 
     mimeUpload.setMaxSize(LiftRules.maxMimeSize)
@@ -143,11 +154,14 @@ class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val 
     import scala.jdk.CollectionConverters._
 
     def next() = what.next match {
-      case f if (f.isFormField) => NormalParamHolder(f.getFieldName, new String(readWholeStream(f.getInputStream), "UTF-8"))
+      case f if (f.isFormField) =>
+        NormalParamHolder(f.getFieldName, new String(readWholeStream(f.getInputStream), "UTF-8"))
       case f => {
         val headers = f.getHeaders()
-        val names: List[String] = if (headers eq null) Nil else headers.getHeaderNames().asInstanceOf[java.util.Iterator[String]].asScala.toList
-        val map: Map[String, List[String]] = Map(names.map(n => n -> headers.getHeaders(n).asInstanceOf[java.util.Iterator[String]].asScala.toList) :_*)
+        val names: List[String] = if (headers eq null) Nil
+        else headers.getHeaderNames().asInstanceOf[java.util.Iterator[String]].asScala.toList
+        val map: Map[String, List[String]] = Map(names.map(n =>
+          n -> headers.getHeaders(n).asInstanceOf[java.util.Iterator[String]].asScala.toList): _*)
         LiftRules.withMimeHeaders(map) {
           LiftRules.handleMimeFile(f.getFieldName, f.getContentType, f.getName, f.getInputStream)
         }
@@ -155,25 +169,25 @@ class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val 
     }
   }).toList
 
-
   def setCharacterEncoding(encoding: String) = req.setCharacterEncoding(encoding)
 
-  def snapshot: HTTPRequest  = new OfflineRequestSnapshot(this, provider)
+  def snapshot: HTTPRequest = new OfflineRequestSnapshot(this, provider)
 
   private lazy val asyncProvider: Box[ServletAsyncProvider] =
     LiftRules.theServletAsyncProvider.map(_(this))
 
-  def resumeInfo : Option[(Req, LiftResponse)] = asyncProvider.flatMap(_.resumeInfo)
+  def resumeInfo: Option[(Req, LiftResponse)] = asyncProvider.flatMap(_.resumeInfo)
 
-  
-  def suspend(timeout: Long): RetryState.Value = asyncProvider.openOrThrowException("open_! is bad, but presumably, the suspendResume support was checked").suspend(timeout)
+  def suspend(timeout: Long): RetryState.Value = asyncProvider.openOrThrowException(
+    "open_! is bad, but presumably, the suspendResume support was checked").suspend(timeout)
 
-  def resume(what: (Req, LiftResponse)): Boolean = asyncProvider.openOrThrowException("open_! is bad, but presumably, the suspendResume support was checked").resume(what)
+  def resume(what: (Req, LiftResponse)): Boolean = asyncProvider.openOrThrowException(
+    "open_! is bad, but presumably, the suspendResume support was checked").resume(what)
 
   lazy val suspendResumeSupport_? = {
     LiftRules.asyncProviderMeta.
-    map(_.suspendResumeSupport_? && 
-        (asyncProvider.map(_.suspendResumeSupport_?) openOr
-         false)) openOr false
+    map(_.suspendResumeSupport_? &&
+      (asyncProvider.map(_.suspendResumeSupport_?) openOr
+        false)) openOr false
   }
 }

@@ -20,27 +20,23 @@ package http
 import util.Helpers._
 import common.{Loggable, Full}
 
-
 trait NamedCometActorTrait extends BaseCometActor with Loggable {
 
   /**
-   * First thing we do is registering this comet actor
-   * for the "name" key
+   * First thing we do is registering this comet actor for the "name" key
    */
-  override  def localSetup = {
-    NamedCometListener.getOrAddDispatchersFor(name).foreach(
-      dispatcher=> dispatcher ! registerCometActor(this, name)
-    )
+  override def localSetup = {
+    NamedCometListener.getOrAddDispatchersFor(name).foreach(dispatcher =>
+      dispatcher ! registerCometActor(this, name))
     super.localSetup()
   }
 
   /**
    * We remove the CometActor from the map of registered actors
    */
-  override  def localShutdown = {
-    NamedCometListener.getOrAddDispatchersFor(name).foreach(
-      dispatcher=> dispatcher !  unregisterCometActor(this)
-    )
+  override def localShutdown = {
+    NamedCometListener.getOrAddDispatchersFor(name).foreach(dispatcher =>
+      dispatcher ! unregisterCometActor(this))
     super.localShutdown()
   }
 

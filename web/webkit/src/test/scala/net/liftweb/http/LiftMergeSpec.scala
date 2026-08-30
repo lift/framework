@@ -4,15 +4,13 @@ package http
 import scala.xml._
 
 import org.specs2._
-  import mutable.Specification
-  import matcher.XmlMatchers
-  import mock.Mockito
+import mutable.Specification
+import matcher.XmlMatchers
+import mock.Mockito
 
-import org.mockito.Mockito._
 
 import common._
 
-import js.JE.JsObj
 import js.pageScript
 
 class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
@@ -26,11 +24,9 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
   testRules.javaScriptSettings.default.set(() => () => Empty)
   testRules.autoIncludeAjaxCalc.default.set(() => () => (_: LiftSession) => false)
   testRules.excludePathFromContextPathRewriting.default
-    .set(
-      () => { in: String =>
-        in.startsWith("exclude-me")
-      }
-    )
+    .set(() => { in: String =>
+      in.startsWith("exclude-me")
+    })
 
   val eventExtractingTestRules = new LiftRules()
   eventExtractingTestRules.javaScriptSettings.default.set(() => () => Empty)
@@ -70,7 +66,8 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
       ): NodeSeq)
     }
 
-    "merge tail segments in the page body in order at the end of the body" in new WithRules(testRules) {
+    "merge tail segments in the page body in order at the end of the body" in new WithRules(
+      testRules) {
       val result =
         testSession.merge(
           <html>
@@ -417,7 +414,9 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
         "rewritten" :: Nil
     }
 
-    "include a page script in the page tail if events are extracted" in new WithLiftContext(eventExtractingTestRules, testSession) {
+    "include a page script in the page tail if events are extracted" in new WithLiftContext(
+      eventExtractingTestRules,
+      testSession) {
       val result =
         testSession.merge(
           <html>
@@ -437,7 +436,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
 
       val scripts = (result \\ "script")
 
-      scripts must have length(1)
+      scripts must have length (1)
       scripts.map(_ \@ "src") must beLike {
         case scriptSrc :: Nil =>
           scriptSrc must beMatching("/context-path/lift/page/F[^.]+.js")
@@ -449,7 +448,9 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
       }
     }
 
-    "include a page script in the page tail even if the page doesn't have a head and body" in new WithLiftContext(eventExtractingTestRules, testSession) {
+    "include a page script in the page tail even if the page doesn't have a head and body" in new WithLiftContext(
+      eventExtractingTestRules,
+      testSession) {
       val result =
         testSession.merge(
           <div onclick="tryme();">
@@ -462,7 +463,7 @@ class LiftMergeSpec extends Specification with XmlMatchers with Mockito {
 
       val scripts = (result \\ "script")
 
-      scripts must have length(1)
+      scripts must have length (1)
       scripts.map(_ \@ "src") must beLike {
         case scriptSrc :: Nil =>
           scriptSrc must beMatching("/context-path/lift/page/F[^.]+.js")

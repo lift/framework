@@ -69,7 +69,8 @@ class CrudifySpec extends Specification with XmlMatchers {
           .filter(td => (td \ "@class").nonEmpty)
           .map(_.text).toList
       }).toList
-      val expectedValues: List[List[String]] = repo.content(0, rowsPerPage).map(i => List(i.id, i.value))
+      val expectedValues: List[List[String]] =
+        repo.content(0, rowsPerPage).map(i => List(i.id, i.value))
       renderedValues === expectedValues
     }
 
@@ -104,7 +105,6 @@ class CrudifySpec extends Specification with XmlMatchers {
     }
   }
 
-
   "displayRecord on `viewTemplate`" should {
 
     "render row for each field" in new SpecCrudifyWithContext {
@@ -113,14 +113,14 @@ class CrudifySpec extends Specification with XmlMatchers {
 
     "render correct field names" in new SpecCrudifyWithContext {
       val filedNames: Seq[String] = (viewItem() \\ "table" \\ "tr" \\ "td").
-        filter(e => (e \ "@class").text == "name")
+      filter(e => (e \ "@class").text == "name")
         .map(_.text)
       filedNames must contain(exactly(fieldsForDisplay.map(_.fieldName): _*))
     }
 
     "render correct field values" in new SpecCrudifyWithContext {
       val filedNames: Seq[String] = (viewItem() \\ "table" \\ "tr" \\ "td").
-        filter(e => (e \ "@class").text == "value")
+      filter(e => (e \ "@class").text == "value")
         .map(_.text)
       filedNames must contain(exactly(firstItem.id, firstItem.value))
     }
@@ -133,17 +133,20 @@ class CrudifySpec extends Specification with XmlMatchers {
     }
 
     def setId(form: NodeSeq, newId: String): Unit = {
-      val setIdFunc: String = ((form \\ "input").find(i => (i \\ "@id").text == "id").head \\ "@name").text
+      val setIdFunc: String =
+        ((form \\ "input").find(i => (i \\ "@id").text == "id").head \\ "@name").text
       S.functionMap(setIdFunc).asInstanceOf[Any => Any].apply(List(newId))
     }
 
     def setValue(form: NodeSeq, newValue: String): Unit = {
-      val setValueFunc: String = ((form \\ "input").find(i => (i \\ "@id").text == "value").head \\ "@name").text
+      val setValueFunc: String =
+        ((form \\ "input").find(i => (i \\ "@id").text == "value").head \\ "@name").text
       S.functionMap(setValueFunc).asInstanceOf[Any => Any].apply(List(newValue))
     }
 
     def submitForm(form: NodeSeq, expectRedirect: Boolean = true): Unit = {
-      val submitFunc: String = ((form \\ "button").find(i => (i \\ "@type").text == "submit").head \\ "@name").text
+      val submitFunc: String =
+        ((form \\ "button").find(i => (i \\ "@type").text == "submit").head \\ "@name").text
       val lazySubmit = () => S.functionMap(submitFunc).asInstanceOf[Any => Any].apply(List(""))
       if (expectRedirect) {
         lazySubmit() must throwA[ResponseShortcutException]

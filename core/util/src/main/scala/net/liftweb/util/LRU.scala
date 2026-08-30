@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-package net.liftweb 
-package util 
+package net.liftweb
+package util
 
 import common._
 
 /**
  * LRU Cache wrapping {@link org.apache.commons.collections.map.LRUMap}
  *
- * @param size the maximum number of Elements allowed in the LRU map
- * @param loadFactor the Load Factor to construct our LRU with.
+ * @param size
+ *   the maximum number of Elements allowed in the LRU map
+ * @param loadFactor
+ *   the Load Factor to construct our LRU with.
  */
-class LRU[KeyType, ValueType](size: Int, loadFactor: Box[Float]) extends net.liftweb.common.LRUMap[KeyType, ValueType](size, loadFactor) {
+class LRU[KeyType, ValueType](size: Int, loadFactor: Box[Float])
+    extends net.liftweb.common.LRUMap[KeyType, ValueType](size, loadFactor) {
   // Alternate constructor that gives you no load factor.
   def this(size: Int) = this(size, Empty)
 
@@ -49,6 +52,5 @@ class LRU[KeyType, ValueType](size: Int, loadFactor: Box[Float]) extends net.lif
   def apply(k: KeyType): ValueType = map.get(k).asInstanceOf[ValueType]
   def contains(k: KeyType): Boolean = map.containsKey(k)
   def keys: List[KeyType] = map.keySet().toList.map(_.asInstanceOf[KeyType])
-  */
+   */
 }
-

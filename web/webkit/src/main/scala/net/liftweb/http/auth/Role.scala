@@ -25,9 +25,10 @@ object AuthRole {
     def name = roleName
   }
 
-  def apply(roleNames: String*): List[Role] = roleNames.toList.map(n => new Role {
-    def name = n
-  })
+  def apply(roleNames: String*): List[Role] = roleNames.toList.map(n =>
+    new Role {
+      def name = n
+    })
 
   def apply(roleName: String, roles: Role*): Role = new Role {
     def name = roleName
@@ -35,9 +36,8 @@ object AuthRole {
 }
 
 /**
- * A Role may be assigned to a resource denominated by a path. A subject
- * that is assigned to the same role or to a role higher into the roles hierarchy
- * will have access to requested resource.
+ * A Role may be assigned to a resource denominated by a path. A subject that is assigned to the
+ * same role or to a role higher into the roles hierarchy will have access to requested resource.
  */
 trait Role {
   private var parent: Box[Role] = Empty
@@ -49,8 +49,7 @@ trait Role {
   def name: String
 
   /**
-   * Add child Role(s) to this role. Node name is ensured to be unique (by name)
-   * in the tree.
+   * Add child Role(s) to this role. Node name is ensured to be unique (by name) in the tree.
    */
   def addRoles(roles: Role*) = {
     for (role <- roles) {
@@ -79,11 +78,13 @@ trait Role {
    */
   def getRoleByName(roleName: String): Box[Role] =
     (this.name == roleName) match {
-      case false => childs.find(role => role.getRoleByName(roleName) match {
-        case Empty => false
-        case theRole@_ => return theRole
-      })
-      Empty
+      case false =>
+        childs.find(role =>
+          role.getRoleByName(roleName) match {
+            case Empty => false
+            case theRole @ _ => return theRole
+          })
+        Empty
       case _ => Full(this)
     }
 
@@ -127,4 +128,3 @@ trait Role {
     str + ")"
   }
 }
-

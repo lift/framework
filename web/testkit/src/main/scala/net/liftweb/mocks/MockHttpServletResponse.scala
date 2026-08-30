@@ -17,37 +17,31 @@
 package net.liftweb
 package mocks
 
-import scala.collection.mutable.HashMap
 import scala.jdk.CollectionConverters._
 import java.io.PrintWriter
-import java.io.StringReader
-import java.io.BufferedReader
-import java.io.ByteArrayOutputStream
-import java.io.ByteArrayInputStream
-import java.io.InputStream
 import java.io.StringBufferInputStream
-import java.io.File
 import java.util.Collection
-import java.util.Arrays
 import java.util.Date
 import java.util.Locale
-import java.util.Vector
 import jakarta.servlet._
 import jakarta.servlet.http._
 
 /**
- * A Mock HttpServletResponse. Take a peek at it's writer or
- * outputStream to see what lift has written in response to your request
+ * A Mock HttpServletResponse. Take a peek at it's writer or outputStream to see what lift has
+ * written in response to your request
  *
- * @param writer a PrintWriter that the response will be written with
- * @param outputStream an OutputStream that the response will be written to.
+ * @param writer
+ *   a PrintWriter that the response will be written with
+ * @param outputStream
+ *   an OutputStream that the response will be written to.
  *
- * @author Steve Jenson (stevej@pobox.com)
+ * @author
+ *   Steve Jenson (stevej@pobox.com)
  */
 class MockHttpServletResponse(var writer: PrintWriter, var outputStream: ServletOutputStream)
-  extends HttpServletResponse {
-  protected var statusCode : Int = 200
-  protected var statusString : String = "OK"
+    extends HttpServletResponse {
+  protected var statusCode: Int = 200
+  protected var statusString: String = "OK"
   protected var contentType = "text/html"
   protected var contentLength: Int = 0
   protected var headers: Map[String, List[String]] = Map()
@@ -128,7 +122,7 @@ class MockHttpServletResponse(var writer: PrintWriter, var outputStream: Servlet
     headers.contains(header)
   }
   def addCookie(cookie: Cookie) = {
-    cookies =  cookie :: cookies
+    cookies = cookie :: cookies
   }
   def getLocale: Locale = locale
   def setLocale(l: Locale) = locale = l

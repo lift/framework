@@ -26,9 +26,9 @@ import scala.xml.{NodeSeq, Text}
 
 class SiteMapException(msg: String) extends Exception(msg)
 
-case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocParam]],
-                   private val convertablekids: ConvertableToMenu*) extends HasKids  {
-  import SiteMap._
+case class SiteMap(
+    globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocParam]],
+    private val convertablekids: ConvertableToMenu*) extends HasKids {
 
   lazy val kids: Seq[Menu] = convertablekids.map(_.toMenu)
 
@@ -37,11 +37,10 @@ case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocPa
   private var locPath: Set[List[String]] = Set()
 
   /**
-   * Create a new SiteMap by passing the current menu items
-   * to a function.  This function can add to, remove, or
-   * otherwise mutate the current menu items.
+   * Create a new SiteMap by passing the current menu items to a function. This function can add to,
+   * remove, or otherwise mutate the current menu items.
    */
-  def rebuild(f: List[Menu] => List[Menu]) = SiteMap(globalParamFuncs, f(kids.toList) :_*)
+  def rebuild(f: List[Menu] => List[Menu]) = SiteMap(globalParamFuncs, f(kids.toList): _*)
 
   kids.foreach(_._parent = Full(this))
   kids.foreach(_.init(this))
@@ -50,15 +49,15 @@ case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocPa
   private[sitemap] def addLoc(in: Loc[_]): Unit = {
     val name = in.name
     if (locs.isDefinedAt(name))
-    throw new SiteMapException("Location "+name+" defined twice "+
-                               locs(name)+" and "+in)
+      throw new SiteMapException("Location " + name + " defined twice " +
+        locs(name) + " and " + in)
     else locs = locs + (name -> in.asInstanceOf[Loc[_]])
 
     if (SiteMap.enforceUniqueLinks && !in.link.external_? &&
-	locPath.contains(in.link.uriList))
-      throw new SiteMapException("Location "+name+
-              " defines a duplicate link "+
-              in.link.uriList)
+      locPath.contains(in.link.uriList))
+      throw new SiteMapException("Location " + name +
+        " defines a duplicate link " +
+        in.link.uriList)
 
     if (!in.link.external_?) locPath += in.link.uriList
   }
@@ -74,18 +73,17 @@ case class SiteMap(globalParamFuncs: List[PartialFunction[Box[Req], Loc.AnyLocPa
   def findLoc(req: Req): Box[Loc[_]] = first(kids)(_.findLoc(req))
 
   /**
-  * Find all the menu items for a given group.
-  * This method returns a linear sequence of menu items
-  */
+   * Find all the menu items for a given group. This method returns a linear sequence of menu items
+   */
   def locForGroup(group: String): Seq[Loc[_]] =
     kids.flatMap(_.locForGroup(group)).filter(
       _.testAccess match {
-        case Left(true) => true case _ => false
+        case Left(true) => true
+        case _ => false
       })
 
   /**
-   * Find all the menu items for a given group.
-   * This method returns menu tree
+   * Find all the menu items for a given group. This method returns menu tree
    */
   def menuForGroup(group: String): CompleteMenu = {
     CompleteMenu(kids.flatMap(_.makeMenuItem(Nil, group)))
@@ -115,32 +113,40 @@ final class SiteMapJBridge {
 object SiteMap extends SiteMapSingleton
 
 sealed class SiteMapSingleton {
+
   /**
-   * By default, Lift enforced unique links in a SiteMap.  However, you
-   * can disable this feature by setting enforceUniqueLinks to false
+   * By default, Lift enforced unique links in a SiteMap. However, you can disable this feature by
+   * setting enforceUniqueLinks to false
    */
   @volatile var enforceUniqueLinks = true
 
-  def findLoc(name: String): Box[Loc[_]] = for (sm <- LiftRules.siteMap; loc <- sm.findLoc(name)) yield loc
+  def findLoc(name: String): Box[Loc[_]] =
+    for (sm <- LiftRules.siteMap; loc <- sm.findLoc(name)) yield loc
 
   /**
-   * Builds a function that successively tests the partial function against the Menu.  If the PartialFunction is
-   * matched, it is applied and a new Menu is created.  This is generally used by modules to insert their menus
-   * at locations in the menu hierarchy denoted by a marker Loc.LocParam.  If the function does not fire,
-   * the 'or' function is applied, which allows trying alternative strategies (e.g., if the marker LocParam
-   * is not found, append the menus to the root SiteMap.)  This method returns a function
-   * so that the strategy can be returned from a module and chained: (module1 andThen module2 andThen module3)(baseSitemap).
+   * Builds a function that successively tests the partial function against the Menu. If the
+   * PartialFunction is matched, it is applied and a new Menu is created. This is generally used by
+   * modules to insert their menus at locations in the menu hierarchy denoted by a marker
+   * Loc.LocParam. If the function does not fire, the 'or' function is applied, which allows trying
+   * alternative strategies (e.g., if the marker LocParam is not found, append the menus to the root
+   * SiteMap.) This method returns a function so that the strategy can be returned from a module and
+   * chained: (module1 andThen module2 andThen module3)(baseSitemap).
    *
-   * @param pf the partial function (pattern match) to test against the Menu, if it matches, apply it which causes menu mutation.
-   * @param or the function to apply if none of the patterns match
+   * @param pf
+   *   the partial function (pattern match) to test against the Menu, if it matches, apply it which
+   *   causes menu mutation.
+   * @param or
+   *   the function to apply if none of the patterns match
    *
-   * @return a function which will apply the changes to a SiteMap
+   * @return
+   *   a function which will apply the changes to a SiteMap
    */
-  def sitemapMutator(pf: PartialFunction[Menu, List[Menu]])(or: SiteMap => SiteMap): SiteMap => SiteMap = 
+  def sitemapMutator(pf: PartialFunction[Menu, List[Menu]])(or: SiteMap => SiteMap)
+      : SiteMap => SiteMap =
     (sm: SiteMap) => {
       var fired = false
 
-      def theFunc: Menu => List[Menu] = 
+      def theFunc: Menu => List[Menu] =
         (menu: Menu) => {
           if (fired) {
             List(menu)
@@ -150,8 +156,7 @@ sealed class SiteMapSingleton {
           } else List(menu.rebuild(doAMenuItem _))
         }
 
-        
-      def doAMenuItem(in: List[Menu]): List[Menu] = 
+      def doAMenuItem(in: List[Menu]): List[Menu] =
         in.flatMap(theFunc)
 
       val ret = sm.rebuild(_.flatMap(theFunc))
@@ -160,78 +165,69 @@ sealed class SiteMapSingleton {
     }
 
   /**
-   * Builds a function that successively tests the partial function against the Menu.  If the PartialFunction is
-   * matched, it is applied and a new Menu is created.  This is generally used by modules to insert their menus
-   * at locations in the menu hierarchy denoted by a marker Loc.LocParam.  If the function does not fire,
-   * a copy of the original sitemap is returned.
+   * Builds a function that successively tests the partial function against the Menu. If the
+   * PartialFunction is matched, it is applied and a new Menu is created. This is generally used by
+   * modules to insert their menus at locations in the menu hierarchy denoted by a marker
+   * Loc.LocParam. If the function does not fire, a copy of the original sitemap is returned.
    *
-   * @param pf the partial function (pattern match) to test against the Menu, if it matches, apply it which causes menu mutation.
+   * @param pf
+   *   the partial function (pattern match) to test against the Menu, if it matches, apply it which
+   *   causes menu mutation.
    *
-   * @return a function which will apply the changes to a SiteMap
+   * @return
+   *   a function which will apply the changes to a SiteMap
    */
   def simpleSitemapMutator(pf: PartialFunction[Menu, List[Menu]]) = sitemapMutator(pf)(s => s)
 
   /**
-   * Create a mutator that simply appends the menus to the SiteMap at the end of the sitemap.  This is a good
-   * default mutator that appends the menu items at the end of the sitemap
+   * Create a mutator that simply appends the menus to the SiteMap at the end of the sitemap. This
+   * is a good default mutator that appends the menu items at the end of the sitemap
    */
   def addMenusAtEndMutator(menus: List[Menu]): SiteMap => SiteMap =
     (sm: SiteMap) => sm.rebuild(_ ::: menus)
 
   /**
-   * <p>
-   * In the PartialFunction for sitemapMutator, you may want to look for a particular Loc in the menu to determine
-   * if you want to (1) replace it, (2) add your menus after it or (3) insert your menus under it.  You can create
-   * a pattern matcher via buildMenuMatcher which returns an instance of UnapplyLocMatcher.
-   * </p>
+   * <p> In the PartialFunction for sitemapMutator, you may want to look for a particular Loc in the
+   * menu to determine if you want to (1) replace it, (2) add your menus after it or (3) insert your
+   * menus under it. You can create a pattern matcher via buildMenuMatcher which returns an instance
+   * of UnapplyLocMatcher. </p>
    *
-   * <p>
-   * For example:<br/>
-   * <code class="scala"><pre>
-   * val MyMarkerLocParam = new Loc.LocParam[Any]
-   * val MyMatcher = SiteMap.buildMenuMatcher(_ == MyMarkerLocParam)
-   * </pre></code>
-   * </p>
+   * <p> For example:<br/> <code class="scala"><pre> val MyMarkerLocParam = new Loc.LocParam[Any]
+   * val MyMatcher = SiteMap.buildMenuMatcher(_ == MyMarkerLocParam) </pre></code> </p>
    */
   trait UnapplyLocMatcher {
     def unapply(menu: Menu): Option[Menu]
   }
 
   /**
-   * <p>
-   * Builds an UnapplyLocMatcher
-   * </p>
+   * <p> Builds an UnapplyLocMatcher </p>
    *
-   * <p>
-   * For example:<br/>
-   * <code class="scala"><pre>
-   * val MyMarkerLocParam = new Loc.LocParam[Any]
-   * val MyMatcher = SiteMap.buildMenuMatcher(_ == MyMarkerLocParam)
-   * </pre></code>
-   * </p>
+   * <p> For example:<br/> <code class="scala"><pre> val MyMarkerLocParam = new Loc.LocParam[Any]
+   * val MyMatcher = SiteMap.buildMenuMatcher(_ == MyMarkerLocParam) </pre></code> </p>
    */
-  def buildMenuMatcher(matchFunc: Loc.LocParam[_] => Boolean): UnapplyLocMatcher = new UnapplyLocMatcher {
-    def unapply(menu: Menu): Option[Menu] =
-      menu.loc.params.find(matchFunc).map(ignore => menu)
-  }
-                       
+  def buildMenuMatcher(matchFunc: Loc.LocParam[_] => Boolean): UnapplyLocMatcher =
+    new UnapplyLocMatcher {
+      def unapply(menu: Menu): Option[Menu] =
+        menu.loc.params.find(matchFunc).map(ignore => menu)
+    }
 
   def findAndTestLoc(name: String): Box[Loc[_]] =
-  findLoc(name).flatMap(l => l.testAccess match {
-      case Left(true) => Full(l)
-      case _ => Empty
-    })
+    findLoc(name).flatMap(l =>
+      l.testAccess match {
+        case Left(true) => Full(l)
+        case _ => Empty
+      })
 
   def buildLink(name: String, text: NodeSeq): NodeSeq = {
     val options = for {
-        loc <- findAndTestLoc(name).toList
-        link <- loc.createDefaultLink
-      } yield {
-        val linkText = text match {
-          case x if x.length > 0 => x
-          case _ => loc.linkText openOr Text(loc.name)
-        }
-        <a href={link}>{linkText}</a>
+      loc <- findAndTestLoc(name).toList
+      link <- loc.createDefaultLink
+    } yield {
+      val linkText = text match {
+        case x if x.length > 0 => x
+        case _ => loc.linkText openOr Text(loc.name)
+      }
+      <a href={link}>{linkText}</a>
     }
 
     options.headOption getOrElse NodeSeq.Empty
@@ -242,25 +238,25 @@ sealed class SiteMapSingleton {
   /**
    * A Java-callable method that builds a SiteMap
    */
-  def build(kids: Array[ConvertableToMenu]): SiteMap = 
+  def build(kids: Array[ConvertableToMenu]): SiteMap =
     this.apply(kids.toList: _*)
 
-  def apply(kids: ConvertableToMenu *) = new SiteMap(Nil, kids :_*)
+  def apply(kids: ConvertableToMenu*) = new SiteMap(Nil, kids: _*)
 
   /**
-   * Should the top level /index path be rendered as /  By default this value is false.
-   * You may set it to true, but this may confuse some application servers when the application
-   * is not running in the root context.
+   * Should the top level /index path be rendered as / By default this value is false. You may set
+   * it to true, but this may confuse some application servers when the application is not running
+   * in the root context.
    */
   @volatile var rawIndex_? = false
 }
 
 trait HasKids {
   def kids: Seq[Menu]
-  def buildUpperLines(pathAt: HasKids, actual: Menu, populate: List[MenuItem]): List[MenuItem] = populate
+  def buildUpperLines(pathAt: HasKids, actual: Menu, populate: List[MenuItem]): List[MenuItem] =
+    populate
 
   def isRoot_? = false
 
   private[sitemap] def testAccess: Either[Boolean, Box[() => LiftResponse]] = Left(true)
 }
-

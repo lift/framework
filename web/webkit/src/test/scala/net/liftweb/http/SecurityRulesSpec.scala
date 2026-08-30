@@ -18,7 +18,7 @@ package http
 
 import java.net.URI
 
-import scala.concurrent.duration.{Duration,SECONDS,DAYS}
+import scala.concurrent.duration.{Duration, SECONDS, DAYS}
 
 import org.specs2.mutable.Specification
 
@@ -107,7 +107,9 @@ class ContentSecurityPolicySpec extends Specification {
         .collect {
           case (headerName, _) if headerName.contains("Content-Security-Policy") =>
             headerName
-        } must_== List("Content-Security-Policy-Report-Only", "X-Content-Security-Policy-Report-Only")
+        } must_== List(
+        "Content-Security-Policy-Report-Only",
+        "X-Content-Security-Policy-Report-Only")
     }
 
     "provide no headers with enforcement and logging disabled" in {

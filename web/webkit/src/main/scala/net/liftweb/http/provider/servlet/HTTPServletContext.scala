@@ -39,13 +39,15 @@ class HTTPServletContext(val ctx: ServletContext) extends HTTPContext {
 
   def initParam(name: String): Box[String] = Box !! ctx.getInitParameter(name)
 
-  def initParams: List[(String, String)] = enumToList[String](ctx.getInitParameterNames.asInstanceOf[java.util.Enumeration[String]]).
-          map(n => (n, initParam(n) openOr ""))
+  def initParams: List[(String, String)] =
+    enumToList[String](ctx.getInitParameterNames.asInstanceOf[java.util.Enumeration[String]]).
+    map(n => (n, initParam(n) openOr ""))
 
   def attribute(name: String): Box[Any] = Box !! ctx.getAttribute(name)
 
-  def attributes: List[(String, Any)] = enumToList[String](ctx.getAttributeNames.asInstanceOf[java.util.Enumeration[String]]).
-          map(n => (n, attribute(n) openOr ""))
+  def attributes: List[(String, Any)] =
+    enumToList[String](ctx.getAttributeNames.asInstanceOf[java.util.Enumeration[String]]).
+    map(n => (n, attribute(n) openOr ""))
 
   def setAttribute(name: String, value: Any): Unit = {
     ctx.setAttribute(name, value)
@@ -56,4 +58,3 @@ class HTTPServletContext(val ctx: ServletContext) extends HTTPContext {
   }
 
 }
-
