@@ -53,40 +53,45 @@ Follow the prompts to create your Lift application.
 
 In order to run the server, navigate to the application folder and run the `sbt` command. In the SBT prompt, run:
 
-    ~jetty:start
+    ~ warStart
 
 By default, the server should run on http://localhost:8080.
 
-The above command will do what you probably want; the application will recompile and restart whenever you change HTML, resources or Scala code.
+`warStart` serves your application directly from your source directories, so changes to HTML, CSS,
+and other resources are served immediately. Running it under the `~` trigger additionally recompiles
+Scala sources and restarts the container whenever they change.
 
-If your efforts are primarily dedicated to the frontend, you may find that it's not efficient to recompile and restart the application every time you change CSS or HTML.
+If you instead want to run your application from the packaged WAR file--exactly as it would be
+deployed to a servlet container--use:
 
-In this case, a good alternative command is
+    warStartPackage
 
-    jetty:quickstart
+The difference between *warStart* and *warStartPackage* is that warStart serves directly from the
+src directory where you're editing the files, while warStartPackage builds the WAR into your target
+directory and serves it from there.
 
-The difference between *start* and *quickstart* is that start serves assets from your target directory where the exploded WAR is, and quickstart serves from the src directory where you're editing the files.
+When you're done, stop the server with:
 
-Note that there is not a leading tilde *~* on the quickstart command.  This is so that compile is not triggered when resources change.  Your changed resources will be served directly.  Note that in this mode Scala changes must be manually compiled. 
+    warStop
 
 ### With sbt (Existing project)
 
-If you're using Lift in an existing sbt project you'll need to:
+1. Add sbt-war if you don't already have it or some other way to start a servlet app.
+2. Add the Lift dependencies.
 
-1. Add the xsbt-web-plugin if you don't already have it or some other way to start a servlet app.
-2. Add the lift dependencies.
-
-To add the xsbt-web-plugin download the most recent version of our [web-plugin.sbt][wpsbt] file
-to your `project/` folder.
-
-Then, enable the plugin for the container you want to use and in your `build.sbt` file. Below, we
-activate the JettyPlugin:
+To add sbt-war, add the following to your `project/plugins.sbt` file:
 
 ```scala
-enablePlugins(JettyPlugin)
+addSbtPlugin("com.earldouglas" % "sbt-war" % "5.2.2")
 ```
 
-More information on using the plugin can be found on the [xsbt-web-plugin project][wpproj].
+Then, enable the plugin in your `build.sbt` file:
+
+```scala
+enablePlugins(SbtWar)
+```
+
+More information on using the plugin can be found on the [sbt-war project][wpproj].
 
 After you've done this, you'll want to add Lift to your `libraryDependencies` in addition to
 Logback if you don't already have another SLF4J logging library in place. For example:
@@ -101,8 +106,7 @@ libraryDependencies ++= {
 }
 ```
 
-[wpsbt]: https://github.com/lift/basic-app.g8/blob/master/src/main/g8/project/web-plugin.sbt
-[wpproj]: https://github.com/earldouglas/xsbt-web-plugin/
+[wpproj]: https://github.com/earldouglas/sbt-war/
 
 #### Running the Server
 
@@ -164,8 +168,8 @@ This repository, `framework`, contains the following components:
 constructs, such as `Box`, this component may be all you need. However, a web application will most
 likely require one or more of Lift's other components.
 * **web:** This component includes all of Lift's core HTTP and web handling. Including `lift-webkit`
-in your build process should be sufficient for basic applications and will include `lift-core` as a
-transitive dependency.
+in your build process should be sufficient for basic applications and will include `lift-util` as a
+transitive dependency, which in turn brings in `lift-actor`, `lift-markdown`, and `lift-common`.
 
 As of Lift 4.0, the persistence components (Mapper and Record) have been removed from this
 repository. If your project relies on them, pin to a 3.x release, or use another ORM of your choice
@@ -205,7 +209,7 @@ runs the test suite for every module against both Scala 2.13 and Scala 3 as conf
 (a plain `sbt test`, without the `+`, only runs against the default Scala version). Likewise, `sbt
 +publishLocal` publishes snapshot artifacts for both Scala versions to your local Ivy repository
 (`~/.ivy2`) so other local projects can depend on them. To build or publish a single module, prefix
-the command with its project name, e.g. `sbt webkit/publishLocal` or `sbt +webkit/publishLocal` for
+the command with its project name, e.g. `sbt lift-webkit/publishLocal` or `sbt +lift-webkit/publishLocal` for
 both Scala versions.
 
 ## Additional Resources
