@@ -17,6 +17,7 @@
 package net.liftweb
 package util
 
+import java.text.SimpleDateFormat
 import java.util.{Calendar, Date, TimeZone}
 
 import net.liftweb.common._
@@ -212,6 +213,21 @@ object forAllTimeZones extends Around {
     // some timezones for java (used in formatters) and for Joda (other computations) has other offset
     val commonJavaAndJodaTimeZones = (TimeZone.getAvailableIDs.toSet & DateTimeZone.getAvailableIDs.asScala.toSet).filter { timeZoneId =>
       TimeZone.getTimeZone(timeZoneId).getOffset(millis) == DateTimeZone.forID(timeZoneId).getOffset(millis)
+    }.filter { timeZoneId =>
+      // Zones whose local midnight for the current day falls inside a DST gap
+      // (e.g. America/Santiago on the day clocks spring forward at 00:00) cannot
+      // produce a wall clock of 00:00:00: the nonexistent midnight is leniently
+      // resolved to 01:00. Skip those zones for the affected day only.
+      val timeZone = TimeZone.getTimeZone(timeZoneId)
+      val calendar = Calendar.getInstance(timeZone)
+      calendar.setTimeInMillis(millis)
+      calendar.set(Calendar.HOUR_OF_DAY, 0)
+      calendar.set(Calendar.MINUTE, 0)
+      calendar.set(Calendar.SECOND, 0)
+      calendar.set(Calendar.MILLISECOND, 0)
+      val hourFormat = new SimpleDateFormat("HH:mm:ss")
+      hourFormat.setTimeZone(timeZone)
+      hourFormat.format(calendar.getTime) == "00:00:00"
     }
     val tzBefore = TimeZone.getDefault
     val dtzBefore = DateTimeZone.getDefault
