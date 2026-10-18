@@ -179,8 +179,12 @@ object CookieEncoder {
   }
 
   private def stripTrailingSeparator(buf: StringBuilder) = {
-    if (buf.length() > 0) {
-      buf.setLength(buf.length() - 2);
+    // No parens: on Scala 2.12 a bare `StringBuilder` is
+    // scala.collection.mutable.StringBuilder, whose `length` is a nullary
+    // def, so `buf.length()` does not compile ("Int does not take
+    // parameters"). `buf.length` compiles on both 2.12 and 2.13.
+    if (buf.length > 0) {
+      buf.setLength(buf.length - 2);
     }
     buf.toString()
   }

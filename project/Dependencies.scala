@@ -26,7 +26,6 @@ object Dependencies {
   // Compile scope:
   // Scope available in all classpath, transitive by default.
   lazy val commons_codec          = "commons-codec"              % "commons-codec"      % "1.11"
-  lazy val commons_fileupload     = "commons-fileupload"         % "commons-fileupload" % "1.3.3"
   lazy val commons_httpclient     = "commons-httpclient"         % "commons-httpclient" % "3.1"
   lazy val javamail               = "javax.mail"                 % "mail"               % "1.4.7"
   lazy val jbcrypt                = "org.mindrot"                % "jbcrypt"            % "0.4"
@@ -59,7 +58,7 @@ object Dependencies {
   lazy val log4j           = "log4j"             % "log4j"                 % "1.2.17"       % Provided
   lazy val slf4j_log4j12   = "org.slf4j"         % "slf4j-log4j12"         % slf4jVersion   % Provided
   lazy val persistence_api = "javax.persistence" % "persistence-api"       % "1.0.2"        % Provided
-  lazy val servlet_api     = "javax.servlet"     % "javax.servlet-api"     % "3.1.0"        % Provided
+  lazy val servlet_api     = "jakarta.servlet" % "jakarta.servlet-api" % "5.0.0"        % Provided
   lazy val jquery          = "org.webjars.bower" % "jquery"                % "1.11.3"       % Provided
   lazy val jasmineCore     = "org.webjars.bower" % "jasmine-core"          % "2.4.1"        % Provided
   lazy val jasmineAjax     = "org.webjars.bower" % "jasmine-ajax"          % "3.2.0"        % Provided
@@ -67,8 +66,10 @@ object Dependencies {
 
   // Test scope:
   // Scope available only in test classpath, non-transitive by default.
-  lazy val jetty6     = "org.mortbay.jetty"        % "jetty"                    % "6.1.26"   % Test
-  lazy val jwebunit   = "net.sourceforge.jwebunit" % "jwebunit-htmlunit-plugin" % "2.5"      % Test
+  lazy val jetty11server  = "org.eclipse.jetty" % "jetty-server" % "11.0.26" % Test
+  lazy val jetty11webapp  = "org.eclipse.jetty" % "jetty-webapp" % "11.0.26" % Test
+  lazy val jetty11client  = "org.eclipse.jetty" % "jetty-client" % "11.0.26" % Test
+  lazy val htmlunit       = "org.htmlunit"       % "htmlunit"      % "4.21.0"   % Test
   lazy val derby      = "org.apache.derby"         % "derby"                    % "10.7.1.1" % Test
   lazy val h2database = "com.h2database"           % "h2"                       % "1.2.147"  % Test
 

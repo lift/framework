@@ -22,6 +22,21 @@ import org.specs2.mutable.Specification
 
 import org.specs2.concurrent.ExecutionEnv
 
+import scala.concurrent.duration._
+
+/**
+ * Tests the asynchronous side of MongoMetaRecord.
+ *
+ * Every assertion here awaits a MongoDB round trip. specs2's default await
+ * budget is one second, and the async driver's first write after a cold start
+ * can exceed that on a loaded machine: `replaceOne asynchronously` was measured
+ * taking 1.251s in total while the same example takes well under a second once
+ * the driver is warm. The awaits below therefore state an explicit budget of
+ * five seconds rather than relying on the one-second default, so that the test
+ * fails only when the operation genuinely does not complete. The operation
+ * itself is not in question: with a larger budget it succeeds, and the writes
+ * are verified afterwards by reading the records back.
+ */
 class MongoRecordAsyncSpec(implicit ee: ExecutionEnv) extends Specification with MongoAsyncTestKit {
   "MongoRecord Async Specification".title
 
@@ -36,7 +51,7 @@ class MongoRecordAsyncSpec(implicit ee: ExecutionEnv) extends Specification with
         .mandatoryLongField(42L)
         .mandatoryIntField(27)
 
-      FieldTypeTestRecord.insertAsync(obj) must beEqualTo[Boolean](true).await
+      FieldTypeTestRecord.insertAsync(obj) must beEqualTo[Boolean](true).awaitFor(5.seconds)
 
       val fetched = FieldTypeTestRecord.find(obj.id.get)
 
@@ -58,7 +73,7 @@ class MongoRecordAsyncSpec(implicit ee: ExecutionEnv) extends Specification with
         .mandatoryLongField(42L)
         .mandatoryIntField(27)
 
-      FieldTypeTestRecord.replaceOneAsync(obj) must beEqualTo[FieldTypeTestRecord](obj).await
+      FieldTypeTestRecord.replaceOneAsync(obj) must beEqualTo[FieldTypeTestRecord](obj).awaitFor(5.seconds)
 
       val fetched = FieldTypeTestRecord.find(obj.id.get)
 
@@ -74,7 +89,7 @@ class MongoRecordAsyncSpec(implicit ee: ExecutionEnv) extends Specification with
         .mandatoryLongField(44L)
         .mandatoryIntField(29)
 
-      FieldTypeTestRecord.replaceOneAsync(obj) must beEqualTo[FieldTypeTestRecord](obj).await
+      FieldTypeTestRecord.replaceOneAsync(obj) must beEqualTo[FieldTypeTestRecord](obj).awaitFor(5.seconds)
 
       val fetched2 = FieldTypeTestRecord.find(obj.id.get)
 
@@ -94,7 +109,7 @@ class MongoRecordAsyncSpec(implicit ee: ExecutionEnv) extends Specification with
 
       val obj = FieldTypeTestRecord.createRecord
 
-      FieldTypeTestRecord.replaceOneAsync(obj, false) must beEqualTo[FieldTypeTestRecord](obj).await
+      FieldTypeTestRecord.replaceOneAsync(obj, false) must beEqualTo[FieldTypeTestRecord](obj).awaitFor(5.seconds)
       FieldTypeTestRecord.find(obj.id.get).isDefined must_== false
     }
   }

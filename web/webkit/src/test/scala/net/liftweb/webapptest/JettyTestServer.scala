@@ -19,13 +19,13 @@ package webapptest
 
 import java.net.URL
 
-import org.mortbay.jetty.Server
-import org.mortbay.jetty.webapp.WebAppContext
+import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.webapp.WebAppContext
 
-import net.sourceforge.jwebunit.junit.WebTester
-import junit.framework.AssertionFailedError
+import org.htmlunit.WebClient
+import org.htmlunit.html.HtmlPage
 
-import common.Box
+import common.{Box, Full}
 
 
 final class JettyTestServer(baseUrlBox: Box[URL]) {
@@ -39,10 +39,8 @@ final class JettyTestServer(baseUrlBox: Box[URL]) {
     context.setContextPath("/")
     val dir = System.getProperty("net.liftweb.webapptest.src.test.webapp", "src/test/webapp")
     context.setWar(dir)
-    //val context = new Context(_server, "/", Context.SESSIONS)
-    //context.addFilter(new FilterHolder(new LiftFilter()), "/");
-    server.addHandler(context)
-    server.setGracefulShutdown(100)
+    server.setHandler(context)
+    server.setStopTimeout(100)
     server.setStopAtShutdown(true)
     (server, context)
   }
@@ -51,29 +49,40 @@ final class JettyTestServer(baseUrlBox: Box[URL]) {
 
   def start() {
     server_.start()
+    // Lift is a filter; getParts() on a filter-dispatched request requires
+    // multipart configuration on the servlet that owns the request (the
+    // container's default servlet here). commons-fileupload bypassed the
+    // container and needed none; getParts() does — this is the migration
+    // requirement flagged in docs/migration/javax-to-jakarta.adoc. The
+    // default servlet is registered when the context parses web.xml at
+    // start, so the configuration is applied after start.
+    Option(context_.getServletHandler.getServlet("default")).foreach { holder =>
+      holder.getRegistration.setMultipartConfig(new jakarta.servlet.MultipartConfigElement(""))
+    }
   }
 
   def stop() {
-    context_.setShutdown(true)
+    context_.stop()
     server_.stop()
     server_.join()
   }
 
   def running = server_.isRunning
 
-  def browse[A](startPath: String, f:(WebTester) => A): A = {
-    val wc = new WebTester()
+  /**
+   * Browse to `startPath` with HtmlUnit and run `f` on the parsed page.
+   * Scripting is disabled: these tests assert on server-rendered markup,
+   * not on client-side behavior. The web client is closed after each call.
+   */
+  def browseHtmlUnit[A](startPath: String, f: HtmlPage => A): A = {
+    val client = new WebClient()
+    client.getOptions.setJavaScriptEnabled(false)
+    client.getOptions.setCssEnabled(false)
     try {
-      wc.setScriptingEnabled(false)
-      wc.beginAt(urlFor(startPath))
-      f(wc)
-    } catch {
-      case exc: AssertionFailedError => {
-        System.err.println("server response: ", wc.getServerResponse)
-        throw exc
-      }
+      val page = client.getPage[HtmlPage](urlFor(startPath))
+      f(page)
     } finally {
-      wc.closeBrowser()
+      client.close()
     }
   }
 

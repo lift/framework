@@ -1,0 +1,93 @@
+# Migrating Lift from javax.servlet to jakarta.servlet
+
+This page describes what changes for a Lift application when Lift runs on the
+jakarta servlet platform, what stays the same, and how to update your
+application and its container.
+
+This extends the existing migration series
+([2.6-to-3.0-lift-screen](2.6-to-3.0-lift-screen.adoc),
+[2.6-to-3.0-paginator](2.6-to-3.0-paginator.adoc)) and covers the servlet
+platform change; for a troubleshooting-oriented upgrade recipe see
+[Upgrading from javax Lift](../upgrading-from-javax-lift.md).
+
+== What changes
+
+*Target*: Jakarta Servlet 5.0 (Jakarta Enterprise Edition 9). Lift compiles
+against `jakarta.servlet:jakarta.servlet-api:5.0.0` (provided scope) and is
+tested on embedded Jetty 11.
+
+*Container requirements.* Your container must provide the jakarta namespace:
+Jetty 11 (or 12 with the EE 9 or later environment), Tomcat 10.0 or later.
+Containers in the `javax` line (Jetty 9, Tomcat 9 and earlier) cannot run the
+jakarta Lift line, and vice versa: the two namespaces cannot be mixed in one
+application.
+
+*Application code.* Application code written against Lift's APIs (snippets,
+CometActors, Mapper, Record, REST) is unchanged: the namespace migration is
+inside Lift's servlet adapter layer.
+
+*Deployment descriptors.* A `web.xml` must use the Jakarta EE namespace and
+version 5.0 schema:
+
+```xml
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+                          https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
+      version="5.0">
+  <filter>
+    <filter-name>LiftFilter</filter-name>
+    <filter-class>net.liftweb.http.LiftFilter</filter-class>
+    <async-supported>true</async-supported>
+  </filter>
+  <filter-mapping>
+    <filter-name>LiftFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+</web-app>
+```
+
+Servlet 3.0-style programmatic/annotation registration carries over with
+`jakarta.servlet` imports.
+
+== File uploads: multipart configuration is now required
+
+Lift ingests uploads through the container's `getParts()`; commons-fileupload
+is no longer used. The container requires multipart configuration on the
+servlet that owns the request — a filter carries none. If your application
+declares a servlet, configure it:
+
+* in `web.xml`, add `<multipart-config/>` inside the `<servlet>` element; or
+* programmatically: `registration.setMultipartConfig(new MultipartConfigElement(""))`.
+
+Without it, the container rejects part parsing
+(`IllegalStateException: No multipart config for servlet`).
+
+Lift's own limits are enforced in the ingestion path: a file part larger
+than `LiftRules.maxMimeFileSize` or a request whose parts total more than
+`LiftRules.maxMimeSize` fails the request with the framework error, as
+before the migration (pinned by
+`UploadIngestionSpec."reject an upload beyond LiftRules.maxMimeSize"`).
+The container's multipart configuration, when declared, is the first line
+of defense at parse time; the LiftRules limits hold for applications that
+set them and for containers with unbounded configuration. Byte-identity of
+ingested uploads is pinned by
+`UploadIngestionSpec."ingest file content byte-identically with correct
+metadata"` (empty-file and non-ASCII-filename boundaries included).
+
+== Asynchronous providers
+
+The provider list registers the standard Servlet 3.0 async provider only; the
+legacy Jetty 6/7 reflection providers are gone
+(`AsyncProviderSelectionSpec."register only the standard servlet 3.0
+provider"`). Any container Lift runs on must support Servlet 3.0 asynchronous
+processing or long polling takes the future-based fallback.
+
+== What does not change
+
+* Lift's module set and features: Mapper, Record, Comet, JSON, HTML selection
+  all keep their behavior; the whole framework migrates in lockstep as one
+  release.
+* The behavior statements in
+  [servlet-behavior-test-map](servlet-behavior-test-map.md) are unchanged by
+  this migration: the characterization tests passed byte-for-byte across it.

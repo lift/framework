@@ -1,6 +1,16 @@
 import Dependencies._
 import LiftSbtHelpers._
 
+// Pin scala-xml to 1.3.x for ALL cross-builds. scala-compiler 2.12.18 pulls
+// scala-xml 2.1.0 transitively (via scalap, which lift-json uses for ScalaSig
+// reading); scala-compiler 2.12.12 pulled only 1.0.6, and the 2.13 compilers
+// pull none. sbt 1.10.7 rejects the 1.x -> 2.x jump as a breaking eviction, and
+// it must not simply be allowed: scala-xml 2.x changed
+// NoBindingFactoryAdapter.hStack and breaks HtmlParser, which calls
+// hStack.push (core/util/src/main/scala/net/liftweb/util/HtmlParser.scala:366).
+// 1.3.0 is what Lift 3.5.0 was built against.
+ThisBuild / dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "1.3.0"
+
 organization in ThisBuild          := "net.liftweb"
 version in ThisBuild               := "3.5.0"
 homepage in ThisBuild              := Some(url("http://www.liftweb.net"))
@@ -8,11 +18,15 @@ licenses in ThisBuild              += ("Apache License, Version 2.0", url("http:
 startYear in ThisBuild             := Some(2006)
 organizationName in ThisBuild      := "WorldWide Conferencing, LLC"
 
-val scala211Version = "2.11.12"
-val scala212Version = "2.12.12"
-val scala213Version = "2.13.2"
+// These are the minimum Scala releases that can compile against, and run on, JDK 21:
+// 2.12.18 and 2.13.11 are the first releases of their lines to read JDK 21 class files
+// (see https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html).
+// No 2.11 release supports JDK 21 (2.11.12 is the final 2.11 release), so the 2.11
+// cross-build has been dropped.
+val scala212Version = "2.12.18"
+val scala213Version = "2.13.11"
 
-val crossUpTo212 = Seq(scala212Version, scala211Version)
+val crossUpTo212 = Seq(scala212Version)
 val crossUpTo213 = scala213Version +: crossUpTo212
 
 scalaVersion in ThisBuild          := scala212Version
@@ -157,13 +171,14 @@ lazy val webkit =
       description := "Webkit Library",
       parallelExecution in Test := false,
       libraryDependencies ++= Seq(
-        commons_fileupload,
         rhino,
         servlet_api,
         specs2Prov,
         specs2MatchersProv,
-        jetty6,
-        jwebunit,
+        jetty11server,
+        jetty11webapp,
+        jetty11client,
+        htmlunit,
         mockito_scalatest,
         jquery,
         jasmineCore,
@@ -254,6 +269,25 @@ lazy val squeryl_record =
   persistenceProject("squeryl-record")
     .dependsOn(record, db)
     .settings(libraryDependencies ++= Seq(h2, squeryl))
+    .settings(
+      // This module is Scala 2.12-only by design: squeryl 0.9.5-7 has no 2.13
+      // artifact at all (the squeryl 2.13 line starts at 0.10.0-RC1), so the
+      // module deliberately does not opt into crossUpTo213. Stated explicitly
+      // here rather than left to the ThisBuild default, so that the intent is
+      // not lost if that default is ever changed. Consequence: `++2.13.11 test`
+      // reports `lift-squeryl-record / update` as a conflicting cross-version
+      // suffix error, because the module stays on 2.12 while its dependencies
+      // move to 2.13. That failure is expected and is not a regression.
+      crossScalaVersions := Seq(scala212Version),
+      // squeryl 0.9.5-7 pulls cglib-nodep 2.2, whose ReflectUtils static
+      // initialiser calls ClassLoader.defineClass reflectively. The JDK module
+      // system blocks that from JDK 17 onward, so without this every example of
+      // SquerylRecordSpec errors during its `around` hook before its body runs.
+      // javaOptions only reach a forked JVM, so Test/fork is required as well as
+      // the --add-opens; either one alone has no effect.
+      fork in Test := true,
+      javaOptions in Test += "--add-opens=java.base/java.lang=ALL-UNNAMED"
+    )
 
 lazy val mongodb =
   persistenceProject("mongodb")
