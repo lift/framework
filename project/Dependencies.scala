@@ -21,15 +21,15 @@ object Dependencies {
 
   type ModuleMap = String => ModuleID
 
-  lazy val slf4jVersion = "1.7.25"
+  lazy val slf4jVersion = "1.7.36"
 
   // Compile scope:
   // Scope available in all classpath, transitive by default.
-  lazy val commons_codec          = "commons-codec"              % "commons-codec"      % "1.11"
+  lazy val commons_codec          = "commons-codec"              % "commons-codec"      % "1.23.0"
   lazy val commons_httpclient     = "commons-httpclient"         % "commons-httpclient" % "3.1"
   lazy val javamail               = "javax.mail"                 % "mail"               % "1.4.7"
   lazy val jbcrypt                = "org.mindrot"                % "jbcrypt"            % "0.4"
-  lazy val joda_time              = "joda-time"                  % "joda-time"          % "2.10"
+  lazy val joda_time              = "joda-time"                  % "joda-time"          % "2.13.0"
   lazy val joda_convert           = "org.joda"                   % "joda-convert"       % "2.1"
   lazy val htmlparser             = "nu.validator"               % "htmlparser"         % "1.4.12"
   lazy val mongo_java_driver      = "org.mongodb"                % "mongodb-driver"     % "3.12.7"
@@ -43,9 +43,9 @@ object Dependencies {
   lazy val slf4j_api              = "org.slf4j"                  % "slf4j-api"          % slf4jVersion
   lazy val scala_xml              = "org.scala-lang.modules"     %% "scala-xml"         % "1.3.0"
   lazy val scala_parallel_collections =  "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0"
-  lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.7.10"
+  lazy val rhino                  = "org.mozilla"                % "rhino"              % "1.7.15.1"
   lazy val scala_parser           = "org.scala-lang.modules"     %% "scala-parser-combinators" % "1.1.2"
-  lazy val xerces                 = "xerces" % "xercesImpl" % "2.11.0"
+  lazy val xerces                 = "xerces" % "xercesImpl" % "2.12.2"
 
   // Aliases
   lazy val mongo_driver = mongo_java_driver
@@ -54,7 +54,7 @@ object Dependencies {
 
   // Provided scope:
   // Scope provided by container, available only in compile and test classpath, non-transitive by default.
-  lazy val logback         = "ch.qos.logback"    % "logback-classic"       % "1.2.3"        % Provided
+  lazy val logback         = "ch.qos.logback"    % "logback-classic"       % "1.2.13"       % Provided
   lazy val log4j           = "log4j"             % "log4j"                 % "1.2.17"       % Provided
   lazy val slf4j_log4j12   = "org.slf4j"         % "slf4j-log4j12"         % slf4jVersion   % Provided
   lazy val persistence_api = "javax.persistence" % "persistence-api"       % "1.0.2"        % Provided
@@ -66,9 +66,11 @@ object Dependencies {
 
   // Test scope:
   // Scope available only in test classpath, non-transitive by default.
-  lazy val jetty11server  = "org.eclipse.jetty" % "jetty-server" % "11.0.26" % Test
-  lazy val jetty11webapp  = "org.eclipse.jetty" % "jetty-webapp" % "11.0.26" % Test
-  lazy val jetty11client  = "org.eclipse.jetty" % "jetty-client" % "11.0.26" % Test
+  // Jetty 12 with the ee9 servlet environment (Servlet 5.0); Jetty 11 is
+  // end-of-life at 11.0.26 and its 2026 CVE fixes exist only in 12.0.39+.
+  lazy val jetty12server  = "org.eclipse.jetty"       % "jetty-server"     % "12.0.40" % Test
+  lazy val jetty12webapp  = "org.eclipse.jetty.ee9"   % "jetty-ee9-webapp" % "12.0.40" % Test
+  lazy val jetty12client  = "org.eclipse.jetty"       % "jetty-client"     % "12.0.40" % Test
   lazy val htmlunit       = "org.htmlunit"       % "htmlunit"      % "4.21.0"   % Test
   lazy val derby      = "org.apache.derby"         % "derby"                    % "10.7.1.1" % Test
   lazy val h2database = "com.h2database"           % "h2"                       % "1.2.147"  % Test

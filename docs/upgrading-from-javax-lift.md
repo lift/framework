@@ -15,8 +15,8 @@ jakarta line; the classpath must not mix them.
 ## Symptom: `NoClassDefFoundError: jakarta/servlet/...` in a javax container
 
 The jakarta Lift line is running inside a javax-line container (Jetty 9,
-Tomcat 9 or earlier). Move to a jakarta container: Jetty 11 (or Jetty 12 with
-the EE 9+ environment), Tomcat 10.0+.
+Tomcat 9 or earlier). Move to a jakarta container: Jetty 12 (ee9
+environment for Servlet 5.0), Tomcat 10.0+.
 
 ## Symptom: `IllegalStateException: No multipart config for servlet` on upload
 

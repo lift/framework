@@ -4,8 +4,8 @@ LLM-oriented parallel of `docs/migration/javax-to-jakarta.adoc`.
 
 - Target: Jakarta Servlet 5.0 (Jakarta EE 9). Lift compiles against
   `jakarta.servlet:jakarta.servlet-api:5.0.0` (provided) and is tested on
-  embedded Jetty 11.
-- Containers: Jetty 11 (or 12 with the EE 9+ environment), Tomcat 10.0+.
+  embedded Jetty 12 (ee9 environment).
+- Containers: Jetty 12 (ee9 environment for Servlet 5.0), Tomcat 10.0+.
   The javax line (Jetty 9, Tomcat 9 and earlier) cannot run the jakarta Lift
   line, and the namespaces cannot be mixed in one application.
 - Application code against Lift's APIs is unchanged; the migration lives in

@@ -79,9 +79,11 @@ applied (`wrapState`).
 ## The test harness
 
 The webkit test suite runs Lift inside an embedded servlet container through
-`net.liftweb.webapptest.JettyTestServer` (test tree): it starts the container
-on a port, deploys the test web application from `src/test/webapp` (whose
-`web.xml` declares `LiftFilter`), and offers request helpers for the characterization tests. The test web
+`net.liftweb.webapptest.JettyTestServer` (test tree): it starts Jetty 12
+with the ee9 servlet environment (Servlet 5.0; Jetty 11 is end-of-life and
+its 2026 security fixes exist only in Jetty 12) on a port, deploys the test
+web application from `src/test/webapp` (whose `web.xml` declares
+`LiftFilter`), and offers request helpers for the characterization tests. The test web
 application's boot
 (`web/webkit/src/test/scala/bootstrap/liftweb/Boot.scala`) registers the
 snippet packages and the test dispatch tables (`ContainerVarTests`,

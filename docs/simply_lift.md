@@ -549,7 +549,8 @@ Chapter 24 Releases
 ## Running Lift on the jakarta servlet platform
 
 Lift runs on containers that provide the `jakarta.servlet` namespace (Jakarta
-Enterprise Edition 9: Jetty 11, Tomcat 10.0 and later). Your application
+Enterprise Edition 9: Jetty 12 with the ee9 environment, Tomcat 10.0 and
+later). Your application
 code — snippets, Comet actors, Mapper, Record — is written against Lift's
 APIs and is unchanged by this; what you maintain is the deployment
 descriptor (a `web.xml` declaring the Lift filter with the Jakarta EE 5.0

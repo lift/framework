@@ -20,7 +20,7 @@ package webapptest
 import java.net.URL
 
 import org.eclipse.jetty.server.Server
-import org.eclipse.jetty.webapp.WebAppContext
+import org.eclipse.jetty.ee9.webapp.WebAppContext
 
 import org.htmlunit.WebClient
 import org.htmlunit.html.HtmlPage

@@ -43,7 +43,7 @@ LLM-oriented parallel of `docs/architecture/servlet-provider-architecture.md`.
    Reply body runs detached from request state; response rendering is wrapped
    in `wrapState(req, session)`.
 5. Test harness: `net.liftweb.webapptest.JettyTestServer` (embedded Jetty 9,
-   Jetty 11, jakarta) deploys `src/test/webapp` (`web.xml` declares `LiftFilter`); boot in
+   Jetty 12 ee9, jakarta) deploys `src/test/webapp` (`web.xml` declares `LiftFilter`); boot in
    `bootstrap.liftweb.Boot` registers `ContainerVarTests`, `LongPollingTests`
    (`/lp/echo`, `/lp/delay`, `/lp/state` — RestContinuation-based, records
    request/reply thread names), `UploadEchoTests` (`/lp/upload` — echoes

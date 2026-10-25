@@ -7,7 +7,8 @@ troubleshooting recipe for the javax-to-jakarta upgrade.
   addon is on the classpath of a jakarta application. Every Lift module and
   addon must come from the same line.
 - `NoClassDefFoundError: jakarta/servlet/...`: the jakarta Lift line runs in
-  a javax container. Move to Jetty 11 (or Jetty 12 EE 9+), Tomcat 10.0+.
+  a javax container. Move to Jetty 12 (ee9 environment for Servlet 5.0),
+  Tomcat 10.0+.
 - `IllegalStateException: No multipart config for servlet` on upload: add
   `<multipart-config/>` to the `<servlet>` (or
   `registration.setMultipartConfig(...)`); `getParts()` requires it,
