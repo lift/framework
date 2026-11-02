@@ -3,7 +3,8 @@
 ## Supported Versions
 
 Our [Support policy](https://github.com/lift/framework/blob/master/SUPPORT.md) outlines
-what versions are supported for bugfixes and security releases.
+what versions are supported for bugfixes and security releases. Security reports are
+reviewed by Matt Farmer and we aim to review them within 2 days.
 
 ## Reporting a Vulnerability
 
