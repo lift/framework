@@ -386,8 +386,8 @@ object LAFuture {
       val sync = new Object
       val len = futures.length
       val accumulator = new ArrayBuffer[Box[T]](len)
-       // pad array so inserts at random places are possible
-      for (i <- 0 to len) { accumulator.insert(i, Empty) }
+       // pad array so values can be placed at their input index
+      for (i <- 0 until len) { accumulator.insert(i, Empty) }
       var gotCnt = 0
 
       futures.toList.zipWithIndex.foreach {
@@ -435,7 +435,7 @@ object LAFuture {
   def collect[T](future: LAFuture[T]*): LAFuture[List[T]] = {
     collect[T, List[T]](
       onFutureSucceeded = { (value, result, values, index) =>
-        values.insert(index, Full(value))
+        values.update(index, Full(value))
       },
       onFutureFailed = { (valueBox, result, values, index) => result.fail(valueBox) },
       onAllFuturesCompleted = { (result, values) => result.satisfy(values.toList.flatten) },
@@ -455,7 +455,7 @@ object LAFuture {
       onFutureSucceeded = { (value, result, values, index) =>
         value match {
           case Full(realValue) =>
-            values.insert(index, Full(Full(realValue)))
+            values.update(index, Full(Full(realValue)))
           case other: EmptyBox =>
             result.satisfy(other)
         }
