@@ -27,6 +27,16 @@ import http._
 import Helpers.tryo
 
 /**
+ * The head-merging and rendering assertions use HtmlUnit directly (Phase 3,
+ * replacing jwebunit per the maintainer's Option A): each example asserts
+ * the same observable fact as before, through `JettyTestServer.browseHtmlUnit`.
+ */
+object ToHeadUsagesHtmlUnit {
+  def hasElement(page: org.htmlunit.html.HtmlPage, xpath: String): Boolean =
+    !page.getByXPath(xpath).isEmpty
+}
+
+/**
  * System under specification for ToHeadUsages.
  */
 object ToHeadUsages extends Specification  {
@@ -53,28 +63,32 @@ object ToHeadUsages extends Specification  {
   "lift <head> merger" should {
 
     "merge <head> from html fragment" in {
-      jetty.browse(
+      // HtmlUnit port (Phase 3, Option A): the script merged into <head>
+      jetty.browseHtmlUnit(
         "/htmlFragmentWithHead", html =>
-          html.getElementByXPath("/html/head/script[@id='fromFrag']") must not(beNull when jetty.running)
-        )
+          ToHeadUsagesHtmlUnit.hasElement(html, "/html/head/script[@id='fromFrag']") must (beTrue when jetty.running)
+      )
     }
 
     "merge <head> from html fragment does not include head element in body" in {
-      jetty.browse(
+      // HtmlUnit port (Phase 3, Option A): the script stayed out of <body>
+      jetty.browseHtmlUnit(
         "/htmlFragmentWithHead", html =>
-          html.getElementsByXPath("/html/body/script[@id='fromFrag']").size must (be_==(0) when jetty.running)
+          ToHeadUsagesHtmlUnit.hasElement(html, "/html/body/script[@id='fromFrag']") must (beFalse when jetty.running)
       )
     }
 
     "merge <head> from snippet" in {
-      jetty.browse(
+      // HtmlUnit port (Phase 3, Option A)
+      jetty.browseHtmlUnit(
         "/htmlSnippetWithHead", html =>
-          html.getElementByXPath("/html/head/script[@src='snippet.js']") must not(beNull when jetty.running)
+          ToHeadUsagesHtmlUnit.hasElement(html, "/html/head/script[@src='snippet.js']") must (beTrue when jetty.running)
       )
     }
 
     "not merge for bodyless html" in {
-      jetty.browse(
+      // HtmlUnit port (Phase 3, Option A)
+      jetty.browseHtmlUnit(
         "/basicDiv", html => {
           html.getElementById("fruit") must not(beNull when jetty.running)
           html.getElementById("bat")   must not(beNull when jetty.running)
@@ -83,7 +97,8 @@ object ToHeadUsages extends Specification  {
     }
 
     "not merge for headless bodyless html" in {
-      jetty.browse(
+      // HtmlUnit port (Phase 3, Option A)
+      jetty.browseHtmlUnit(
         "/h1", html => {
           html.getElementById("h1") must not(beNull when jetty.running)
         }
@@ -103,7 +118,8 @@ object ToHeadUsages extends Specification  {
     }*/
 
     "not merge non-html" in {
-      jetty.browse(
+      // HtmlUnit port (Phase 3, Option A)
+      jetty.browseHtmlUnit(
         "/non_html", html => {
           html.getElementById("frog") must not(beNull when jetty.running)
         }
@@ -143,7 +159,8 @@ object ToHeadUsages extends Specification  {
 
   "deferred snippets" should {
     "render" in {
-      jetty.browse(
+      // HtmlUnit port (Phase 3, Option A)
+      jetty.browseHtmlUnit(
         "/deferred", html => {
           html.getElementById("second") must not(beNull when jetty.running)
         }
@@ -151,17 +168,19 @@ object ToHeadUsages extends Specification  {
     }
 
     "not deferred not in actor" in {
-      jetty.browse(
+      // HtmlUnit port (Phase 3, Option A)
+      jetty.browseHtmlUnit(
         "/deferred", html => {
-          html.getElementByXPath("/html/body/span[@id='whack1']/span[@id='actor_false']") must not(beNull when jetty.running)
+          ToHeadUsagesHtmlUnit.hasElement(html, "/html/body/span[@id='whack1']/span[@id='actor_false']") must (beTrue when jetty.running)
         }
       )
     }
 
     "deferred in actor" in {
-      jetty.browse(
+      // HtmlUnit port (Phase 3, Option A)
+      jetty.browseHtmlUnit(
         "/deferred", html => {
-          html.getElementByXPath("/html/body/span[@id='whack2']/span[@id='actor_true']") must not(beNull when jetty.running)
+          ToHeadUsagesHtmlUnit.hasElement(html, "/html/body/span[@id='whack2']/span[@id='actor_true']") must (beTrue when jetty.running)
         }
       )
     }

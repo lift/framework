@@ -37,7 +37,12 @@ abstract class EnumWithDescription  {
 
     // possibly not a good idea using this directly
     val enum = new Enumeration {
-        def Value(inName: String, inDescription: String): Value with ValueWithDescription = {
+        // No explicit return type: on Scala 2.13.11+ the explicit
+        // `Value with ValueWithDescription` closes a cyclic reference with the
+        // enclosing `type Value = enum.Value with ValueWithDescription`
+        // ("illegal cyclic reference involving type Value"). Inference yields
+        // the same type; this compiles on 2.12 and on 2.13.
+        def Value(inName: String, inDescription: String) = {
             new Val(nextId, inName) with ValueWithDescription {
                 def description = inDescription
                 def name = inName

@@ -90,7 +90,7 @@ trait HTTPProvider {
         // The UnavailableException is the idiomatic way to tell a Java application container that
         // the boot process has gone horribly, horribly wrong. That _must_ bubble to the application
         // container that is invoking the app. See https://github.com/lift/framework/issues/1843
-        case unavailableException: javax.servlet.UnavailableException =>
+        case unavailableException: jakarta.servlet.UnavailableException =>
           logger.error("------------------------------------------------------------------")
           logger.error("------------------------------------------------------------------")
           logger.error("------------------------------------------------------------------")

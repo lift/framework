@@ -21,9 +21,7 @@ package servlet
 
 import java.io.InputStream
 import java.util.Locale
-import javax.servlet.http.HttpServletRequest
-import org.apache.commons.fileupload.servlet._
-import org.apache.commons.fileupload.ProgressListener
+import jakarta.servlet.http.HttpServletRequest
 import net.liftweb.common._
 import net.liftweb.util._
 import Helpers._
@@ -105,7 +103,13 @@ class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val 
 
   def inputStream: InputStream = req.getInputStream
 
-  def multipartContent_? = ServletFileUpload.isMultipartContent(req)
+  // A multipart request is one whose content type is multipart/*; this is
+  // the same rule the Servlet 3.0+ container applies when getParts is
+  // called, and it is evaluated before the container parses the body.
+  def multipartContent_? = {
+    val contentType = req.getContentType
+    (contentType ne null) && contentType.toLowerCase.startsWith("multipart/")
+  }
 
   /**
    * Destroy the underlying servlet session
@@ -126,34 +130,48 @@ class HTTPRequestServlet(@transient val req: HttpServletRequest, @transient val 
       id <- Box !! httpSession.getId
     } yield id
 
-  def extractFiles: List[ParamHolder] = (new Iterator[ParamHolder] {
-    val mimeUpload = new ServletFileUpload
-    mimeUpload.setProgressListener(new ProgressListener {
-      lazy val progList: (Long, Long, Int) => Unit = S.session.flatMap(_.progressListener) openOr LiftRules.progressListener
-
-      def update(a: Long, b: Long, c: Int) {progList(a, b, c)}
-    })
-
-    mimeUpload.setSizeMax(LiftRules.maxMimeSize)
-    mimeUpload.setFileSizeMax(LiftRules.maxMimeFileSize)
-    val what = mimeUpload.getItemIterator(req)
-
-    def hasNext = what.hasNext
-
+  /**
+    * Ingest the request body's parts through the container's
+    * `HttpServletRequest.getParts` (Servlet 3.0+). A part without a
+    * submitted filename is a form field (NormalParamHolder); a part with
+    * one is a file (via LiftRules.handleMimeFile, with the part's headers
+    * made available through LiftRules.withMimeHeaders).
+    *
+    * Lift's own upload limits are enforced here: a file part larger than
+    * `LiftRules.maxMimeFileSize`, or a request whose parts total more than
+    * `LiftRules.maxMimeSize`, fails the request (the framework error page)
+    * instead of being ingested. The container's multipart configuration, if
+    * the application declared one, is a first line of defense at parse
+    * time; these checks keep Lift's limits in force for applications that
+    * set them through LiftRules and for containers with unbounded
+    * configuration.
+    */
+  def extractFiles: List[ParamHolder] = {
     import scala.collection.JavaConverters._
 
-    def next = what.next match {
-      case f if (f.isFormField) => NormalParamHolder(f.getFieldName, new String(readWholeStream(f.openStream), "UTF-8"))
-      case f => {
-        val headers = f.getHeaders()
-        val names: List[String] = if (headers eq null) Nil else headers.getHeaderNames().asInstanceOf[java.util.Iterator[String]].asScala.toList
-        val map: Map[String, List[String]] = Map(names.map(n => n -> headers.getHeaders(n).asInstanceOf[java.util.Iterator[String]].asScala.toList) :_*)
+    var runningTotal = 0L
+    req.getParts.asScala.toList.map { part =>
+      runningTotal += part.getSize
+      if (runningTotal > LiftRules.maxMimeSize) {
+        throw new jakarta.servlet.ServletException(
+          "Upload exceeds LiftRules.maxMimeSize (" + LiftRules.maxMimeSize + " bytes)")
+      }
+      if ((part.getSubmittedFileName ne null) && part.getSize > LiftRules.maxMimeFileSize) {
+        throw new jakarta.servlet.ServletException(
+          "File part \"" + part.getName + "\" exceeds LiftRules.maxMimeFileSize (" +
+          LiftRules.maxMimeFileSize + " bytes)")
+      }
+      if (part.getSubmittedFileName eq null) {
+        NormalParamHolder(part.getName, new String(readWholeStream(part.getInputStream), "UTF-8"))
+      } else {
+        val names = part.getHeaderNames.asScala.toList
+        val map: Map[String, List[String]] = Map(names.map(n => n -> part.getHeaders(n).asScala.toList) :_*)
         LiftRules.withMimeHeaders(map) {
-          LiftRules.handleMimeFile(f.getFieldName, f.getContentType, f.getName, f.openStream)
+          LiftRules.handleMimeFile(part.getName, part.getContentType, part.getSubmittedFileName, part.getInputStream)
         }
       }
     }
-  }).toList
+  }
 
 
   def setCharacterEncoding(encoding: String) = req.setCharacterEncoding(encoding)

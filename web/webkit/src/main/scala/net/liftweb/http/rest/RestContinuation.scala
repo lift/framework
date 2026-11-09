@@ -62,10 +62,13 @@ object RestContinuation {
    * }
    * </pre></code>
    *
-   * The body of the function will be executed on a separate thread.
-   * When the answer is ready, apply the reply function... the function
-   * body will be executed in the scope of the current request (the
-   * current session and the current Req object).
+   * The body of the function will be executed on a separate thread,
+   * detached from the request's state: the reply body observes no session
+   * (S.session is Empty there). The response the reply produces is rendered
+   * with the request's session and request state applied. Both facts are
+   * pinned by CometLongPollingSpec ("run the reply detached from request
+   * state", "run the reply off the request thread and deliver it to the
+   * client").
    */
   def async(f: ((=> LiftResponse) => Unit) => Unit): Nothing = {
     throw new ContinuationException(CurrentReq.value, S.session, f)
